@@ -454,8 +454,9 @@ export async function getModerations({
         `Failed to load mock moderations: ${res.status} - ${res.statusText}`,
       );
     }
-    const moderations =
-      deserializeToPrisma<ExamEnvironmentExamModeration[]>(await res.json());
+    const moderations = deserializeToPrisma<ExamEnvironmentExamModeration[]>(
+      await res.json(),
+    );
 
     let filtered = moderations;
     if (status) {
@@ -950,6 +951,7 @@ export async function getExamMetricsById(examId: string) {
             userId: attempt.userId,
             examId: attempt.examId,
             generatedExamId: attempt.generatedExamId,
+            examModerationId: attempt.examModerationId,
             startTime,
             version: 3,
             questionSets: attempt.questionSets.map((qs) => ({
