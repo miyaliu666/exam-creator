@@ -887,6 +887,11 @@ function EditAttempt({
                 <b>Feedback</b>: {moderationQuery.data?.feedback}
               </Text>
             )}
+            {moderationQuery.data?.moderationScore && (
+              <Text color="fg" py={3}>
+                <b>Moderation Score</b>: {moderationQuery.data?.moderationScore}
+              </Text>
+            )}
             <AllUserAttemptsContainer
               attempt={attempt}
               options={{ isSubmissionTimeToggled, isSubmissionTimelineToggled }}

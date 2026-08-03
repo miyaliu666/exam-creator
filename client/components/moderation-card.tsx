@@ -135,6 +135,14 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
                 {moderation.feedback}
               </Text>
             )}
+            {moderation.moderationScore && (
+              <Text>
+                <Box as="span" fontWeight="bold" color="whiteAlpha.600">
+                  Moderation Score:
+                </Box>{" "}
+                {moderation.moderationScore}
+              </Text>
+            )}
             {moderation.moderationDate && (
               <Text>
                 <Box as="span" fontWeight="bold" color="whiteAlpha.600">
