@@ -5,6 +5,7 @@ import {
   type ExamEnvironmentExamModeration,
   type ExamEnvironmentExamModerationStatus,
   type ExamEnvironmentGeneratedExam,
+  type user,
 } from "@prisma/client";
 import type {
   Attempt,
@@ -743,6 +744,105 @@ export async function getUserSearch(
   const json = await res.json();
   const deserialized = deserializeToPrisma<UserSearchResult>(json);
   return deserialized;
+}
+
+export type DuplicateUser = Omit<
+  user,
+  "examAttempts" | "examEnvironmentAuthorizationToken"
+> & {
+  attemptCount: number;
+};
+
+export async function getDuplicateUsers(
+  email: string,
+): Promise<DuplicateUser[]> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+
+    const res = await fetch("/mocks/users.json");
+    const docs = deserializeToPrisma<Array<user & { id: string }>>(
+      await res.json(),
+    );
+    const attemptCounts: Record<string, number> = {
+      "5f0000001111111111111101": 12,
+      "620000002222222222222202": 3,
+      "650000003333333333333303": 0,
+    };
+    return docs
+      .filter(
+        (u) => email === "camperbot@freecodecamp.org" || u.email === email,
+      )
+      .map((u) => ({
+        ...u,
+        attemptCount: attemptCounts[u.id] ?? 0,
+      })) as DuplicateUser[];
+  }
+
+  const url = new URL("/api/users/duplicates", window.location.href);
+  url.searchParams.set("email", email);
+  const res = await authorizedFetch(url);
+  const json = await res.json();
+  const deserialized = deserializeToPrisma<DuplicateUser[]>(json);
+  return deserialized;
+}
+
+/// A recursive spec for how one value (a field, or any nested value) is assembled from the
+/// candidate "sources" available at its position. Source ids are record ids at the top level,
+/// or the ids of the records contributing an item when recursing into an array group. The server
+/// resolves each spec by copying BSON verbatim, so every value - scalar, object, or array, nested
+/// to any depth - round-trips with its type intact and nothing is hard-coded.
+export type Selection =
+  /// Take the whole value from one source.
+  | { kind: "pick"; sourceId: string }
+  /// Build an object, sourcing each sub-key with its own (recursive) selection.
+  | { kind: "object"; fields: Record<string, Selection> }
+  /// Build an array from ordered item groups, each merging the matching items its members
+  /// contribute (by array index) via its own (recursive) selection.
+  | {
+      kind: "array";
+      groups: Array<{
+        members: Array<{ sourceId: string; index: number }>;
+        selection: Selection;
+      }>;
+    };
+
+export interface MergeUsersPayload {
+  survivorId: string;
+  discardedIds: string[];
+  /// Per-field selection spec covering every mergeable `user` field.
+  selections: Record<string, Selection>;
+}
+
+export async function scheduleUserMerge(
+  payload: MergeUsersPayload,
+): Promise<Response> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+    return new Response();
+  }
+
+  return await authorizedFetch("/api/users/merge", {
+    method: "POST",
+    body: JSON.stringify({
+      survivor_id: payload.survivorId,
+      discarded_ids: payload.discardedIds,
+      selections: payload.selections,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+}
+
+export async function cancelUserMerge(survivorId: string): Promise<Response> {
+  if (import.meta.env.VITE_MOCK_DATA === "true") {
+    await delayForTesting(300);
+    return new Response();
+  }
+
+  return await authorizedFetch(`/api/users/merge/${survivorId}`, {
+    method: "DELETE",
+  });
 }
 
 export async function getNumberOfAttemptsByUserId(

@@ -17,7 +17,7 @@ export function Header({ title, description, children }: HeaderProps) {
       align="center"
       bg={"bg"}
       borderRadius="xl"
-      p={8}
+      p={4}
       boxShadow="lg"
       mb={2}
     >

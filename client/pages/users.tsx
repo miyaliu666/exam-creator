@@ -22,7 +22,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDownIcon, SearchIcon } from "lucide-react";
+import { ChevronDownIcon, SearchIcon, UsersIcon } from "lucide-react";
 
 import { rootRoute } from "./root";
 import { ProtectedRoute } from "../components/protected-route";
@@ -32,12 +32,17 @@ import { landingRoute } from "./landing";
 import { DatabaseStatus } from "../components/database-status";
 import { Header } from "../components/ui/header";
 import { DeleteAttemptModal } from "../components/delete-attempt-modal";
-import { getUserSearch, type UserSearchBy } from "../utils/fetch";
+import { getDuplicateUsers, getUserSearch, type UserSearchBy } from "../utils/fetch";
 import {
   getPendingDeletes,
   scheduleDelete,
   subscribePendingDeletes,
 } from "../utils/pending-deletes";
+import {
+  getPendingDiscarded,
+  subscribePendingMerges,
+} from "../utils/pending-merges";
+import { objectIdToDate } from "../utils/object-id";
 
 const SEARCH_FIELDS = [
   { key: "email", label: "Email" },
@@ -113,6 +118,24 @@ export function Users() {
   );
   const visibleModerations = (search.data?.moderations ?? []).filter(
     (m) => !pending.has(m.examAttemptId),
+  );
+
+  // All `user`-collection records sharing the found user's email (duplicate accounts).
+  const searchedEmail = search.data?.user.email;
+  const duplicates = useQuery({
+    queryKey: ["user-duplicates", searchedEmail],
+    queryFn: () => getDuplicateUsers(searchedEmail!),
+    enabled: !!searchedEmail,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+  // Records optimistically hidden by an in-flight merge's undo window.
+  const discarded = useSyncExternalStore(
+    subscribePendingMerges,
+    getPendingDiscarded,
+  );
+  const visibleDuplicates = (duplicates.data ?? []).filter(
+    (d) => !discarded.has(d.id),
   );
 
   useEffect(() => {
@@ -250,6 +273,75 @@ export function Users() {
                   </Stack>
                 </SimpleGrid>
               </Box>
+              {searchedEmail && (
+                <Box bg="bg.subtle" borderRadius="xl" p={6} boxShadow="md">
+                  <Flex justify="space-between" align="center" mb={4} gap={4}>
+                    <Heading size="md">
+                      User Accounts ({visibleDuplicates.length})
+                    </Heading>
+                    {visibleDuplicates.length > 1 && (
+                      <Button
+                        colorPalette="orange"
+                        size="sm"
+                        onClick={() =>
+                          navigate({
+                            to: "/user/deduplicate",
+                            search: { email: searchedEmail },
+                          })
+                        }
+                      >
+                        <UsersIcon />
+                        Deduplicate
+                      </Button>
+                    )}
+                  </Flex>
+                  {duplicates.isPending ? (
+                    <Center py={4}>
+                      <Spinner color="teal.focusRing" />
+                    </Center>
+                  ) : duplicates.isError ? (
+                    <Text color="red.400">{duplicates.error.message}</Text>
+                  ) : visibleDuplicates.length === 0 ? (
+                    <Text color="fg.muted">No accounts found.</Text>
+                  ) : (
+                    <Stack gap={3}>
+                      {visibleDuplicates.length > 1 && (
+                        <Text color="fg.muted" fontSize="sm">
+                          This email has {visibleDuplicates.length} accounts.
+                          Use Deduplicate to consolidate them.
+                        </Text>
+                      )}
+                      {visibleDuplicates.map((rec) => {
+                        const created = objectIdToDate(rec.id);
+                        return (
+                          <Flex
+                            key={rec.id}
+                            borderWidth="1px"
+                            borderRadius="lg"
+                            p={4}
+                            gap={4}
+                            wrap="wrap"
+                          >
+                            <Stack gap={0}>
+                              <Text fontFamily="mono" fontSize="sm">
+                                {rec.id}
+                              </Text>
+                              <Text>{rec.email ?? "-"}</Text>
+                              <Text color="fg.muted" fontSize="sm">
+                                Username: {rec.username ?? "-"}
+                              </Text>
+                              <Text color="fg.muted" fontSize="sm">
+                                Created:{" "}
+                                {created ? created.toLocaleString() : "-"}
+                              </Text>
+                            </Stack>
+                          </Flex>
+                        );
+                      })}
+                    </Stack>
+                  )}
+                </Box>
+              )}
               <Box bg="bg.subtle" borderRadius="xl" p={6} boxShadow="md">
                 <Heading size="md" mb={4}>
                   Attempts ({visibleAttempts.length})

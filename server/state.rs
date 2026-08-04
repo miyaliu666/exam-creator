@@ -28,6 +28,9 @@ pub struct ServerState {
     /// Attempts scheduled for deletion after a grace period. Sending on (or dropping)
     /// the sender cancels the pending delete before it runs.
     pub pending_deletes: PendingDeletes,
+    /// User merges scheduled after a grace period, keyed by survivor id. Dropping
+    /// the sender cancels the pending merge before it runs.
+    pub pending_merges: PendingMerges,
     /// Time each attempt's moderation page was last opened, so a subsequent moderation
     /// decision can compute time spent reviewing it.
     pub attempt_page_views: AttemptPageViews,
@@ -36,6 +39,10 @@ pub struct ServerState {
 /// Maps an attempt id to the cancellation channel for its pending deletion task, tagged with a
 /// generation so a completing task only clears its own entry (not a newer reschedule that replaced it).
 pub type PendingDeletes = Arc<Mutex<HashMap<ObjectId, (u64, oneshot::Sender<()>)>>>;
+
+/// Maps a merge's survivor id to the cancellation channel for its pending merge task, tagged with a
+/// generation so a completing task only clears its own entry (not a newer reschedule that replaced it).
+pub type PendingMerges = Arc<Mutex<HashMap<ObjectId, (u64, oneshot::Sender<()>)>>>;
 
 /// Maps a moderator id and an attempt id to the time its moderation page was last opened.
 pub type AttemptPageViews = Arc<Mutex<HashMap<(ObjectId, ObjectId), bson::DateTime>>>;

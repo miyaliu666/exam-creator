@@ -102,6 +102,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
     let exam_metrics_by_id_cache = Arc::new(Mutex::new(vec![]));
     let attempt_metrics_cache = Arc::new(Mutex::new(Cache::new()));
     let pending_deletes = Arc::new(Mutex::new(std::collections::HashMap::new()));
+    let pending_merges = Arc::new(Mutex::new(std::collections::HashMap::new()));
     let attempt_page_views = Arc::new(Mutex::new(std::collections::HashMap::new()));
 
     let supabase_url = &env_vars.supabase_url;
@@ -118,6 +119,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         exam_metrics_by_id_cache,
         attempt_metrics_cache,
         pending_deletes,
+        pending_merges,
         attempt_page_views,
     };
 
@@ -244,6 +246,15 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         )
         .route("/api/users", get(routes::users::get_users))
         .route("/api/users/search", get(routes::users::get_user_search))
+        .route(
+            "/api/users/duplicates",
+            get(routes::users::get_user_duplicates),
+        )
+        .route("/api/users/merge", post(routes::users::post_user_merge))
+        .route(
+            "/api/users/merge/{survivor_id}",
+            delete(routes::users::delete_user_merge),
+        )
         .route("/api/users/session", get(routes::users::get_session_user))
         .route(
             "/api/users/session/settings",
@@ -274,6 +285,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .route_service("/exams/{*id}", ServeFile::new("dist/index.html"))
         .route_service("/metrics", ServeFile::new("dist/index.html"))
         .route_service("/users", ServeFile::new("dist/index.html"))
+        .route_service("/user/deduplicate", ServeFile::new("dist/index.html"))
         .route_service("/metrics/exams/{*id}", ServeFile::new("dist/index.html"))
         .route_service("/login", ServeFile::new("dist/index.html"))
         .fallback_service(ServeDir::new("dist"))
