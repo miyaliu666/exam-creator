@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fcc:a1:candidate-response:0.2",
+  "title": "Candidate response union",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "responseType",
+        "selectedOptionId"
+      ],
+      "properties": {
+        "responseType": {
+          "const": "selection"
+        },
+        "selectedOptionId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "responseType",
+        "matches"
+      ],
+      "properties": {
+        "responseType": {
+          "const": "matching"
+        },
+        "matches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "leftItemId",
+              "rightItemId"
+            ],
+            "properties": {
+              "leftItemId": {
+                "type": "string"
+              },
+              "rightItemId": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "responseType",
+        "fieldValues"
+      ],
+      "properties": {
+        "responseType": {
+          "const": "fields"
+        },
+        "fieldValues": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "required": [
+        "responseType",
+        "typedText"
+      ],
+      "properties": {
+        "responseType": {
+          "const": "typedText"
+        },
+        "typedText": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "responseType",
+        "recordingRef"
+      ],
+      "properties": {
+        "responseType": {
+          "const": "recording"
+        },
+        "recordingRef": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "responseType",
+        "turns",
+        "pathId"
+      ],
+      "properties": {
+        "responseType": {
+          "const": "multiturnRecording"
+        },
+        "pathId": {
+          "type": "string"
+        },
+        "turns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "responseId",
+              "recordingRef"
+            ],
+            "properties": {
+              "responseId": {
+                "type": "string"
+              },
+              "recordingRef": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+contractVersion: 0.2-provisional
+canonicalOwner: LanguageItemWorkbench
+consumers:
+- exam-creator
+- exam-env
+dataPartitions:
+- candidatePayload
+- authoringPackage
+- scoringPackage
+- reviewPackage
+- responsePayload
+immutabilityRule: Approved item versions and generated forms are immutable
+exportBlockingConditions:
+- missing renderer capability
+- missing operational policy
+- authoring or scoring leakage
+- version not frozen

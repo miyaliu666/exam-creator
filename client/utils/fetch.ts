@@ -17,7 +17,7 @@ import type {
 } from "../types";
 import { deserializeToPrisma, serializeFromPrisma } from "./serde";
 
-async function authorizedFetch(
+export async function authorizedFetch(
   url: string | URL,
   options?: RequestInit,
 ): Promise<Response> {
@@ -34,7 +34,12 @@ async function authorizedFetch(
     const errorData = await res.text();
     console.debug(res.status, url, errorData);
     if (res.status === 401) {
-      throw new Error(`${errorData}: Log out, then try again.`);
+      window.dispatchEvent(new Event("exam-creator:session-expired"));
+      throw new Error(
+        errorData
+          ? `Your session has expired: ${errorData}`
+          : "Your session has expired. Sign in again.",
+      );
     }
 
     throw new Error(`${res.status} - ${errorData || res.statusText}`);

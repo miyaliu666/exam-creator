@@ -1,0 +1,227 @@
+registryType: A1TaskFamilyRegistry
+registryVersion: 0.2-provisional
+entries:
+- taskFamilyId: TF-SIGNS-NOTICES
+  blueprintSlotIds:
+  - R-A1-1
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  - IF-MATCHING
+  coreBehavior: 理解短标志、标签或通知的直接含义
+  requiredCapabilities:
+  - shortText
+  - imageOptional
+  - multiResponseGroup
+  prohibitedUses:
+  - 孤立汉字测试
+  - 纯视觉猜测
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-SHORT-MESSAGE-COMPREHENSION
+  blueprintSlotIds:
+  - R-A1-2
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  - IF-MATCHING
+  coreBehavior: 从短消息或消息线程找到显性事实
+  requiredCapabilities:
+  - messageThread
+  - sharedStimulus
+  prohibitedUses:
+  - 态度推断
+  - 长邮件
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-STRUCTURED-INFORMATION
+  blueprintSlotIds:
+  - R-A1-3
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  - IF-MATCHING
+  - IF-RESTRICTED-INPUT
+  coreBehavior: 从菜单、表格和时间表定位信息
+  requiredCapabilities:
+  - semanticTable
+  - list
+  - sharedStimulus
+  prohibitedUses:
+  - 计算
+  - 密集表格
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-SHORT-TEXT-COMPREHENSION
+  blueprintSlotIds:
+  - R-A1-4
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  - IF-MATCHING
+  coreBehavior: 理解人物资料、日常安排或一步式说明
+  requiredCapabilities:
+  - shortContinuousText
+  prohibitedUses:
+  - 长故事
+  - 隐含意义
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-LISTEN-AND-IDENTIFY
+  blueprintSlotIds:
+  - L-A1-1
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  coreBehavior: 将短口头信息与人物、图片或活动对应
+  requiredCapabilities:
+  - audio
+  - playLimit
+  - shortOptions
+  prohibitedUses:
+  - 声调最小对陷阱
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-SHORT-DIALOGUE-DETAIL
+  blueprintSlotIds:
+  - L-A1-2
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  coreBehavior: 从短对话识别一个明确细节
+  requiredCapabilities:
+  - multiVoiceAudio
+  - playLimit
+  prohibitedUses:
+  - 隐含态度
+  - 问题依赖
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-LISTENING-INFORMATION-COMPLETION
+  blueprintSlotIds:
+  - L-A1-3
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  - IF-RESTRICTED-INPUT
+  coreBehavior: 从通知或留言提取并记录信息
+  requiredCapabilities:
+  - sharedAudio
+  - multipleFields
+  - autosave
+  prohibitedUses:
+  - 完整句听写
+  - 大量汉字输入
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-COMMUNICATIVE-PURPOSE
+  blueprintSlotIds:
+  - L-A1-4
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  coreBehavior: 理解问题、请求、邀请、确认或一步式指示
+  requiredCapabilities:
+  - audio
+  - shortOptions
+  prohibitedUses:
+  - 将选择回应计入 Interaction
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-FORM-COMPLETION
+  blueprintSlotIds:
+  - W-A1-1
+  allowedItemFormatIds:
+  - IF-FORM-ENTRY
+  coreBehavior: 在表格中输入基本资料
+  requiredCapabilities:
+  - mixedFieldTypes
+  - IME
+  - autosave
+  prohibitedUses:
+  - 真实敏感信息
+  - 全部机械复制
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-SHORT-MESSAGE-RESPONSE
+  blueprintSlotIds:
+  - W-A1-2
+  allowedItemFormatIds:
+  - IF-TYPED-MESSAGE
+  coreBehavior: 针对指定对象和目的作出书面回应
+  requiredCapabilities:
+  - messageThread
+  - IME
+  - taskRubric
+  prohibitedUses:
+  - 预设回复
+  - 长篇邮件
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-WRITTEN-INFORMATION-RELAY
+  blueprintSlotIds:
+  - W-A1-3
+  allowedItemFormatIds:
+  - IF-TYPED-MESSAGE
+  coreBehavior: 从源材料选择信息并写给指定对象
+  requiredCapabilities:
+  - visibleSource
+  - recipientPurpose
+  - taskRubric
+  prohibitedUses:
+  - 无接收者抄写
+  - 多来源总结
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-PERSONAL-QA
+  blueprintSlotIds:
+  - S-A1-1
+  allowedItemFormatIds:
+  - IF-SPOKEN-MULTITURN
+  coreBehavior: 回答个人问题并提出简单相关问题
+  requiredCapabilities:
+  - fixedPath
+  - multiRecording
+  - initiationPrompt
+  prohibitedUses:
+  - 背诵独白
+  - 敏感问题
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-GUIDED-SPOKEN-PRODUCTION
+  blueprintSlotIds:
+  - S-A1-2
+  allowedItemFormatIds:
+  - IF-SPOKEN-SINGLE
+  coreBehavior: 根据提示表达直接需要或熟悉内容
+  requiredCapabilities:
+  - preparationTimer
+  - recording
+  - upload
+  prohibitedUses:
+  - 朗读
+  - 复杂解释
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-INTERACTIVE-ROLEPLAY
+  blueprintSlotIds:
+  - S-A1-3
+  allowedItemFormatIds:
+  - IF-SPOKEN-MULTITURN
+  coreBehavior: 完成两至三轮可预测互动
+  requiredCapabilities:
+  - fixedOrLimitedBranch
+  - multiRecording
+  - pathAudit
+  prohibitedUses:
+  - 生成式动态追问
+  - 只选择
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-SPOKEN-INFORMATION-RELAY
+  blueprintSlotIds:
+  - S-A1-4
+  allowedItemFormatIds:
+  - IF-SPOKEN-SINGLE
+  coreBehavior: 从源材料选择信息并口头转告
+  requiredCapabilities:
+  - visibleSource
+  - preparationTimer
+  - recording
+  prohibitedUses:
+  - 朗读全部材料
+  - 多来源总结
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse

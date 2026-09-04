@@ -11,7 +11,7 @@ use tracing::error;
 
 use crate::{
     config::EnvVars,
-    database::{Database, prisma},
+    database::{Database, WorkbenchDatabase, prisma},
     routes::metrics::{GetAttemptsMetrics, GetExamMetricsById},
 };
 
@@ -19,6 +19,7 @@ use crate::{
 pub struct ServerState {
     pub production_database: Database,
     pub staging_database: Database,
+    pub workbench_database: WorkbenchDatabase,
     pub supabase: SupabaseClient,
     pub client_sync: Arc<Mutex<ClientSync>>,
     pub key: Key,

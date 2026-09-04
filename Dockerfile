@@ -25,6 +25,8 @@ WORKDIR /app
 
 COPY server/ server/
 COPY prisma/ prisma/
+COPY language-item-workbench/registries/ language-item-workbench/registries/
+COPY language-item-workbench/contracts/ language-item-workbench/contracts/
 COPY Cargo.toml Cargo.lock ./
 # Copy frontend build to the 'dist' directory for the server to use
 COPY --from=frontend_builder /app/dist /app/dist

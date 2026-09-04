@@ -1,0 +1,12358 @@
+registryType: A1CharacterRegistry
+registryVersion: 0.2-provisional
+status: ProvisionalExploratory
+count: 349
+entries:
+- characterId: CHAR-A1-0001
+  form: 你
+  readingsInScope:
+  - nǐ
+  exampleLexicalIds:
+  - LEX-A1-0001
+  - LEX-A1-0030
+  - LEX-A1-0031
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0002
+  form: 好
+  readingsInScope:
+  - hǎo
+  exampleLexicalIds:
+  - LEX-A1-0001
+  - LEX-A1-0002
+  - LEX-A1-0003
+  - LEX-A1-0004
+  - LEX-A1-0014
+  - LEX-A1-0015
+  - LEX-A1-0019
+  - LEX-A1-0170
+  - LEX-A1-0171
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D04
+  - D05
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0003
+  form: 您
+  readingsInScope:
+  - nín
+  exampleLexicalIds:
+  - LEX-A1-0002
+  - LEX-A1-0032
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0004
+  form: 早
+  readingsInScope:
+  - zǎo
+  exampleLexicalIds:
+  - LEX-A1-0003
+  - LEX-A1-0176
+  - LEX-A1-0242
+  - LEX-A1-0326
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0005
+  form: 上
+  readingsInScope:
+  - shàng
+  exampleLexicalIds:
+  - LEX-A1-0003
+  - LEX-A1-0004
+  - LEX-A1-0145
+  - LEX-A1-0147
+  - LEX-A1-0242
+  - LEX-A1-0243
+  - LEX-A1-0246
+  - LEX-A1-0277
+  - LEX-A1-0343
+  grammarIds:
+  - GR-A1-008
+  - GR-A1-052
+  - GR-A1-055
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0006
+  form: 晚
+  readingsInScope:
+  - wǎn
+  exampleLexicalIds:
+  - LEX-A1-0004
+  - LEX-A1-0177
+  - LEX-A1-0246
+  - LEX-A1-0328
+  grammarIds:
+  - GR-A1-055
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0007
+  form: 再
+  readingsInScope:
+  - zài
+  exampleLexicalIds:
+  - LEX-A1-0005
+  - LEX-A1-0022
+  - LEX-A1-0393
+  grammarIds:
+  - GR-A1-041
+  - GR-A1-059
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L3
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D07
+  - D13
+  - D16
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0008
+  form: 见
+  readingsInScope:
+  - jiàn
+  exampleLexicalIds:
+  - LEX-A1-0005
+  - LEX-A1-0111
+  - LEX-A1-0113
+  - LEX-A1-0150
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D05
+  - D06
+  - D13
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0009
+  form: 谢
+  readingsInScope:
+  - xiè
+  exampleLexicalIds:
+  - LEX-A1-0006
+  - LEX-A1-0006
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L3
+  - A1-W2
+  contextIds:
+  - D01
+  - D08
+  - D09
+  - D14
+  - D16
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0010
+  form: 不
+  readingsInScope:
+  - bù
+  exampleLexicalIds:
+  - LEX-A1-0007
+  - LEX-A1-0008
+  - LEX-A1-0015
+  - LEX-A1-0017
+  - LEX-A1-0018
+  - LEX-A1-0157
+  - LEX-A1-0196
+  - LEX-A1-0358
+  grammarIds:
+  - GR-A1-020
+  - GR-A1-021
+  - GR-A1-022
+  - GR-A1-029
+  - GR-A1-031
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0011
+  form: 客
+  readingsInScope:
+  - kè
+  exampleLexicalIds:
+  - LEX-A1-0007
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L3
+  - A1-W2
+  contextIds:
+  - D01
+  - D08
+  - D09
+  - D14
+  - D16
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0012
+  form: 气
+  readingsInScope:
+  - qì
+  exampleLexicalIds:
+  - LEX-A1-0007
+  - LEX-A1-0382
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D06
+  - D08
+  - D09
+  - D14
+  - D16
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0013
+  form: 对
+  readingsInScope:
+  - duì
+  exampleLexicalIds:
+  - LEX-A1-0008
+  - LEX-A1-0182
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D13
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0014
+  form: 起
+  readingsInScope:
+  - qǐ
+  exampleLexicalIds:
+  - LEX-A1-0008
+  - LEX-A1-0143
+  grammarIds:
+  - GR-A1-042
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D04
+  - D05
+  - D06
+  - D08
+  - D13
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0015
+  form: 没
+  readingsInScope:
+  - méi
+  exampleLexicalIds:
+  - LEX-A1-0009
+  - LEX-A1-0010
+  - LEX-A1-0024
+  - LEX-A1-0160
+  - LEX-A1-0198
+  - LEX-A1-0380
+  grammarIds:
+  - GR-A1-005
+  - GR-A1-021
+  - GR-A1-030
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0016
+  form: 关
+  readingsInScope:
+  - guān
+  exampleLexicalIds:
+  - LEX-A1-0009
+  - LEX-A1-0134
+  - LEX-A1-0289
+  - LEX-A1-0298
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D06
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0017
+  form: 系
+  readingsInScope:
+  - xì
+  exampleLexicalIds:
+  - LEX-A1-0009
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L3
+  - A1-W2
+  contextIds:
+  - D01
+  - D13
+  - D16
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0018
+  form: 事
+  readingsInScope:
+  - shì
+  exampleLexicalIds:
+  - LEX-A1-0010
+  - LEX-A1-0076
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D13
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0019
+  form: 请
+  readingsInScope:
+  - qǐng
+  exampleLexicalIds:
+  - LEX-A1-0011
+  - LEX-A1-0012
+  - LEX-A1-0022
+  - LEX-A1-0023
+  - LEX-A1-0025
+  - LEX-A1-0378
+  grammarIds:
+  - GR-A1-043
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0020
+  form: 问
+  readingsInScope:
+  - wèn
+  exampleLexicalIds:
+  - LEX-A1-0012
+  - LEX-A1-0120
+  - LEX-A1-0372
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0021
+  form: 喂
+  readingsInScope:
+  - wèi
+  exampleLexicalIds:
+  - LEX-A1-0013
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L3
+  - A1-W2
+  contextIds:
+  - D01
+  - D16
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0022
+  form: 可
+  readingsInScope:
+  - kě
+  exampleLexicalIds:
+  - LEX-A1-0016
+  - LEX-A1-0017
+  - LEX-A1-0020
+  - LEX-A1-0026
+  grammarIds:
+  - GR-A1-022
+  - GR-A1-033
+  - GR-A1-044
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L3
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0023
+  form: 以
+  readingsInScope:
+  - yǐ
+  exampleLexicalIds:
+  - LEX-A1-0016
+  - LEX-A1-0017
+  - LEX-A1-0020
+  - LEX-A1-0026
+  grammarIds:
+  - GR-A1-022
+  - GR-A1-033
+  - GR-A1-044
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L3
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0024
+  form: 要
+  readingsInScope:
+  - yào
+  exampleLexicalIds:
+  - LEX-A1-0018
+  - LEX-A1-0102
+  - LEX-A1-0103
+  - LEX-A1-0359
+  grammarIds:
+  - GR-A1-031
+  - GR-A1-032
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D13
+  - D14
+  - D15
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0025
+  form: 吗
+  readingsInScope:
+  - ma
+  exampleLexicalIds:
+  - LEX-A1-0019
+  - LEX-A1-0020
+  - LEX-A1-0026
+  - LEX-A1-0395
+  grammarIds:
+  - GR-A1-019
+  - GR-A1-044
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L3
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D05
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0026
+  form: 怎
+  readingsInScope:
+  - zěn
+  exampleLexicalIds:
+  - LEX-A1-0021
+  - LEX-A1-0161
+  - LEX-A1-0299
+  grammarIds:
+  - GR-A1-027
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0027
+  form: 么
+  readingsInScope:
+  - me
+  exampleLexicalIds:
+  - LEX-A1-0021
+  - LEX-A1-0042
+  - LEX-A1-0161
+  - LEX-A1-0252
+  - LEX-A1-0299
+  grammarIds:
+  - GR-A1-023
+  - GR-A1-027
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0028
+  form: 样
+  readingsInScope:
+  - yàng
+  exampleLexicalIds:
+  - LEX-A1-0021
+  grammarIds:
+  - GR-A1-027
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L3
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D07
+  - D08
+  - D09
+  - D10
+  - D13
+  - D14
+  - D15
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0029
+  form: 说
+  readingsInScope:
+  - shuō
+  exampleLexicalIds:
+  - LEX-A1-0022
+  - LEX-A1-0023
+  - LEX-A1-0114
+  - LEX-A1-0115
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I4
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D07
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0030
+  form: 一
+  readingsInScope:
+  - yī
+  exampleLexicalIds:
+  - LEX-A1-0022
+  - LEX-A1-0023
+  - LEX-A1-0200
+  - LEX-A1-0253
+  - LEX-A1-0293
+  - LEX-A1-0329
+  - LEX-A1-0330
+  - LEX-A1-0332
+  - LEX-A1-0345
+  - LEX-A1-0387
+  - LEX-A1-0388
+  - LEX-A1-0389
+  grammarIds:
+  - GR-A1-042
+  - GR-A1-045
+  - GR-A1-053
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0031
+  form: 次
+  readingsInScope:
+  - cì
+  exampleLexicalIds:
+  - LEX-A1-0022
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I4
+  - A1-L3
+  - A1-S2
+  contextIds:
+  - D07
+  - D16
+  - D18
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0032
+  form: 慢
+  readingsInScope:
+  - màn
+  exampleLexicalIds:
+  - LEX-A1-0023
+  - LEX-A1-0179
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D06
+  - D07
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0033
+  form: 点
+  readingsInScope:
+  - diǎn
+  exampleLexicalIds:
+  - LEX-A1-0023
+  - LEX-A1-0247
+  - LEX-A1-0251
+  - LEX-A1-0256
+  - LEX-A1-0349
+  - LEX-A1-0389
+  - LEX-A1-0401
+  - LEX-A1-0412
+  grammarIds:
+  - GR-A1-006
+  - GR-A1-010
+  - GR-A1-013
+  - GR-A1-026
+  - GR-A1-049
+  - GR-A1-050
+  - GR-A1-051
+  - GR-A1-052
+  - GR-A1-053
+  - GR-A1-055
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D04
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0034
+  form: 我
+  readingsInScope:
+  - wǒ
+  exampleLexicalIds:
+  - LEX-A1-0024
+  - LEX-A1-0025
+  - LEX-A1-0026
+  - LEX-A1-0028
+  - LEX-A1-0029
+  - LEX-A1-0357
+  - LEX-A1-0358
+  - LEX-A1-0359
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0035
+  form: 听
+  readingsInScope:
+  - tīng
+  exampleLexicalIds:
+  - LEX-A1-0024
+  - LEX-A1-0112
+  - LEX-A1-0113
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I4
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D07
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0036
+  form: 懂
+  readingsInScope:
+  - dǒng
+  exampleLexicalIds:
+  - LEX-A1-0024
+  - LEX-A1-0107
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I4
+  - A1-L3
+  - A1-S2
+  contextIds:
+  - D02
+  - D07
+  - D11
+  - D13
+  - D15
+  - D16
+  - D18
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0037
+  form: 帮
+  readingsInScope:
+  - bāng
+  exampleLexicalIds:
+  - LEX-A1-0025
+  - LEX-A1-0026
+  - LEX-A1-0124
+  - LEX-A1-0125
+  - LEX-A1-0356
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L3
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D13
+  - D14
+  - D15
+  - D16
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0038
+  form: 欢
+  readingsInScope:
+  - huān
+  exampleLexicalIds:
+  - LEX-A1-0027
+  - LEX-A1-0100
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D13
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0039
+  form: 迎
+  readingsInScope:
+  - yíng
+  exampleLexicalIds:
+  - LEX-A1-0027
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L3
+  - A1-W2
+  contextIds:
+  - D01
+  - D16
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0040
+  form: 们
+  readingsInScope:
+  - men
+  exampleLexicalIds:
+  - LEX-A1-0029
+  - LEX-A1-0031
+  - LEX-A1-0036
+  - LEX-A1-0037
+  - LEX-A1-0392
+  grammarIds:
+  - GR-A1-015
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0041
+  form: 他
+  readingsInScope:
+  - tā
+  exampleLexicalIds:
+  - LEX-A1-0033
+  - LEX-A1-0036
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0042
+  form: 她
+  readingsInScope:
+  - tā
+  exampleLexicalIds:
+  - LEX-A1-0034
+  - LEX-A1-0037
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0043
+  form: 它
+  readingsInScope:
+  - tā
+  exampleLexicalIds:
+  - LEX-A1-0035
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0044
+  form: 大
+  readingsInScope:
+  - dà
+  exampleLexicalIds:
+  - LEX-A1-0038
+  - LEX-A1-0093
+  - LEX-A1-0094
+  - LEX-A1-0162
+  - LEX-A1-0189
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0045
+  form: 家
+  readingsInScope:
+  - jiā
+  exampleLexicalIds:
+  - LEX-A1-0038
+  - LEX-A1-0060
+  - LEX-A1-0078
+  - LEX-A1-0079
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0046
+  form: 自
+  readingsInScope:
+  - zì
+  exampleLexicalIds:
+  - LEX-A1-0039
+  - LEX-A1-0061
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D03
+  - D05
+  - D06
+  - D13
+  - D14
+  - D16
+  - D17
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0047
+  form: 己
+  readingsInScope:
+  - jǐ
+  exampleLexicalIds:
+  - LEX-A1-0039
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  contextIds:
+  - D02
+  - D03
+  - D05
+  - D06
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0048
+  form: 人
+  readingsInScope:
+  - rén
+  exampleLexicalIds:
+  - LEX-A1-0040
+  - LEX-A1-0079
+  grammarIds:
+  - GR-A1-006
+  - GR-A1-015
+  - GR-A1-047
+  - GR-A1-048
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  contextIds:
+  - D02
+  - D03
+  - D04
+  - D13
+  - D17
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0049
+  form: 谁
+  readingsInScope:
+  - shéi
+  exampleLexicalIds:
+  - LEX-A1-0041
+  grammarIds:
+  - GR-A1-023
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-R2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D08
+  - D09
+  - D10
+  - D11
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0050
+  form: 什
+  readingsInScope:
+  - shén
+  exampleLexicalIds:
+  - LEX-A1-0042
+  - LEX-A1-0252
+  grammarIds:
+  - GR-A1-023
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0051
+  form: 哪
+  readingsInScope:
+  - nǎ
+  exampleLexicalIds:
+  - LEX-A1-0043
+  - LEX-A1-0044
+  - LEX-A1-0045
+  - LEX-A1-0046
+  - LEX-A1-0345
+  grammarIds:
+  - GR-A1-024
+  - GR-A1-025
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0052
+  form: 个
+  readingsInScope:
+  - gè
+  exampleLexicalIds:
+  - LEX-A1-0044
+  - LEX-A1-0049
+  - LEX-A1-0050
+  - LEX-A1-0216
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0053
+  form: 些
+  readingsInScope:
+  - xiē
+  exampleLexicalIds:
+  - LEX-A1-0045
+  - LEX-A1-0051
+  - LEX-A1-0052
+  - LEX-A1-0388
+  - LEX-A1-0400
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0054
+  form: 里
+  readingsInScope:
+  - lǐ
+  exampleLexicalIds:
+  - LEX-A1-0046
+  - LEX-A1-0053
+  - LEX-A1-0054
+  - LEX-A1-0279
+  grammarIds:
+  - GR-A1-008
+  - GR-A1-025
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0055
+  form: 这
+  readingsInScope:
+  - zhè
+  exampleLexicalIds:
+  - LEX-A1-0047
+  - LEX-A1-0049
+  - LEX-A1-0051
+  - LEX-A1-0053
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0056
+  form: 那
+  readingsInScope:
+  - nà
+  exampleLexicalIds:
+  - LEX-A1-0048
+  - LEX-A1-0050
+  - LEX-A1-0052
+  - LEX-A1-0054
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0057
+  form: 名
+  readingsInScope:
+  - míng
+  exampleLexicalIds:
+  - LEX-A1-0055
+  - LEX-A1-0056
+  - LEX-A1-0364
+  grammarIds:
+  - GR-A1-015
+  - GR-A1-016
+  - GR-A1-017
+  - GR-A1-018
+  - GR-A1-024
+  - GR-A1-028
+  - GR-A1-030
+  - GR-A1-032
+  - GR-A1-040
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0058
+  form: 字
+  readingsInScope:
+  - zì
+  exampleLexicalIds:
+  - LEX-A1-0055
+  - LEX-A1-0375
+  - LEX-A1-0376
+  grammarIds:
+  - GR-A1-054
+  - GR-A1-055
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0059
+  form: 姓
+  readingsInScope:
+  - xìng
+  exampleLexicalIds:
+  - LEX-A1-0056
+  - LEX-A1-0057
+  grammarIds:
+  - GR-A1-003
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D13
+  - D14
+  - D16
+  - D17
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0060
+  form: 叫
+  readingsInScope:
+  - jiào
+  exampleLexicalIds:
+  - LEX-A1-0058
+  grammarIds:
+  - GR-A1-002
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D13
+  - D14
+  - D16
+  - D17
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0061
+  form: 国
+  readingsInScope:
+  - guó
+  exampleLexicalIds:
+  - LEX-A1-0059
+  - LEX-A1-0060
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D13
+  - D14
+  - D16
+  - D17
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0062
+  form: 籍
+  readingsInScope:
+  - jí
+  exampleLexicalIds:
+  - LEX-A1-0059
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D13
+  - D14
+  - D16
+  - D17
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0063
+  form: 来
+  readingsInScope:
+  - lái
+  exampleLexicalIds:
+  - LEX-A1-0061
+  - LEX-A1-0127
+  grammarIds:
+  - GR-A1-049
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D10
+  - D11
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0064
+  form: 住
+  readingsInScope:
+  - zhù
+  exampleLexicalIds:
+  - LEX-A1-0062
+  - LEX-A1-0346
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D13
+  - D14
+  - D16
+  - D17
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0065
+  form: 城
+  readingsInScope:
+  - chéng
+  exampleLexicalIds:
+  - LEX-A1-0063
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D13
+  - D14
+  - D16
+  - D17
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0066
+  form: 市
+  readingsInScope:
+  - shì
+  exampleLexicalIds:
+  - LEX-A1-0063
+  - LEX-A1-0261
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0067
+  form: 年
+  readingsInScope:
+  - nián
+  exampleLexicalIds:
+  - LEX-A1-0064
+  - LEX-A1-0226
+  - LEX-A1-0235
+  - LEX-A1-0236
+  - LEX-A1-0237
+  grammarIds:
+  - GR-A1-054
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0068
+  form: 龄
+  readingsInScope:
+  - líng
+  exampleLexicalIds:
+  - LEX-A1-0064
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D13
+  - D14
+  - D16
+  - D17
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0069
+  form: 岁
+  readingsInScope:
+  - suì
+  exampleLexicalIds:
+  - LEX-A1-0065
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D13
+  - D14
+  - D16
+  - D17
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0070
+  form: 生
+  readingsInScope:
+  - shēng
+  exampleLexicalIds:
+  - LEX-A1-0066
+  - LEX-A1-0073
+  - LEX-A1-0089
+  - LEX-A1-0094
+  - LEX-A1-0098
+  - LEX-A1-0156
+  - LEX-A1-0359
+  - LEX-A1-0360
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D03
+  - D07
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0071
+  form: 日
+  readingsInScope:
+  - rì
+  exampleLexicalIds:
+  - LEX-A1-0066
+  - LEX-A1-0098
+  - LEX-A1-0228
+  - LEX-A1-0231
+  - LEX-A1-0241
+  grammarIds:
+  - GR-A1-054
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0072
+  form: 电
+  readingsInScope:
+  - diàn
+  exampleLexicalIds:
+  - LEX-A1-0067
+  - LEX-A1-0069
+  - LEX-A1-0153
+  - LEX-A1-0259
+  - LEX-A1-0302
+  - LEX-A1-0303
+  - LEX-A1-0304
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D04
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0073
+  form: 话
+  readingsInScope:
+  - huà
+  exampleLexicalIds:
+  - LEX-A1-0067
+  - LEX-A1-0069
+  - LEX-A1-0115
+  - LEX-A1-0153
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D05
+  - D06
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0074
+  form: 手
+  readingsInScope:
+  - shǒu
+  exampleLexicalIds:
+  - LEX-A1-0068
+  - LEX-A1-0269
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0075
+  form: 机
+  readingsInScope:
+  - jī
+  exampleLexicalIds:
+  - LEX-A1-0068
+  - LEX-A1-0267
+  - LEX-A1-0340
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0076
+  form: 号
+  readingsInScope:
+  - hào
+  exampleLexicalIds:
+  - LEX-A1-0069
+  - LEX-A1-0070
+  - LEX-A1-0229
+  - LEX-A1-0347
+  - LEX-A1-0411
+  grammarIds:
+  - GR-A1-026
+  - GR-A1-054
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0077
+  form: 码
+  readingsInScope:
+  - mǎ
+  exampleLexicalIds:
+  - LEX-A1-0069
+  - LEX-A1-0070
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D13
+  - D14
+  - D16
+  - D17
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0078
+  form: 工
+  readingsInScope:
+  - gōng
+  exampleLexicalIds:
+  - LEX-A1-0071
+  grammarIds:
+  - GR-A1-050
+  canDoIds:
+  - A1-I1
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D03
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0079
+  form: 作
+  readingsInScope:
+  - zuò
+  exampleLexicalIds:
+  - LEX-A1-0071
+  grammarIds:
+  - GR-A1-010
+  canDoIds:
+  - A1-I1
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D03
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0080
+  form: 学
+  readingsInScope:
+  - xué
+  exampleLexicalIds:
+  - LEX-A1-0072
+  - LEX-A1-0073
+  - LEX-A1-0075
+  - LEX-A1-0093
+  - LEX-A1-0094
+  - LEX-A1-0095
+  - LEX-A1-0119
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D03
+  - D05
+  - D06
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0081
+  form: 习
+  readingsInScope:
+  - xí
+  exampleLexicalIds:
+  - LEX-A1-0072
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D03
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0082
+  form: 老
+  readingsInScope:
+  - lǎo
+  exampleLexicalIds:
+  - LEX-A1-0074
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D03
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0083
+  form: 师
+  readingsInScope:
+  - shī
+  exampleLexicalIds:
+  - LEX-A1-0074
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D03
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0084
+  form: 同
+  readingsInScope:
+  - tóng
+  exampleLexicalIds:
+  - LEX-A1-0075
+  - LEX-A1-0076
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D03
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0085
+  form: 朋
+  readingsInScope:
+  - péng
+  exampleLexicalIds:
+  - LEX-A1-0077
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  contextIds:
+  - D02
+  - D03
+  - D13
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0086
+  form: 友
+  readingsInScope:
+  - yǒu
+  exampleLexicalIds:
+  - LEX-A1-0077
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  contextIds:
+  - D02
+  - D03
+  - D13
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0087
+  form: 爸
+  readingsInScope:
+  - bà
+  exampleLexicalIds:
+  - LEX-A1-0080
+  - LEX-A1-0080
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  contextIds:
+  - D02
+  - D03
+  - D13
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0088
+  form: 妈
+  readingsInScope:
+  - mā
+  exampleLexicalIds:
+  - LEX-A1-0081
+  - LEX-A1-0081
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  contextIds:
+  - D02
+  - D03
+  - D13
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0089
+  form: 哥
+  readingsInScope:
+  - gē
+  exampleLexicalIds:
+  - LEX-A1-0082
+  - LEX-A1-0082
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  contextIds:
+  - D02
+  - D03
+  - D13
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0090
+  form: 姐
+  readingsInScope:
+  - jiě
+  exampleLexicalIds:
+  - LEX-A1-0083
+  - LEX-A1-0083
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  contextIds:
+  - D02
+  - D03
+  - D13
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0091
+  form: 弟
+  readingsInScope:
+  - dì
+  exampleLexicalIds:
+  - LEX-A1-0084
+  - LEX-A1-0084
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  contextIds:
+  - D02
+  - D03
+  - D13
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0092
+  form: 妹
+  readingsInScope:
+  - mèi
+  exampleLexicalIds:
+  - LEX-A1-0085
+  - LEX-A1-0085
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  contextIds:
+  - D02
+  - D03
+  - D13
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0093
+  form: 儿
+  readingsInScope:
+  - ér
+  exampleLexicalIds:
+  - LEX-A1-0086
+  - LEX-A1-0087
+  - LEX-A1-0389
+  - LEX-A1-0401
+  grammarIds:
+  - GR-A1-013
+  - GR-A1-025
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  contextIds:
+  - D02
+  - D03
+  - D04
+  - D06
+  - D07
+  - D08
+  - D09
+  - D13
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0094
+  form: 子
+  readingsInScope:
+  - zǐ
+  exampleLexicalIds:
+  - LEX-A1-0086
+  - LEX-A1-0088
+  - LEX-A1-0306
+  - LEX-A1-0307
+  - LEX-A1-0308
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  contextIds:
+  - D02
+  - D03
+  - D04
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0095
+  form: 女
+  readingsInScope:
+  - nǚ
+  exampleLexicalIds:
+  - LEX-A1-0087
+  - LEX-A1-0090
+  - LEX-A1-0092
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D03
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0096
+  form: 孩
+  readingsInScope:
+  - hái
+  exampleLexicalIds:
+  - LEX-A1-0088
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  contextIds:
+  - D02
+  - D03
+  - D13
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0097
+  form: 先
+  readingsInScope:
+  - xiān
+  exampleLexicalIds:
+  - LEX-A1-0089
+  grammarIds:
+  - GR-A1-059
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D03
+  - D14
+  - D15
+  - D16
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0098
+  form: 士
+  readingsInScope:
+  - shì
+  exampleLexicalIds:
+  - LEX-A1-0090
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D03
+  - D14
+  - D15
+  - D16
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0099
+  form: 男
+  readingsInScope:
+  - nán
+  exampleLexicalIds:
+  - LEX-A1-0091
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D03
+  - D14
+  - D15
+  - D16
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0100
+  form: 校
+  readingsInScope:
+  - xiào
+  exampleLexicalIds:
+  - LEX-A1-0095
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D03
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0101
+  form: 公
+  readingsInScope:
+  - gōng
+  exampleLexicalIds:
+  - LEX-A1-0096
+  - LEX-A1-0336
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D03
+  - D10
+  - D11
+  - D12
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0102
+  form: 司
+  readingsInScope:
+  - sī
+  exampleLexicalIds:
+  - LEX-A1-0096
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D03
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0103
+  form: 职
+  readingsInScope:
+  - zhí
+  exampleLexicalIds:
+  - LEX-A1-0097
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0104
+  form: 业
+  readingsInScope:
+  - yè
+  exampleLexicalIds:
+  - LEX-A1-0097
+  - LEX-A1-0290
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0105
+  form: 出
+  readingsInScope:
+  - chū
+  exampleLexicalIds:
+  - LEX-A1-0098
+  - LEX-A1-0287
+  - LEX-A1-0337
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  contextIds:
+  - D02
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0106
+  form: 期
+  readingsInScope:
+  - qī
+  exampleLexicalIds:
+  - LEX-A1-0098
+  - LEX-A1-0230
+  - LEX-A1-0231
+  - LEX-A1-0241
+  - LEX-A1-0410
+  grammarIds:
+  - GR-A1-054
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0107
+  form: 爱
+  readingsInScope:
+  - ài
+  exampleLexicalIds:
+  - LEX-A1-0099
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D13
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0108
+  form: 喜
+  readingsInScope:
+  - xǐ
+  exampleLexicalIds:
+  - LEX-A1-0100
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D13
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0109
+  form: 想
+  readingsInScope:
+  - xiǎng
+  exampleLexicalIds:
+  - LEX-A1-0101
+  grammarIds:
+  - GR-A1-032
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D13
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0110
+  form: 需
+  readingsInScope:
+  - xū
+  exampleLexicalIds:
+  - LEX-A1-0103
+  - LEX-A1-0359
+  grammarIds:
+  - GR-A1-032
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I4
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D13
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0111
+  form: 会
+  readingsInScope:
+  - huì
+  exampleLexicalIds:
+  - LEX-A1-0104
+  - LEX-A1-0365
+  grammarIds:
+  - GR-A1-033
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D13
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0112
+  form: 能
+  readingsInScope:
+  - néng
+  exampleLexicalIds:
+  - LEX-A1-0105
+  grammarIds:
+  - GR-A1-022
+  - GR-A1-033
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D13
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0113
+  form: 知
+  readingsInScope:
+  - zhī
+  exampleLexicalIds:
+  - LEX-A1-0106
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I4
+  - A1-L3
+  - A1-S2
+  contextIds:
+  - D02
+  - D11
+  - D13
+  - D15
+  - D16
+  - D18
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0114
+  form: 道
+  readingsInScope:
+  - dào
+  exampleLexicalIds:
+  - LEX-A1-0106
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I4
+  - A1-L3
+  - A1-S2
+  contextIds:
+  - D02
+  - D11
+  - D13
+  - D15
+  - D16
+  - D18
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0115
+  form: 认
+  readingsInScope:
+  - rèn
+  exampleLexicalIds:
+  - LEX-A1-0108
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0116
+  form: 识
+  readingsInScope:
+  - shí
+  exampleLexicalIds:
+  - LEX-A1-0108
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0117
+  form: 觉
+  readingsInScope:
+  - jué
+  exampleLexicalIds:
+  - LEX-A1-0109
+  - LEX-A1-0142
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D13
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0118
+  form: 得
+  readingsInScope:
+  - de
+  exampleLexicalIds:
+  - LEX-A1-0109
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D13
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0119
+  form: 看
+  readingsInScope:
+  - kàn
+  exampleLexicalIds:
+  - LEX-A1-0110
+  - LEX-A1-0111
+  - LEX-A1-0155
+  - LEX-A1-0170
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0120
+  form: 读
+  readingsInScope:
+  - dú
+  exampleLexicalIds:
+  - LEX-A1-0116
+  - LEX-A1-0117
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I4
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0121
+  form: 书
+  readingsInScope:
+  - shū
+  exampleLexicalIds:
+  - LEX-A1-0117
+  - LEX-A1-0264
+  - LEX-A1-0265
+  - LEX-A1-0301
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D06
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0122
+  form: 写
+  readingsInScope:
+  - xiě
+  exampleLexicalIds:
+  - LEX-A1-0118
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I4
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0123
+  form: 回
+  readingsInScope:
+  - huí
+  exampleLexicalIds:
+  - LEX-A1-0121
+  - LEX-A1-0130
+  - LEX-A1-0370
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D10
+  - D11
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0124
+  form: 答
+  readingsInScope:
+  - dá
+  exampleLexicalIds:
+  - LEX-A1-0121
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I4
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0125
+  form: 给
+  readingsInScope:
+  - gěi
+  exampleLexicalIds:
+  - LEX-A1-0122
+  grammarIds:
+  - GR-A1-047
+  canDoIds:
+  - A1-I2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D13
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0126
+  form: 告
+  readingsInScope:
+  - gào
+  exampleLexicalIds:
+  - LEX-A1-0123
+  grammarIds:
+  - GR-A1-048
+  canDoIds:
+  - A1-I2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D13
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0127
+  form: 诉
+  readingsInScope:
+  - sù
+  exampleLexicalIds:
+  - LEX-A1-0123
+  grammarIds:
+  - GR-A1-048
+  canDoIds:
+  - A1-I2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D13
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0128
+  form: 忙
+  readingsInScope:
+  - máng
+  exampleLexicalIds:
+  - LEX-A1-0125
+  - LEX-A1-0173
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D07
+  - D09
+  - D11
+  - D13
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0129
+  form: 找
+  readingsInScope:
+  - zhǎo
+  exampleLexicalIds:
+  - LEX-A1-0126
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D03
+  - D09
+  - D10
+  - D11
+  - D12
+  - D14
+  - D15
+  - D17
+  - D18
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0130
+  form: 去
+  readingsInScope:
+  - qù
+  exampleLexicalIds:
+  - LEX-A1-0128
+  - LEX-A1-0237
+  grammarIds:
+  - GR-A1-049
+  - GR-A1-050
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0131
+  form: 到
+  readingsInScope:
+  - dào
+  exampleLexicalIds:
+  - LEX-A1-0129
+  - LEX-A1-0371
+  grammarIds:
+  - GR-A1-051
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D06
+  - D10
+  - D11
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0132
+  form: 走
+  readingsInScope:
+  - zǒu
+  exampleLexicalIds:
+  - LEX-A1-0131
+  - LEX-A1-0293
+  - LEX-A1-0299
+  grammarIds:
+  - GR-A1-053
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D06
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0133
+  form: 坐
+  readingsInScope:
+  - zuò
+  exampleLexicalIds:
+  - LEX-A1-0132
+  grammarIds:
+  - GR-A1-050
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D06
+  - D10
+  - D11
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0134
+  form: 开
+  readingsInScope:
+  - kāi
+  exampleLexicalIds:
+  - LEX-A1-0133
+  - LEX-A1-0151
+  - LEX-A1-0154
+  - LEX-A1-0288
+  - LEX-A1-0297
+  - LEX-A1-0412
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D06
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0135
+  form: 做
+  readingsInScope:
+  - zuò
+  exampleLexicalIds:
+  - LEX-A1-0135
+  - LEX-A1-0136
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D06
+  - D08
+  - D17
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0136
+  form: 饭
+  readingsInScope:
+  - fàn
+  exampleLexicalIds:
+  - LEX-A1-0136
+  - LEX-A1-0318
+  - LEX-A1-0319
+  - LEX-A1-0326
+  - LEX-A1-0327
+  - LEX-A1-0328
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D06
+  - D08
+  - D09
+  - D17
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0137
+  form: 吃
+  readingsInScope:
+  - chī
+  exampleLexicalIds:
+  - LEX-A1-0137
+  - LEX-A1-0171
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D06
+  - D08
+  - D09
+  - D14
+  - D17
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0138
+  form: 喝
+  readingsInScope:
+  - hē
+  exampleLexicalIds:
+  - LEX-A1-0138
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D06
+  - D08
+  - D17
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0139
+  form: 买
+  readingsInScope:
+  - mǎi
+  exampleLexicalIds:
+  - LEX-A1-0139
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D09
+  - D10
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0140
+  form: 卖
+  readingsInScope:
+  - mài
+  exampleLexicalIds:
+  - LEX-A1-0140
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D09
+  - D10
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0141
+  form: 穿
+  readingsInScope:
+  - chuān
+  exampleLexicalIds:
+  - LEX-A1-0141
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D06
+  - D08
+  - D17
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0142
+  form: 睡
+  readingsInScope:
+  - shuì
+  exampleLexicalIds:
+  - LEX-A1-0142
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D06
+  - D08
+  - D17
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0143
+  form: 床
+  readingsInScope:
+  - chuáng
+  exampleLexicalIds:
+  - LEX-A1-0143
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D06
+  - D08
+  - D17
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0144
+  form: 休
+  readingsInScope:
+  - xiū
+  exampleLexicalIds:
+  - LEX-A1-0144
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D06
+  - D08
+  - D17
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0145
+  form: 息
+  readingsInScope:
+  - xī
+  exampleLexicalIds:
+  - LEX-A1-0144
+  - LEX-A1-0367
+  grammarIds:
+  - GR-A1-048
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D06
+  - D08
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0146
+  form: 班
+  readingsInScope:
+  - bān
+  exampleLexicalIds:
+  - LEX-A1-0145
+  - LEX-A1-0146
+  - LEX-A1-0366
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D06
+  - D13
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0147
+  form: 下
+  readingsInScope:
+  - xià
+  exampleLexicalIds:
+  - LEX-A1-0146
+  - LEX-A1-0148
+  - LEX-A1-0245
+  - LEX-A1-0278
+  - LEX-A1-0344
+  - LEX-A1-0384
+  - LEX-A1-0387
+  - LEX-A1-0413
+  grammarIds:
+  - GR-A1-008
+  - GR-A1-045
+  - GR-A1-052
+  - GR-A1-055
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0148
+  form: 课
+  readingsInScope:
+  - kè
+  exampleLexicalIds:
+  - LEX-A1-0147
+  - LEX-A1-0148
+  - LEX-A1-0361
+  - LEX-A1-0362
+  - LEX-A1-0381
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D13
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0149
+  form: 参
+  readingsInScope:
+  - cān
+  exampleLexicalIds:
+  - LEX-A1-0149
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D06
+  - D13
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0150
+  form: 加
+  readingsInScope:
+  - jiā
+  exampleLexicalIds:
+  - LEX-A1-0149
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D06
+  - D13
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0151
+  form: 面
+  readingsInScope:
+  - miàn
+  exampleLexicalIds:
+  - LEX-A1-0150
+  - LEX-A1-0281
+  - LEX-A1-0282
+  - LEX-A1-0320
+  grammarIds:
+  - GR-A1-008
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D06
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0152
+  form: 始
+  readingsInScope:
+  - shǐ
+  exampleLexicalIds:
+  - LEX-A1-0151
+  - LEX-A1-0412
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D06
+  - D13
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0153
+  form: 结
+  readingsInScope:
+  - jié
+  exampleLexicalIds:
+  - LEX-A1-0152
+  - LEX-A1-0333
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D06
+  - D08
+  - D09
+  - D13
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0154
+  form: 束
+  readingsInScope:
+  - shù
+  exampleLexicalIds:
+  - LEX-A1-0152
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D06
+  - D13
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0155
+  form: 打
+  readingsInScope:
+  - dǎ
+  exampleLexicalIds:
+  - LEX-A1-0153
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D02
+  - D13
+  - D14
+  - D16
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0156
+  form: 车
+  readingsInScope:
+  - chē
+  exampleLexicalIds:
+  - LEX-A1-0154
+  - LEX-A1-0266
+  - LEX-A1-0310
+  - LEX-A1-0335
+  - LEX-A1-0336
+  - LEX-A1-0337
+  - LEX-A1-0339
+  - LEX-A1-0341
+  - LEX-A1-0343
+  - LEX-A1-0344
+  - LEX-A1-0345
+  grammarIds:
+  - GR-A1-052
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D04
+  - D06
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0157
+  form: 病
+  readingsInScope:
+  - bìng
+  exampleLexicalIds:
+  - LEX-A1-0155
+  - LEX-A1-0156
+  - LEX-A1-0350
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I4
+  - A1-L3
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D07
+  - D18
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0158
+  form: 是
+  readingsInScope:
+  - shì
+  exampleLexicalIds:
+  - LEX-A1-0158
+  grammarIds:
+  - GR-A1-001
+  - GR-A1-021
+  - GR-A1-057
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0159
+  form: 有
+  readingsInScope:
+  - yǒu
+  exampleLexicalIds:
+  - LEX-A1-0159
+  - LEX-A1-0160
+  - LEX-A1-0197
+  - LEX-A1-0379
+  - LEX-A1-0400
+  - LEX-A1-0401
+  grammarIds:
+  - GR-A1-004
+  - GR-A1-005
+  - GR-A1-006
+  - GR-A1-013
+  - GR-A1-021
+  - GR-A1-030
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0160
+  form: 小
+  readingsInScope:
+  - xiǎo
+  exampleLexicalIds:
+  - LEX-A1-0163
+  - LEX-A1-0189
+  - LEX-A1-0250
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D04
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0161
+  form: 多
+  readingsInScope:
+  - duō
+  exampleLexicalIds:
+  - LEX-A1-0164
+  - LEX-A1-0215
+  - LEX-A1-0331
+  - LEX-A1-0332
+  grammarIds:
+  - GR-A1-017
+  - GR-A1-026
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D04
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0162
+  form: 少
+  readingsInScope:
+  - shǎo
+  exampleLexicalIds:
+  - LEX-A1-0165
+  - LEX-A1-0215
+  - LEX-A1-0331
+  - LEX-A1-0332
+  grammarIds:
+  - GR-A1-017
+  - GR-A1-026
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D04
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0163
+  form: 新
+  readingsInScope:
+  - xīn
+  exampleLexicalIds:
+  - LEX-A1-0166
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D08
+  - D09
+  - D14
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0164
+  form: 贵
+  readingsInScope:
+  - guì
+  exampleLexicalIds:
+  - LEX-A1-0167
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D08
+  - D09
+  - D14
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0165
+  form: 便
+  readingsInScope:
+  - biàn
+  exampleLexicalIds:
+  - LEX-A1-0168
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D08
+  - D09
+  - D14
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0166
+  form: 宜
+  readingsInScope:
+  - yí
+  exampleLexicalIds:
+  - LEX-A1-0168
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D08
+  - D09
+  - D14
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0167
+  form: 漂
+  readingsInScope:
+  - piào
+  exampleLexicalIds:
+  - LEX-A1-0169
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D08
+  - D09
+  - D14
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0168
+  form: 亮
+  readingsInScope:
+  - liàng
+  exampleLexicalIds:
+  - LEX-A1-0169
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D08
+  - D09
+  - D14
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0169
+  form: 高
+  readingsInScope:
+  - gāo
+  exampleLexicalIds:
+  - LEX-A1-0172
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D07
+  - D13
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0170
+  form: 兴
+  readingsInScope:
+  - xìng
+  exampleLexicalIds:
+  - LEX-A1-0172
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D07
+  - D13
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0171
+  form: 冷
+  readingsInScope:
+  - lěng
+  exampleLexicalIds:
+  - LEX-A1-0174
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D06
+  - D07
+  - D14
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0172
+  form: 热
+  readingsInScope:
+  - rè
+  exampleLexicalIds:
+  - LEX-A1-0175
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D06
+  - D07
+  - D14
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0173
+  form: 快
+  readingsInScope:
+  - kuài
+  exampleLexicalIds:
+  - LEX-A1-0178
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D06
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0174
+  form: 近
+  readingsInScope:
+  - jìn
+  exampleLexicalIds:
+  - LEX-A1-0180
+  - LEX-A1-0276
+  grammarIds:
+  - GR-A1-060
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D06
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0175
+  form: 远
+  readingsInScope:
+  - yuǎn
+  exampleLexicalIds:
+  - LEX-A1-0181
+  grammarIds:
+  - GR-A1-060
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D06
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0176
+  form: 错
+  readingsInScope:
+  - cuò
+  exampleLexicalIds:
+  - LEX-A1-0183
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0177
+  form: 真
+  readingsInScope:
+  - zhēn
+  exampleLexicalIds:
+  - LEX-A1-0184
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0178
+  form: 非
+  readingsInScope:
+  - fēi
+  exampleLexicalIds:
+  - LEX-A1-0185
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0179
+  form: 常
+  readingsInScope:
+  - cháng
+  exampleLexicalIds:
+  - LEX-A1-0185
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0180
+  form: 很
+  readingsInScope:
+  - hěn
+  exampleLexicalIds:
+  - LEX-A1-0186
+  grammarIds:
+  - GR-A1-011
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0181
+  form: 太
+  readingsInScope:
+  - tài
+  exampleLexicalIds:
+  - LEX-A1-0187
+  grammarIds:
+  - GR-A1-012
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D01
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0182
+  form: 颜
+  readingsInScope:
+  - yán
+  exampleLexicalIds:
+  - LEX-A1-0188
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D14
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0183
+  form: 色
+  readingsInScope:
+  - sè
+  exampleLexicalIds:
+  - LEX-A1-0188
+  - LEX-A1-0190
+  - LEX-A1-0191
+  - LEX-A1-0192
+  - LEX-A1-0193
+  - LEX-A1-0194
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D14
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0184
+  form: 红
+  readingsInScope:
+  - hóng
+  exampleLexicalIds:
+  - LEX-A1-0190
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D14
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0185
+  form: 白
+  readingsInScope:
+  - bái
+  exampleLexicalIds:
+  - LEX-A1-0191
+  - LEX-A1-0386
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D06
+  - D08
+  - D09
+  - D14
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0186
+  form: 黑
+  readingsInScope:
+  - hēi
+  exampleLexicalIds:
+  - LEX-A1-0192
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D14
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0187
+  form: 蓝
+  readingsInScope:
+  - lán
+  exampleLexicalIds:
+  - LEX-A1-0193
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D14
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0188
+  form: 绿
+  readingsInScope:
+  - lǜ
+  exampleLexicalIds:
+  - LEX-A1-0194
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D14
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0189
+  form: 舒
+  readingsInScope:
+  - shū
+  exampleLexicalIds:
+  - LEX-A1-0195
+  - LEX-A1-0196
+  - LEX-A1-0358
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D05
+  - D06
+  - D07
+  - D13
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0190
+  form: 服
+  readingsInScope:
+  - fú
+  exampleLexicalIds:
+  - LEX-A1-0195
+  - LEX-A1-0196
+  - LEX-A1-0305
+  - LEX-A1-0358
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0191
+  form: 时
+  readingsInScope:
+  - shí
+  exampleLexicalIds:
+  - LEX-A1-0197
+  - LEX-A1-0198
+  - LEX-A1-0239
+  - LEX-A1-0240
+  - LEX-A1-0250
+  - LEX-A1-0252
+  - LEX-A1-0290
+  grammarIds:
+  - GR-A1-010
+  - GR-A1-051
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0192
+  form: 间
+  readingsInScope:
+  - jiān
+  exampleLexicalIds:
+  - LEX-A1-0197
+  - LEX-A1-0198
+  - LEX-A1-0239
+  - LEX-A1-0257
+  - LEX-A1-0269
+  - LEX-A1-0290
+  - LEX-A1-0347
+  grammarIds:
+  - GR-A1-010
+  - GR-A1-051
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0193
+  form: 零
+  readingsInScope:
+  - líng
+  exampleLexicalIds:
+  - LEX-A1-0199
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0194
+  form: 二
+  readingsInScope:
+  - èr
+  exampleLexicalIds:
+  - LEX-A1-0201
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0195
+  form: 两
+  readingsInScope:
+  - liǎng
+  exampleLexicalIds:
+  - LEX-A1-0202
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0196
+  form: 三
+  readingsInScope:
+  - sān
+  exampleLexicalIds:
+  - LEX-A1-0203
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0197
+  form: 四
+  readingsInScope:
+  - sì
+  exampleLexicalIds:
+  - LEX-A1-0204
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0198
+  form: 五
+  readingsInScope:
+  - wǔ
+  exampleLexicalIds:
+  - LEX-A1-0205
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0199
+  form: 六
+  readingsInScope:
+  - liù
+  exampleLexicalIds:
+  - LEX-A1-0206
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0200
+  form: 七
+  readingsInScope:
+  - qī
+  exampleLexicalIds:
+  - LEX-A1-0207
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0201
+  form: 八
+  readingsInScope:
+  - bā
+  exampleLexicalIds:
+  - LEX-A1-0208
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0202
+  form: 九
+  readingsInScope:
+  - jiǔ
+  exampleLexicalIds:
+  - LEX-A1-0209
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0203
+  form: 十
+  readingsInScope:
+  - shí
+  exampleLexicalIds:
+  - LEX-A1-0210
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0204
+  form: 百
+  readingsInScope:
+  - bǎi
+  exampleLexicalIds:
+  - LEX-A1-0211
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0205
+  form: 千
+  readingsInScope:
+  - qiān
+  exampleLexicalIds:
+  - LEX-A1-0212
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0206
+  form: 半
+  readingsInScope:
+  - bàn
+  exampleLexicalIds:
+  - LEX-A1-0213
+  grammarIds:
+  - GR-A1-055
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0207
+  form: 几
+  readingsInScope:
+  - jǐ
+  exampleLexicalIds:
+  - LEX-A1-0214
+  - LEX-A1-0251
+  - LEX-A1-0349
+  - LEX-A1-0410
+  - LEX-A1-0411
+  - LEX-A1-0412
+  grammarIds:
+  - GR-A1-017
+  - GR-A1-026
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0208
+  form: 本
+  readingsInScope:
+  - běn
+  exampleLexicalIds:
+  - LEX-A1-0217
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0209
+  form: 杯
+  readingsInScope:
+  - bēi
+  exampleLexicalIds:
+  - LEX-A1-0218
+  - LEX-A1-0306
+  - LEX-A1-0329
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D04
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0210
+  form: 件
+  readingsInScope:
+  - jiàn
+  exampleLexicalIds:
+  - LEX-A1-0219
+  - LEX-A1-0369
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0211
+  form: 口
+  readingsInScope:
+  - kǒu
+  exampleLexicalIds:
+  - LEX-A1-0220
+  - LEX-A1-0271
+  - LEX-A1-0275
+  - LEX-A1-0286
+  - LEX-A1-0287
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0212
+  form: 块
+  readingsInScope:
+  - kuài
+  exampleLexicalIds:
+  - LEX-A1-0221
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0213
+  form: 元
+  readingsInScope:
+  - yuán
+  exampleLexicalIds:
+  - LEX-A1-0222
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0214
+  form: 位
+  readingsInScope:
+  - wèi
+  exampleLexicalIds:
+  - LEX-A1-0223
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0215
+  form: 张
+  readingsInScope:
+  - zhāng
+  exampleLexicalIds:
+  - LEX-A1-0224
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0216
+  form: 份
+  readingsInScope:
+  - fèn
+  exampleLexicalIds:
+  - LEX-A1-0225
+  - LEX-A1-0330
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0217
+  form: 月
+  readingsInScope:
+  - yuè
+  exampleLexicalIds:
+  - LEX-A1-0227
+  grammarIds:
+  - GR-A1-054
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0218
+  form: 星
+  readingsInScope:
+  - xīng
+  exampleLexicalIds:
+  - LEX-A1-0230
+  - LEX-A1-0231
+  - LEX-A1-0410
+  grammarIds:
+  - GR-A1-054
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0219
+  form: 今
+  readingsInScope:
+  - jīn
+  exampleLexicalIds:
+  - LEX-A1-0232
+  - LEX-A1-0235
+  grammarIds:
+  - GR-A1-056
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0220
+  form: 天
+  readingsInScope:
+  - tiān
+  exampleLexicalIds:
+  - LEX-A1-0232
+  - LEX-A1-0233
+  - LEX-A1-0234
+  - LEX-A1-0254
+  - LEX-A1-0382
+  - LEX-A1-0386
+  - LEX-A1-0409
+  grammarIds:
+  - GR-A1-056
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0221
+  form: 明
+  readingsInScope:
+  - míng
+  exampleLexicalIds:
+  - LEX-A1-0233
+  - LEX-A1-0236
+  grammarIds:
+  - GR-A1-056
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0222
+  form: 昨
+  readingsInScope:
+  - zuó
+  exampleLexicalIds:
+  - LEX-A1-0234
+  grammarIds:
+  - GR-A1-056
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0223
+  form: 现
+  readingsInScope:
+  - xiàn
+  exampleLexicalIds:
+  - LEX-A1-0238
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0224
+  form: 在
+  readingsInScope:
+  - zài
+  exampleLexicalIds:
+  - LEX-A1-0238
+  - LEX-A1-0399
+  - LEX-A1-0402
+  grammarIds:
+  - GR-A1-007
+  - GR-A1-008
+  - GR-A1-034
+  - GR-A1-052
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D04
+  - D06
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0225
+  form: 候
+  readingsInScope:
+  - hòu
+  exampleLexicalIds:
+  - LEX-A1-0240
+  - LEX-A1-0252
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0226
+  form: 午
+  readingsInScope:
+  - wǔ
+  exampleLexicalIds:
+  - LEX-A1-0243
+  - LEX-A1-0244
+  - LEX-A1-0245
+  - LEX-A1-0327
+  grammarIds:
+  - GR-A1-055
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0227
+  form: 中
+  readingsInScope:
+  - zhōng
+  exampleLexicalIds:
+  - LEX-A1-0244
+  - LEX-A1-0374
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0228
+  form: 分
+  readingsInScope:
+  - fēn
+  exampleLexicalIds:
+  - LEX-A1-0248
+  - LEX-A1-0249
+  grammarIds:
+  - GR-A1-055
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0229
+  form: 钟
+  readingsInScope:
+  - zhōng
+  exampleLexicalIds:
+  - LEX-A1-0249
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0230
+  form: 共
+  readingsInScope:
+  - gòng
+  exampleLexicalIds:
+  - LEX-A1-0253
+  - LEX-A1-0332
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0231
+  form: 地
+  readingsInScope:
+  - dì
+  exampleLexicalIds:
+  - LEX-A1-0255
+  - LEX-A1-0256
+  - LEX-A1-0296
+  - LEX-A1-0338
+  grammarIds:
+  - GR-A1-006
+  - GR-A1-010
+  - GR-A1-049
+  - GR-A1-050
+  - GR-A1-051
+  - GR-A1-052
+  - GR-A1-053
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0232
+  form: 方
+  readingsInScope:
+  - fāng
+  exampleLexicalIds:
+  - LEX-A1-0255
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0233
+  form: 房
+  readingsInScope:
+  - fáng
+  exampleLexicalIds:
+  - LEX-A1-0257
+  - LEX-A1-0347
+  - LEX-A1-0348
+  - LEX-A1-0349
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0234
+  form: 教
+  readingsInScope:
+  - jiào
+  exampleLexicalIds:
+  - LEX-A1-0258
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0235
+  form: 室
+  readingsInScope:
+  - shì
+  exampleLexicalIds:
+  - LEX-A1-0258
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0236
+  form: 影
+  readingsInScope:
+  - yǐng
+  exampleLexicalIds:
+  - LEX-A1-0259
+  - LEX-A1-0304
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0237
+  form: 院
+  readingsInScope:
+  - yuàn
+  exampleLexicalIds:
+  - LEX-A1-0259
+  - LEX-A1-0268
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0238
+  form: 商
+  readingsInScope:
+  - shāng
+  exampleLexicalIds:
+  - LEX-A1-0260
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0239
+  form: 店
+  readingsInScope:
+  - diàn
+  exampleLexicalIds:
+  - LEX-A1-0260
+  - LEX-A1-0263
+  - LEX-A1-0264
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0240
+  form: 超
+  readingsInScope:
+  - chāo
+  exampleLexicalIds:
+  - LEX-A1-0261
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0241
+  form: 餐
+  readingsInScope:
+  - cān
+  exampleLexicalIds:
+  - LEX-A1-0262
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0242
+  form: 厅
+  readingsInScope:
+  - tīng
+  exampleLexicalIds:
+  - LEX-A1-0262
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0243
+  form: 酒
+  readingsInScope:
+  - jiǔ
+  exampleLexicalIds:
+  - LEX-A1-0263
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0244
+  form: 图
+  readingsInScope:
+  - tú
+  exampleLexicalIds:
+  - LEX-A1-0265
+  - LEX-A1-0296
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0245
+  form: 馆
+  readingsInScope:
+  - guǎn
+  exampleLexicalIds:
+  - LEX-A1-0265
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0246
+  form: 站
+  readingsInScope:
+  - zhàn
+  exampleLexicalIds:
+  - LEX-A1-0266
+  - LEX-A1-0341
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0247
+  form: 场
+  readingsInScope:
+  - chǎng
+  exampleLexicalIds:
+  - LEX-A1-0267
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0248
+  form: 医
+  readingsInScope:
+  - yī
+  exampleLexicalIds:
+  - LEX-A1-0268
+  - LEX-A1-0359
+  - LEX-A1-0360
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D07
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0249
+  form: 洗
+  readingsInScope:
+  - xǐ
+  exampleLexicalIds:
+  - LEX-A1-0269
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0250
+  form: 门
+  readingsInScope:
+  - mén
+  exampleLexicalIds:
+  - LEX-A1-0270
+  - LEX-A1-0271
+  - LEX-A1-0288
+  - LEX-A1-0289
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0251
+  form: 楼
+  readingsInScope:
+  - lóu
+  exampleLexicalIds:
+  - LEX-A1-0272
+  - LEX-A1-0273
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0252
+  form: 层
+  readingsInScope:
+  - céng
+  exampleLexicalIds:
+  - LEX-A1-0273
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0253
+  form: 路
+  readingsInScope:
+  - lù
+  exampleLexicalIds:
+  - LEX-A1-0274
+  - LEX-A1-0275
+  - LEX-A1-0342
+  - LEX-A1-0345
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0254
+  form: 附
+  readingsInScope:
+  - fù
+  exampleLexicalIds:
+  - LEX-A1-0276
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0255
+  form: 外
+  readingsInScope:
+  - wài
+  exampleLexicalIds:
+  - LEX-A1-0280
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0256
+  form: 前
+  readingsInScope:
+  - qián
+  exampleLexicalIds:
+  - LEX-A1-0281
+  grammarIds:
+  - GR-A1-008
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0257
+  form: 后
+  readingsInScope:
+  - hòu
+  exampleLexicalIds:
+  - LEX-A1-0282
+  grammarIds:
+  - GR-A1-008
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0258
+  form: 左
+  readingsInScope:
+  - zuǒ
+  exampleLexicalIds:
+  - LEX-A1-0283
+  - LEX-A1-0294
+  grammarIds:
+  - GR-A1-008
+  - GR-A1-053
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0259
+  form: 边
+  readingsInScope:
+  - biān
+  exampleLexicalIds:
+  - LEX-A1-0283
+  - LEX-A1-0284
+  - LEX-A1-0285
+  grammarIds:
+  - GR-A1-008
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0260
+  form: 右
+  readingsInScope:
+  - yòu
+  exampleLexicalIds:
+  - LEX-A1-0284
+  - LEX-A1-0295
+  grammarIds:
+  - GR-A1-008
+  - GR-A1-053
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0261
+  form: 旁
+  readingsInScope:
+  - páng
+  exampleLexicalIds:
+  - LEX-A1-0285
+  grammarIds:
+  - GR-A1-008
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0262
+  form: 入
+  readingsInScope:
+  - rù
+  exampleLexicalIds:
+  - LEX-A1-0286
+  - LEX-A1-0346
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D17
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0263
+  form: 营
+  readingsInScope:
+  - yíng
+  exampleLexicalIds:
+  - LEX-A1-0290
+  grammarIds: []
+  canDoIds:
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  contextIds:
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D17
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0264
+  form: 禁
+  readingsInScope:
+  - jìn
+  exampleLexicalIds:
+  - LEX-A1-0291
+  grammarIds: []
+  canDoIds:
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  contextIds:
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D17
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0265
+  form: 止
+  readingsInScope:
+  - zhǐ
+  exampleLexicalIds:
+  - LEX-A1-0291
+  grammarIds: []
+  canDoIds:
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  contextIds:
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D17
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0266
+  form: 往
+  readingsInScope:
+  - wǎng
+  exampleLexicalIds:
+  - LEX-A1-0292
+  grammarIds:
+  - GR-A1-053
+  canDoIds:
+  - A1-I2
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D10
+  - D11
+  - D12
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0267
+  form: 直
+  readingsInScope:
+  - zhí
+  exampleLexicalIds:
+  - LEX-A1-0293
+  grammarIds:
+  - GR-A1-053
+  canDoIds:
+  - A1-I2
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D10
+  - D11
+  - D12
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0268
+  form: 转
+  readingsInScope:
+  - zhuǎn
+  exampleLexicalIds:
+  - LEX-A1-0294
+  - LEX-A1-0295
+  grammarIds:
+  - GR-A1-053
+  canDoIds:
+  - A1-I2
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D10
+  - D11
+  - D12
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0269
+  form: 放
+  readingsInScope:
+  - fàng
+  exampleLexicalIds:
+  - LEX-A1-0297
+  grammarIds: []
+  canDoIds:
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  contextIds:
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D17
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0270
+  form: 闭
+  readingsInScope:
+  - bì
+  exampleLexicalIds:
+  - LEX-A1-0298
+  grammarIds: []
+  canDoIds:
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  contextIds:
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D17
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0271
+  form: 东
+  readingsInScope:
+  - dōng
+  exampleLexicalIds:
+  - LEX-A1-0300
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D16
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0272
+  form: 西
+  readingsInScope:
+  - xī
+  exampleLexicalIds:
+  - LEX-A1-0300
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D16
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0273
+  form: 脑
+  readingsInScope:
+  - nǎo
+  exampleLexicalIds:
+  - LEX-A1-0302
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D16
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0274
+  form: 视
+  readingsInScope:
+  - shì
+  exampleLexicalIds:
+  - LEX-A1-0303
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D16
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0275
+  form: 衣
+  readingsInScope:
+  - yī
+  exampleLexicalIds:
+  - LEX-A1-0305
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D16
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0276
+  form: 椅
+  readingsInScope:
+  - yǐ
+  exampleLexicalIds:
+  - LEX-A1-0307
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D16
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0277
+  form: 桌
+  readingsInScope:
+  - zhuō
+  exampleLexicalIds:
+  - LEX-A1-0308
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D16
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0278
+  form: 票
+  readingsInScope:
+  - piào
+  exampleLexicalIds:
+  - LEX-A1-0309
+  - LEX-A1-0310
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D16
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0279
+  form: 菜
+  readingsInScope:
+  - cài
+  exampleLexicalIds:
+  - LEX-A1-0311
+  - LEX-A1-0321
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D16
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0280
+  form: 单
+  readingsInScope:
+  - dān
+  exampleLexicalIds:
+  - LEX-A1-0311
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D16
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0281
+  form: 卡
+  readingsInScope:
+  - kǎ
+  exampleLexicalIds:
+  - LEX-A1-0312
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D16
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0282
+  form: 钱
+  readingsInScope:
+  - qián
+  exampleLexicalIds:
+  - LEX-A1-0313
+  - LEX-A1-0331
+  - LEX-A1-0332
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D04
+  - D08
+  - D09
+  - D10
+  - D12
+  - D14
+  - D15
+  - D16
+  - D18
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0283
+  form: 水
+  readingsInScope:
+  - shuǐ
+  exampleLexicalIds:
+  - LEX-A1-0314
+  - LEX-A1-0322
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0284
+  form: 茶
+  readingsInScope:
+  - chá
+  exampleLexicalIds:
+  - LEX-A1-0315
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0285
+  form: 牛
+  readingsInScope:
+  - niú
+  exampleLexicalIds:
+  - LEX-A1-0316
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0286
+  form: 奶
+  readingsInScope:
+  - nǎi
+  exampleLexicalIds:
+  - LEX-A1-0316
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0287
+  form: 饮
+  readingsInScope:
+  - yǐn
+  exampleLexicalIds:
+  - LEX-A1-0317
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0288
+  form: 料
+  readingsInScope:
+  - liào
+  exampleLexicalIds:
+  - LEX-A1-0317
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0289
+  form: 米
+  readingsInScope:
+  - mǐ
+  exampleLexicalIds:
+  - LEX-A1-0319
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0290
+  form: 包
+  readingsInScope:
+  - bāo
+  exampleLexicalIds:
+  - LEX-A1-0320
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0291
+  form: 果
+  readingsInScope:
+  - guǒ
+  exampleLexicalIds:
+  - LEX-A1-0322
+  - LEX-A1-0323
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0292
+  form: 苹
+  readingsInScope:
+  - píng
+  exampleLexicalIds:
+  - LEX-A1-0323
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0293
+  form: 鸡
+  readingsInScope:
+  - jī
+  exampleLexicalIds:
+  - LEX-A1-0324
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0294
+  form: 蛋
+  readingsInScope:
+  - dàn
+  exampleLexicalIds:
+  - LEX-A1-0324
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0295
+  form: 食
+  readingsInScope:
+  - shí
+  exampleLexicalIds:
+  - LEX-A1-0325
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0296
+  form: 物
+  readingsInScope:
+  - wù
+  exampleLexicalIds:
+  - LEX-A1-0325
+  grammarIds:
+  - GR-A1-006
+  - GR-A1-015
+  - GR-A1-047
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0297
+  form: 账
+  readingsInScope:
+  - zhàng
+  exampleLexicalIds:
+  - LEX-A1-0333
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0298
+  form: 付
+  readingsInScope:
+  - fù
+  exampleLexicalIds:
+  - LEX-A1-0334
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0299
+  form: 款
+  readingsInScope:
+  - kuǎn
+  exampleLexicalIds:
+  - LEX-A1-0334
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0300
+  form: 交
+  readingsInScope:
+  - jiāo
+  exampleLexicalIds:
+  - LEX-A1-0336
+  grammarIds:
+  - GR-A1-050
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  contextIds:
+  - D10
+  - D11
+  - D12
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0301
+  form: 租
+  readingsInScope:
+  - zū
+  exampleLexicalIds:
+  - LEX-A1-0337
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  contextIds:
+  - D10
+  - D11
+  - D12
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0302
+  form: 铁
+  readingsInScope:
+  - tiě
+  exampleLexicalIds:
+  - LEX-A1-0338
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  contextIds:
+  - D10
+  - D11
+  - D12
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0303
+  form: 火
+  readingsInScope:
+  - huǒ
+  exampleLexicalIds:
+  - LEX-A1-0339
+  - LEX-A1-0341
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  contextIds:
+  - D10
+  - D11
+  - D12
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0304
+  form: 飞
+  readingsInScope:
+  - fēi
+  exampleLexicalIds:
+  - LEX-A1-0340
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  contextIds:
+  - D10
+  - D11
+  - D12
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0305
+  form: 线
+  readingsInScope:
+  - xiàn
+  exampleLexicalIds:
+  - LEX-A1-0342
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  contextIds:
+  - D10
+  - D11
+  - D12
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0306
+  form: 退
+  readingsInScope:
+  - tuì
+  exampleLexicalIds:
+  - LEX-A1-0348
+  - LEX-A1-0349
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D14
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0307
+  form: 身
+  readingsInScope:
+  - shēn
+  exampleLexicalIds:
+  - LEX-A1-0351
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I4
+  - A1-L3
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D07
+  - D18
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0308
+  form: 体
+  readingsInScope:
+  - tǐ
+  exampleLexicalIds:
+  - LEX-A1-0351
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I4
+  - A1-L3
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D07
+  - D18
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0309
+  form: 头
+  readingsInScope:
+  - tóu
+  exampleLexicalIds:
+  - LEX-A1-0352
+  - LEX-A1-0353
+  - LEX-A1-0357
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I4
+  - A1-L3
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D07
+  - D18
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0310
+  form: 疼
+  readingsInScope:
+  - téng
+  exampleLexicalIds:
+  - LEX-A1-0353
+  - LEX-A1-0354
+  - LEX-A1-0357
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I4
+  - A1-L3
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D07
+  - D18
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0311
+  form: 药
+  readingsInScope:
+  - yào
+  exampleLexicalIds:
+  - LEX-A1-0355
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I4
+  - A1-L3
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D07
+  - D18
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0312
+  form: 助
+  readingsInScope:
+  - zhù
+  exampleLexicalIds:
+  - LEX-A1-0356
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I4
+  - A1-L3
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D07
+  - D18
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0313
+  form: 程
+  readingsInScope:
+  - chéng
+  exampleLexicalIds:
+  - LEX-A1-0362
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D15
+  - D16
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0314
+  form: 活
+  readingsInScope:
+  - huó
+  exampleLexicalIds:
+  - LEX-A1-0363
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D06
+  - D13
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0315
+  form: 动
+  readingsInScope:
+  - dòng
+  exampleLexicalIds:
+  - LEX-A1-0363
+  grammarIds:
+  - GR-A1-009
+  - GR-A1-010
+  - GR-A1-020
+  - GR-A1-027
+  - GR-A1-029
+  - GR-A1-030
+  - GR-A1-031
+  - GR-A1-032
+  - GR-A1-033
+  - GR-A1-034
+  - GR-A1-035
+  - GR-A1-041
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D06
+  - D13
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0316
+  form: 报
+  readingsInScope:
+  - bào
+  exampleLexicalIds:
+  - LEX-A1-0364
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D15
+  - D16
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0317
+  form: 议
+  readingsInScope:
+  - yì
+  exampleLexicalIds:
+  - LEX-A1-0365
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0318
+  form: 排
+  readingsInScope:
+  - pái
+  exampleLexicalIds:
+  - LEX-A1-0366
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0319
+  form: 消
+  readingsInScope:
+  - xiāo
+  exampleLexicalIds:
+  - LEX-A1-0367
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-W2
+  contextIds:
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0320
+  form: 短
+  readingsInScope:
+  - duǎn
+  exampleLexicalIds:
+  - LEX-A1-0368
+  grammarIds:
+  - GR-A1-032
+  - GR-A1-043
+  - GR-A1-046
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-W2
+  contextIds:
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0321
+  form: 信
+  readingsInScope:
+  - xìn
+  exampleLexicalIds:
+  - LEX-A1-0368
+  grammarIds:
+  - GR-A1-048
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-W2
+  contextIds:
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0322
+  form: 邮
+  readingsInScope:
+  - yóu
+  exampleLexicalIds:
+  - LEX-A1-0369
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-W2
+  contextIds:
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0323
+  form: 复
+  readingsInScope:
+  - fù
+  exampleLexicalIds:
+  - LEX-A1-0370
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-W2
+  contextIds:
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0324
+  form: 收
+  readingsInScope:
+  - shōu
+  exampleLexicalIds:
+  - LEX-A1-0371
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-W2
+  contextIds:
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0325
+  form: 题
+  readingsInScope:
+  - tí
+  exampleLexicalIds:
+  - LEX-A1-0372
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I4
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D07
+  - D15
+  - D16
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0326
+  form: 汉
+  readingsInScope:
+  - hàn
+  exampleLexicalIds:
+  - LEX-A1-0373
+  - LEX-A1-0375
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D15
+  - D16
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0327
+  form: 语
+  readingsInScope:
+  - yǔ
+  exampleLexicalIds:
+  - LEX-A1-0373
+  grammarIds:
+  - GR-A1-009
+  - GR-A1-010
+  - GR-A1-011
+  - GR-A1-032
+  - GR-A1-035
+  - GR-A1-038
+  - GR-A1-039
+  - GR-A1-040
+  - GR-A1-043
+  - GR-A1-056
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D15
+  - D16
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0328
+  form: 文
+  readingsInScope:
+  - wén
+  exampleLexicalIds:
+  - LEX-A1-0374
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D15
+  - D16
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0329
+  form: 预
+  readingsInScope:
+  - yù
+  exampleLexicalIds:
+  - LEX-A1-0377
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-W2
+  contextIds:
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0330
+  form: 约
+  readingsInScope:
+  - yuē
+  exampleLexicalIds:
+  - LEX-A1-0377
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-W2
+  contextIds:
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0331
+  form: 邀
+  readingsInScope:
+  - yāo
+  exampleLexicalIds:
+  - LEX-A1-0378
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-W2
+  contextIds:
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0332
+  form: 空
+  readingsInScope:
+  - kòng
+  exampleLexicalIds:
+  - LEX-A1-0379
+  - LEX-A1-0380
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-W2
+  contextIds:
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0333
+  form: 表
+  readingsInScope:
+  - biǎo
+  exampleLexicalIds:
+  - LEX-A1-0381
+  grammarIds: []
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-M1
+  - A1-M2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-W1
+  - A1-W2
+  contextIds:
+  - D02
+  - D15
+  - D16
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0334
+  form: 雨
+  readingsInScope:
+  - yǔ
+  exampleLexicalIds:
+  - LEX-A1-0383
+  - LEX-A1-0384
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D06
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0335
+  form: 雪
+  readingsInScope:
+  - xuě
+  exampleLexicalIds:
+  - LEX-A1-0385
+  - LEX-A1-0413
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D06
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0336
+  form: 也
+  readingsInScope:
+  - yě
+  exampleLexicalIds:
+  - LEX-A1-0390
+  grammarIds:
+  - GR-A1-038
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D03
+  - D05
+  - D06
+  - D17
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0337
+  form: 了
+  readingsInScope:
+  - le
+  exampleLexicalIds:
+  - LEX-A1-0391
+  grammarIds:
+  - GR-A1-012
+  - GR-A1-035
+  - GR-A1-036
+  canDoIds:
+  - A1-I3a
+  - A1-I3b
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D06
+  - D13
+  - D15
+  - D17
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0338
+  form: 只
+  readingsInScope:
+  - zhǐ
+  exampleLexicalIds:
+  - LEX-A1-0394
+  grammarIds:
+  - GR-A1-058
+  canDoIds:
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  contextIds:
+  - D04
+  - D06
+  - D08
+  - D09
+  - D12
+  - D15
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0339
+  form: 吧
+  readingsInScope:
+  - ba
+  exampleLexicalIds:
+  - LEX-A1-0396
+  grammarIds:
+  - GR-A1-046
+  canDoIds:
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-L3
+  - A1-W2
+  contextIds:
+  - D08
+  - D09
+  - D13
+  - D15
+  - D18
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0340
+  form: 呢
+  readingsInScope:
+  - ne
+  exampleLexicalIds:
+  - LEX-A1-0397
+  grammarIds:
+  - GR-A1-028
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L3
+  contextIds:
+  - D01
+  - D02
+  - D05
+  - D06
+  - D08
+  - D15
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0341
+  form: 和
+  readingsInScope:
+  - hé
+  exampleLexicalIds:
+  - LEX-A1-0398
+  grammarIds:
+  - GR-A1-037
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D03
+  - D04
+  - D05
+  - D08
+  - D13
+  - D17
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0342
+  form: 正
+  readingsInScope:
+  - zhèng
+  exampleLexicalIds:
+  - LEX-A1-0402
+  grammarIds:
+  - GR-A1-034
+  canDoIds:
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D06
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0343
+  form: 的
+  readingsInScope:
+  - de
+  exampleLexicalIds:
+  - LEX-A1-0403
+  grammarIds:
+  - GR-A1-014
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D02
+  - D03
+  - D04
+  - D05
+  - D15
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0344
+  form: 第
+  readingsInScope:
+  - dì
+  exampleLexicalIds:
+  - LEX-A1-0404
+  grammarIds:
+  - GR-A1-018
+  canDoIds:
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  contextIds:
+  - D10
+  - D12
+  - D14
+  - D15
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0345
+  form: 还
+  readingsInScope:
+  - hái
+  exampleLexicalIds:
+  - LEX-A1-0405
+  grammarIds:
+  - GR-A1-040
+  - GR-A1-057
+  canDoIds:
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D03
+  - D04
+  - D05
+  - D06
+  - D17
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0346
+  form: 都
+  readingsInScope:
+  - dōu
+  exampleLexicalIds:
+  - LEX-A1-0406
+  grammarIds:
+  - GR-A1-039
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  contextIds:
+  - D03
+  - D04
+  - D05
+  - D06
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0347
+  form: 从
+  readingsInScope:
+  - cóng
+  exampleLexicalIds:
+  - LEX-A1-0407
+  grammarIds:
+  - GR-A1-051
+  canDoIds:
+  - A1-I3a
+  - A1-I3b
+  - A1-L2
+  - A1-M1
+  - A1-M2
+  - A1-R2
+  - A1-W2
+  contextIds:
+  - D10
+  - D13
+  - D15
+  - D17
+  - D18
+  - D19
+  - D20
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0348
+  form: 跟
+  readingsInScope:
+  - gēn
+  exampleLexicalIds:
+  - LEX-A1-0408
+  grammarIds:
+  - GR-A1-037
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  contextIds:
+  - D03
+  - D05
+  - D08
+  - D13
+  - D17
+  - D19
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview
+- characterId: CHAR-A1-0349
+  form: 每
+  readingsInScope:
+  - měi
+  exampleLexicalIds:
+  - LEX-A1-0409
+  grammarIds: []
+  canDoIds:
+  - A1-I1
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  contextIds:
+  - D06
+  - D17
+  sourceIds:
+  - A1-LEXICON-0.1-PROVISIONAL
+  - A1-GRAMMAR-0.2-PROVISIONAL
+  notes: 只要求在所列核心词语、构式和语境中认读；读音仍须人工复核。
+  readingQaStatus: PendingHumanQA
+  reviewStatus: PendingHumanContentReview

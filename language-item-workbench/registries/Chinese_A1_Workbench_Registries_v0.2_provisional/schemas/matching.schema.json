@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fcc:a1:matching:0.2",
+  "title": "IF-MATCHING candidate payload",
+  "type": "object",
+  "required": [
+    "stimulus",
+    "prompt",
+    "leftItems",
+    "rightItems",
+    "shuffleRightItems",
+    "allowRightItemReuse"
+  ],
+  "properties": {
+    "stimulus": {
+      "type": "object",
+      "required": [],
+      "properties": {
+        "text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "imageRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "audioRef": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "prompt": {
+      "type": "string"
+    },
+    "leftItems": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": [
+          "itemId"
+        ],
+        "properties": {
+          "itemId": {
+            "type": "string"
+          },
+          "text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "imageRef": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "rightItems": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": [
+          "itemId"
+        ],
+        "properties": {
+          "itemId": {
+            "type": "string"
+          },
+          "text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "imageRef": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "shuffleRightItems": {
+      "type": "boolean"
+    },
+    "allowRightItemReuse": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

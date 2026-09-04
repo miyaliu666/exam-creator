@@ -8,7 +8,7 @@ use mongodb::bson::doc;
 use oauth2::{
     AccessToken, EmptyExtraTokenFields, StandardTokenResponse, TokenResponse, basic::BasicTokenType,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tower_sessions::Session;
 use tracing::instrument;
 
@@ -23,7 +23,7 @@ pub async fn delete_logout(
     jar: PrivateCookieJar,
     State(server_state): State<ServerState>,
 ) -> Result<PrivateCookieJar, Error> {
-    let cookie = jar
+    let _cookie = jar
         .get("sid")
         .map(|cookie| cookie.value().to_owned())
         .ok_or(Error::Server(
@@ -37,13 +37,25 @@ pub async fn delete_logout(
         .delete_many(doc! {"user_id": &user.id})
         .await?;
 
-    Ok(jar.remove(cookie))
+    Ok(jar.remove(Cookie::build(("sid", "")).path("/")))
 }
 
 #[derive(Deserialize)]
 pub struct DevLoginBody {
     pub name: String,
     pub email: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DevLoginStatus {
+    enabled: bool,
+}
+
+pub async fn get_dev_login_status(State(server_state): State<ServerState>) -> Json<DevLoginStatus> {
+    Json(DevLoginStatus {
+        enabled: cfg!(debug_assertions) && server_state.env_vars.mock_auth,
+    })
 }
 
 /// Dev login route for development purposes only
@@ -55,8 +67,22 @@ pub async fn post_dev_login(
     _session: Session,
     jar: PrivateCookieJar,
     State(server_state): State<ServerState>,
-    Json(user_body): Json<DevLoginBody>,
+    Json(mut user_body): Json<DevLoginBody>,
 ) -> Result<impl IntoResponse, Error> {
+    user_body.name = user_body.name.trim().to_string();
+    user_body.email = user_body.email.trim().to_ascii_lowercase();
+    if user_body.name.is_empty()
+        || user_body.name.chars().count() > 80
+        || user_body.email.is_empty()
+        || user_body.email.chars().count() > 254
+        || !user_body.email.contains('@')
+    {
+        return Err(Error::Server(
+            StatusCode::BAD_REQUEST,
+            "development login requires a valid name and email".to_string(),
+        ));
+    }
+
     let dev_user = server_state
         .production_database
         .exam_creator_user
@@ -115,7 +141,7 @@ pub async fn post_dev_login(
     let cookie = Cookie::build(("sid", session.session_id))
         // .domain("http://127.0.0.1:3001")
         .path("/")
-        .secure(true)
+        .secure(!cfg!(debug_assertions))
         .http_only(true)
         .max_age(expires_in.try_into()?);
 

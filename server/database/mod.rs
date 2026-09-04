@@ -1,6 +1,11 @@
-use bson::Document;
-use mongodb::Collection;
+use bson::{Document, doc};
+use mongodb::{Collection, IndexModel, options::IndexOptions};
 
+use crate::language_items::domain::{
+    AiGenerationRun, AiReviewRun, LanguageItem, LanguageItemAssembly, LanguageItemAuditEvent,
+    LanguageItemExport, LanguageItemReview, LanguageItemReviewDiscussion,
+    LanguageItemReviewDiscussionEvent, LanguageItemVersion, StagingLanguageItem,
+};
 use crate::state::{Activity, ServerState, User};
 
 pub mod prisma;
@@ -16,6 +21,185 @@ pub struct Database {
     pub exam_creator_user: Collection<prisma::ExamCreatorUser>,
     pub exam_creator_session: Collection<prisma::ExamCreatorSession>,
     pub exam_environment_exam_moderation: Collection<prisma::ExamEnvironmentExamModeration>,
+}
+
+#[derive(Clone, Debug)]
+pub struct WorkbenchDatabase {
+    pub language_items: Collection<LanguageItem>,
+    pub versions: Collection<LanguageItemVersion>,
+    pub ai_generation_runs: Collection<AiGenerationRun>,
+    pub ai_review_runs: Collection<AiReviewRun>,
+    pub reviews: Collection<LanguageItemReview>,
+    pub review_discussions: Collection<LanguageItemReviewDiscussion>,
+    pub review_discussion_events: Collection<LanguageItemReviewDiscussionEvent>,
+    pub exports: Collection<LanguageItemExport>,
+    pub assemblies: Collection<LanguageItemAssembly>,
+    pub audit_events: Collection<LanguageItemAuditEvent>,
+    pub staging_items: Collection<StagingLanguageItem>,
+}
+
+impl WorkbenchDatabase {
+    pub async fn ensure_indexes(&self) -> Result<(), mongodb::error::Error> {
+        let unique = |name: &str| {
+            IndexOptions::builder()
+                .name(name.to_string())
+                .unique(true)
+                .build()
+        };
+        self.language_items
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "id": 1 })
+                    .options(unique("language_items_id_unique"))
+                    .build(),
+            )
+            .await?;
+        self.versions
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "id": 1 })
+                    .options(unique("language_item_versions_id_unique"))
+                    .build(),
+            )
+            .await?;
+        self.versions
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "itemId": 1, "versionNumber": 1 })
+                    .options(unique("language_item_versions_number_unique"))
+                    .build(),
+            )
+            .await?;
+        self.ai_generation_runs
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "id": 1 })
+                    .options(unique("language_item_ai_runs_id_unique"))
+                    .build(),
+            )
+            .await?;
+        self.ai_review_runs
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "id": 1 })
+                    .options(unique("language_item_ai_review_runs_id_unique"))
+                    .build(),
+            )
+            .await?;
+        self.reviews
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "id": 1 })
+                    .options(unique("language_item_reviews_id_unique"))
+                    .build(),
+            )
+            .await?;
+        self.review_discussions
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "id": 1 })
+                    .options(unique("language_item_review_discussions_id_unique"))
+                    .build(),
+            )
+            .await?;
+        self.review_discussions
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "itemId": 1, "createdAt": 1 })
+                    .options(
+                        IndexOptions::builder()
+                            .name("language_item_review_discussions_item_time".to_string())
+                            .build(),
+                    )
+                    .build(),
+            )
+            .await?;
+        self.review_discussion_events
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "id": 1 })
+                    .options(unique("language_item_review_discussion_events_id_unique"))
+                    .build(),
+            )
+            .await?;
+        self.review_discussion_events
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "discussionId": 1, "createdAt": 1 })
+                    .options(
+                        IndexOptions::builder()
+                            .name("language_item_review_discussion_events_thread_time".to_string())
+                            .build(),
+                    )
+                    .build(),
+            )
+            .await?;
+        self.reviews
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "versionId": 1, "createdAt": 1 })
+                    .options(
+                        IndexOptions::builder()
+                            .name("language_item_reviews_version_time".to_string())
+                            .build(),
+                    )
+                    .build(),
+            )
+            .await?;
+        self.exports
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "id": 1 })
+                    .options(unique("language_item_exports_id_unique"))
+                    .build(),
+            )
+            .await?;
+        self.assemblies
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "id": 1 })
+                    .options(unique("language_item_assemblies_id_unique"))
+                    .build(),
+            )
+            .await?;
+        self.assemblies
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "legacyExamId": 1 })
+                    .options(unique("language_item_assemblies_legacy_exam_unique"))
+                    .build(),
+            )
+            .await?;
+        self.staging_items
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "id": 1 })
+                    .options(unique("language_item_staging_id_unique"))
+                    .build(),
+            )
+            .await?;
+        self.audit_events
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "id": 1 })
+                    .options(unique("language_item_audit_id_unique"))
+                    .build(),
+            )
+            .await?;
+        self.audit_events
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "itemId": 1, "createdAt": 1 })
+                    .options(
+                        IndexOptions::builder()
+                            .name("language_item_audit_item_time".to_string())
+                            .build(),
+                    )
+                    .build(),
+            )
+            .await?;
+        Ok(())
+    }
 }
 
 impl prisma::ExamCreatorUser {

@@ -1,0 +1,120 @@
+registryType: A1ReviewRegistry
+registryVersion: 0.2-provisional
+gates:
+- gateId: automatedPrecheck
+  checks:
+  - required IDs and versions
+  - schema validity
+  - slot-family-format-renderer compatibility
+  - candidate/scoring/authoring separation
+  - media and policy references
+  - batch-plan match
+  finalApprover: system
+  humanOverride: not allowed for hard schema failure
+- gateId: editorial
+  checks:
+  - natural and accurate Chinese
+  - clear instructions
+  - no typos or ambiguous reference
+  - balanced options
+  - script and layout consistency
+  finalApprover: EditorialReviewer
+- gateId: constructAndLevel
+  checks:
+  - target Can-do evidence
+  - A1 task conditions
+  - no construct-irrelevant burden
+  - Interaction and Mediation actually observed
+  - difficulty drivers allowed
+  finalApprover: ConstructReviewer
+- gateId: content
+  checks:
+  - lexicon, characters, grammar and pragmatics
+  - supported content reason and support
+  - pinyin and pronunciation scope
+  finalApprover: ContentReviewer
+- gateId: scoring
+  checks:
+  - unique or pre-specified answer
+  - partial credit
+  - task-specific criteria
+  - rubric executability
+  - no hidden requirements
+  finalApprover: ScoringReviewer
+- gateId: fairnessAccessibility
+  checks:
+  - culture and group bias
+  - adult relevance
+  - device and writing-system burden
+  - keyboard, focus, zoom and non-color cues
+  - equivalent access issue
+  finalApprover: FairnessAccessibilityReviewer
+- gateId: technicalSecurity
+  checks:
+  - real renderer behavior
+  - timing, playback, input and recording
+  - autosave and recovery
+  - answer and transcript leakage
+  - media integrity
+  finalApprover: TechnicalSecurityReviewer
+- gateId: pilotReadiness
+  checks:
+  - all prior gates approved
+  - complete metadata and media
+  - reference scoring materials
+  - pilot form and data plan
+  finalApprover: PilotLead
+raci:
+- roleId: AUTHOR
+  role: 题目作者
+  responsible:
+  - draft item and metadata
+  - respond to review
+  restrictions:
+  - cannot approve own item
+- roleId: EDITORIAL
+  role: 编辑审核员
+  responsible:
+  - language naturalness
+  - instructions, options, scripts and layout
+  restrictions: []
+- roleId: CONTENT
+  role: 汉语内容审核员
+  responsible:
+  - lexicon, characters, grammar, pragmatics and pronunciation
+  restrictions: []
+- roleId: CONSTRUCT
+  role: 构念与等级审核员
+  responsible:
+  - Can-do evidence
+  - A1 boundaries
+  - difficulty and construct pollution
+  restrictions:
+  - must understand assessment construct
+- roleId: SCORING
+  role: 评分审核员
+  responsible:
+  - answer, scoring points, rubric and task criteria
+  restrictions:
+  - cannot solely approve own final answer/rubric
+- roleId: FAIR-A11Y
+  role: 公平性与无障碍审核员
+  responsible:
+  - bias, access, device and script burden
+  restrictions: []
+- roleId: TECH-SEC
+  role: 技术与安全审核员
+  responsible:
+  - renderer, media, policies, data separation and leakage
+  restrictions: []
+- roleId: PILOT
+  role: 预试负责人
+  responsible:
+  - pilot readiness, sample/data integrity and data review
+  restrictions: []
+- roleId: APPROVER
+  role: 题库批准人
+  responsible:
+  - confirm all required gates and approve transition
+  restrictions:
+  - cannot bypass gates

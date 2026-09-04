@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fcc:a1:single-select:0.2",
+  "title": "IF-SINGLE-SELECT candidate payload",
+  "type": "object",
+  "required": [
+    "stimulus",
+    "prompt",
+    "options",
+    "shuffleOptions"
+  ],
+  "properties": {
+    "stimulus": {
+      "type": "object",
+      "required": [],
+      "properties": {
+        "text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "imageRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "audioRef": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "prompt": {
+      "type": "string"
+    },
+    "options": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": [
+          "optionId"
+        ],
+        "properties": {
+          "optionId": {
+            "type": "string"
+          },
+          "text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "imageRef": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "shuffleOptions": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}

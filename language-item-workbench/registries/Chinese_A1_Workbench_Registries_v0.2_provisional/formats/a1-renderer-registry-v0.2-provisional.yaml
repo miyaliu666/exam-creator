@@ -1,0 +1,80 @@
+registryType: A1RendererRegistry
+registryVersion: 0.2-provisional
+entries:
+- rendererId: REN-SINGLE-SELECT
+  supportedItemFormatIds:
+  - IF-SINGLE-SELECT
+  externalReferences:
+  - multiple-choice-single-answer
+  - listen-and-choose-picture
+  - listen-and-respond
+  status: AdaptationRequired
+  requiredWork:
+  - candidate payload only
+  - keyboard access
+  - exam mode without feedback
+- rendererId: REN-MATCHING
+  supportedItemFormatIds:
+  - IF-MATCHING
+  externalReferences:
+  - match-columns
+  - listening-matching
+  status: AdaptationRequired
+  requiredWork:
+  - click and keyboard mode
+  - no precision drag dependency
+- rendererId: REN-RESTRICTED-INPUT
+  supportedItemFormatIds:
+  - IF-RESTRICTED-INPUT
+  externalReferences:
+  - short-answer-questions
+  - listening-short-answer-questions
+  status: AdaptationRequired
+  requiredWork:
+  - field autosave
+  - server-side normalization
+- rendererId: REN-FORM-ENTRY
+  supportedItemFormatIds:
+  - IF-FORM-ENTRY
+  externalReferences: []
+  status: NewCapabilityRequired
+  requiredWork:
+  - mixed field types
+  - persistent labels
+  - IME-safe autosave
+- rendererId: REN-TYPED-MESSAGE
+  supportedItemFormatIds:
+  - IF-TYPED-MESSAGE
+  externalReferences:
+  - guided-writing
+  - answer-an-email
+  - situational-writing
+  status: AdaptationRequired
+  requiredWork:
+  - IME handling
+  - source remains visible
+  - no client answer
+- rendererId: REN-SPOKEN-SINGLE
+  supportedItemFormatIds:
+  - IF-SPOKEN-SINGLE
+  externalReferences:
+  - speaking
+  - answer-short-question
+  - respond-using-information
+  status: AdaptationRequired
+  requiredWork:
+  - server upload
+  - single attempt
+  - technical retry audit
+- rendererId: REN-SPOKEN-MULTITURN
+  supportedItemFormatIds:
+  - IF-SPOKEN-MULTITURN
+  externalReferences:
+  - conversations
+  - listen-and-speak
+  status: NewCapabilityRequired
+  requiredWork:
+  - fixed or limited path
+  - turn recordings
+  - path audit
+  - equivalent branches

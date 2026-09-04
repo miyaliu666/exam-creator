@@ -1,0 +1,57 @@
+{
+  "taskId": "EX-R-A1-1-001",
+  "taskVersion": "0.1",
+  "specVersions": {
+    "contentSpecVersion": "0.2-provisional"
+  },
+  "blueprintSlotId": "R-A1-1",
+  "taskFamilyId": "TF-SIGNS-NOTICES",
+  "itemFormatId": "IF-SINGLE-SELECT",
+  "renderer": {
+    "rendererId": "REN-SINGLE-SELECT",
+    "rendererVersion": "0.1"
+  },
+  "candidatePayload": {
+    "stimulus": {
+      "text": "星期一不开门",
+      "imageRefs": [],
+      "audioRef": null
+    },
+    "prompt": "哪一天不能来？",
+    "options": [
+      {
+        "optionId": "A",
+        "text": "星期一",
+        "imageRef": null
+      },
+      {
+        "optionId": "B",
+        "text": "星期二",
+        "imageRef": null
+      }
+    ],
+    "shuffleOptions": true
+  },
+  "authoringPackage": {
+    "notes": [
+      "exploratory reference"
+    ]
+  },
+  "scoringPackage": {
+    "correctOptionId": "A"
+  },
+  "reviewPackage": {
+    "gates": {}
+  },
+  "mediaRefs": [],
+  "delivery": {
+    "navigationPolicyId": "NAV-REVIEW-WITHIN-MODULE-v0.1",
+    "inputPolicyId": "notApplicable",
+    "playbackPolicyId": "notApplicable",
+    "recordingPolicyId": "notApplicable",
+    "speakingRateProfileId": "notApplicable",
+    "pauseProfileId": "notApplicable"
+  },
+  "content": {},
+  "variation": {}
+}

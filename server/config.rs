@@ -1,4 +1,4 @@
-use std::env::var;
+use std::{env::var, fmt};
 
 use http::HeaderValue;
 use mongodb::bson::oid::ObjectId;
@@ -7,6 +7,65 @@ use serde::{Deserialize, Serialize};
 use tracing::{error, warn};
 
 use crate::database::prisma;
+
+#[derive(Clone)]
+pub enum LanguageItemAiProviderConfig {
+    DeterministicMock,
+    DeepSeek {
+        api_key: String,
+        base_url: String,
+        model: String,
+    },
+    OpenAi {
+        api_key: String,
+        base_url: String,
+        model: String,
+    },
+}
+
+impl fmt::Debug for LanguageItemAiProviderConfig {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::DeterministicMock => formatter.write_str("DeterministicMock"),
+            Self::DeepSeek {
+                base_url, model, ..
+            } => formatter
+                .debug_struct("DeepSeek")
+                .field("api_key", &"[REDACTED]")
+                .field("base_url", base_url)
+                .field("model", model)
+                .finish(),
+            Self::OpenAi {
+                base_url, model, ..
+            } => formatter
+                .debug_struct("OpenAi")
+                .field("api_key", &"[REDACTED]")
+                .field("base_url", base_url)
+                .field("model", model)
+                .finish(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct GithubReviewConfig {
+    pub token: String,
+    pub repository: String,
+    pub base_branch: String,
+    pub api_base_url: String,
+}
+
+impl fmt::Debug for GithubReviewConfig {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("GithubReviewConfig")
+            .field("token", &"[REDACTED]")
+            .field("repository", &self.repository)
+            .field("base_branch", &self.base_branch)
+            .field("api_base_url", &self.api_base_url)
+            .finish()
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct EnvVars {
@@ -26,6 +85,10 @@ pub struct EnvVars {
     pub github_redirect_url: String,
     /// Whether to use mock authentication
     pub mock_auth: bool,
+    /// Provider used for Language Item candidate generation and AI pre-review.
+    pub language_item_ai: LanguageItemAiProviderConfig,
+    /// Optional GitHub repository used for the human review workflow.
+    pub github_review: Option<GithubReviewConfig>,
     /// MongoDB URI for production database
     pub mongodb_uri_production: String,
     /// MongoDB URI for staging database
@@ -94,6 +157,103 @@ impl EnvVars {
                 mock_auth
             }
             Err(_e) => false,
+        };
+
+        let language_item_ai = match var("LANGUAGE_ITEM_AI_PROVIDER")
+            .unwrap_or_else(|_| "deterministic-mock".to_string())
+            .to_ascii_lowercase()
+            .as_str()
+        {
+            "deterministic-mock" | "mock" => LanguageItemAiProviderConfig::DeterministicMock,
+            "deepseek" => {
+                let api_key = var("DEEPSEEK_API_KEY")
+                    .expect("DEEPSEEK_API_KEY is required when LANGUAGE_ITEM_AI_PROVIDER=deepseek");
+                assert!(
+                    !api_key.trim().is_empty(),
+                    "DEEPSEEK_API_KEY must not be empty"
+                );
+                let base_url = var("DEEPSEEK_BASE_URL")
+                    .unwrap_or_else(|_| "https://api.deepseek.com".to_string())
+                    .trim_end_matches('/')
+                    .to_string();
+                let model = var("LANGUAGE_ITEM_AI_MODEL").expect(
+                    "LANGUAGE_ITEM_AI_MODEL is required when LANGUAGE_ITEM_AI_PROVIDER=deepseek",
+                );
+                assert!(
+                    !model.trim().is_empty(),
+                    "LANGUAGE_ITEM_AI_MODEL must not be empty"
+                );
+                LanguageItemAiProviderConfig::DeepSeek {
+                    api_key,
+                    base_url,
+                    model,
+                }
+            }
+            "openai" => {
+                let api_key = var("OPENAI_API_KEY")
+                    .expect("OPENAI_API_KEY is required when LANGUAGE_ITEM_AI_PROVIDER=openai");
+                assert!(
+                    !api_key.trim().is_empty(),
+                    "OPENAI_API_KEY must not be empty"
+                );
+                let base_url = var("OPENAI_BASE_URL")
+                    .unwrap_or_else(|_| "https://api.openai.com/v1".to_string())
+                    .trim_end_matches('/')
+                    .to_string();
+                let model = var("LANGUAGE_ITEM_AI_MODEL").expect(
+                    "LANGUAGE_ITEM_AI_MODEL is required when LANGUAGE_ITEM_AI_PROVIDER=openai",
+                );
+                assert!(
+                    !model.trim().is_empty(),
+                    "LANGUAGE_ITEM_AI_MODEL must not be empty"
+                );
+                LanguageItemAiProviderConfig::OpenAi {
+                    api_key,
+                    base_url,
+                    model,
+                }
+            }
+            provider => panic!(
+                "LANGUAGE_ITEM_AI_PROVIDER must be deterministic-mock, deepseek, or openai, got {provider}"
+            ),
+        };
+
+        let github_review_enabled = var("GITHUB_REVIEW_ENABLED")
+            .ok()
+            .is_some_and(|value| value.eq_ignore_ascii_case("true"));
+        let github_review = if github_review_enabled {
+            let token = var("GITHUB_REVIEW_TOKEN")
+                .expect("GITHUB_REVIEW_TOKEN is required when GITHUB_REVIEW_ENABLED=true");
+            assert!(
+                !token.trim().is_empty(),
+                "GITHUB_REVIEW_TOKEN must not be empty"
+            );
+            let repository = var("GITHUB_REVIEW_REPOSITORY")
+                .expect("GITHUB_REVIEW_REPOSITORY is required when GITHUB_REVIEW_ENABLED=true");
+            let repository_parts: Vec<&str> = repository.split('/').collect();
+            assert!(
+                repository_parts.len() == 2
+                    && repository_parts.iter().all(|part| !part.trim().is_empty()),
+                "GITHUB_REVIEW_REPOSITORY must use owner/repository format"
+            );
+            let base_branch =
+                var("GITHUB_REVIEW_BASE_BRANCH").unwrap_or_else(|_| "main".to_string());
+            assert!(
+                !base_branch.trim().is_empty(),
+                "GITHUB_REVIEW_BASE_BRANCH must not be empty"
+            );
+            let api_base_url = var("GITHUB_REVIEW_API_BASE_URL")
+                .unwrap_or_else(|_| "https://api.github.com".to_string())
+                .trim_end_matches('/')
+                .to_string();
+            Some(GithubReviewConfig {
+                token,
+                repository,
+                base_branch,
+                api_base_url,
+            })
+        } else {
+            None
         };
 
         let github_client_id = match var("GITHUB_CLIENT_ID") {
@@ -220,13 +380,15 @@ impl EnvVars {
         };
         assert!(!supabase_key.is_empty(), "SUPABASE_KEY must not be empty");
 
-        let env_vars = Self {
+        Self {
             allowed_origins,
             cookie_key,
             github_client_id,
             github_client_secret,
             github_redirect_url,
             mock_auth,
+            language_item_ai,
+            github_review,
             mongodb_uri_production,
             mongodb_uri_staging,
             port,
@@ -236,9 +398,7 @@ impl EnvVars {
             session_ttl_in_s,
             supabase_url,
             supabase_key,
-        };
-
-        env_vars
+        }
     }
 }
 

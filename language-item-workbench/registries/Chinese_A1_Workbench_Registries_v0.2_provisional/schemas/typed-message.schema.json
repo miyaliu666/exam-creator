@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fcc:a1:typed-message:0.2",
+  "title": "IF-TYPED-MESSAGE candidate payload",
+  "type": "object",
+  "required": [
+    "situation",
+    "instructions",
+    "recipient",
+    "purpose",
+    "requiredContentPoints",
+    "lengthGuidance"
+  ],
+  "properties": {
+    "situation": {
+      "type": "string"
+    },
+    "instructions": {
+      "type": "string"
+    },
+    "sourceMessage": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sourceMaterialRefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recipient": {
+      "type": "string"
+    },
+    "purpose": {
+      "type": "string"
+    },
+    "requiredContentPoints": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": [
+          "contentPointId",
+          "description"
+        ],
+        "properties": {
+          "contentPointId": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "lengthGuidance": {
+      "type": "object",
+      "required": [
+        "countBy",
+        "minimum",
+        "maximum"
+      ],
+      "properties": {
+        "countBy": {
+          "const": "characters"
+        },
+        "minimum": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maximum": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

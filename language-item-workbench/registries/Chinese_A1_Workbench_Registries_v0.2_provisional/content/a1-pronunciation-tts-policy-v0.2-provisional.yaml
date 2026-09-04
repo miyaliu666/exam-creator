@@ -1,0 +1,25 @@
+policyId: A1-PRON-TTS-v0.2-provisional
+status: ProvisionalExploratory
+inputVariety: clearNaturalStandardMandarin
+rules:
+- 核心词项按本级义项和读音朗读；多音字必须结合词语人工确认。
+- 拼音读音支持使用声调符号；轻声按自然普通话实现。
+- 一、不及连续三声等常见变调按自然语流实现，但 Registry 保存词典形式和实际音频 QA 结果。
+- 儿化只在固定词形中自然出现，不把地区性儿化作为理解前提。
+- 年份、电话号码、房间号和线路号按真实标识方式朗读；价格、日期和钟点保持同类任务一致。
+- 人名、地名、外来词、数字密集片段和 TTS 易错词必须人工试听。
+- 音频必须逐字对应批准的 authoringTranscript，不通过重音、停顿或语调提示答案。
+- 同一角色、平行任务和同一任务中的声音、音量和基本语速条件保持可比。
+qaFields:
+- scriptMatch
+- segmentalAccuracy
+- toneAndSandhi
+- neutralTone
+- properNames
+- numbersAndTimes
+- pauses
+- rate
+- volume
+- artifacts
+- fairness
+operationalParametersStatus: PendingVoiceSelectionAndPilot

@@ -41,7 +41,7 @@ where
 
         let Some(cookie) = cookiejar.get("sid").map(|cookie| cookie.value().to_owned()) else {
             warn!("no sid in jar");
-            return Err((StatusCode::UNAUTHORIZED, "no sid in jar"));
+            return Err((StatusCode::UNAUTHORIZED, "登录状态已失效，请重新登录"));
         };
 
         let user_session = state
@@ -56,7 +56,7 @@ where
                     "db session find op failed",
                 )
             })?
-            .ok_or((StatusCode::UNAUTHORIZED, "no existing session"))?;
+            .ok_or((StatusCode::UNAUTHORIZED, "登录会话不存在，请重新登录"))?;
 
         let user = state
             .production_database
@@ -67,7 +67,7 @@ where
                 error!("db user find op failed: {e:?}");
                 (StatusCode::INTERNAL_SERVER_ERROR, "db user find op failed")
             })?
-            .ok_or((StatusCode::UNAUTHORIZED, "no user account"))?;
+            .ok_or((StatusCode::UNAUTHORIZED, "登录账号不存在，请重新登录"))?;
 
         let client_sync = &mut state.client_sync.lock().unwrap();
         if let Some(user) = client_sync.users.iter_mut().find(|u| u.email == user.email) {

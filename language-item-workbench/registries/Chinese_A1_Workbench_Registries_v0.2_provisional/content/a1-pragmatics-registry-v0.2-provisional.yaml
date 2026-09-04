@@ -1,0 +1,371 @@
+registryType: A1PragmaticsRegistry
+registryVersion: 0.2-provisional
+status: ProvisionalExploratory
+count: 18
+entries:
+- pragmaticFunctionId: PRAG-GREET
+  title: 问候
+  function: 开始简短交流
+  lexicalIds:
+  - LEX-A1-0001
+  - LEX-A1-0002
+  - LEX-A1-0003
+  - LEX-A1-0004
+  exampleForms:
+  - 你好
+  - 您好
+  - 早上好
+  - 晚上好
+  canDoIds:
+  - A1-L3
+  - A1-I2
+  contextIds:
+  - D01
+  politenessConditions: 普通服务场景可用“你好”；需要直接礼貌称呼时可用“您好”。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview
+- pragmaticFunctionId: PRAG-FAREWELL
+  title: 告别
+  function: 结束简短交流
+  lexicalIds:
+  - LEX-A1-0005
+  exampleForms:
+  - 再见
+  canDoIds:
+  - A1-L3
+  - A1-I2
+  contextIds:
+  - D01
+  politenessConditions: 直接、友好结束。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview
+- pragmaticFunctionId: PRAG-THANK
+  title: 感谢
+  function: 对帮助、服务或信息表示感谢
+  lexicalIds:
+  - LEX-A1-0006
+  exampleForms:
+  - 谢谢
+  canDoIds:
+  - A1-L3
+  - A1-W2
+  - A1-I2
+  contextIds:
+  - D01
+  - D08
+  - D09
+  - D14
+  - D16
+  - D18
+  - D19
+  politenessConditions: 可单独或句末使用。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview
+- pragmaticFunctionId: PRAG-RESPOND-THANK
+  title: 回应感谢
+  function: 表示不用谢
+  lexicalIds:
+  - LEX-A1-0007
+  exampleForms:
+  - 不客气
+  canDoIds:
+  - A1-L3
+  - A1-I2
+  contextIds:
+  - D01
+  - D08
+  - D09
+  - D14
+  - D16
+  - D18
+  politenessConditions: 不要求细分正式程度。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview
+- pragmaticFunctionId: PRAG-APOLOGISE
+  title: 道歉
+  function: 对迟到、不能参加或小问题道歉
+  lexicalIds:
+  - LEX-A1-0008
+  exampleForms:
+  - 对不起
+  canDoIds:
+  - A1-L3
+  - A1-W2
+  - A1-I2
+  contextIds:
+  - D01
+  - D13
+  - D16
+  - D18
+  - D19
+  politenessConditions: 只处理低风险、直接道歉。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview
+- pragmaticFunctionId: PRAG-RESPOND-APOLOGY
+  title: 回应道歉
+  function: 表示不介意
+  lexicalIds:
+  - LEX-A1-0009
+  - LEX-A1-0010
+  exampleForms:
+  - 没关系
+  - 没事
+  canDoIds:
+  - A1-L3
+  - A1-I2
+  contextIds:
+  - D01
+  - D13
+  - D16
+  - D18
+  politenessConditions: 不处理严重事件。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview
+- pragmaticFunctionId: PRAG-POLITE-OPEN
+  title: 礼貌开始提问
+  function: 吸引注意并提出问题
+  lexicalIds:
+  - LEX-A1-0012
+  exampleForms:
+  - 请问
+  canDoIds:
+  - A1-L3
+  - A1-I2
+  - A1-I4
+  contextIds:
+  - D08
+  - D09
+  - D10
+  - D11
+  - D14
+  - D15
+  - D16
+  - D18
+  politenessConditions: 不能把是否使用“请问”作为唯一正确形式。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview
+- pragmaticFunctionId: PRAG-REQUEST
+  title: 提出简单请求
+  function: 请求物品、行动或许可
+  lexicalIds:
+  - LEX-A1-0011
+  - LEX-A1-0020
+  exampleForms:
+  - 请
+  - 可以吗
+  canDoIds:
+  - A1-L3
+  - A1-W2
+  - A1-I2
+  contextIds:
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D13
+  - D14
+  - D15
+  - D16
+  - D18
+  - D19
+  - D20
+  politenessConditions: 请求必须具体、一步式。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview
+- pragmaticFunctionId: PRAG-ASK-HELP
+  title: 请求帮助
+  function: 明确表示需要帮助
+  lexicalIds:
+  - LEX-A1-0025
+  - LEX-A1-0026
+  - LEX-A1-0125
+  exampleForms:
+  - 请帮我
+  - 可以帮我吗
+  - 帮忙
+  canDoIds:
+  - A1-S2
+  - A1-I2
+  - A1-I4
+  contextIds:
+  - D07
+  - D10
+  - D11
+  - D14
+  - D16
+  - D18
+  politenessConditions: 不要求解释复杂原因。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview
+- pragmaticFunctionId: PRAG-CONFIRM
+  title: 确认信息
+  function: 确认词语、数字、时间、地点或安排
+  lexicalIds:
+  - LEX-A1-0019
+  - LEX-A1-0020
+  exampleForms:
+  - 好吗
+  - 可以吗
+  canDoIds:
+  - A1-L3
+  - A1-W2
+  - A1-I3a
+  - A1-I3b
+  - A1-I4
+  contextIds:
+  - D10
+  - D13
+  - D14
+  - D15
+  - D17
+  - D18
+  - D19
+  politenessConditions: 确认对象必须明确。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview
+- pragmaticFunctionId: PRAG-REQUEST-REPEAT
+  title: 请求重复
+  function: 请对方重复刚才的话
+  lexicalIds:
+  - LEX-A1-0022
+  exampleForms:
+  - 请再说一次
+  canDoIds:
+  - A1-I4
+  contextIds:
+  - D16
+  - D18
+  politenessConditions: 只能播放预先批准的重复版本。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview
+- pragmaticFunctionId: PRAG-REQUEST-SLOWER
+  title: 请求放慢
+  function: 请对方说慢一点
+  lexicalIds:
+  - LEX-A1-0023
+  exampleForms:
+  - 请说慢一点
+  canDoIds:
+  - A1-I4
+  contextIds:
+  - D16
+  - D18
+  politenessConditions: 不能用故意过快输入诱发。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview
+- pragmaticFunctionId: PRAG-NONUNDERSTANDING
+  title: 表示没听懂
+  function: 明确表示理解困难
+  lexicalIds:
+  - LEX-A1-0024
+  exampleForms:
+  - 我没听懂
+  canDoIds:
+  - A1-I4
+  contextIds:
+  - D16
+  - D18
+  politenessConditions: 允许固定表达；不要求解释哪里不懂。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview
+- pragmaticFunctionId: PRAG-ACCEPT-INVITATION
+  title: 接受邀请
+  function: 表示能够或愿意参加
+  lexicalIds:
+  - LEX-A1-0016
+  - LEX-A1-0014
+  exampleForms:
+  - 可以
+  - 好
+  canDoIds:
+  - A1-W2
+  - A1-I3a
+  - A1-I3b
+  contextIds:
+  - D13
+  - D19
+  politenessConditions: 应结合时间或地点确认。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview
+- pragmaticFunctionId: PRAG-DECLINE-INVITATION
+  title: 拒绝邀请
+  function: 简短表示不能参加
+  lexicalIds:
+  - LEX-A1-0017
+  - LEX-A1-0008
+  exampleForms:
+  - 不可以
+  - 对不起
+  canDoIds:
+  - A1-W2
+  - A1-I3a
+  - A1-I3b
+  contextIds:
+  - D13
+  - D19
+  politenessConditions: 不要求给出多个理由。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview
+- pragmaticFunctionId: PRAG-ASK-RELATED-QUESTION
+  title: 提出相关问题
+  function: 在个人问答或日常交换中主动提一个简单问题
+  lexicalIds:
+  - LEX-A1-0251
+  - LEX-A1-0331
+  exampleForms:
+  - 几点
+  - 多少钱
+  canDoIds:
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds:
+  - D01
+  - D02
+  - D05
+  - D06
+  - D08
+  - D09
+  - D10
+  - D11
+  - D13
+  - D15
+  - D17
+  - D19
+  politenessConditions: 问题必须与当前情境直接相关。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview
+- pragmaticFunctionId: PRAG-ORDER
+  title: 点餐或购买
+  function: 说明所需物品和数量
+  lexicalIds: []
+  exampleForms: []
+  canDoIds:
+  - A1-I2
+  contextIds:
+  - D08
+  - D09
+  politenessConditions: 不处理定制、投诉或复杂偏好。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview
+- pragmaticFunctionId: PRAG-RELAY
+  title: 面向指定对象转告
+  function: 选择并转告与接收者有关的信息
+  lexicalIds:
+  - LEX-A1-0123
+  exampleForms:
+  - 告诉
+  canDoIds:
+  - A1-M1
+  - A1-M2
+  contextIds:
+  - D13
+  - D15
+  - D17
+  - D18
+  - D20
+  politenessConditions: 必须有源材料、接收者和目的；不等同机械复制。
+  restrictions: ''
+  reviewStatus: PendingHumanPragmaticsReview

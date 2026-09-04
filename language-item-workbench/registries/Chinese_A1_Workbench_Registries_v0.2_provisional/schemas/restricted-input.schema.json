@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fcc:a1:restricted-input:0.2",
+  "title": "IF-RESTRICTED-INPUT candidate payload",
+  "type": "object",
+  "required": [
+    "stimulus",
+    "prompt",
+    "responseFields"
+  ],
+  "properties": {
+    "stimulus": {
+      "type": "object",
+      "required": [],
+      "properties": {
+        "text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "imageRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "audioRef": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "prompt": {
+      "type": "string"
+    },
+    "responseFields": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "responseId",
+          "inputType"
+        ],
+        "properties": {
+          "responseId": {
+            "type": "string"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "inputType": {
+            "type": "string",
+            "enum": [
+              "shortText",
+              "number",
+              "date",
+              "time"
+            ]
+          },
+          "maxLength": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "placeholder": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

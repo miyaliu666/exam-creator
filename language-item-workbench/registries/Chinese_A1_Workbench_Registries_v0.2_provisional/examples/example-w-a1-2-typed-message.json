@@ -1,0 +1,59 @@
+{
+  "taskId": "EX-W-A1-2-001",
+  "taskVersion": "0.1",
+  "specVersions": {
+    "contentSpecVersion": "0.2-provisional"
+  },
+  "blueprintSlotId": "W-A1-2",
+  "taskFamilyId": "TF-SHORT-MESSAGE-RESPONSE",
+  "itemFormatId": "IF-TYPED-MESSAGE",
+  "renderer": {
+    "rendererId": "REN-TYPED-MESSAGE",
+    "rendererVersion": "0.1"
+  },
+  "candidatePayload": {
+    "situation": "你收到朋友的消息。",
+    "instructions": "回复朋友，说明能不能参加，并确认见面地点。",
+    "sourceMessage": "明天下午三点一起去图书馆，可以吗？",
+    "sourceMaterialRefs": [],
+    "recipient": "朋友",
+    "purpose": "回复邀请并确认安排",
+    "requiredContentPoints": [
+      {
+        "contentPointId": "attend",
+        "description": "说明能否参加"
+      },
+      {
+        "contentPointId": "place",
+        "description": "询问或确认见面地点"
+      }
+    ],
+    "lengthGuidance": {
+      "countBy": "characters",
+      "minimum": 15,
+      "maximum": 40
+    }
+  },
+  "authoringPackage": {},
+  "scoringPackage": {
+    "rubricId": "RUB-W-A1-v0.1",
+    "requiredContentPointIds": [
+      "attend",
+      "place"
+    ]
+  },
+  "reviewPackage": {
+    "gates": {}
+  },
+  "mediaRefs": [],
+  "delivery": {
+    "navigationPolicyId": "NAV-REVIEW-WITHIN-MODULE-v0.1",
+    "inputPolicyId": "INPUT-EXAM-STANDARDIZED-PINYIN-v0.1",
+    "playbackPolicyId": "notApplicable",
+    "recordingPolicyId": "notApplicable",
+    "speakingRateProfileId": "notApplicable",
+    "pauseProfileId": "notApplicable"
+  },
+  "content": {},
+  "variation": {}
+}

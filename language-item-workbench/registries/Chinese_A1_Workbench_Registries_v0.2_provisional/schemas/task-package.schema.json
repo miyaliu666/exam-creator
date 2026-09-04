@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fcc:a1:task-package:0.2",
+  "title": "Language task package",
+  "type": "object",
+  "required": [
+    "taskId",
+    "taskVersion",
+    "specVersions",
+    "blueprintSlotId",
+    "taskFamilyId",
+    "itemFormatId",
+    "renderer",
+    "candidatePayload",
+    "authoringPackage",
+    "scoringPackage",
+    "reviewPackage"
+  ],
+  "properties": {
+    "taskId": {
+      "type": "string"
+    },
+    "taskVersion": {
+      "type": "string"
+    },
+    "specVersions": {
+      "type": "object"
+    },
+    "blueprintSlotId": {
+      "type": "string"
+    },
+    "taskFamilyId": {
+      "type": "string"
+    },
+    "itemFormatId": {
+      "type": "string"
+    },
+    "renderer": {
+      "type": "object",
+      "required": [
+        "rendererId",
+        "rendererVersion"
+      ],
+      "properties": {
+        "rendererId": {
+          "type": "string"
+        },
+        "rendererVersion": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "candidatePayload": {
+      "type": "object"
+    },
+    "authoringPackage": {
+      "type": "object"
+    },
+    "scoringPackage": {
+      "type": "object"
+    },
+    "reviewPackage": {
+      "type": "object"
+    },
+    "mediaRefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "delivery": {
+      "type": "object"
+    },
+    "content": {
+      "type": "object"
+    },
+    "variation": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

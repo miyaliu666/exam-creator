@@ -1,0 +1,274 @@
+registryType: A1DeliveryPolicyRegistry
+registryVersion: 0.2-provisional
+navigationPolicies:
+- navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+  mode: reviewWithinModule
+  lockScope: module
+  allowReturnWithinTask: true
+  allowReturnWithinModule: true
+  lockAfterSubmission: false
+  lockAfterModuleExit: true
+  status: SpecificationReady
+- navigationPolicyId: NAV-FORWARD-TASK-v0.1
+  mode: forwardOnly
+  lockScope: task
+  allowReturnWithinTask: true
+  allowReturnWithinModule: false
+  lockAfterSubmission: true
+  lockAfterModuleExit: true
+  status: SpecificationReady
+- navigationPolicyId: NAV-FORWARD-RECORDING-v0.1
+  mode: forwardOnly
+  lockScope: responseTurn
+  allowReturnWithinTask: false
+  allowReturnWithinModule: false
+  lockAfterSubmission: true
+  lockAfterModuleExit: true
+  status: SpecificationReady
+inputPolicies:
+- inputPolicyId: INPUT-RESTRICTED-FIELD-v0.1
+  inputMethod: restrictedField
+  allowed:
+  - numbers
+  - dates
+  - times
+  - shortText
+  - revision
+  blocked:
+  - prediction
+  - autocorrection
+  status: RendererImplementationPending
+- inputPolicyId: INPUT-WORKBENCH-BROWSER-IME-v0.1
+  inputMethod: browserIMEPrototype
+  outputScript: zh-Hans
+  allowedUse:
+  - workbenchPreview
+  - exploratoryAuthoring
+  prohibitedUse:
+  - operationalExam
+  blocked:
+  - spellcheck
+  - autocomplete
+  - AI assistance
+  status: PrototypeOnly
+- inputPolicyId: INPUT-EXAM-STANDARDIZED-PINYIN-v0.1
+  inputMethod: standardizedPinyin
+  outputScript: zh-Hans
+  allowed:
+  - fullPinyin
+  - fixedCandidateSelection
+  - revision
+  - numbersAndPunctuation
+  blocked:
+  - personalHistory
+  - cloudPersonalization
+  - prediction
+  - autocorrection
+  - translation
+  - voiceInput
+  - handwritingInput
+  dictionaryVersion: Pending
+  candidateSortOrder: fixed
+  status: NewCapabilityRequired
+playbackPolicies:
+- playbackPolicyId: PLAY-COMPLETE-ONCE-v0.1
+  maxPlays: 1
+  playbackMode: completeOnly
+  allowSeek: false
+  allowSpeedChange: false
+  showRemainingPlays: true
+  technicalFailureRecoveryPolicyId: TECH-RECOVERY-MEDIA-v0.1
+  status: RendererImplementationPending
+- playbackPolicyId: PLAY-COMPLETE-TWICE-v0.1
+  maxPlays: 2
+  playbackMode: completeOnly
+  allowSeek: false
+  allowSpeedChange: false
+  showRemainingPlays: true
+  technicalFailureRecoveryPolicyId: TECH-RECOVERY-MEDIA-v0.1
+  status: RendererImplementationPending
+recordingPolicies:
+- recordingPolicyId: REC-SINGLE-A1-v0.1
+  preparationTimeSeconds: 10-20 per task
+  responseTimeSeconds: 20-40 per task
+  maximumAttempts: 1
+  allowPlaybackBeforeSubmit: false
+  allowEarlyStop: true
+  technicalRetryPolicyId: TECH-RECOVERY-RECORDING-v0.1
+  uploadPolicyId: UPLOAD-AUDIO-DURABLE-v0.1
+  status: NewCapabilityRequired
+- recordingPolicyId: REC-MULTITURN-A1-v0.1
+  preparationTimeSeconds: task-defined
+  responseTimeSeconds: per turn
+  maximumAttempts: 1
+  allowPlaybackBeforeSubmit: false
+  allowEarlyStop: true
+  technicalRetryPolicyId: TECH-RECOVERY-RECORDING-v0.1
+  uploadPolicyId: UPLOAD-AUDIO-DURABLE-v0.1
+  status: NewCapabilityRequired
+interfaceLanguagePolicies:
+- interfaceLanguagePolicyId: UI-LANGUAGE-SELECTED-v0.1
+  scope:
+  - login
+  - device check
+  - buttons
+  - errors
+  - timers
+  - submission state
+  targetLanguageMaterialsRemainChinese: true
+  instructionsVersioned: true
+  status: SpecificationReadyTranslationPending
+technicalRecoveryPolicies:
+- technicalFailureRecoveryPolicyId: TECH-RECOVERY-MEDIA-v0.1
+  confirmedEvents:
+  - load failure
+  - interrupted playback
+  actions:
+  - record event
+  - restore same audio opportunity when confirmed
+  - do not expose transcript
+  status: ImplementationPending
+- technicalFailureRecoveryPolicyId: TECH-RECOVERY-RECORDING-v0.1
+  confirmedEvents:
+  - microphone failure
+  - upload failure
+  - corrupt recording
+  actions:
+  - retain same recording for upload retry
+  - controlled retry only when unrecoverable
+  - audit all actions
+  status: ImplementationPending
+uploadPolicies:
+- uploadPolicyId: UPLOAD-AUDIO-DURABLE-v0.1
+  localBufferUntilAcknowledged: true
+  idempotentRetry: true
+  requiredMetadata:
+  - duration
+  - mimeType
+  - sha256
+  - uploadTime
+  status: NewCapabilityRequired
+speakingRateProfiles:
+- speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+  description: 清楚、自然、较慢，适用于关键信息密集的 A1 输入。
+  numericParameters: PendingVoiceSpecificCalibration
+  status: Provisional
+- speakingRateProfileId: RATE-A1-CLEAR-NATURAL-v0.1
+  description: 清楚、自然、不急促，适用于极短熟悉表达。
+  numericParameters: PendingVoiceSpecificCalibration
+  status: Provisional
+pauseProfiles:
+- pauseProfileId: PAUSE-A1-SENTENCE-v0.1
+  description: 按自然短句和信息组停顿，不在答案前后异常停顿。
+  numericParameters: PendingVoiceSpecificCalibration
+  status: Provisional
+- pauseProfileId: PAUSE-A1-DIALOGUE-v0.1
+  description: 说话人轮次清楚，轮次间有一致自然停顿。
+  numericParameters: PendingVoiceSpecificCalibration
+  status: Provisional
+slotPolicyMap:
+  R-A1-1:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+  R-A1-2:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+  R-A1-3:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: INPUT-RESTRICTED-FIELD-v0.1
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+  R-A1-4:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+  L-A1-1:
+    navigationPolicyId: NAV-FORWARD-TASK-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: PLAY-COMPLETE-TWICE-v0.1
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+    pauseProfileId: PAUSE-A1-SENTENCE-v0.1
+  L-A1-2:
+    navigationPolicyId: NAV-FORWARD-TASK-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: PLAY-COMPLETE-TWICE-v0.1
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+    pauseProfileId: PAUSE-A1-DIALOGUE-v0.1
+  L-A1-3:
+    navigationPolicyId: NAV-FORWARD-TASK-v0.1
+    inputPolicyId: INPUT-RESTRICTED-FIELD-v0.1
+    playbackPolicyId: PLAY-COMPLETE-TWICE-v0.1
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+    pauseProfileId: PAUSE-A1-SENTENCE-v0.1
+  L-A1-4:
+    navigationPolicyId: NAV-FORWARD-TASK-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: PLAY-COMPLETE-TWICE-v0.1
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+    pauseProfileId: PAUSE-A1-SENTENCE-v0.1
+  W-A1-1:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: INPUT-EXAM-STANDARDIZED-PINYIN-v0.1
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+  W-A1-2:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: INPUT-EXAM-STANDARDIZED-PINYIN-v0.1
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+  W-A1-3:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: INPUT-EXAM-STANDARDIZED-PINYIN-v0.1
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+  S-A1-1:
+    navigationPolicyId: NAV-FORWARD-RECORDING-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: REC-MULTITURN-A1-v0.1
+    speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+    pauseProfileId: PAUSE-A1-DIALOGUE-v0.1
+  S-A1-2:
+    navigationPolicyId: NAV-FORWARD-RECORDING-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: REC-SINGLE-A1-v0.1
+    speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+    pauseProfileId: PAUSE-A1-SENTENCE-v0.1
+  S-A1-3:
+    navigationPolicyId: NAV-FORWARD-RECORDING-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: REC-MULTITURN-A1-v0.1
+    speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+    pauseProfileId: PAUSE-A1-DIALOGUE-v0.1
+  S-A1-4:
+    navigationPolicyId: NAV-FORWARD-RECORDING-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: REC-SINGLE-A1-v0.1
+    speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+    pauseProfileId: PAUSE-A1-SENTENCE-v0.1

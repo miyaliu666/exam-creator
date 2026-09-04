@@ -1,5 +1,13 @@
 # Exam Creator
 
+## Language Exam Item Creator
+
+登录后可从 Landing Page 进入独立的中文 A1 题项工作台。当前软件按 15 个 Blueprint Slot 创建题项，并实现 7 种 Item Format 的 21 个合法组合。新建顺序固定为“考试任务 → 锁定能力目标 → 允许题型 → 系统实现合同”，随后完成领域、情境、难度、语言内容、命题、校验、GitHub 审核与 Staging 交付。每个 Item Format 自动加载唯一的固定编辑/预览模板，同时完整保留能力、语言内容、评分、交付和审核合同；内部规范编号默认不向普通用户展示。
+
+本地开发可设置 MOCK_AUTH=true；登录页会提供“命题人 / 审核人”两个预设身份，也可创建更多测试审核人。服务端禁止作者审核自己的版本，不同审核人可分别完成不同审核门。AI 默认使用无需网络的 deterministic mock；可通过 LANGUAGE_ITEM_AI_PROVIDER=deepseek、LANGUAGE_ITEM_AI_MODEL 和 DEEPSEEK_API_KEY 启用 DeepSeek，OpenAI 也保留为可选 provider。模型输出不会自动批准或绕过服务端校验。
+
+工作台提交的版本化资源位于 `language-item-workbench/`：`registries/` 保存可机读业务规则，`contracts/` 保存编译时 TaskPackage 合同。
+
 ## Using the Application
 
 ### Landing Page

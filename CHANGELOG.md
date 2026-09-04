@@ -2,6 +2,76 @@
 
 ## [Unreleased]
 
+### Added
+
+- relocate versioned Workbench registries and compile-time contracts under `language-item-workbench/`; keep planning and software documentation local-only
+- rename the product-facing workbench title to `Language Exam Item Creator`
+- add Language Exam Item Creator software requirements, architecture, implementation plan, and strict TaskPackage contract
+- add registry-backed `R-A1-1` single-select authoring, revision-safe autosave, constraint validation, safe candidate preview, locked immutable versions, content hashes, and revision workflow
+- add deterministic provider-neutral AI candidate generation/adoption plus independent Draft/Version AI review with versioned prompts and output schemas
+- add review queue and append-only human gates with four decisions, field/rule references, self-review prevention, and `ApprovedForExport` lifecycle
+- add compensating, idempotent Staging export to canonical handoff plus legacy Exam Creator/Environment collections, including source-to-legacy ID mappings and generator smoke coverage
+- add Workbench database indexes, API routes, dashboard entry, item list, editor, registry guidance, audit history, and export history UI
+- add MVP acceptance report and exercise-template clean-room adoption record
+- add Phase 2A R-A1-1 Slot assembly with 5–6 source validation, stable mappings, idempotent Staging persistence, source audits, Workbench selection UI, and existing-generator smoke coverage
+- add Phase 2B immutable TaskPackage version diffs, reviewer Before/After UI, and candidate renderer registry dispatch for editor and AI previews
+- add Phase 2C task-oriented Chinese Workbench navigation, workflow sections, human-readable registry labels, and bounded content search
+- add optional Phase 2D DeepSeek and OpenAI Responses API providers with structured outputs, server-only credentials, deterministic revalidation, failure runs, and offline mock fallback
+- add Phase 2E local author/reviewer login presets, custom test identities, visible current identity, and per-gate latest-reviewer attribution
+- add platform-native review discussions with replies, addressed/resolved/reopened states, reviewer confirmation, audit events, and unresolved change-request export blocking
+- add private GitHub review-repository integration with atomic item batches, pull-request creation, review-state synchronization, merged-content revalidation/import, and audit links
+- add all seven registered Chinese A1 Item Formats across creation, authoring, candidate preview, deterministic validation, mock/DeepSeek generation, freezing, GitHub review, and Workbench Staging export
+- add a dependency-free GitHub Action template that validates item identities, format structure, scoring separation, and review manifests
+- add Slot-first creation for all 15 A1 Blueprint Slots and all 21 allowed Slot/Item-Format combinations, with server-locked Can-do, renderer, scoring, delivery, domain and context contracts
+- add author-visible scoring contracts in both authoring stages, including policy explanations, immutable/editable separation, task-specific criteria, rubric, version, and current item scoring coverage
+- add complete author-facing capability briefs with all communicative activities, supporting Can-dos, evidence, A1 boundaries, Task Family behavior, delivery rules, prohibitions, and valid/invalid reference tasks
+- add deterministic information-point suggestions plus server-confirmed Candidate Preview round trips and field-level validation feedback
+- add a single fixed Item-Format template registry that binds all seven authoring editors and candidate-safe renderers while retaining the complete Workbench TaskPackage contract
+- add structured information points with type and scoring-point linkage, separate supporting-content references, and author-editable item scoring points with automatic total-score calculation
+- add owner-controlled active, archived, and recoverable deleted item states with audit history, Workbench filters, restore actions, and exclusion from review queues and assembly
+
+### Changed
+
+- make validated drafts directly submittable to GitHub review, keep editing and AI regeneration available until PR creation succeeds, and lock only after successful PR creation
+- use the item title plus English capability/checklist context in review PRs; import merged GitHub edits back into the same logical item/current version while Git commits preserve the original submission snapshot
+- use English-only Workbench chrome, generated draft titles, and pull-request metadata; replace Slot, Can-do, and Item Format codes with business names in reviewer-facing PR summaries while retaining canonical codes inside machine-validated item files
+- treat the checked-in exercise-template catalog as the primary question-structure source through TaskPackage adapters, remove parallel `TPL-A1-*` identities, and add form-entry and spoken-multiturn template coverage
+- simplify authoring pages and the item list by hiding internal readiness/delivery labels and low-value operational metadata; keep capability details in a disclosure and low-frequency item actions in a menu
+- make language-content choices depend on Slot, Can-do, skill, mastery scope, format, and context, and add candidate-text coverage hints
+- replace editable per-item scoring policy with a concise author-visible answer/scoring summary; scoring points, totals, normalization, rubrics, and benchmark references are regenerated from the locked registry contract on save and AI adoption
+
+- use repository-local Prisma schemas for reproducible Rust type generation
+- allow Staging generation to load Staging-only Workbench smoke exams while preserving production fallback for existing exams
+- keep mock GitHub authentication on the current localhost/127.0.0.1 host so development cookies are not lost across hostnames
+- show the active AI provider truthfully inside the editor and use Chinese copy in candidate previews
+- make constraint selection followed by AI generation the primary authoring path, with manual authoring as a fallback
+- expose vocabulary, grammar, character, and pragmatic targets as category-based selectors and send their human-readable registry entries plus the full difficulty profile to the AI provider
+- default new single-select items to a fixed reviewed option order; shuffled orders now produce a validation warning
+- use DeepSeek Chat Completions JSON mode with non-thinking structured requests, schema-shaped examples, and one automatic retry for empty JSON responses; return actionable connection, timeout, and provider errors without exposing credentials
+- validate AI authoring settings before a paid request; cascade domain-to-context choices and filter/count vocabulary, grammar, character, and pragmatic targets by context
+- replace item-card grids with a searchable table; separate content lifecycle labels from Staging delivery and add explicit revision, blocked, rejected, and approved states
+- make GitHub pull requests the configured human-review surface; keep legacy in-platform review APIs only as a fallback when GitHub review is disabled
+- treat Workbench Staging export as the canonical handoff for every format; create legacy Exam Environment records only when a lossless single-select adapter exists
+- persist GitHub synchronization failures as a blocked lifecycle state, skip completed batches during bulk sync, and allow merged items to begin a fresh auditable revision
+- replace the type-first new-item menu with an explicit Blueprint task selector, no default task, task-scoped formats, human-readable locked capability details, and cascading domain/context choices
+- derive and validate delivery policy from the final Slot × Item Format capability, so matching and selection items do not inherit restricted-input policies from another format in the same Slot
+- filter authoring content by Can-do, supporting Can-dos, receptive/productive mastery scope, and context on both client and server; send the complete capability and scoring Task Brief to real AI providers
+- separate the four skill headings from Blueprint selection as explicit browse filters, show capability/scoring context before creation, and reapply locked Registry fields when saving legacy drafts
+- render language-content candidates and selected targets as responsive full-width grids instead of a narrow single column
+- tolerate a newly built Workbench client connecting temporarily to an older Registry snapshot, and ignore locked Rust targets in the Vite watcher on Windows
+- show independent authoring, Staging-package, and formal-renderer readiness instead of collapsing them into one implementation badge
+- add per-format array reordering and synchronize matching, restricted-input, and form response units with their item scoring points
+- streamline Workbench authoring with decision-first creation, compact capability and language-content guidance, and progressive disclosure for fixed scoring, delivery, readiness, reference, and technical metadata
+- simplify the Workbench header and item table by hiding the presence avatar, removing the updated timestamp, exposing archive and delete as separate action columns, and placing PR links below status badges
+- start new items with an empty title and show the authoring/history guidance inside the title input as its placeholder
+
+### Fixed
+
+- honor `SESSION_TTL_IN_S` for inactivity expiry, allow the development `sid` cookie over local HTTP, clear authentication on 401, and replace raw `no sid in jar` failures with an explicit Chinese re-login path
+- prevent incomplete legacy scoring packages and AI candidate adoption from bypassing item-level scoring initialization and response-unit coverage validation
+- merge real-provider answer proposals into the existing item scoring package so AI generation cannot erase the fixed scoring contract, rubric, benchmark, item-level scoring metadata, or author criteria
+- prevent React Strict Mode from creating a no-op draft revision when an author only opens an item, and avoid empty avatar image URLs in local test identities
+
 ### TODO
 
 - Add React error boundaries at appropriate component levels to catch and handle component errors gracefully

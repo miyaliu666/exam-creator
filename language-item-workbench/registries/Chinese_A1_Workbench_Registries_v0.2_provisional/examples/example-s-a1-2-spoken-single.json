@@ -1,0 +1,63 @@
+{
+  "taskId": "EX-S-A1-2-001",
+  "taskVersion": "0.1",
+  "specVersions": {
+    "contentSpecVersion": "0.2-provisional"
+  },
+  "blueprintSlotId": "S-A1-2",
+  "taskFamilyId": "TF-GUIDED-SPOKEN-PRODUCTION",
+  "itemFormatId": "IF-SPOKEN-SINGLE",
+  "renderer": {
+    "rendererId": "REN-SPOKEN-SINGLE",
+    "rendererVersion": "0.1"
+  },
+  "candidatePayload": {
+    "situation": "你在饮料店。",
+    "instructions": "说出你想喝什么和数量。",
+    "visiblePromptText": "你想喝什么？要几杯？",
+    "promptAudioRef": "MEDIA-DRAFT-S-A1-2-001",
+    "sourceMaterialRefs": [],
+    "recipient": "服务人员",
+    "purpose": "点饮料",
+    "preparationTimeSeconds": 15,
+    "responseTimeSeconds": 30,
+    "requiredContentPoints": [
+      {
+        "contentPointId": "drink",
+        "description": "说明饮料"
+      },
+      {
+        "contentPointId": "quantity",
+        "description": "说明数量"
+      }
+    ]
+  },
+  "authoringPackage": {
+    "authoringTranscripts": [
+      "你想喝什么？要几杯？"
+    ]
+  },
+  "scoringPackage": {
+    "rubricId": "RUB-S-A1-PRODUCTION-v0.1",
+    "requiredContentPointIds": [
+      "drink",
+      "quantity"
+    ]
+  },
+  "reviewPackage": {
+    "gates": {}
+  },
+  "mediaRefs": [
+    "MEDIA-DRAFT-S-A1-2-001"
+  ],
+  "delivery": {
+    "navigationPolicyId": "NAV-FORWARD-RECORDING-v0.1",
+    "inputPolicyId": "notApplicable",
+    "playbackPolicyId": "notApplicable",
+    "recordingPolicyId": "REC-SINGLE-A1-v0.1",
+    "speakingRateProfileId": "RATE-A1-CLEAR-SLOW-v0.1",
+    "pauseProfileId": "PAUSE-A1-SENTENCE-v0.1"
+  },
+  "content": {},
+  "variation": {}
+}

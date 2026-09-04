@@ -1,0 +1,71 @@
+{
+  "taskId": "EX-L-A1-3-001",
+  "taskVersion": "0.1",
+  "specVersions": {
+    "contentSpecVersion": "0.2-provisional"
+  },
+  "blueprintSlotId": "L-A1-3",
+  "taskFamilyId": "TF-LISTENING-INFORMATION-COMPLETION",
+  "itemFormatId": "IF-RESTRICTED-INPUT",
+  "renderer": {
+    "rendererId": "REN-RESTRICTED-INPUT",
+    "rendererVersion": "0.1"
+  },
+  "candidatePayload": {
+    "stimulus": {
+      "text": null,
+      "imageRefs": [],
+      "audioRef": "MEDIA-DRAFT-L-A1-3-001"
+    },
+    "prompt": "听留言，填写时间和教室。",
+    "responseFields": [
+      {
+        "responseId": "time",
+        "label": "时间",
+        "inputType": "time",
+        "maxLength": 8,
+        "placeholder": ""
+      },
+      {
+        "responseId": "room",
+        "label": "教室",
+        "inputType": "shortText",
+        "maxLength": 8,
+        "placeholder": ""
+      }
+    ]
+  },
+  "authoringPackage": {
+    "authoringTranscripts": [
+      "汉语课星期三上午九点，在305教室。"
+    ]
+  },
+  "scoringPackage": {
+    "acceptedValues": {
+      "time": [
+        "9:00",
+        "上午九点"
+      ],
+      "room": [
+        "305",
+        "305教室"
+      ]
+    }
+  },
+  "reviewPackage": {
+    "gates": {}
+  },
+  "mediaRefs": [
+    "MEDIA-DRAFT-L-A1-3-001"
+  ],
+  "delivery": {
+    "navigationPolicyId": "NAV-FORWARD-TASK-v0.1",
+    "inputPolicyId": "INPUT-RESTRICTED-FIELD-v0.1",
+    "playbackPolicyId": "PLAY-COMPLETE-TWICE-v0.1",
+    "recordingPolicyId": "notApplicable",
+    "speakingRateProfileId": "RATE-A1-CLEAR-SLOW-v0.1",
+    "pauseProfileId": "PAUSE-A1-SENTENCE-v0.1"
+  },
+  "content": {},
+  "variation": {}
+}

@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fcc:a1:spoken-multiturn:0.2",
+  "title": "IF-SPOKEN-MULTITURN candidate payload",
+  "type": "object",
+  "required": [
+    "situation",
+    "instructions",
+    "roles",
+    "interactionMode",
+    "startPathId",
+    "paths",
+    "routingRuleId"
+  ],
+  "properties": {
+    "situation": {
+      "type": "string"
+    },
+    "instructions": {
+      "type": "string"
+    },
+    "roles": {
+      "type": "object",
+      "required": [
+        "systemRole",
+        "candidateRole"
+      ],
+      "properties": {
+        "systemRole": {
+          "type": "string"
+        },
+        "candidateRole": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "interactionMode": {
+      "type": "string",
+      "enum": [
+        "fixed",
+        "limitedBranching"
+      ]
+    },
+    "startPathId": {
+      "type": "string"
+    },
+    "paths": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "pathId",
+          "turns"
+        ],
+        "properties": {
+          "pathId": {
+            "type": "string"
+          },
+          "turns": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "object",
+              "required": [
+                "turnId",
+                "speaker"
+              ],
+              "properties": {
+                "turnId": {
+                  "type": "string"
+                },
+                "speaker": {
+                  "type": "string",
+                  "enum": [
+                    "system",
+                    "candidate"
+                  ]
+                },
+                "promptAudioRef": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "responseId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "responseTimeSeconds": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1
+                },
+                "requiredFunctionIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "routingRuleId": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,1735 @@
+registryType: A1GrammarRegistry
+registryVersion: 0.2-provisional
+status: ProvisionalExploratory
+count: 60
+entries:
+- grammarId: GR-A1-001
+  function: 说明身份或类别
+  pattern: A 是 B
+  examples:
+  - 我是学生。
+  - 她是老师。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-S1
+  - A1-I1
+  - A1-W1
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D15
+  - D17
+  triggerLexicalIds:
+  - LEX-A1-0158
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限具体身份、职业、关系或类别；不处理抽象定义和“是……的”。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-002
+  function: 说明姓名
+  pattern: A 叫 X
+  examples:
+  - 我叫安娜。
+  - 他叫李明。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-S1
+  - A1-I1
+  - A1-W1
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D15
+  - D17
+  triggerLexicalIds:
+  - LEX-A1-0058
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: X 为简短姓名或题目提供的名字。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-003
+  function: 说明姓氏
+  pattern: A 姓 X
+  examples:
+  - 我姓王。
+  - 老师姓李。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-S1
+  - A1-I1
+  - A1-W1
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D15
+  - D17
+  triggerLexicalIds:
+  - LEX-A1-0057
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限一个常见或题目提供的姓氏。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-004
+  function: 表达拥有或关系
+  pattern: A 有 B
+  examples:
+  - 我有一个姐姐。
+  - 她有手机。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-I1
+  contextIds:
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D17
+  triggerLexicalIds:
+  - LEX-A1-0159
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限具体人、物、时间和家庭关系。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-005
+  function: 否定拥有或存在
+  pattern: A 没有 B
+  examples:
+  - 我没有车。
+  - 他没有时间。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-I1
+  - A1-I3a
+  - A1-I3b
+  contextIds:
+  - D02
+  - D03
+  - D05
+  - D06
+  - D13
+  - D17
+  - D19
+  triggerLexicalIds:
+  - LEX-A1-0160
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限明确的没有；不处理复杂时体。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-006
+  function: 说明某处有人或物
+  pattern: 地点 + 有 + 人／物
+  examples:
+  - 教室里有十个人。
+  - 楼下有一家商店。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-I2
+  contextIds: &id001
+  - D04
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  triggerLexicalIds:
+  - LEX-A1-0159
+  - LEX-A1-0279
+  - LEX-A1-0278
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限一个地点和少量具体人或物。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-007
+  function: 说明所在地点
+  pattern: A 在 B
+  examples:
+  - 我在学校。
+  - 书在桌子上。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-M1
+  - A1-M2
+  contextIds: *id001
+  triggerLexicalIds:
+  - LEX-A1-0399
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限一个清楚的具体地点。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-008
+  function: 说明基本方位
+  pattern: A 在 B 里／上／下／前面／后面／左边／右边／旁边
+  examples:
+  - 洗手间在电梯旁边。
+  - 教室在二楼。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L2
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-I2
+  - A1-M1
+  - A1-M2
+  contextIds: *id001
+  triggerLexicalIds:
+  - LEX-A1-0399
+  - LEX-A1-0279
+  - LEX-A1-0277
+  - LEX-A1-0278
+  - LEX-A1-0281
+  - LEX-A1-0282
+  - LEX-A1-0283
+  - LEX-A1-0284
+  - LEX-A1-0285
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限一步式、单一参照物的方位。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-009
+  function: 表达基本动作
+  pattern: 主语 + 动词 + 宾语
+  examples:
+  - 我喝茶。
+  - 她学汉语。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  contextIds: &id002
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  triggerLexicalIds: []
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 通常只含一个主要动作和简单宾语。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-010
+  function: 表达时间地点动作顺序
+  pattern: 时间 + 主语 + 地点 + 动作
+  examples:
+  - 明天我在学校上课。
+  - 下午三点我们在门口见。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L2
+  - A1-R2
+  - A1-W2
+  - A1-I3a
+  - A1-I3b
+  - A1-M1
+  - A1-M2
+  contextIds: &id003
+  - D02
+  - D06
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  triggerLexicalIds:
+  - LEX-A1-0399
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 不处理多重时间状语和复杂语序。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-011
+  function: 描述基本性质或状态
+  pattern: 主语 + 很 + 形容词；主语 + 形容词
+  examples:
+  - 这个房间很大。
+  - 今天冷。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  - A1-I1
+  contextIds:
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D14
+  - D17
+  triggerLexicalIds:
+  - LEX-A1-0186
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限高频、具体、可观察或感受的形容词。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-012
+  function: 表达明显程度或变化
+  pattern: 太 + 形容词 + 了
+  examples:
+  - 太贵了。
+  - 今天太冷了。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  - A1-I2
+  contextIds:
+  - D06
+  - D07
+  - D08
+  - D09
+  - D14
+  - D18
+  - D19
+  triggerLexicalIds:
+  - LEX-A1-0187
+  - LEX-A1-0391
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限直接、明显的程度。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-013
+  function: 表达轻微程度
+  pattern: 有点儿 + 形容词／状态
+  examples:
+  - 我有点儿累。
+  - 这个有点儿贵。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  - A1-I2
+  contextIds:
+  - D04
+  - D06
+  - D07
+  - D08
+  - D09
+  - D14
+  - D18
+  - D19
+  triggerLexicalIds:
+  - LEX-A1-0401
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限轻微程度或身体感受。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-014
+  function: 表达所属或简单修饰
+  pattern: A 的 B
+  examples:
+  - 我的手机。
+  - 老师的办公室。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W1
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  contextIds: *id002
+  triggerLexicalIds:
+  - LEX-A1-0403
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: A 通常为人称、姓名或短名词；不处理长定语。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-015
+  function: 表示人物复数
+  pattern: 人称代词／人物名词 + 们
+  examples:
+  - 我们明天见。
+  - 同学们好。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  contextIds:
+  - D01
+  - D02
+  - D03
+  - D15
+  - D17
+  - D19
+  triggerLexicalIds:
+  - LEX-A1-0392
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只用于人称代词和常见人物称谓。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-016
+  function: 表达基本数量
+  pattern: 数词 + 量词 + 名词
+  examples:
+  - 两杯茶。
+  - 三个学生。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W1
+  - A1-I2
+  - A1-M1
+  - A1-M2
+  contextIds:
+  - D02
+  - D03
+  - D04
+  - D08
+  - D09
+  - D10
+  - D14
+  - D15
+  - D17
+  - D20
+  triggerLexicalIds: []
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只用批准的常见量词。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-017
+  function: 询问基本数量
+  pattern: 几／多少 + 量词 + 名词
+  examples:
+  - 几个人？
+  - 多少钱？
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L2
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds:
+  - D02
+  - D03
+  - D04
+  - D08
+  - D09
+  - D10
+  - D13
+  - D14
+  - D15
+  - D17
+  - D19
+  triggerLexicalIds:
+  - LEX-A1-0214
+  - LEX-A1-0215
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限直接数量、价格或人数。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-018
+  function: 表达简单序数
+  pattern: 第 + 数词 + 量词／名词
+  examples:
+  - 第三课。
+  - 二楼第三个房间。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-I2
+  - A1-M1
+  - A1-M2
+  contextIds:
+  - D10
+  - D12
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D20
+  triggerLexicalIds:
+  - LEX-A1-0404
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限课程、楼层、房间和小序数。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-019
+  function: 提出一般疑问
+  pattern: 陈述句 + 吗？
+  examples:
+  - 你是老师吗？
+  - 明天上课吗？
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L3
+  - A1-R2
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds: *id002
+  triggerLexicalIds:
+  - LEX-A1-0395
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 问题只含一个主要信息点。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-020
+  function: 提出正反疑问
+  pattern: 动词／形容词 + 不 + 动词／形容词
+  examples:
+  - 你去不去？
+  - 这个大不大？
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L3
+  - A1-R2
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds: *id002
+  triggerLexicalIds:
+  - LEX-A1-0157
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限短小、对称形式。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-021
+  function: 确认身份或存在
+  pattern: 是不是；有没有
+  examples:
+  - 他是不是老师？
+  - 这里有没有洗手间？
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L3
+  - A1-R2
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds: *id002
+  triggerLexicalIds:
+  - LEX-A1-0158
+  - LEX-A1-0159
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只确认一个明确事实。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-022
+  function: 确认能力或许可
+  pattern: 能不能；可不可以
+  examples:
+  - 你能不能来？
+  - 这里可不可以停车？
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds: &id004
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D13
+  - D14
+  - D15
+  - D16
+  - D18
+  - D19
+  - D20
+  triggerLexicalIds:
+  - LEX-A1-0105
+  - LEX-A1-0016
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只处理简单能力、参加和许可。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-023
+  function: 询问人物或事物
+  pattern: 谁；什么
+  examples:
+  - 他是谁？
+  - 你喝什么？
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L3
+  - A1-R2
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  contextIds: *id002
+  triggerLexicalIds:
+  - LEX-A1-0041
+  - LEX-A1-0042
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只询问一个具体人物、物品、活动或信息。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-024
+  function: 询问选择
+  pattern: 哪 + 量词／名词
+  examples:
+  - 哪一杯？
+  - 你坐哪一路车？
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L2
+  - A1-L3
+  - A1-R2
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-M1
+  - A1-M2
+  contextIds:
+  - D02
+  - D08
+  - D09
+  - D10
+  - D11
+  - D13
+  - D14
+  - D15
+  - D17
+  - D19
+  - D20
+  triggerLexicalIds:
+  - LEX-A1-0043
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限少量、清楚候选项。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-025
+  function: 询问地点
+  pattern: 哪里／哪儿
+  examples:
+  - 洗手间在哪里？
+  - 你住哪儿？
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L2
+  - A1-L3
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds: *id001
+  triggerLexicalIds:
+  - LEX-A1-0046
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只询问一个地点或位置。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-026
+  function: 询问日期时间价格
+  pattern: 几；多少；几点；几号
+  examples:
+  - 今天几号？
+  - 现在几点？
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L2
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds: *id003
+  triggerLexicalIds:
+  - LEX-A1-0214
+  - LEX-A1-0215
+  - LEX-A1-0251
+  - LEX-A1-0411
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限直接数字、日期、时间、价格或数量。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-027
+  function: 询问方法或情况
+  pattern: 怎么 + 动词；怎么样
+  examples:
+  - 怎么走？
+  - 这个怎么样？
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L3
+  - A1-R2
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  - A1-I4
+  contextIds:
+  - D04
+  - D05
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D14
+  - D15
+  - D16
+  - D18
+  - D19
+  triggerLexicalIds:
+  - LEX-A1-0161
+  - LEX-A1-0021
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只处理一步式方法、状态或简单评价。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-028
+  function: 简单追问
+  pattern: 名词／代词 + 呢？
+  examples:
+  - 你呢？
+  - 星期六呢？
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L3
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds:
+  - D01
+  - D02
+  - D05
+  - D06
+  - D13
+  - D15
+  - D17
+  - D19
+  triggerLexicalIds:
+  - LEX-A1-0397
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只在上下文清楚时追问同类信息。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-029
+  function: 否定习惯、意愿或一般事实
+  pattern: 不 + 动词／形容词
+  examples:
+  - 我不喝咖啡。
+  - 今天不冷。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds: *id002
+  triggerLexicalIds:
+  - LEX-A1-0157
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只处理一般否定、意愿否定或当前判断。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-030
+  function: 否定已发生或表示没有
+  pattern: 没（有）+ 动词／名词
+  examples:
+  - 我没吃早饭。
+  - 我没有车。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds: *id002
+  triggerLexicalIds:
+  - LEX-A1-0160
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只处理简单未发生、未完成或没有。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-031
+  function: 表达简单禁止或劝阻
+  pattern: 不要／别 + 动词
+  examples:
+  - 不要在这里停车。
+  - 别走。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-W2
+  - A1-I2
+  contextIds:
+  - D07
+  - D09
+  - D10
+  - D11
+  - D12
+  - D14
+  - D15
+  - D16
+  - D18
+  - D19
+  triggerLexicalIds:
+  - LEX-A1-0018
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限一步式、直接、情境清楚的禁止。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-032
+  function: 表达意愿、需要或计划
+  pattern: 想／要／需要 + 名词／动词短语
+  examples:
+  - 我想喝茶。
+  - 我需要医生。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds: *id002
+  triggerLexicalIds:
+  - LEX-A1-0101
+  - LEX-A1-0102
+  - LEX-A1-0103
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只处理直接需要和近期简单安排。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-033
+  function: 表达能力或许可
+  pattern: 会／能／可以 + 动词
+  examples:
+  - 我会说一点儿汉语。
+  - 你可以进来。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds: *id002
+  triggerLexicalIds:
+  - LEX-A1-0104
+  - LEX-A1-0105
+  - LEX-A1-0016
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只处理基本技能、现实可能性或简单许可。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-034
+  function: 表达当前动作
+  pattern: 在／正在 + 动词
+  examples:
+  - 我在吃饭。
+  - 他正在上课。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  - A1-I1
+  contextIds:
+  - D03
+  - D04
+  - D06
+  - D08
+  - D15
+  - D17
+  - D18
+  - D19
+  triggerLexicalIds:
+  - LEX-A1-0399
+  - LEX-A1-0402
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只处理当前可观察或明确说明的动作。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-035
+  function: 表达简单完成
+  pattern: 动词 + 了 + 宾语
+  examples:
+  - 我买了两张票。
+  - 她到了学校。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  - A1-I3a
+  - A1-I3b
+  contextIds: *id002
+  triggerLexicalIds:
+  - LEX-A1-0391
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只处理一个已经完成的具体动作；不叙述连续过去经历。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-036
+  function: 表达新情况或状态变化
+  pattern: 句末了
+  examples:
+  - 下雨了。
+  - 现在可以走了。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-L2
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds: *id002
+  triggerLexicalIds:
+  - LEX-A1-0391
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只表示显而易见或直接说明的新情况。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-037
+  function: 连接名词性成分
+  pattern: A 和／跟 B
+  examples:
+  - 我和朋友去。
+  - 老师跟学生说话。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  - A1-I1
+  contextIds: *id002
+  triggerLexicalIds:
+  - LEX-A1-0398
+  - LEX-A1-0408
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只连接两个简单名词或代词。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-038
+  function: 表达相同或补充情况
+  pattern: 也 + 谓语
+  examples:
+  - 我也去。
+  - 她也是学生。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  contextIds: *id002
+  triggerLexicalIds:
+  - LEX-A1-0390
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只补充一个相同或并行事实。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-039
+  function: 表达全体或共同情况
+  pattern: 都 + 谓语
+  examples:
+  - 我们都去。
+  - 两个教室都在二楼。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  - A1-I1
+  contextIds: *id002
+  triggerLexicalIds:
+  - LEX-A1-0406
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 集合范围必须清楚且很小。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-040
+  function: 表达继续、另外或仍然
+  pattern: 还 + 谓语／名词
+  examples:
+  - 我还要一杯水。
+  - 他还在学校。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  contextIds: *id002
+  triggerLexicalIds:
+  - LEX-A1-0405
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限继续、另外或仍然的直接意义。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-041
+  function: 表达再次动作
+  pattern: 再 + 动词
+  examples:
+  - 请再说一次。
+  - 我们明天再见。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L3
+  - A1-W2
+  - A1-I2
+  - A1-I4
+  contextIds:
+  - D01
+  - D13
+  - D16
+  - D18
+  - D19
+  triggerLexicalIds:
+  - LEX-A1-0393
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只表示一次简单重复或稍后再做。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-042
+  function: 表达共同参与
+  pattern: 一起 + 动词
+  examples:
+  - 我们一起去。
+  - 一起吃饭吧。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds:
+  - D03
+  - D05
+  - D06
+  - D08
+  - D10
+  - D13
+  - D15
+  - D17
+  - D19
+  triggerLexicalIds: []
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限熟悉的共同活动。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-043
+  function: 礼貌提出请求
+  pattern: 请 + 动词／短语
+  examples:
+  - 请等一下。
+  - 请给我一杯茶。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L3
+  - A1-W2
+  - A1-I2
+  - A1-I4
+  contextIds: *id004
+  triggerLexicalIds:
+  - LEX-A1-0011
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 一次只提出一个直接请求。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-044
+  function: 请求许可或确认可行性
+  pattern: 可以 + 动词 + 吗？
+  examples:
+  - 可以进来吗？
+  - 明天可以见面吗？
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L3
+  - A1-W2
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds: *id004
+  triggerLexicalIds:
+  - LEX-A1-0016
+  - LEX-A1-0395
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只处理简单许可或安排可行性。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-045
+  function: 弱化简单请求
+  pattern: 动词 + 一下
+  examples:
+  - 请等一下。
+  - 看一下这个。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L3
+  - A1-W2
+  - A1-I2
+  - A1-I4
+  contextIds: *id004
+  triggerLexicalIds:
+  - LEX-A1-0387
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只用于少量高频请求；不要求语用细微辨析。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-046
+  function: 提出简单建议或确认
+  pattern: 短句 + 吧
+  examples:
+  - 三点见吧。
+  - 我们坐公交车吧。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L3
+  - A1-W2
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds:
+  - D08
+  - D09
+  - D10
+  - D13
+  - D15
+  - D17
+  - D19
+  triggerLexicalIds:
+  - LEX-A1-0396
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只用于明显、低风险的建议或确认。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-047
+  function: 给出物品或服务
+  pattern: 给 + 人 + 物
+  examples:
+  - 请给我一杯水。
+  - 我给你车票。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L3
+  - A1-W2
+  - A1-I2
+  - A1-M1
+  - A1-M2
+  contextIds: *id004
+  triggerLexicalIds:
+  - LEX-A1-0122
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只处理具体物品或简单服务。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-048
+  function: 转告信息
+  pattern: 告诉 + 人 + 信息
+  examples:
+  - 请告诉安娜九点上课。
+  - 我告诉你地址。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-W2
+  - A1-I2
+  - A1-M1
+  - A1-M2
+  contextIds:
+  - D13
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  triggerLexicalIds:
+  - LEX-A1-0123
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 信息限一至三个显性事实；不处理复杂引语。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-049
+  function: 表达移动到地点
+  pattern: 去／来 + 地点
+  examples:
+  - 我去学校。
+  - 你来办公室吗？
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S1
+  - A1-S2
+  - A1-W2
+  - A1-I1
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds: *id001
+  triggerLexicalIds:
+  - LEX-A1-0128
+  - LEX-A1-0127
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只处理一个目的地。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-050
+  function: 表达交通方式和目的地
+  pattern: 坐 + 交通工具 + 去 + 地点
+  examples:
+  - 我坐公交车去学校。
+  - 坐地铁去车站。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L2
+  - A1-R2
+  - A1-S2
+  - A1-I2
+  - A1-M1
+  - A1-M2
+  contextIds:
+  - D10
+  - D11
+  - D13
+  - D15
+  - D17
+  - D20
+  triggerLexicalIds:
+  - LEX-A1-0132
+  - LEX-A1-0128
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 不处理复杂换乘和多段行程。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-051
+  function: 表达起止范围
+  pattern: 从 + 时间／地点 + 到 + 时间／地点
+  examples:
+  - 从九点到十点上课。
+  - 从车站到学校。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L2
+  - A1-R2
+  - A1-W2
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  - A1-M1
+  - A1-M2
+  contextIds: *id003
+  triggerLexicalIds:
+  - LEX-A1-0407
+  - LEX-A1-0129
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只连接一组明确起点和终点。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-052
+  function: 表达上下交通工具
+  pattern: 在 + 地点 + 上车／下车
+  examples:
+  - 在学校门口上车。
+  - 在第三站下车。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L2
+  - A1-L3
+  - A1-R2
+  - A1-I2
+  - A1-M1
+  - A1-M2
+  contextIds:
+  - D10
+  - D11
+  - D20
+  triggerLexicalIds:
+  - LEX-A1-0399
+  - LEX-A1-0343
+  - LEX-A1-0344
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只处理一个上下车点。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-053
+  function: 给出一步式方向
+  pattern: 一直走；左转；右转；往 + 地点 + 走
+  examples:
+  - 一直走。
+  - 在银行右转。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L3
+  - A1-R1
+  - A1-R2
+  - A1-S2
+  - A1-I2
+  contextIds:
+  - D10
+  - D11
+  - D12
+  - D14
+  - D15
+  - D18
+  triggerLexicalIds:
+  - LEX-A1-0293
+  - LEX-A1-0294
+  - LEX-A1-0295
+  - LEX-A1-0292
+  - LEX-A1-0131
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 最多一个转向或一个直接行走指令。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-054
+  function: 表达具体日期
+  pattern: 年／月／日／号；星期 + 数字
+  examples:
+  - 五月三号。
+  - 星期二上课。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  - A1-I3a
+  - A1-I3b
+  - A1-M1
+  - A1-M2
+  contextIds: *id003
+  triggerLexicalIds:
+  - LEX-A1-0226
+  - LEX-A1-0227
+  - LEX-A1-0228
+  - LEX-A1-0229
+  - LEX-A1-0230
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只处理常见、清楚的日期格式。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-055
+  function: 表达钟点
+  pattern: 上午／下午／晚上 + 数字 + 点／分／半
+  examples:
+  - 下午三点半。
+  - 上午九点十分。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L2
+  - A1-R1
+  - A1-R2
+  - A1-W1
+  - A1-W2
+  - A1-I3a
+  - A1-I3b
+  - A1-M1
+  - A1-M2
+  contextIds: *id003
+  triggerLexicalIds:
+  - LEX-A1-0243
+  - LEX-A1-0245
+  - LEX-A1-0246
+  - LEX-A1-0247
+  - LEX-A1-0248
+  - LEX-A1-0213
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只处理常见整点、半点和简单分钟。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-056
+  function: 表达相对日期
+  pattern: 今天／明天／昨天 + 谓语
+  examples:
+  - 明天上课。
+  - 昨天没上班。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  - A1-I1
+  - A1-I3a
+  - A1-I3b
+  contextIds: *id003
+  triggerLexicalIds:
+  - LEX-A1-0232
+  - LEX-A1-0233
+  - LEX-A1-0234
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 不要求连续叙述过去事件。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-057
+  function: 表达选择确认
+  pattern: A 还是 B？
+  examples:
+  - 茶还是咖啡？
+  - 九点还是十点？
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L3
+  - A1-R2
+  - A1-I2
+  - A1-I3a
+  - A1-I3b
+  contextIds:
+  - D08
+  - D09
+  - D10
+  - D13
+  - D14
+  - D15
+  - D17
+  - D18
+  - D19
+  triggerLexicalIds: []
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只在两个明确选项之间确认。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-058
+  function: 表达限制
+  pattern: 只 + 动词／数量
+  examples:
+  - 我只要一杯。
+  - 今天只上两节课。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L1
+  - A1-L2
+  - A1-R2
+  - A1-S2
+  - A1-W2
+  - A1-I2
+  contextIds:
+  - D05
+  - D06
+  - D08
+  - D09
+  - D13
+  - D15
+  - D17
+  - D19
+  triggerLexicalIds:
+  - LEX-A1-0394
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 限一个清楚的限制范围。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-059
+  function: 表达简单先后
+  pattern: 先 + 动词，再 + 动词
+  examples:
+  - 先报名，再上课。
+  - 先买票，再上车。
+  masteryScope: receptiveProductive
+  canDoIds:
+  - A1-L3
+  - A1-R2
+  - A1-I2
+  contextIds:
+  - D09
+  - D10
+  - D14
+  - D15
+  - D16
+  - D18
+  triggerLexicalIds:
+  - LEX-A1-0393
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只用于两个直接步骤；不得发展为多步骤说明。
+  reviewStatus: PendingHumanGrammarReview
+- grammarId: GR-A1-060
+  function: 表示接近或距离
+  pattern: A 离 B 近／远
+  examples:
+  - 学校离车站很近。
+  - 这里离医院远吗？
+  masteryScope: receptive
+  canDoIds:
+  - A1-L2
+  - A1-L3
+  - A1-R2
+  - A1-S2
+  - A1-I2
+  contextIds:
+  - D10
+  - D11
+  - D14
+  - D15
+  - D17
+  triggerLexicalIds:
+  - LEX-A1-0180
+  - LEX-A1-0181
+  sourceIds:
+  - PROJECT-CANDO-CONTEXT-v0.2
+  - HSK-L1-CROSSCHECK
+  decision: retainOrAdjust
+  restrictions: 只处理整体近远，不要求距离计算。
+  reviewStatus: PendingHumanGrammarReview

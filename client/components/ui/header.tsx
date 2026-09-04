@@ -6,9 +6,15 @@ interface HeaderProps {
   title: string;
   description?: string;
   children?: ReactNode;
+  showPresence?: boolean;
 }
 
-export function Header({ title, description, children }: HeaderProps) {
+export function Header({
+  title,
+  description,
+  children,
+  showPresence = true,
+}: HeaderProps) {
   const path = window.location.pathname.split("/")[1];
   console.debug(path);
   return (
@@ -31,7 +37,7 @@ export function Header({ title, description, children }: HeaderProps) {
           </Text>
         )}
       </Stack>
-      <UsersOnPageAvatars path={"/" + path} />
+      {showPresence ? <UsersOnPageAvatars path={"/" + path} /> : null}
       {children}
     </Flex>
   );

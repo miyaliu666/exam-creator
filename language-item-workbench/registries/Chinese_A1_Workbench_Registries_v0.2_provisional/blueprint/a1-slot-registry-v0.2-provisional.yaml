@@ -1,0 +1,597 @@
+registryType: A1BlueprintSlotRegistry
+registryVersion: 0.2-provisional
+status: SpecificationReadyImplementationPending
+entries:
+- blueprintSlotId: R-A1-1
+  title: 标志、标签和简短通知
+  slotVersion: 0.2-provisional
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-R1
+  supportingCanDoIds: []
+  primaryReportedSkill: Reading
+  communicativeActivities:
+  - Reception
+  allowedDomains:
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  scoredResponseMode: selectOrMatch
+  taskFamilyId: TF-SIGNS-NOTICES
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  - IF-MATCHING
+  taskStructure:
+    taskGroups: 1
+    stimuli: 5-6
+    responses: 5-6
+    scoringPoints: 5-6
+  timeTargetMinutes: 5
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+- blueprintSlotId: R-A1-2
+  title: 短消息和在线信息
+  slotVersion: 0.2-provisional
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-R2
+  supportingCanDoIds: []
+  primaryReportedSkill: Reading
+  communicativeActivities:
+  - Reception
+  allowedDomains: &id001
+  - Personal
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  scoredResponseMode: selectOrMatch
+  taskFamilyId: TF-SHORT-MESSAGE-COMPREHENSION
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  - IF-MATCHING
+  taskStructure:
+    taskGroups: 1
+    stimuli: 2-3
+    responses: 5-6
+    scoringPoints: 5-6
+  timeTargetMinutes: 7
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+- blueprintSlotId: R-A1-3
+  title: 实用结构化信息
+  slotVersion: 0.2-provisional
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-R2
+  supportingCanDoIds: []
+  primaryReportedSkill: Reading
+  communicativeActivities:
+  - Reception
+  allowedDomains:
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D20
+  scoredResponseMode: selectMatchOrRestrictedInput
+  taskFamilyId: TF-STRUCTURED-INFORMATION
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  - IF-MATCHING
+  - IF-RESTRICTED-INPUT
+  taskStructure:
+    taskGroups: 1
+    stimuli: 2-3
+    responses: 5-6
+    scoringPoints: 5-6
+  timeTargetMinutes: 7
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+- blueprintSlotId: R-A1-4
+  title: 简短人物资料、日常安排和基本说明
+  slotVersion: 0.2-provisional
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-R2
+  supportingCanDoIds: []
+  primaryReportedSkill: Reading
+  communicativeActivities:
+  - Reception
+  allowedDomains: *id001
+  allowedContextIds:
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D11
+  - D15
+  - D16
+  - D17
+  - D18
+  scoredResponseMode: selectOrMatch
+  taskFamilyId: TF-SHORT-TEXT-COMPREHENSION
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  - IF-MATCHING
+  taskStructure:
+    taskGroups: 1
+    stimuli: 2-3
+    responses: 5-6
+    scoringPoints: 5-6
+  timeTargetMinutes: 8
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+- blueprintSlotId: L-A1-1
+  title: 基本个人和熟悉信息
+  slotVersion: 0.2-provisional
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-L1
+  supportingCanDoIds: []
+  primaryReportedSkill: Listening
+  communicativeActivities:
+  - Reception
+  allowedDomains:
+  - Personal
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D15
+  - D17
+  scoredResponseMode: select
+  taskFamilyId: TF-LISTEN-AND-IDENTIFY
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  taskStructure:
+    taskGroups: 1
+    stimuli: about 5
+    responses: 5
+    scoringPoints: 5
+  timeTargetMinutes: 5
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+- blueprintSlotId: L-A1-2
+  title: 短对话中的明确细节
+  slotVersion: 0.2-provisional
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-L2
+  supportingCanDoIds: []
+  primaryReportedSkill: Listening
+  communicativeActivities:
+  - Reception
+  allowedDomains: *id001
+  allowedContextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D20
+  scoredResponseMode: select
+  taskFamilyId: TF-SHORT-DIALOGUE-DETAIL
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  taskStructure:
+    taskGroups: 1
+    stimuli: about 5
+    responses: 5
+    scoringPoints: 5
+  timeTargetMinutes: 6
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+- blueprintSlotId: L-A1-3
+  title: 通知、留言和信息记录
+  slotVersion: 0.2-provisional
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-L2
+  supportingCanDoIds: []
+  primaryReportedSkill: Listening
+  communicativeActivities:
+  - Reception
+  allowedDomains: *id001
+  allowedContextIds:
+  - D02
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  scoredResponseMode: selectOrRestrictedInput
+  taskFamilyId: TF-LISTENING-INFORMATION-COMPLETION
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  - IF-RESTRICTED-INPUT
+  taskStructure:
+    taskGroups: 1
+    stimuli: 2-3
+    responses: about 5
+    scoringPoints: about 5
+  timeTargetMinutes: 8
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+- blueprintSlotId: L-A1-4
+  title: 简单交际目的和一步式指示
+  slotVersion: 0.2-provisional
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-L3
+  supportingCanDoIds: []
+  primaryReportedSkill: Listening
+  communicativeActivities:
+  - Reception
+  allowedDomains: *id001
+  allowedContextIds:
+  - D01
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  scoredResponseMode: select
+  taskFamilyId: TF-COMMUNICATIVE-PURPOSE
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  taskStructure:
+    taskGroups: 1
+    stimuli: about 5
+    responses: 5
+    scoringPoints: 5
+  timeTargetMinutes: 6
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+- blueprintSlotId: W-A1-1
+  title: 填写基本在线表格
+  slotVersion: 0.2-provisional
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-W1
+  supportingCanDoIds: []
+  primaryReportedSkill: Writing
+  communicativeActivities:
+  - Production
+  allowedDomains: *id001
+  allowedContextIds:
+  - D02
+  - D13
+  - D14
+  - D16
+  - D17
+  - D20
+  scoredResponseMode: formEntry
+  taskFamilyId: TF-FORM-COMPLETION
+  allowedItemFormatIds:
+  - IF-FORM-ENTRY
+  taskStructure:
+    tasks: 1
+    fields: 4-6
+    responses: 4-6
+    scoringPoints: 4-6
+  timeTargetMinutes: 6
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+- blueprintSlotId: W-A1-2
+  title: 回复非常短的实用消息
+  slotVersion: 0.2-provisional
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-W2
+  supportingCanDoIds:
+  - A1-I3b
+  primaryReportedSkill: Writing
+  communicativeActivities:
+  - Production
+  - Interaction
+  allowedDomains: *id001
+  allowedContextIds:
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  scoredResponseMode: typedChinese
+  taskFamilyId: TF-SHORT-MESSAGE-RESPONSE
+  allowedItemFormatIds:
+  - IF-TYPED-MESSAGE
+  taskStructure:
+    tasks: 1
+    responses: 1
+    taskScores: 1
+  timeTargetMinutes: 10
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+- blueprintSlotId: W-A1-3
+  title: 书面转告简单信息
+  slotVersion: 0.2-provisional
+  status: PilotRequired
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-M2
+  supportingCanDoIds:
+  - A1-W2
+  primaryReportedSkill: Writing
+  communicativeActivities:
+  - Mediation
+  - Production
+  allowedDomains: *id001
+  allowedContextIds:
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D17
+  - D18
+  - D19
+  - D20
+  scoredResponseMode: typedChinese
+  taskFamilyId: TF-WRITTEN-INFORMATION-RELAY
+  allowedItemFormatIds:
+  - IF-TYPED-MESSAGE
+  taskStructure:
+    tasks: 1
+    responses: 1
+    taskScores: 1
+  timeTargetMinutes: 12
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+- blueprintSlotId: S-A1-1
+  title: 基本个人问答
+  slotVersion: 0.2-provisional
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-I1
+  supportingCanDoIds:
+  - A1-S1
+  primaryReportedSkill: Speaking
+  communicativeActivities:
+  - Interaction
+  - Production
+  allowedDomains:
+  - Personal
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D15
+  - D16
+  - D17
+  scoredResponseMode: spokenResponse
+  taskFamilyId: TF-PERSONAL-QA
+  allowedItemFormatIds:
+  - IF-SPOKEN-MULTITURN
+  taskStructure:
+    tasks: 1
+    candidateTurns: 2-3
+    taskScores: 1
+  timeTargetMinutes: 5
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+- blueprintSlotId: S-A1-2
+  title: 表达直接需要和熟悉内容
+  slotVersion: 0.2-provisional
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-S2
+  supportingCanDoIds: []
+  primaryReportedSkill: Speaking
+  communicativeActivities:
+  - Production
+  allowedDomains: *id001
+  allowedContextIds:
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D14
+  - D17
+  - D18
+  scoredResponseMode: spokenResponse
+  taskFamilyId: TF-GUIDED-SPOKEN-PRODUCTION
+  allowedItemFormatIds:
+  - IF-SPOKEN-SINGLE
+  taskStructure:
+    tasks: 1
+    candidateTurns: 1
+    taskScores: 1
+  timeTargetMinutes: 3
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+- blueprintSlotId: S-A1-3
+  title: 简单日常互动与安排确认
+  slotVersion: 0.2-provisional
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-I2
+  supportingCanDoIds:
+  - A1-I3a
+  - A1-I4
+  primaryReportedSkill: Speaking
+  communicativeActivities:
+  - Interaction
+  allowedDomains: *id001
+  allowedContextIds:
+  - D01
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  scoredResponseMode: spokenResponse
+  taskFamilyId: TF-INTERACTIVE-ROLEPLAY
+  allowedItemFormatIds:
+  - IF-SPOKEN-MULTITURN
+  taskStructure:
+    tasks: 1
+    candidateTurns: 2-3
+    taskScores: 1
+  timeTargetMinutes: 6
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+- blueprintSlotId: S-A1-4
+  title: 口头转告简单信息
+  slotVersion: 0.2-provisional
+  status: PilotRequired
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-M1
+  supportingCanDoIds: []
+  primaryReportedSkill: Speaking
+  communicativeActivities:
+  - Mediation
+  - Production
+  allowedDomains: *id001
+  allowedContextIds:
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D17
+  - D18
+  - D20
+  scoredResponseMode: spokenResponse
+  taskFamilyId: TF-SPOKEN-INFORMATION-RELAY
+  allowedItemFormatIds:
+  - IF-SPOKEN-SINGLE
+  taskStructure:
+    tasks: 1
+    candidateTurns: 1
+    taskScores: 1
+  timeTargetMinutes: 4
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending

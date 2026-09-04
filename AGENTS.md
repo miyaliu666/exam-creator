@@ -13,6 +13,7 @@ Exam Creator is a Rust (Axum) + React (Vite + TypeScript) application for creati
 - GitHub OAuth (or mock auth in debug) with session management
 - Real-time collaboration via WebSockets (exam state sync, user presence)
 - Moderation workflow with approval/denial/feedback
+- Language Exam Item Creator with seven registered task formats, versioned authoring, optional real AI, deterministic validation, GitHub pull-request review, idempotent Staging export, and R-A1-1 assembly
 
 ## Repository Structure
 
@@ -26,9 +27,14 @@ server/          Rust Axum backend
   ├── extractor/ WebSocket handlers & auth extractor
   ├── database/  DB helpers, Prisma bridging
   ├── state.rs   Shared in-memory state (ClientSync)
-  └── errors.rs  Unified error handling
+  ├── errors.rs  Unified error handling
+  └── language_items/ Registry, domain, validation, and AI provider boundary
 prisma/          Schema & JS client generation
 public/          Static assets
+language-item-workbench/
+  ├─ contracts/  Compile-time Workbench data contracts
+  └─ registries/ Versioned Workbench business-rule and payload registries
+docs/            Local-only planning and product documentation (gitignored)
 index.html       Frontend entry
 Dockerfile       Multi-stage build (bun + cargo chef + distroless)
 sample.env       Environment variable template
@@ -80,14 +86,31 @@ sample.env       Environment variable template
 - `GITHUB_CLIENT_ID`
 - `GITHUB_CLIENT_SECRET`
 
+**Conditionally Required (when using a real Language Item AI provider):**
+
+- `LANGUAGE_ITEM_AI_MODEL`
+- `DEEPSEEK_API_KEY` when `LANGUAGE_ITEM_AI_PROVIDER=deepseek`
+- `OPENAI_API_KEY` when `LANGUAGE_ITEM_AI_PROVIDER=openai`
+
+**Conditionally Required (when GitHub review is enabled):**
+
+- `GITHUB_REVIEW_TOKEN` - fine-grained token with Contents and Pull requests read/write access
+- `GITHUB_REVIEW_REPOSITORY` - private review repository in `owner/repository` form
+
 **Optional (with defaults):**
 
 - `PORT` (8080) - Server port
 - `ALLOWED_ORIGINS` (`http://127.0.0.1:{PORT}`) - CORS origins (CSV)
 - `GITHUB_REDIRECT_URL` (`http://127.0.0.1:{PORT}/auth/callback/github`)
 - `MOCK_AUTH` (false) - Bypass OAuth (debug only)
+- `LANGUAGE_ITEM_AI_PROVIDER` (`deterministic-mock`) - Use offline mock, `deepseek`, or `openai`
+- `DEEPSEEK_BASE_URL` (`https://api.deepseek.com`) - DeepSeek Chat Completions API base URL
+- `OPENAI_BASE_URL` (`https://api.openai.com/v1`) - Responses API base URL
+- `GITHUB_REVIEW_ENABLED` (`false`) - Use GitHub pull requests as the human-review authority
+- `GITHUB_REVIEW_BASE_BRANCH` (`main`) - Review repository target branch
+- `GITHUB_REVIEW_API_BASE_URL` (`https://api.github.com`) - GitHub API base URL
 - `REQUEST_BODY_SIZE_LIMIT` (5 \* 2^20 bytes) - ~5 MiB
-- `REQUEST_TIMEOUT_IN_MS` (5000)
+- `REQUEST_TIMEOUT_IN_MS` (11000; increase for real AI calls)
 - `SESSION_TTL_IN_S` (7200)
 
 **Update `sample.env` when adding/modifying env vars.**
@@ -103,6 +126,15 @@ sample.env       Environment variable template
 - GitHub OAuth via oauth2 crate
 - WebSocket state in `Arc<Mutex<ClientSync>>` with 5-min cleanup task
 - Static file serving: Built frontend (`dist/`) served by Rust server
+- Workbench canonical data uses dedicated collections in the Staging MongoDB database and is independent of the user's database-environment setting
+- Workbench AI runs, exports, assemblies, and audit events use append-only records; GitHub PR commits are the configured submission-history and human-review authority, and merged files are revalidated before replacing the same item's current approved content
+- Workbench item record state is independent from content/review status: owners can archive, soft-delete, and restore items while immutable versions, PR links, exports, and audits remain intact
+- Seven Item Formats are authorable and previewable: single select, matching, restricted input, form entry, typed message, spoken single, and spoken multiturn
+- A single fixed template registry binds each Item Format to its authoring editor and candidate-safe renderer; canonical TaskPackage metadata, scoring, delivery, and review partitions remain outside the candidate template
+- Language content separates core target refs from supporting context refs; structured information points can reference item-level scoring points, while registry scoring policy stays locked and author-visible
+- Workbench capability snapshots expose author-readable Can-do evidence, all communicative activities, Task Family/reference constraints, Slot × Item Format delivery policy, and complete scoring-contract summaries; locked rules remain visible to every author
+- Language-content compatibility is enforced on both client and server by context, primary/supporting Can-do, and receptive/productive mastery scope; saved candidate previews are reread through the candidate-safe preview API
+- Workbench AI defaults to a deterministic offline provider. DeepSeek uses server-side Chat Completions JSON mode; OpenAI uses Responses API structured outputs with `store: false`. All output is revalidated and provider errors are persisted as failed runs.
 
 **WebSockets:**
 
@@ -169,10 +201,45 @@ sample.env       Environment variable template
 - `GET /api/users/search` - Get user with all their attempts and moderations by one of `user_id`, `attempt_id`, `moderation_id`, `username`, or `email` query params
 - `GET /api/users/session` - Current session user
 - `PUT /api/users/session/settings` - Update user settings
+- `GET /auth/login/dev/status` - Report whether local multi-identity dev login is enabled
+- `POST /auth/login/dev` - Create/login a local test identity (debug + `MOCK_AUTH=true` only)
 
 **State:**
 
 - `PUT /api/state/exams/{exam_id}` - Discard exam state
+
+**Language Items:**
+
+- `GET|POST /api/language-items` - List items or create one from a required `blueprintSlotId` + allowed `itemFormatId` pair
+- `GET /api/language-items/registry` - Get the implemented registry capability snapshot
+- `GET /api/language-items/ai-provider` - Get the active AI provider/model status without credentials
+- `GET /api/language-items/github-review/status` - Get GitHub review configuration status without credentials
+- `POST /api/language-items/github-review/batches` - Validate drafts, create submission snapshots, commit 1–50 items, and create a review PR; drafts lock only after PR creation succeeds
+- `POST /api/language-items/github-review/batches/{batch_id}/sync` - Sync PR review/merge state and replace each item's current content with the revalidated merged file
+- `GET /api/language-items/{item_id}` - Get an item and mutable draft
+- `PUT /api/language-items/{item_id}/record-state` - Archive or restore an owner-controlled item without changing its content lifecycle
+- `DELETE /api/language-items/{item_id}` - Soft-delete an owner-controlled item into the recoverable Workbench recycle bin
+- `GET /api/language-items/{item_id}/preview` - Get candidate-safe preview data only
+- `PUT /api/language-items/{item_id}/draft` - Save a draft with revision checking
+- `POST /api/language-items/{item_id}/validate` - Validate the saved draft
+- `GET|POST /api/language-items/{item_id}/versions` - List or freeze immutable versions
+- `GET /api/language-item-review-queue` - List items whose latest frozen version awaits review
+- `GET /api/language-items/{item_id}/audit` - Query item audit history
+- `GET /api/language-items/{item_id}/exports` - Query item export mappings
+- `GET|POST /api/language-items/{item_id}/ai-runs` - List or generate AI candidates
+- `GET|POST /api/language-items/{item_id}/ai-review` - List or run independent advisory review on a mutable draft
+- `GET|POST /api/language-item-versions/{version_id}/ai-review` - List or run isolated AI pre-review
+- `GET /api/language-item-versions/{version_id}/diff` - Compare a frozen TaskPackage with its prior frozen version
+- `GET|POST /api/language-item-versions/{version_id}/reviews` - List or record review gates
+- `GET /api/language-items/{item_id}/review-discussions` - List review discussions and resolution history
+- `POST /api/language-item-versions/{version_id}/review-discussions` - Open a discussion or blocking change request
+- `POST /api/language-item-review-discussions/{discussion_id}/events` - Reply, mark addressed, resolve, or reopen
+- `POST /api/language-item-versions/{version_id}/revise` - Start a new mutable draft from a frozen version
+- `POST /api/language-item-versions/{version_id}/exports/staging` - Idempotent Staging export
+- `POST /api/language-item-versions/{version_id}/exports/production` - Explicitly rejected in MVP
+- `GET /api/language-item-assemblies` - List idempotent Slot assemblies
+- `GET /api/language-item-assemblies/{assembly_id}` - Get one Slot assembly and all source mappings
+- `POST /api/language-item-assemblies/staging` - Assemble 5–6 distinct exported R-A1-1 versions into a Staging legacy exam
 
 **Auth:**
 

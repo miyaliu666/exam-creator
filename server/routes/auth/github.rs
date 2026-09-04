@@ -7,8 +7,8 @@ use axum::{
 };
 use axum_extra::extract::{PrivateCookieJar, cookie::Cookie};
 use http::{
-    StatusCode,
-    header::{ACCEPT, USER_AGENT},
+    HeaderMap, StatusCode,
+    header::{ACCEPT, HOST, USER_AGENT},
 };
 use mongodb::bson::{doc, oid::ObjectId};
 use oauth2::{
@@ -27,13 +27,19 @@ type GitHubClient =
     BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
 
 pub async fn github_login_handler(
+    headers: HeaderMap,
     _session: Session,
     State(server_state): State<ServerState>,
     Extension(github_client): Extension<GitHubClient>,
 ) -> impl IntoResponse {
     if server_state.env_vars.mock_auth {
+        let host = headers
+            .get(HOST)
+            .and_then(|value| value.to_str().ok())
+            .unwrap_or("127.0.0.1:8080");
+        let callback_url = format!("http://{host}/auth/callback/github");
         let redirect_url = Url::parse_with_params(
-            &server_state.env_vars.github_redirect_url,
+            &callback_url,
             &[("code", "anything"), ("state", "anything")],
         )
         .expect("Unreachable. Development static string parsing.");
@@ -201,7 +207,7 @@ pub async fn github_handler(
     let cookie = Cookie::build(("sid", session.session_id))
         // .domain("http://127.0.0.1:3001")
         .path("/")
-        .secure(true)
+        .secure(!cfg!(debug_assertions))
         .http_only(true)
         .max_age(expires_in.try_into()?);
 

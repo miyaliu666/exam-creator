@@ -1,0 +1,17 @@
+// Minimal compatibility schema for prisma-rust-schema.
+// Prisma JS uses prisma/schema.prisma; this file exists only because the Rust
+// parser still requires a datasource URL that Prisma 7 moved to config.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URI_PRODUCTION")
+}
+
+model user {
+  id                             String                                 @id @default(auto()) @map("_id") @db.ObjectId
+  examAttempts                   ExamEnvironmentExamAttempt[]
+  examEnvironmentAuthorizationToken ExamEnvironmentAuthorizationToken?
+}

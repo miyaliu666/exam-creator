@@ -57,14 +57,16 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
     let production_database = production_client
         .default_database()
         .expect("database must be defined in the MONGODB_URI_PRODUCTION URI");
-    let staging_database = staging_client
+    let staging_mongodb_database = staging_client
         .default_database()
         .expect("database must be defined in the MONGODB_URI_STAGING URI");
 
     let session_store = MemoryStore::default();
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(false)
-        .with_expiry(Expiry::OnInactivity(time::Duration::seconds(10)));
+        .with_expiry(Expiry::OnInactivity(time::Duration::seconds(
+            env_vars.session_ttl_in_s.try_into().unwrap_or(i64::MAX),
+        )));
 
     let production_database = database::Database {
         user: production_database.collection("user"),
@@ -80,19 +82,35 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
     };
 
     let staging_database = database::Database {
-        user: staging_database.collection("user"),
-        exam_creator_exam: staging_database.collection("ExamCreatorExam"),
-        exam: staging_database.collection("ExamEnvironmentExam"),
-        exam_attempt: staging_database.collection("ExamEnvironmentExamAttempt"),
-        exam_environment_challenge: staging_database.collection("ExamEnvironmentChallenge"),
-        generated_exam: staging_database.collection("ExamEnvironmentGeneratedExam"),
+        user: staging_mongodb_database.collection("user"),
+        exam_creator_exam: staging_mongodb_database.collection("ExamCreatorExam"),
+        exam: staging_mongodb_database.collection("ExamEnvironmentExam"),
+        exam_attempt: staging_mongodb_database.collection("ExamEnvironmentExamAttempt"),
+        exam_environment_challenge: staging_mongodb_database.collection("ExamEnvironmentChallenge"),
+        generated_exam: staging_mongodb_database.collection("ExamEnvironmentGeneratedExam"),
         // Should not be used
-        exam_creator_user: staging_database.collection("ExamCreatorUser"),
+        exam_creator_user: staging_mongodb_database.collection("ExamCreatorUser"),
         // Should not be used
-        exam_creator_session: staging_database.collection("ExamCreatorSession"),
-        exam_environment_exam_moderation: staging_database
+        exam_creator_session: staging_mongodb_database.collection("ExamCreatorSession"),
+        exam_environment_exam_moderation: staging_mongodb_database
             .collection("ExamEnvironmentExamModeration"),
     };
+
+    let workbench_database = database::WorkbenchDatabase {
+        language_items: staging_mongodb_database.collection("LanguageItems"),
+        versions: staging_mongodb_database.collection("LanguageItemVersions"),
+        ai_generation_runs: staging_mongodb_database.collection("LanguageItemAiRuns"),
+        ai_review_runs: staging_mongodb_database.collection("LanguageItemAiReviewRuns"),
+        reviews: staging_mongodb_database.collection("LanguageItemReviews"),
+        review_discussions: staging_mongodb_database.collection("LanguageItemReviewDiscussions"),
+        review_discussion_events: staging_mongodb_database
+            .collection("LanguageItemReviewDiscussionEvents"),
+        exports: staging_mongodb_database.collection("LanguageItemExports"),
+        assemblies: staging_mongodb_database.collection("LanguageItemAssemblies"),
+        audit_events: staging_mongodb_database.collection("LanguageItemAuditEvents"),
+        staging_items: staging_mongodb_database.collection("LanguageItemStaging"),
+    };
+    workbench_database.ensure_indexes().await?;
 
     let client_sync = Arc::new(Mutex::new(ClientSync {
         users: Vec::new(),
@@ -112,6 +130,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
     let server_state = ServerState {
         production_database,
         staging_database,
+        workbench_database,
         supabase,
         client_sync,
         key: Key::from(env_vars.cookie_key.as_bytes()),
@@ -174,7 +193,134 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
     };
 
     let app = app
+        .route(
+            "/auth/login/dev/status",
+            get(routes::auth::get_dev_login_status),
+        )
         .route("/api/exams", get(routes::exams::get_exams))
+        .route(
+            "/api/language-items/registry",
+            get(routes::language_items::get_registry),
+        )
+        .route(
+            "/api/language-items/ai-provider",
+            get(routes::language_items::get_ai_provider_status),
+        )
+        .route(
+            "/api/language-items/github-review/status",
+            get(routes::language_item_github::get_status),
+        )
+        .route(
+            "/api/language-items/github-review/batches",
+            post(routes::language_item_github::post_batch),
+        )
+        .route(
+            "/api/language-items/github-review/batches/{batch_id}/sync",
+            post(routes::language_item_github::post_sync_batch),
+        )
+        .route(
+            "/api/language-items",
+            get(routes::language_items::get_items).post(routes::language_items::post_item),
+        )
+        .route(
+            "/api/language-item-review-queue",
+            get(routes::language_items::get_review_queue),
+        )
+        .route(
+            "/api/language-item-assemblies",
+            get(routes::language_item_assemblies::get_assemblies),
+        )
+        .route(
+            "/api/language-item-assemblies/staging",
+            post(routes::language_item_assemblies::post_staging_assembly),
+        )
+        .route(
+            "/api/language-item-assemblies/{assembly_id}",
+            get(routes::language_item_assemblies::get_assembly),
+        )
+        .route(
+            "/api/language-items/{item_id}",
+            get(routes::language_items::get_item).delete(routes::language_items::delete_item),
+        )
+        .route(
+            "/api/language-items/{item_id}/record-state",
+            put(routes::language_items::put_record_state),
+        )
+        .route(
+            "/api/language-items/{item_id}/preview",
+            get(routes::language_items::get_candidate_preview),
+        )
+        .route(
+            "/api/language-items/{item_id}/draft",
+            put(routes::language_items::put_draft),
+        )
+        .route(
+            "/api/language-items/{item_id}/validate",
+            post(routes::language_items::post_validate),
+        )
+        .route(
+            "/api/language-items/{item_id}/versions",
+            get(routes::language_items::get_versions).post(routes::language_items::post_version),
+        )
+        .route(
+            "/api/language-items/{item_id}/exports",
+            get(routes::language_items::get_exports),
+        )
+        .route(
+            "/api/language-items/{item_id}/audit",
+            get(routes::language_items::get_audit_events),
+        )
+        .route(
+            "/api/language-items/{item_id}/review-discussions",
+            get(routes::language_items::get_review_discussions),
+        )
+        .route(
+            "/api/language-items/{item_id}/ai-runs",
+            get(routes::language_items::get_ai_runs)
+                .post(routes::language_items::post_ai_generation),
+        )
+        .route(
+            "/api/language-items/{item_id}/ai-review",
+            get(routes::language_items::get_draft_ai_reviews)
+                .post(routes::language_items::post_draft_ai_review),
+        )
+        .route(
+            "/api/language-items/{item_id}/ai-runs/{run_id}/candidates/{candidate_id}/adopt",
+            post(routes::language_items::post_adopt_candidate),
+        )
+        .route(
+            "/api/language-item-versions/{version_id}/ai-review",
+            get(routes::language_items::get_ai_reviews)
+                .post(routes::language_items::post_ai_review),
+        )
+        .route(
+            "/api/language-item-versions/{version_id}/diff",
+            get(routes::language_item_diffs::get_version_diff),
+        )
+        .route(
+            "/api/language-item-versions/{version_id}/reviews",
+            get(routes::language_items::get_reviews).post(routes::language_items::post_review),
+        )
+        .route(
+            "/api/language-item-versions/{version_id}/review-discussions",
+            post(routes::language_items::post_review_discussion),
+        )
+        .route(
+            "/api/language-item-review-discussions/{discussion_id}/events",
+            post(routes::language_items::post_review_discussion_event),
+        )
+        .route(
+            "/api/language-item-versions/{version_id}/revise",
+            post(routes::language_items::post_revise_version),
+        )
+        .route(
+            "/api/language-item-versions/{version_id}/exports/staging",
+            post(routes::language_items::post_staging_export),
+        )
+        .route(
+            "/api/language-item-versions/{version_id}/exports/production",
+            post(routes::language_items::post_production_export),
+        )
         .route("/api/exams", post(routes::exams::post_exam))
         .route("/api/exams/{exam_id}", get(routes::exams::get_exam_by_id))
         .route("/api/exams/{exam_id}", put(routes::exams::put_exam))
@@ -283,6 +429,8 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .route_service("/attempts/{*id}", ServeFile::new("dist/index.html"))
         .route_service("/exams", ServeFile::new("dist/index.html"))
         .route_service("/exams/{*id}", ServeFile::new("dist/index.html"))
+        .route_service("/language-items", ServeFile::new("dist/index.html"))
+        .route_service("/language-items/{*id}", ServeFile::new("dist/index.html"))
         .route_service("/metrics", ServeFile::new("dist/index.html"))
         .route_service("/users", ServeFile::new("dist/index.html"))
         .route_service("/user/deduplicate", ServeFile::new("dist/index.html"))

@@ -12,6 +12,7 @@ name = "server"
 axum = { version = "0.8", features = ["macros", "ws"] }
 axum-extra = { version = "0.12", features = ["cookie-private", "typed-header"] }
 axum-streams = { version = "0.24.0", features = ["json"] }
+base64 = "0.22"
 bson = { version = "3", features = ["chrono-0_4", "serde_with-3", "serde"] }
 chrono = "0.4"
 dotenvy = "0.15"

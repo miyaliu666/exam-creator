@@ -1,0 +1,193 @@
+registryType: A1ContextRegistry
+registryVersion: 0.2-provisional
+status: ProvisionalWorkbenchUse
+entries:
+- contextId: D01
+  title: 问候和介绍
+  primaryDomain: Personal
+  canDoIds:
+  - A1-L3
+  - A1-S1
+  - A1-I1
+  - A1-I2
+  scope: 问候、告别、简单介绍和基本社交表达。
+  status: ProvisionalExploratory
+- contextId: D02
+  title: 交换基本个人信息
+  primaryDomain: Personal
+  canDoIds:
+  - A1-L1
+  - A1-S1
+  - A1-I1
+  - A1-W1
+  scope: 姓名、国籍、住处、年龄、生日、电话、工作或学习。
+  status: ProvisionalExploratory
+- contextId: D03
+  title: 谈论熟悉的人
+  primaryDomain: Personal
+  canDoIds:
+  - A1-L1
+  - A1-S1
+  - A1-R2
+  scope: 家人、朋友、同学、老师和同事的基本关系与信息。
+  status: ProvisionalExploratory
+- contextId: D04
+  title: 描述熟悉的人、物品和地点
+  primaryDomain: Personal
+  canDoIds:
+  - A1-S2
+  - A1-R1
+  - A1-R2
+  scope: 颜色、大小、数量、位置和明显特征。
+  status: ProvisionalExploratory
+- contextId: D05
+  title: 表达喜好、兴趣和能力
+  primaryDomain: Personal
+  canDoIds:
+  - A1-S2
+  - A1-I1
+  - A1-W2
+  scope: 喜欢、不喜欢、想要、需要、会、不会和少量兴趣。
+  status: ProvisionalExploratory
+- contextId: D06
+  title: 谈论日常活动和当前情况
+  primaryDomain: Personal
+  canDoIds:
+  - A1-L1
+  - A1-S2
+  - A1-R2
+  scope: 日常活动、当前动作、当前天气和近期简单安排。
+  status: ProvisionalExploratory
+- contextId: D07
+  title: 表达基本健康和帮助需要
+  primaryDomain: Personal
+  canDoIds:
+  - A1-S2
+  - A1-I2
+  - A1-I4
+  scope: 基本身体不适、医生和帮助请求。
+  status: ProvisionalExploratory
+- contextId: D08
+  title: 点常见食物和饮料
+  primaryDomain: Public
+  canDoIds:
+  - A1-R2
+  - A1-L3
+  - A1-I2
+  scope: 看菜单、点一两种食物或饮料、数量和基本偏好。
+  status: ProvisionalExploratory
+- contextId: D09
+  title: 完成简单购买
+  primaryDomain: Public
+  canDoIds:
+  - A1-L2
+  - A1-R1
+  - A1-I2
+  scope: 价格、颜色、大小、数量和简单付款。
+  status: ProvisionalExploratory
+- contextId: D10
+  title: 使用基本交通信息
+  primaryDomain: Public
+  canDoIds:
+  - A1-L2
+  - A1-R2
+  - A1-I2
+  scope: 线路、车次、时间、购票和上下车地点。
+  status: ProvisionalExploratory
+- contextId: D11
+  title: 询问和说明基本位置
+  primaryDomain: Public
+  canDoIds:
+  - A1-L3
+  - A1-S2
+  - A1-I2
+  scope: 询问地点、说明基本位置和一步式方向。
+  status: ProvisionalExploratory
+- contextId: D12
+  title: 理解公共标志和开放信息
+  primaryDomain: Public
+  canDoIds:
+  - A1-R1
+  - A1-R2
+  - A1-L2
+  scope: 入口、出口、楼层、房间号、开放时间和简单许可禁止。
+  status: ProvisionalExploratory
+- contextId: D13
+  title: 约定或确认时间和地点
+  primaryDomain: Public
+  canDoIds:
+  - A1-L2
+  - A1-W2
+  - A1-I3a
+  - A1-I3b
+  scope: 见面、邀请、课程、活动和简单预约。
+  status: ProvisionalExploratory
+- contextId: D14
+  title: 确认最基本的住宿信息
+  primaryDomain: Public
+  canDoIds:
+  - A1-L2
+  - A1-R2
+  - A1-I2
+  scope: 姓名、入住日期、房间号、早餐、退房和设施位置。
+  status: ProvisionalExploratory
+- contextId: D15
+  title: 理解和确认基本课程信息
+  primaryDomain: Educational
+  canDoIds:
+  - A1-L2
+  - A1-L3
+  - A1-R2
+  - A1-I3a
+  - A1-I3b
+  scope: 课程名称、时间、教室、教师和一步式课堂指示。
+  status: ProvisionalExploratory
+- contextId: D16
+  title: 完成简单报名和课堂交流
+  primaryDomain: Educational
+  canDoIds:
+  - A1-W1
+  - A1-W2
+  - A1-I2
+  - A1-I4
+  scope: 填写课程资料、回复课程消息、询问词语或教室并请求重复。
+  status: ProvisionalExploratory
+- contextId: D17
+  title: 提供和理解基本工作信息
+  primaryDomain: Occupational
+  canDoIds:
+  - A1-L1
+  - A1-R2
+  - A1-S1
+  - A1-I1
+  - A1-I3a
+  scope: 职业、工作地点、上下班、简单排班和同事是否在。
+  status: ProvisionalExploratory
+- contextId: D18
+  title: 完成简单工作场所交流
+  primaryDomain: Occupational
+  canDoIds:
+  - A1-L3
+  - A1-I2
+  - A1-I3a
+  - A1-I4
+  scope: 一步式工作请求、请求物品、到达时间、会议安排和求助。
+  status: ProvisionalExploratory
+- contextId: D19
+  title: 阅读和回复非常短的在线消息
+  primaryDomain: Personal/Public/Educational/Occupational
+  canDoIds:
+  - A1-R2
+  - A1-W2
+  - A1-I3b
+  scope: 确认时间、告知地点、接受拒绝邀请、说明参加和简单提问。
+  status: ProvisionalExploratory
+- contextId: D20
+  title: 填写表格并转告关键信息
+  primaryDomain: Personal/Public/Educational/Occupational
+  canDoIds:
+  - A1-W1
+  - A1-M1
+  - A1-M2
+  scope: 填写基本资料并从短材料找到和转告显性实用信息。
+  status: ProvisionalExploratory

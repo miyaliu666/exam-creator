@@ -31,7 +31,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    checkLoginUser();
+    const handleSessionExpired = () => {
+      setUser(null);
+      setIsLoading(false);
+    };
+
+    window.addEventListener("exam-creator:session-expired", handleSessionExpired);
+    void checkLoginUser();
+    return () => {
+      window.removeEventListener(
+        "exam-creator:session-expired",
+        handleSessionExpired,
+      );
+    };
   }, []);
 
   const login = async () => {

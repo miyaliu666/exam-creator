@@ -1,0 +1,237 @@
+import { Box, Heading, SimpleGrid, Stack, Text } from "@chakra-ui/react";
+
+import type { RegistrySnapshot, TaskPackage } from "./types";
+
+interface ScoringContractPanelProps {
+  draft: TaskPackage;
+  registry: RegistrySnapshot | undefined;
+}
+
+const SCORING_TYPE_LABELS: Record<string, string> = {
+  objective: "Automatic scoring",
+  objectiveFields: "Automatic field-by-field scoring",
+  fieldCriteria: "Field-by-field scoring",
+  analyticRubric: "Fixed A1 analytic rubric",
+};
+
+const POLICY_LABELS: Record<string, string> = {
+  "PC-NONE-v0.1": "Full credit for a correct answer; zero for an incorrect or blank answer; no negative marking",
+  "PC-PER-MATCH-v0.1": "Each correct match earns credit independently; no negative marking",
+  "PC-PER-FIELD-v0.1": "Each valid field earns credit independently; blank or invalid fields earn zero",
+  "PC-ANALYTIC-RUBRIC-v0.1": "Evaluate the required response evidence with the fixed A1 rubric",
+};
+
+const REQUIREMENT_LABELS: Record<string, string> = {
+  "4-6 fields": "Include 4–6 fields",
+  "at least one Chinese field": "Require Chinese in at least one field",
+  "field labels understood": "Make every field label clear and understandable",
+  "no real sensitive information": "Do not request real sensitive information",
+  "respond to source message": "Respond to the source message",
+  "ask, state or confirm at least one arrangement detail": "Ask, state, or confirm at least one arrangement detail",
+  "1-3 content points": "Include 1–3 required content points",
+  "select relevant information": "Select information relevant to the task",
+  "maintain key information accuracy": "Preserve the accuracy of key information",
+  "address specified recipient and purpose": "Address the specified recipient and purpose",
+  "answer personal/familiar questions": "Answer questions about personal or familiar topics",
+  "provide basic information": "Provide basic information",
+  "ask one related question": "Ask one related question",
+  "address 1-3 prompted content points": "Address 1–3 prompted content points",
+  "remain intelligible enough to identify key content": "Remain intelligible enough to identify key content",
+  "respond across 2-3 turns": "Respond across 2–3 turns",
+  "complete required request/confirmation/repair": "Complete the required request, confirmation, or repair",
+  "actually speak": "Produce an actual spoken response",
+  "select recipient-relevant information": "Select information relevant to the recipient",
+  "relay key details accurately": "Relay key details accurately",
+  "complete oral relay purpose": "Complete the oral relay purpose",
+};
+
+const CAP_LABELS: Record<string, string> = {
+  "All-mechanical copying cannot alone satisfy the task.": "Mechanical copying alone cannot satisfy the task.",
+  "Without actual message response or arrangement behavior, Task Fulfilment cannot exceed band 1 and A1-I3b is not evidenced.": "Without an actual message response or arrangement, Task Fulfilment cannot exceed band 1.",
+  "Pure copying without recipient-oriented message caps Task Fulfilment at band 1.": "Pure copying without a recipient-oriented message caps Task Fulfilment at band 1.",
+  "No required initiation caps Interaction and Responsiveness at band 1.": "Missing the required initiation caps Interaction and Responsiveness at band 1.",
+  "Reading a supplied sentence does not count as the target production.": "Reading a supplied sentence does not count as the target production.",
+  "Selecting an option without speaking yields no Interaction evidence.": "Selecting an option without speaking yields no Interaction evidence.",
+  "Reading the whole source without recipient-oriented relay caps task fulfilment at band 1.": "Reading the source without a recipient-oriented relay caps Task Fulfilment at band 1.",
+};
+
+const NORMALIZATION_LABELS: Record<string, string> = {
+  "NORM-NONE-v0.1": "Validate submitted response IDs exactly; do not infer semantic matches.",
+  "NORM-NUMBER-v0.1": "Trim spacing, normalize Unicode and full-width digits, and apply only approved leading-zero rules.",
+  "NORM-DATE-v0.1": "Accept only approved equivalent date forms; do not infer missing parts or swap month and day.",
+  "NORM-TIME-v0.1": "Accept approved equivalent clock-time forms; preserve AM/PM meaning and do not round.",
+  "NORM-PHONE-v0.1": "Normalize Unicode and approved visual separators only; never reorder or replace digits.",
+  "NORM-SHORT-CORE-TEXT-v0.1": "Trim outer spacing, normalize Unicode, and ignore only explicitly non-target final punctuation; do not use fuzzy matching.",
+  "NORM-FORM-v0.1": "Apply the approved normalization rule for each field; never apply one fuzzy rule to the whole form.",
+  notApplicable: "No response normalization applies.",
+};
+
+const INVALID_RESPONSE_LABELS: Record<string, string> = {
+  "INVALID-OBJECTIVE-v0.1": "A blank, invalid response ID, or multiple selections where only one is allowed earns zero. A technical failure is not scored as a candidate error.",
+  "INVALID-CONSTRUCTED-v0.1": "A blank, completely off-topic response, or response with no scorable language earns zero. A short but relevant response is scored on the evidence present. A technical failure is not scored as a candidate error.",
+  notApplicable: "Not applicable.",
+};
+
+const TECHNICAL_INCIDENT_LABEL =
+  "A system failure must never be recorded directly as a candidate zero. Recover the response, allow a controlled retry, exclude the affected item, or record insufficient evidence.";
+
+const SCORING_POINT_LABELS: Record<string, string> = {
+  "整题正确": "Correct response",
+  "任务完成与关键信息": "Task fulfilment and key information",
+  "可理解度": "Comprehensibility",
+  "基本语言控制": "Basic language control",
+  "简体文字与基本书面规范": "Simplified Chinese and basic writing conventions",
+  "任务完成与信息准确性": "Task fulfilment and information accuracy",
+  "可理解度与语音控制": "Intelligibility and pronunciation control",
+  "基本语言控制与流利度": "Basic language control and fluency",
+  "任务完成与相关性": "Task fulfilment and relevance",
+  "互动与回应": "Interaction and responsiveness",
+};
+
+function scoringPointLabel(description: string, index: number) {
+  if (SCORING_POINT_LABELS[description]) return SCORING_POINT_LABELS[description];
+  if (description.startsWith("正确匹配")) return `Correct match ${index + 1}`;
+  if (description.startsWith("表单字段")) return `Form field ${index + 1}`;
+  return description;
+}
+
+function rubricLabel(rubricId: string) {
+  if (rubricId === "notApplicable") return "Not applicable";
+  if (rubricId.includes("INTERACTION")) return "Fixed A1 spoken interaction rubric";
+  if (rubricId.includes("PRODUCTION")) return "Fixed A1 spoken production rubric";
+  if (rubricId.includes("RUB-W")) return "Fixed A1 writing rubric";
+  return "Fixed A1 rubric";
+}
+
+function benchmarkLabel(version: string | undefined) {
+  if (!version) return "Not applicable";
+  if (version === "PendingRealCandidateResponses") {
+    return "Pilot response benchmark pending; use the fixed rubric until an approved benchmark is published.";
+  }
+  return version;
+}
+
+export function ScoringContractPanel({ draft, registry }: ScoringContractPanelProps) {
+  const contract = registry?.scoringContracts?.find(
+    (entry) =>
+      entry.scoringContractTemplateId === draft.scoringPackage.scoringContractTemplateId,
+  );
+  const maxRawScore = (draft.scoringPackage.scoringPoints ?? []).reduce(
+    (total, point) => total + (Number(point.points) || 0),
+    0,
+  );
+
+  return (
+    <Stack aria-label="Answers and scoring" borderWidth="1px" borderRadius="xl" p={5} gap={4}>
+      <Box>
+        <Heading size="md">Answers and scoring</Heading>
+        <Text mt={1} fontSize="sm" color="fg.muted">
+          Enter correct answers and required content points in the item fields. The exam task and item format determine scoring.
+        </Text>
+      </Box>
+
+      {!contract ? (
+        <Text color="fg.error">Scoring rules could not be loaded. Refresh and try again.</Text>
+      ) : (
+        <>
+          <SimpleGrid minChildWidth="190px" gap={3}>
+            <Box borderWidth="1px" borderRadius="lg" p={3} bg="bg.subtle">
+              <Text fontSize="sm" color="fg.muted">Scoring method</Text>
+              <Text mt={1} fontWeight="semibold">
+                {SCORING_TYPE_LABELS[contract.scoringType] ?? contract.scoringType}
+              </Text>
+            </Box>
+            <Box borderWidth="1px" borderRadius="lg" p={3} bg="bg.subtle">
+              <Text fontSize="sm" color="fg.muted">Credit rule</Text>
+              <Text mt={1} fontWeight="semibold">
+                {POLICY_LABELS[contract.partialCredit.policyId] ?? contract.partialCredit.summary}
+              </Text>
+            </Box>
+            <Box borderWidth="1px" borderRadius="lg" p={3} bg="bg.subtle">
+              <Text fontSize="sm" color="fg.muted">Total score</Text>
+              <Text mt={1} fontWeight="semibold">{maxRawScore} points · calculated from the item format</Text>
+            </Box>
+          </SimpleGrid>
+
+          {contract.rubricId !== "notApplicable" ? (
+            <Text fontSize="sm">
+              This item uses the fixed {draft.content.primaryReportedSkill === "Writing" ? "A1 writing" : "A1 speaking"} rubric.
+              Confirm the required content points; do not write a separate scoring policy.
+            </Text>
+          ) : null}
+
+          <Box as="details" borderWidth="1px" borderRadius="lg" p={4}>
+            <Text as="summary" cursor="pointer" fontWeight="semibold">
+              View complete fixed scoring contract
+            </Text>
+            <Stack mt={4} gap={4}>
+              <SimpleGrid minChildWidth="220px" gap={3}>
+                <Box>
+                  <Text fontSize="sm" color="fg.muted">Contract version</Text>
+                  <Text>{contract.templateVersion || "Current approved version"}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="fg.muted">Rubric</Text>
+                  <Text>{rubricLabel(contract.rubricId)}</Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" color="fg.muted">Benchmark evidence</Text>
+                  <Text>{benchmarkLabel(draft.scoringPackage.benchmarkSetVersion)}</Text>
+                </Box>
+              </SimpleGrid>
+
+              <Box>
+                <Text fontWeight="semibold">Scoring points</Text>
+                <Stack mt={2} gap={1}>
+                  {(draft.scoringPackage.scoringPoints ?? []).map((point, index) => (
+                    <Text key={point.scoringPointId} fontSize="sm">
+                      {index + 1}. {scoringPointLabel(point.description, index)} — {point.points} {point.points === 1 ? "point" : "points"}
+                    </Text>
+                  ))}
+                </Stack>
+              </Box>
+
+              <Box>
+                <Text fontWeight="semibold">Response normalization</Text>
+                <Text mt={1} fontSize="sm">
+                  {NORMALIZATION_LABELS[contract.normalization.policyId] ?? contract.normalization.summary}
+                </Text>
+              </Box>
+
+              <Box>
+                <Text fontWeight="semibold">Invalid responses</Text>
+                <Text mt={1} fontSize="sm">
+                  {INVALID_RESPONSE_LABELS[contract.invalidResponse.policyId] ?? contract.invalidResponse.summary}
+                </Text>
+              </Box>
+
+              <Box>
+                <Text fontWeight="semibold">Technical incidents</Text>
+                <Text mt={1} fontSize="sm">{TECHNICAL_INCIDENT_LABEL}</Text>
+              </Box>
+
+              {contract.taskSpecificRequirements.length > 0 ? (
+                <Box>
+                  <Text fontWeight="semibold">Fixed item requirements</Text>
+                  <Stack mt={2} gap={1}>
+                    {contract.taskSpecificRequirements.map((requirement) => (
+                      <Text key={requirement} fontSize="sm">
+                        · {REQUIREMENT_LABELS[requirement] ?? requirement}
+                      </Text>
+                    ))}
+                    {contract.capOrExclusion ? (
+                      <Text mt={2} fontSize="sm" color="fg.warning">
+                        {CAP_LABELS[contract.capOrExclusion] ?? contract.capOrExclusion}
+                      </Text>
+                    ) : null}
+                  </Stack>
+                </Box>
+              ) : null}
+            </Stack>
+          </Box>
+
+        </>
+      )}
+    </Stack>
+  );
+}

@@ -1,0 +1,82 @@
+registryType: A1SupportedContentRegistry
+registryVersion: 0.2-provisional
+entries:
+- supportedContentTypeId: SUP-PERSON-NAME
+  type: personName
+  allowedSupport:
+  - pinyin
+  - sourceVisible
+  - audio
+  rule: 超出核心范围的人名可在首次出现时统一提供拼音，或保持在源材料中可见；不得成为唯一目标词。
+- supportedContentTypeId: SUP-PLACE-NAME
+  type: placeName
+  allowedSupport:
+  - pinyin
+  - mapLabel
+  - sourceVisible
+  rule: 地点名只用于建立情境；位置任务仍须由核心方位语言完成。
+- supportedContentTypeId: SUP-INSTITUTION-NAME
+  type: institutionName
+  allowedSupport:
+  - pinyin
+  - shortGloss
+  - sourceVisible
+  rule: 机构名不要求事先掌握，且不得依赖制度知识。
+- supportedContentTypeId: SUP-COURSE-NAME
+  type: courseName
+  allowedSupport:
+  - pinyin
+  - sourceVisible
+  rule: 课程名可以照录或转告，但不能作为唯一证明阅读或写作能力的计分点。
+- supportedContentTypeId: SUP-ACTIVITY-NAME
+  type: activityName
+  allowedSupport:
+  - pinyin
+  - image
+  - sourceVisible
+  rule: 活动名称应具体、成人化、无文化背景要求。
+- supportedContentTypeId: SUP-LOW-FREQUENCY-ITEM
+  type: lowFrequencyItem
+  allowedSupport:
+  - image
+  - shortGloss
+  - sourceVisible
+  rule: 只在真实情境确有必要时使用；题目必须仍包含核心语言计分证据。
+- supportedContentTypeId: SUP-FOOD-NAME
+  type: foodName
+  allowedSupport:
+  - image
+  - shortGloss
+  - sourceVisible
+  rule: 特定地域食物可作为菜单内容，但不得要求全球 A1 考生事先知道。
+- supportedContentTypeId: SUP-ADDRESS-SEGMENT
+  type: addressSegment
+  allowedSupport:
+  - sourceVisible
+  - structuredField
+  rule: 只使用完成定位或照录所需的简短地址片段，不要求复杂地址知识。
+- supportedContentTypeId: SUP-ROUTE-LABEL
+  type: routeOrServiceLabel
+  allowedSupport:
+  - sourceVisible
+  - iconWithText
+  rule: 线路、车次、柜台和服务标签必须清楚，数字格式不得制造陷阱。
+- supportedContentTypeId: SUP-LATIN-PROPER-NAME
+  type: latinProperName
+  allowedSupport:
+  - sourceVisible
+  - audio
+  rule: 批准的拉丁字母专名可保留原样；大小写不作为核心语言难点。
+- supportedContentTypeId: SUP-INTERFACE-LABEL
+  type: interfaceLabel
+  allowedSupport:
+  - interfaceLanguage
+  - iconWithText
+  rule: 操作标签属于界面语言，不得计入目标语言能力。
+- supportedContentTypeId: SUP-CULTURE-SPECIFIC
+  type: cultureSpecificContent
+  allowedSupport:
+  - shortGloss
+  - image
+  - sourceVisible
+  rule: 原则上避免；确有必要时必须解释且不能成为答案依据。

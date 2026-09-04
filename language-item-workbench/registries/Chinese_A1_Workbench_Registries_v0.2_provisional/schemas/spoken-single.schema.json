@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fcc:a1:spoken-single:0.2",
+  "title": "IF-SPOKEN-SINGLE candidate payload",
+  "type": "object",
+  "required": [
+    "situation",
+    "instructions",
+    "preparationTimeSeconds",
+    "responseTimeSeconds",
+    "requiredContentPoints"
+  ],
+  "properties": {
+    "situation": {
+      "type": "string"
+    },
+    "instructions": {
+      "type": "string"
+    },
+    "visiblePromptText": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "promptAudioRef": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sourceMaterialRefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recipient": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "purpose": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "preparationTimeSeconds": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "responseTimeSeconds": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "requiredContentPoints": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": [
+          "contentPointId",
+          "description"
+        ],
+        "properties": {
+          "contentPointId": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,38 @@
+registryType: A1ItemFormatRegistry
+registryVersion: 0.2-provisional
+entries:
+- itemFormatId: IF-SINGLE-SELECT
+  title: 单项选择
+  scoredResponseMode: select
+  candidateResponseType: selectedOptionId
+  schemaRef: schemas/single-select.schema.json
+- itemFormatId: IF-MATCHING
+  title: 匹配
+  scoredResponseMode: match
+  candidateResponseType: matches
+  schemaRef: schemas/matching.schema.json
+- itemFormatId: IF-RESTRICTED-INPUT
+  title: 受限输入
+  scoredResponseMode: restrictedInput
+  candidateResponseType: fieldValues
+  schemaRef: schemas/restricted-input.schema.json
+- itemFormatId: IF-FORM-ENTRY
+  title: 表格填写
+  scoredResponseMode: formEntry
+  candidateResponseType: fieldValues
+  schemaRef: schemas/form-entry.schema.json
+- itemFormatId: IF-TYPED-MESSAGE
+  title: 短消息输入
+  scoredResponseMode: typedChinese
+  candidateResponseType: typedText
+  schemaRef: schemas/typed-message.schema.json
+- itemFormatId: IF-SPOKEN-SINGLE
+  title: 单次口头回答
+  scoredResponseMode: spokenResponse
+  candidateResponseType: recordingRef
+  schemaRef: schemas/spoken-single.schema.json
+- itemFormatId: IF-SPOKEN-MULTITURN
+  title: 多轮口头回答
+  scoredResponseMode: spokenResponse
+  candidateResponseType: turnRecordingsAndPath
+  schemaRef: schemas/spoken-multiturn.schema.json

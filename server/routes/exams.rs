@@ -307,21 +307,40 @@ pub async fn put_generations_by_exam_id_with_database_environment(
     Path((exam_id, database_environment)): Path<(ObjectId, prisma::ExamCreatorDatabaseEnvironment)>,
     Json(body): Json<PutGenerateExamBody>,
 ) -> Result<impl IntoResponse, Error> {
-    let database = match database_environment {
-        prisma::ExamCreatorDatabaseEnvironment::Staging => state.staging_database.clone(),
-        prisma::ExamCreatorDatabaseEnvironment::Production => state.production_database.clone(),
+    let (database, exam_creator_exam) = match database_environment {
+        prisma::ExamCreatorDatabaseEnvironment::Staging => {
+            // Workbench smoke-test exams live only in Staging. Existing exams
+            // continue to fall back to the production authoring collection.
+            let exam = match state
+                .staging_database
+                .exam_creator_exam
+                .find_one(doc! { "_id": exam_id })
+                .await?
+            {
+                Some(exam) => Some(exam),
+                None => {
+                    state
+                        .production_database
+                        .exam_creator_exam
+                        .find_one(doc! { "_id": exam_id })
+                        .await?
+                }
+            };
+            (state.staging_database.clone(), exam)
+        }
+        prisma::ExamCreatorDatabaseEnvironment::Production => {
+            let exam = state
+                .production_database
+                .exam_creator_exam
+                .find_one(doc! { "_id": exam_id })
+                .await?;
+            (state.production_database.clone(), exam)
+        }
     };
-
-    // Fetch the exam from the source
-    let exam_creator_exam = state
-        .production_database
-        .exam_creator_exam
-        .find_one(doc! { "_id": exam_id })
-        .await?
-        .ok_or(Error::Server(
-            StatusCode::BAD_REQUEST,
-            format!("exam non-existent: {exam_id}"),
-        ))?;
+    let exam_creator_exam = exam_creator_exam.ok_or(Error::Server(
+        StatusCode::BAD_REQUEST,
+        format!("exam non-existent: {exam_id}"),
+    ))?;
     put_generations_by_exam_id(body.count, database, exam_id, exam_creator_exam).await
 }
 

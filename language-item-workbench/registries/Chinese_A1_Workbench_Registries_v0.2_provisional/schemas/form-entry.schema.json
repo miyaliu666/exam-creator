@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fcc:a1:form-entry:0.2",
+  "title": "IF-FORM-ENTRY candidate payload",
+  "type": "object",
+  "required": [
+    "situation",
+    "instructions",
+    "fields"
+  ],
+  "properties": {
+    "situation": {
+      "type": "string"
+    },
+    "instructions": {
+      "type": "string"
+    },
+    "sourceProfile": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "fields": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": [
+          "fieldId",
+          "label",
+          "inputType",
+          "required"
+        ],
+        "properties": {
+          "fieldId": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "inputType": {
+            "type": "string",
+            "enum": [
+              "shortText",
+              "number",
+              "date",
+              "time",
+              "typedChinese"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "maxLength": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "placeholder": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

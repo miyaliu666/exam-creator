@@ -15,12 +15,7 @@ import { rootRoute } from "./root";
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../contexts/auth";
 import { landingRoute } from "./landing";
-
-let DevSignInOptions: React.FC = () => null;
-if (import.meta.env.MODE === "development") {
-  DevSignInOptions = (await import("../components/dev-sign-in-options"))
-    .DevSignInOptions;
-}
+import { DevSignInOptions } from "../components/dev-sign-in-options";
 
 export function Login() {
   const navigate = useNavigate();
@@ -69,9 +64,9 @@ export function Login() {
           ) : (
             <>
               <Heading fontWeight="extrabold" fontSize="2xl">
-                Login
+                Sign in
               </Heading>
-              <Text fontSize="md">Please authenticate to continue.</Text>
+              <Text fontSize="md">Choose an identity to continue.</Text>
               <Button
                 colorPalette="teal"
                 size="lg"
@@ -79,7 +74,7 @@ export function Login() {
                 onClick={login}
                 px={8}
               >
-                Login with GitHub
+                Continue with GitHub
               </Button>
               <DevSignInOptions />
             </>

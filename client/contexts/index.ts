@@ -13,6 +13,8 @@ import { metricsRoute } from "../pages/metrics";
 import { usersRoute } from "../pages/users";
 import { userDeduplicateRoute } from "../pages/user-deduplicate";
 import { viewMetricsRoute } from "../pages/view-metrics";
+import { languageItemsRoute } from "../pages/language-items";
+import { editLanguageItemRoute } from "../pages/edit-language-item";
 
 export const queryClient = new QueryClient();
 
@@ -28,6 +30,8 @@ export const routeTree = rootRoute.addChildren([
   usersRoute,
   userDeduplicateRoute,
   viewMetricsRoute,
+  languageItemsRoute,
+  editLanguageItemRoute,
 ]);
 
 export const router = createRouter({ routeTree, context: { queryClient } });
