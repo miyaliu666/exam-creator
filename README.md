@@ -32,6 +32,7 @@ bun run dev --host localhost --port 8001
 ```
 
 Open [http://localhost:8001](http://localhost:8001).
+
 [Gist](https://gist.github.com/miyaliu666/0616cc867e90d176880ba68eb7966caa)
 
 ## Using the Application
