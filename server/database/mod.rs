@@ -2,10 +2,11 @@ use bson::{Document, doc};
 use mongodb::{Collection, IndexModel, options::IndexOptions};
 
 use crate::language_items::domain::{
-    AiGenerationRun, AiReviewRun, LanguageItem, LanguageItemAssembly, LanguageItemAuditEvent,
+    AiGenerationRun, AiReviewRun, GithubSyncDelivery, LanguageItem, LanguageItemAuditEvent,
     LanguageItemExport, LanguageItemReview, LanguageItemReviewDiscussion,
     LanguageItemReviewDiscussionEvent, LanguageItemVersion, StagingLanguageItem,
 };
+use crate::language_items::registry_store::{RegistryAuditEvent, RegistryVersionRecord};
 use crate::state::{Activity, ServerState, User};
 
 pub mod prisma;
@@ -25,6 +26,8 @@ pub struct Database {
 
 #[derive(Clone, Debug)]
 pub struct WorkbenchDatabase {
+    pub registry_versions: Collection<RegistryVersionRecord>,
+    pub registry_audit_events: Collection<RegistryAuditEvent>,
     pub language_items: Collection<LanguageItem>,
     pub versions: Collection<LanguageItemVersion>,
     pub ai_generation_runs: Collection<AiGenerationRun>,
@@ -33,8 +36,8 @@ pub struct WorkbenchDatabase {
     pub review_discussions: Collection<LanguageItemReviewDiscussion>,
     pub review_discussion_events: Collection<LanguageItemReviewDiscussionEvent>,
     pub exports: Collection<LanguageItemExport>,
-    pub assemblies: Collection<LanguageItemAssembly>,
     pub audit_events: Collection<LanguageItemAuditEvent>,
+    pub github_sync_deliveries: Collection<GithubSyncDelivery>,
     pub staging_items: Collection<StagingLanguageItem>,
 }
 
@@ -46,11 +49,43 @@ impl WorkbenchDatabase {
                 .unique(true)
                 .build()
         };
+        self.registry_versions
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "id": 1 })
+                    .options(unique("language_assessment_registry_ids_unique"))
+                    .build(),
+            )
+            .await?;
+        self.registry_versions
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "version": 1 })
+                    .options(unique("language_assessment_registry_versions_unique"))
+                    .build(),
+            )
+            .await?;
+        self.registry_audit_events
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "id": 1 })
+                    .options(unique("language_assessment_registry_audit_ids_unique"))
+                    .build(),
+            )
+            .await?;
         self.language_items
             .create_index(
                 IndexModel::builder()
                     .keys(doc! { "id": 1 })
                     .options(unique("language_items_id_unique"))
+                    .build(),
+            )
+            .await?;
+        self.github_sync_deliveries
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "id": 1 })
+                    .options(unique("language_item_github_sync_delivery_ids_unique"))
                     .build(),
             )
             .await?;
@@ -75,6 +110,22 @@ impl WorkbenchDatabase {
                 IndexModel::builder()
                     .keys(doc! { "id": 1 })
                     .options(unique("language_item_ai_runs_id_unique"))
+                    .build(),
+            )
+            .await?;
+        self.ai_generation_runs
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "itemId": 1, "createdBy": 1, "idempotencyKey": 1 })
+                    .options(
+                        IndexOptions::builder()
+                            .name("language_item_ai_runs_idempotency_unique".to_string())
+                            .unique(true)
+                            .partial_filter_expression(
+                                doc! { "idempotencyKey": { "$type": "string" } },
+                            )
+                            .build(),
+                    )
                     .build(),
             )
             .await?;
@@ -151,22 +202,6 @@ impl WorkbenchDatabase {
                 IndexModel::builder()
                     .keys(doc! { "id": 1 })
                     .options(unique("language_item_exports_id_unique"))
-                    .build(),
-            )
-            .await?;
-        self.assemblies
-            .create_index(
-                IndexModel::builder()
-                    .keys(doc! { "id": 1 })
-                    .options(unique("language_item_assemblies_id_unique"))
-                    .build(),
-            )
-            .await?;
-        self.assemblies
-            .create_index(
-                IndexModel::builder()
-                    .keys(doc! { "legacyExamId": 1 })
-                    .options(unique("language_item_assemblies_legacy_exam_unique"))
                     .build(),
             )
             .await?;

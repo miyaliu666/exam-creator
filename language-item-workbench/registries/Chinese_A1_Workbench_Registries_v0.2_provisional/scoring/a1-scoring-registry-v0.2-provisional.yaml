@@ -89,7 +89,7 @@ technicalIncidentPolicy:
   - NotScoredTechnical
   - ScoringHold
   - Inconclusive
-  rule: 系统故障不得直接记为考生零分；先恢复、受控重试、排除无效题或判定证据不足。
+  rule: A system failure must not automatically give the candidate a zero; first recover, allow a controlled retry, exclude the invalid item, or record insufficient evidence as appropriate.
 adjudicationPolicies:
 - adjudicationPolicyId: ADJ-NOT-APPLICABLE-v0.1
   scope: objective items without scoring dispute

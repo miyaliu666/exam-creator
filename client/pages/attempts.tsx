@@ -124,22 +124,6 @@ export function Attempts() {
       </HStack>
       <Center>
         <Stack gap={8} w="full" maxW="7xl">
-          {/* <Flex
-            justify="space-between"
-            align="center"
-            bg="bg.panel"
-            borderRadius="xl"
-            p={8}
-            boxShadow="lg"
-            mb={4}
-          >
-            <Stack gap={1}>
-              <Heading fontWeight="extrabold" fontSize="3xl">
-                Exam Moderator
-              </Heading>
-              <Text fontSize="lg">Moderate exam attempts.</Text>
-            </Stack>
-            <UsersOnPageAvatars path="/attempts" /> */}
           <Header title="Exam Moderator" description="Moderate exam attempts">
             <HStack gap={2}>
               <Menu.Root>

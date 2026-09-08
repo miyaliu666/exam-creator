@@ -3,7 +3,7 @@ registryVersion: 0.2-provisional
 status: SpecificationReadyImplementationPending
 entries:
 - blueprintSlotId: R-A1-1
-  title: 标志、标签和简短通知
+  title: Signs, labels, and short notices
   slotVersion: 0.2-provisional
   status: Required
   coverageRole: requiredForPilot
@@ -43,7 +43,7 @@ entries:
   - UpperA1
   implementationStatus: SpecificationReadyImplementationPending
 - blueprintSlotId: R-A1-2
-  title: 短消息和在线信息
+  title: Short messages and online information
   slotVersion: 0.2-provisional
   status: Required
   coverageRole: requiredForPilot
@@ -90,7 +90,7 @@ entries:
   - UpperA1
   implementationStatus: SpecificationReadyImplementationPending
 - blueprintSlotId: R-A1-3
-  title: 实用结构化信息
+  title: Practical structured information
   slotVersion: 0.2-provisional
   status: Required
   coverageRole: requiredForPilot
@@ -134,7 +134,7 @@ entries:
   - UpperA1
   implementationStatus: SpecificationReadyImplementationPending
 - blueprintSlotId: R-A1-4
-  title: 简短人物资料、日常安排和基本说明
+  title: Short profiles, routines, and basic descriptions
   slotVersion: 0.2-provisional
   status: Required
   coverageRole: requiredForPilot
@@ -173,7 +173,7 @@ entries:
   - UpperA1
   implementationStatus: SpecificationReadyImplementationPending
 - blueprintSlotId: L-A1-1
-  title: 基本个人和熟悉信息
+  title: Basic personal and familiar information
   slotVersion: 0.2-provisional
   status: Required
   coverageRole: requiredForPilot
@@ -212,7 +212,7 @@ entries:
   - UpperA1
   implementationStatus: SpecificationReadyImplementationPending
 - blueprintSlotId: L-A1-2
-  title: 短对话中的明确细节
+  title: Explicit details in short dialogues
   slotVersion: 0.2-provisional
   status: Required
   coverageRole: requiredForPilot
@@ -253,7 +253,7 @@ entries:
   - UpperA1
   implementationStatus: SpecificationReadyImplementationPending
 - blueprintSlotId: L-A1-3
-  title: 通知、留言和信息记录
+  title: Announcements, messages, and information records
   slotVersion: 0.2-provisional
   status: Required
   coverageRole: requiredForPilot
@@ -292,7 +292,7 @@ entries:
   - UpperA1
   implementationStatus: SpecificationReadyImplementationPending
 - blueprintSlotId: L-A1-4
-  title: 简单交际目的和一步式指示
+  title: Simple communicative purposes and one-step instructions
   slotVersion: 0.2-provisional
   status: Required
   coverageRole: requiredForPilot
@@ -332,7 +332,7 @@ entries:
   - UpperA1
   implementationStatus: SpecificationReadyImplementationPending
 - blueprintSlotId: W-A1-1
-  title: 填写基本在线表格
+  title: Complete a basic online form
   slotVersion: 0.2-provisional
   status: Required
   coverageRole: requiredForPilot
@@ -365,7 +365,7 @@ entries:
   - UpperA1
   implementationStatus: SpecificationReadyImplementationPending
 - blueprintSlotId: W-A1-2
-  title: 回复非常短的实用消息
+  title: Reply to a very short practical message
   slotVersion: 0.2-provisional
   status: Required
   coverageRole: requiredForPilot
@@ -400,7 +400,7 @@ entries:
   - UpperA1
   implementationStatus: SpecificationReadyImplementationPending
 - blueprintSlotId: W-A1-3
-  title: 书面转告简单信息
+  title: Relay simple information in writing
   slotVersion: 0.2-provisional
   status: PilotRequired
   coverageRole: requiredForPilot
@@ -440,7 +440,7 @@ entries:
   - UpperA1
   implementationStatus: SpecificationReadyImplementationPending
 - blueprintSlotId: S-A1-1
-  title: 基本个人问答
+  title: Basic personal questions and answers
   slotVersion: 0.2-provisional
   status: Required
   coverageRole: requiredForPilot
@@ -480,7 +480,7 @@ entries:
   - UpperA1
   implementationStatus: SpecificationReadyImplementationPending
 - blueprintSlotId: S-A1-2
-  title: 表达直接需要和熟悉内容
+  title: Express direct needs and familiar content
   slotVersion: 0.2-provisional
   status: Required
   coverageRole: requiredForPilot
@@ -500,6 +500,7 @@ entries:
   - D10
   - D11
   - D14
+  - D16
   - D17
   - D18
   scoredResponseMode: spokenResponse
@@ -517,7 +518,7 @@ entries:
   - UpperA1
   implementationStatus: SpecificationReadyImplementationPending
 - blueprintSlotId: S-A1-3
-  title: 简单日常互动与安排确认
+  title: Simple everyday interaction and arrangement confirmation
   slotVersion: 0.2-provisional
   status: Required
   coverageRole: requiredForPilot
@@ -558,7 +559,7 @@ entries:
   - UpperA1
   implementationStatus: SpecificationReadyImplementationPending
 - blueprintSlotId: S-A1-4
-  title: 口头转告简单信息
+  title: Relay simple information orally
   slotVersion: 0.2-provisional
   status: PilotRequired
   coverageRole: requiredForPilot

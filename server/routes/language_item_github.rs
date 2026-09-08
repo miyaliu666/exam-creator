@@ -2,13 +2,17 @@ use std::collections::HashMap;
 
 use axum::{
     Extension, Json,
+    body::Bytes,
     extract::{Path, State},
 };
 use futures_util::TryStreamExt;
-use http::StatusCode;
+use hmac::{Hmac, Mac};
+use http::{HeaderMap, StatusCode};
 use mongodb::bson::doc;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use sha2::Sha256;
+use tracing::error;
 use uuid::Uuid;
 
 use crate::{
@@ -17,8 +21,8 @@ use crate::{
     errors::Error,
     language_items::{
         domain::{
-            GithubReviewBatch, GithubReviewLink, GithubReviewState, LanguageItem,
-            LanguageItemAuditEvent, LanguageItemRecordState, LanguageItemReview,
+            GithubReviewBatch, GithubReviewLink, GithubReviewState, GithubSyncDelivery,
+            LanguageItem, LanguageItemAuditEvent, LanguageItemRecordState, LanguageItemReview,
             LanguageItemStatus, LanguageItemVersion, ReviewDecision, TaskPackage,
             task_package_hash,
         },
@@ -80,6 +84,7 @@ pub struct GithubIntegrationStatus {
     repository: Option<String>,
     base_branch: Option<String>,
     review_mode: &'static str,
+    automatic_sync: bool,
 }
 
 pub async fn get_status(
@@ -92,6 +97,7 @@ pub async fn get_status(
         repository: config.map(|config| config.repository.clone()),
         base_branch: config.map(|config| config.base_branch.clone()),
         review_mode: "pullRequest",
+        automatic_sync: config.is_some_and(|config| config.webhook_secret.is_some()),
     })
 }
 
@@ -525,7 +531,197 @@ pub async fn post_sync_batch(
     Extension(http_client): Extension<reqwest::Client>,
     Path(batch_id): Path<String>,
 ) -> Result<Json<GithubReviewBatch>, Error> {
+    sync_review_batch(&state, &http_client, &batch_id, &user.email)
+        .await
+        .map(Json)
+}
+
+#[derive(Deserialize)]
+struct GithubWebhookPullRequest {
+    merged: bool,
+    merge_commit_sha: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct GithubWebhookRepository {
+    full_name: String,
+}
+
+#[derive(Deserialize)]
+struct GithubWebhookSender {
+    login: String,
+}
+
+#[derive(Deserialize)]
+struct GithubWebhookPayload {
+    action: String,
+    number: u64,
+    pull_request: GithubWebhookPullRequest,
+    repository: GithubWebhookRepository,
+    sender: GithubWebhookSender,
+}
+
+fn verify_webhook_signature(secret: &str, signature: &str, body: &[u8]) -> bool {
+    let Some(hex_signature) = signature.strip_prefix("sha256=") else {
+        return false;
+    };
+    let Ok(expected) = hex::decode(hex_signature) else {
+        return false;
+    };
+    let Ok(mut mac) = Hmac::<Sha256>::new_from_slice(secret.as_bytes()) else {
+        return false;
+    };
+    mac.update(body);
+    mac.verify_slice(&expected).is_ok()
+}
+
+pub async fn post_webhook(
+    State(state): State<ServerState>,
+    Extension(http_client): Extension<reqwest::Client>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> Result<StatusCode, Error> {
     let config = github_config(&state)?;
+    let secret = config.webhook_secret.as_deref().ok_or_else(|| {
+        Error::Server(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "GitHub review webhook is not configured".to_string(),
+        )
+    })?;
+    let signature = headers
+        .get("x-hub-signature-256")
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or_default();
+    if !verify_webhook_signature(secret, signature, &body) {
+        return Err(Error::Server(
+            StatusCode::UNAUTHORIZED,
+            "invalid GitHub webhook signature".to_string(),
+        ));
+    }
+    if headers
+        .get("x-github-event")
+        .and_then(|value| value.to_str().ok())
+        != Some("pull_request")
+    {
+        return Ok(StatusCode::ACCEPTED);
+    }
+    let delivery_id = headers
+        .get("x-github-delivery")
+        .and_then(|value| value.to_str().ok())
+        .filter(|value| !value.trim().is_empty())
+        .ok_or_else(|| {
+            Error::Server(
+                StatusCode::BAD_REQUEST,
+                "missing GitHub delivery id".to_string(),
+            )
+        })?
+        .to_string();
+    let payload: GithubWebhookPayload = serde_json::from_slice(&body).map_err(|error| {
+        Error::Server(
+            StatusCode::BAD_REQUEST,
+            format!("invalid GitHub webhook payload: {error}"),
+        )
+    })?;
+    if payload.repository.full_name != config.repository
+        || payload.action != "closed"
+        || !payload.pull_request.merged
+    {
+        return Ok(StatusCode::ACCEPTED);
+    }
+    if state
+        .workbench_database
+        .github_sync_deliveries
+        .find_one(doc! { "id": &delivery_id })
+        .await?
+        .is_some()
+    {
+        return Ok(StatusCode::ACCEPTED);
+    }
+    let item = state
+        .workbench_database
+        .language_items
+        .find_one(doc! {
+            "githubReview.repository": &config.repository,
+            "githubReview.pullRequestNumber": payload.number as i64,
+        })
+        .await?
+        .ok_or_else(|| not_found("GitHub review pull request", &payload.number.to_string()))?;
+    let batch_id = item
+        .github_review
+        .as_ref()
+        .expect("query guarantees GitHub review")
+        .batch_id
+        .clone();
+    let timestamp = now();
+    let delivery = GithubSyncDelivery {
+        id: delivery_id.clone(),
+        repository: config.repository.clone(),
+        pull_request_number: payload.number,
+        batch_id: batch_id.clone(),
+        merge_commit_sha: payload.pull_request.merge_commit_sha,
+        actor_email: format!("github:{}", payload.sender.login),
+        status: "queued".to_string(),
+        error: None,
+        created_at: timestamp.clone(),
+        updated_at: timestamp,
+        completed_at: None,
+    };
+    state
+        .workbench_database
+        .github_sync_deliveries
+        .insert_one(&delivery)
+        .await?;
+
+    let worker_state = state.clone();
+    tokio::spawn(async move {
+        let started_at = now();
+        let _ = worker_state
+            .workbench_database
+            .github_sync_deliveries
+            .update_one(
+                doc! { "id": &delivery_id },
+                doc! { "$set": { "status": "running", "updatedAt": &started_at } },
+            )
+            .await;
+        let result = sync_review_batch(
+            &worker_state,
+            &http_client,
+            &batch_id,
+            &delivery.actor_email,
+        )
+        .await;
+        let completed_at = now();
+        let (status, sync_error) = match result {
+            Ok(_) => ("completed", None),
+            Err(sync_error) => {
+                error!(delivery_id, batch_id, error = %sync_error, "GitHub review auto-sync failed");
+                ("failed", Some(sync_error.to_string()))
+            }
+        };
+        let _ = worker_state
+            .workbench_database
+            .github_sync_deliveries
+            .update_one(
+                doc! { "id": &delivery_id },
+                doc! { "$set": {
+                    "status": status,
+                    "error": sync_error,
+                    "updatedAt": &completed_at,
+                    "completedAt": &completed_at,
+                } },
+            )
+            .await;
+    });
+    Ok(StatusCode::ACCEPTED)
+}
+
+async fn sync_review_batch(
+    state: &ServerState,
+    http_client: &reqwest::Client,
+    batch_id: &str,
+    actor_email: &str,
+) -> Result<GithubReviewBatch, Error> {
+    let config = github_config(state)?;
     let mut items: Vec<LanguageItem> = state
         .workbench_database
         .language_items
@@ -534,7 +730,7 @@ pub async fn post_sync_batch(
         .try_collect()
         .await?;
     if items.is_empty() {
-        return Err(not_found("GitHub review batch", &batch_id));
+        return Err(not_found("GitHub review batch", batch_id));
     }
     let first_link = items[0]
         .github_review
@@ -545,7 +741,7 @@ pub async fn post_sync_batch(
             "GitHub review repository does not match configuration",
         ));
     }
-    let github = GithubClient::new(&http_client, config);
+    let github = GithubClient::new(http_client, config);
     let remote = match github
         .pull_request_summary(first_link.pull_request_number)
         .await
@@ -553,11 +749,33 @@ pub async fn post_sync_batch(
         Ok(remote) => remote,
         Err(error) => {
             let message = error.to_string();
-            let _ = mark_sync_failed(&state, &mut items, &user.email, &message).await;
+            let _ = mark_sync_failed(state, &mut items, actor_email, &message).await;
             return Err(error);
         }
     };
     let timestamp = now();
+
+    if remote.state == GithubReviewState::Merged
+        && items.iter().all(|item| {
+            item.github_review.as_ref().is_some_and(|link| {
+                link.state == GithubReviewState::Merged
+                    && link.merge_commit_sha == remote.merge_commit_sha
+                    && link.approved_version_id.is_some()
+            })
+        })
+    {
+        return Ok(GithubReviewBatch {
+            batch_id: batch_id.to_string(),
+            repository: config.repository.clone(),
+            pull_request_number: remote.number,
+            pull_request_url: remote.html_url,
+            state: remote.state,
+            item_ids: items.into_iter().map(|item| item.id).collect(),
+            approval_count: remote.approval_count,
+            changes_requested_count: remote.changes_requested_count,
+            last_synced_at: timestamp,
+        });
+    }
 
     let import_result = async {
         if remote.state != GithubReviewState::Merged {
@@ -616,10 +834,33 @@ pub async fn post_sync_batch(
         Ok(files) => files,
         Err(error) => {
             let message = error.to_string();
-            let _ = mark_sync_failed(&state, &mut items, &user.email, &message).await;
+            let _ = mark_sync_failed(state, &mut items, actor_email, &message).await;
             return Err(error);
         }
     };
+
+    if imported_files.is_some() {
+        for item in &items {
+            let link = item.github_review.as_ref().expect("query guarantees link");
+            let source_version = state
+                .workbench_database
+                .versions
+                .find_one(doc! { "id": &link.source_version_id })
+                .await?
+                .ok_or_else(|| not_found("language item version", &link.source_version_id))?;
+            if item.latest_version_id.as_deref() != Some(&link.source_version_id)
+                || item.revision != source_version.created_from_draft_revision
+            {
+                let message = format!(
+                    "Item {} changed after review submission; merged content was not allowed to overwrite its newer draft",
+                    item.id
+                );
+                let error = conflict(&message);
+                let _ = mark_sync_failed(state, &mut items, actor_email, &message).await;
+                return Err(error);
+            }
+        }
+    }
 
     let mut item_ids = Vec::new();
     for item in &mut items {
@@ -648,39 +889,109 @@ pub async fn post_sync_batch(
 
         if let Some(files) = &imported_files {
             let (file, validation) = files.get(&item.id).expect("validated above");
-            let final_hash = task_package_hash(&file.task_package);
-            let current_version_id = item
-                .latest_version_id
-                .clone()
-                .ok_or_else(|| conflict("Reviewed item lost its frozen version"))?;
-            let mut current_version = state
+            let merged_content_hash = task_package_hash(&file.task_package);
+            let mut source_version = state
                 .workbench_database
                 .versions
-                .find_one(doc! { "id": &current_version_id })
+                .find_one(doc! { "id": &link.source_version_id })
                 .await?
-                .ok_or_else(|| not_found("language item version", &current_version_id))?;
-            let changed = current_version.content_hash != final_hash
-                || item.title.trim() != file.title.trim();
-            current_version.content_hash = final_hash;
-            current_version.lifecycle_status = "approved".to_string();
-            current_version.package = file.task_package.clone();
-            current_version.validation = validation.clone();
-            current_version.submitted_by = format!(
-                "github:{}",
-                remote.merged_by.as_deref().unwrap_or("unknown")
-            );
-            state
-                .workbench_database
-                .versions
-                .replace_one(doc! { "id": &current_version.id }, &current_version)
-                .await?;
-            if changed {
+                .ok_or_else(|| not_found("language item version", &link.source_version_id))?;
+            if item.latest_version_id.as_deref() != Some(&link.source_version_id)
+                || item.revision != source_version.created_from_draft_revision
+            {
+                return Err(conflict(format!(
+                    "Item {} changed after review submission; merged content was not allowed to overwrite its newer draft",
+                    item.id
+                )));
+            }
+
+            let package_changed = source_version.content_hash != merged_content_hash;
+            let title_changed = item.title.trim() != file.title.trim();
+            let approved_version = if package_changed {
+                let version_number = state
+                    .workbench_database
+                    .versions
+                    .count_documents(doc! { "itemId": &item.id })
+                    .await?
+                    + 1;
+                let mut approved_package = file.task_package.clone();
+                approved_package.task_version = version_number.to_string();
+                let approved_validation = validate_task_package(&approved_package);
+                if !approved_validation.valid {
+                    return Err(Error::Server(
+                        StatusCode::UNPROCESSABLE_ENTITY,
+                        format!(
+                            "Merged GitHub item {} became invalid after version normalization",
+                            item.id
+                        ),
+                    ));
+                }
+                source_version.lifecycle_status = "superseded-by-github-review".to_string();
+                state
+                    .workbench_database
+                    .versions
+                    .replace_one(doc! { "id": &source_version.id }, &source_version)
+                    .await?;
+                let version = LanguageItemVersion {
+                    id: format!("LIV-{}", Uuid::new_v4()),
+                    item_id: item.id.clone(),
+                    version_number,
+                    created_from_draft_revision: item.revision,
+                    author_email: source_version.author_email.clone(),
+                    submitted_by: format!(
+                        "github:{}",
+                        remote.merged_by.as_deref().unwrap_or("unknown")
+                    ),
+                    frozen: true,
+                    content_hash: task_package_hash(&approved_package),
+                    lifecycle_status: "approved".to_string(),
+                    package: approved_package,
+                    validation: approved_validation,
+                    created_at: timestamp.clone(),
+                };
+                state
+                    .workbench_database
+                    .versions
+                    .insert_one(&version)
+                    .await?;
+                version
+            } else {
+                source_version.lifecycle_status = "approved".to_string();
+                source_version.submitted_by = format!(
+                    "github:{}",
+                    remote.merged_by.as_deref().unwrap_or("unknown")
+                );
+                source_version.validation = validation.clone();
+                state
+                    .workbench_database
+                    .versions
+                    .replace_one(doc! { "id": &source_version.id }, &source_version)
+                    .await?;
+                source_version
+            };
+            if package_changed || title_changed {
                 item.revision += 1;
             }
             item.title = file.title.trim().to_string();
-            item.draft = file.task_package.clone();
-            item.latest_version_id = Some(current_version.id.clone());
-            link.approved_version_id = Some(current_version.id);
+            item.draft = approved_version.package.clone();
+            item.latest_version_id = Some(approved_version.id.clone());
+            link.approved_version_id = Some(approved_version.id.clone());
+            write_audit(
+                state,
+                &item.id,
+                Some(&approved_version.id),
+                "github_review.merged_content_imported",
+                actor_email,
+                json!({
+                    "sourceVersionId": link.source_version_id,
+                    "approvedVersionId": approved_version.id,
+                    "packageChanged": package_changed,
+                    "titleChanged": title_changed,
+                    "mergedContentHash": merged_content_hash,
+                    "approvedContentHash": approved_version.content_hash,
+                }),
+            )
+            .await?;
         }
         item.github_review = Some(link.clone());
         item.updated_at = timestamp.clone();
@@ -690,11 +1001,11 @@ pub async fn post_sync_batch(
             .replace_one(doc! { "id": &item.id }, &*item)
             .await?;
         write_audit(
-            &state,
+            state,
             &item.id,
             item.latest_version_id.as_deref(),
             "github_review.synced",
-            &user.email,
+            actor_email,
             json!({
                 "batchId": batch_id,
                 "pullRequestNumber": remote.number,
@@ -706,8 +1017,8 @@ pub async fn post_sync_batch(
         )
         .await?;
     }
-    Ok(Json(GithubReviewBatch {
-        batch_id,
+    Ok(GithubReviewBatch {
+        batch_id: batch_id.to_string(),
         repository: config.repository.clone(),
         pull_request_number: remote.number,
         pull_request_url: remote.html_url,
@@ -716,7 +1027,7 @@ pub async fn post_sync_batch(
         approval_count: remote.approval_count,
         changes_requested_count: remote.changes_requested_count,
         last_synced_at: timestamp,
-    }))
+    })
 }
 
 async fn mark_sync_failed(
@@ -756,4 +1067,24 @@ async fn mark_sync_failed(
         .await?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::verify_webhook_signature;
+
+    #[test]
+    fn verifies_github_sha256_signature() {
+        let body = br#"{"action":"closed"}"#;
+        assert!(verify_webhook_signature(
+            "secret",
+            "sha256=336cf634bffeed63498de4350ea7c1c1ad9ecb668d04a357794118841e02c3db",
+            body,
+        ));
+        assert!(!verify_webhook_signature(
+            "secret",
+            "sha256=003f6b8a4a4f5a8f54d43b0f07a2621f9867eddb6ca0e0432085ed12b99f0e99",
+            body,
+        ));
+    }
 }

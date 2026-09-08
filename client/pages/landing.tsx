@@ -16,7 +16,7 @@ import { Header } from "../components/ui/header";
 import { languageItemsRoute } from "./language-items";
 
 export function Landing() {
-  const { logout } = useContext(AuthContext)!;
+  const { isDevelopmentAuth, logout } = useContext(AuthContext)!;
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   const navigate = useNavigate();
 
@@ -29,44 +29,22 @@ export function Landing() {
 
   return (
     <Box minH="100vh" bg={"bg"} py={12} px={4}>
-      {/* Logout button top right */}
-      <Button
-        position="fixed"
-        top={3}
-        right={8}
-        zIndex={101}
-        colorPalette="red"
-        variant="outline"
-        size="sm"
-        onClick={() => logout()}
-      >
-        Logout
-      </Button>
+      {!isDevelopmentAuth ? (
+        <Button
+          position="fixed"
+          top={3}
+          right={8}
+          zIndex={101}
+          colorPalette="red"
+          variant="outline"
+          size="sm"
+          onClick={() => logout()}
+        >
+          Logout
+        </Button>
+      ) : null}
       <Center>
         <Stack gap={8} w="full" maxW="7xl">
-          {/* <Flex
-            justify="space-between"
-            align="center"
-            bg={"bg"}
-            borderRadius="xl"
-            p={8}
-            boxShadow="lg"
-            mb={4}
-          >
-            <Stack gap={1}>
-              <Heading
-                color={"fg.success"}
-                fontWeight="extrabold"
-                fontSize="3xl"
-              >
-                Exam Creator
-              </Heading>
-              <Text color="fg.muted" fontSize="lg">
-                Create and moderate exams and attempts.
-              </Text>
-            </Stack>
-            <UsersOnPageAvatars path="/" />
-          </Flex> */}
           <Header
             title="Exam Creator"
             description="Create and moderate exams and attempts"
@@ -86,7 +64,7 @@ export function Landing() {
                 p={0}
                 bg={"bg.subtle"}
               >
-                <LandingCard path={"/language-items"}>
+                <LandingCard>
                   Language Exam Item Creator
                 </LandingCard>
               </Button>
@@ -103,7 +81,7 @@ export function Landing() {
                 p={0}
                 bg={"bg.subtle"}
               >
-                <LandingCard path={"/exams"}>Exams</LandingCard>
+                <LandingCard>Exams</LandingCard>
               </Button>
               <Button
                 onClick={() => navigate({ to: attemptsRoute.to })}
@@ -118,7 +96,7 @@ export function Landing() {
                 p={0}
                 bg={"bg.subtle"}
               >
-                <AttemptsLandingCard path={"/attempts"} />
+                <AttemptsLandingCard />
               </Button>
               <Button
                 onClick={() => navigate({ to: metricsRoute.to })}
@@ -133,7 +111,7 @@ export function Landing() {
                 p={0}
                 bg={"bg.subtle"}
               >
-                <LandingCard path={"/metrics"}>Exam Metrics</LandingCard>
+                <LandingCard>Exam Metrics</LandingCard>
               </Button>
               <Button
                 onClick={() => navigate({ to: usersRoute.to })}
@@ -148,7 +126,7 @@ export function Landing() {
                 p={0}
                 bg={"bg.subtle"}
               >
-                <LandingCard path={"/users"}>User Management</LandingCard>
+                <LandingCard>User Management</LandingCard>
               </Button>
             </SimpleGrid>
           </Box>

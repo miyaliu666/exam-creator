@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use axum::{
     Extension, Json,
@@ -17,8 +17,8 @@ use crate::{
     language_items::{
         ai,
         domain::{
-            AiGenerationRun, AiReviewRun, CandidatePreview, GithubReviewState, LanguageItem,
-            LanguageItemAuditEvent, LanguageItemExport, LanguageItemRecordState,
+            AiGenerationRun, AiReviewRun, CandidatePreview, DifficultyProfile, GithubReviewState,
+            LanguageItem, LanguageItemAuditEvent, LanguageItemExport, LanguageItemRecordState,
             LanguageItemReview, LanguageItemReviewDiscussion, LanguageItemReviewDiscussionEvent,
             LanguageItemReviewDiscussionView, LanguageItemStatus, LanguageItemVersion,
             ReviewDecision, ReviewDiscussionEventKind, ReviewDiscussionKind,
@@ -26,11 +26,17 @@ use crate::{
             task_package_hash,
         },
         export::build_legacy_export,
-        registry::{RegistrySnapshot, WorkbenchCapability, snapshot},
+        registry::{
+            RegistrySnapshot, WorkbenchCapability, active_snapshot, capability_for,
+            context_supports_capability, difficulty_standards_for_capability, snapshot_for,
+        },
         validation::{validate_generation_setup, validate_task_package},
     },
     state::ServerState,
 };
+
+#[cfg(test)]
+use crate::language_items::registry::snapshot;
 
 fn now() -> String {
     chrono::Utc::now().to_rfc3339()
@@ -42,6 +48,14 @@ fn not_found(kind: &str, id: &str) -> Error {
 
 fn conflict(message: impl Into<String>) -> Error {
     Error::Server(StatusCode::CONFLICT, message.into())
+}
+
+fn pinned_registry(version: &str) -> Result<Arc<RegistrySnapshot>, Error> {
+    snapshot_for(version).ok_or_else(|| {
+        conflict(format!(
+            "Registry version {version} is unavailable; the item cannot use a different rule version"
+        ))
+    })
 }
 
 fn require_owner(item: &LanguageItem, user: &prisma::ExamCreatorUser) -> Result<(), Error> {
@@ -208,8 +222,17 @@ async fn compensate_failed_staging_export(
         .await;
 }
 
-pub async fn get_registry(_: prisma::ExamCreatorUser) -> Json<&'static RegistrySnapshot> {
-    Json(snapshot())
+pub async fn get_registry(_: prisma::ExamCreatorUser) -> Json<RegistrySnapshot> {
+    Json((*active_snapshot()).clone())
+}
+
+pub async fn get_registry_version(
+    _: prisma::ExamCreatorUser,
+    Path(registry_version): Path<String>,
+) -> Result<Json<RegistrySnapshot>, Error> {
+    snapshot_for(&registry_version)
+        .map(|registry| Json((*registry).clone()))
+        .ok_or_else(|| not_found("Registry version", &registry_version))
 }
 
 #[derive(Serialize)]
@@ -282,6 +305,10 @@ pub struct CreateItemBody {
     template_id: Option<String>,
     blueprint_slot_id: Option<String>,
     item_format_id: Option<String>,
+    primary_can_do_id: Option<String>,
+    primary_domain: Option<String>,
+    context_id: Option<String>,
+    difficulty_band: Option<String>,
 }
 
 fn template_for_format(item_format_id: &str) -> Option<&'static str> {
@@ -301,6 +328,9 @@ fn draft_for_capability(
     id: String,
     capability: &WorkbenchCapability,
     registry: &RegistrySnapshot,
+    requested_domain: Option<&str>,
+    requested_context_id: Option<&str>,
+    requested_difficulty_band: Option<&str>,
 ) -> Result<TaskPackage, Error> {
     let template_id = template_for_format(&capability.item_format_id).ok_or_else(|| {
         Error::Server(
@@ -318,29 +348,43 @@ fn draft_for_capability(
         )
     })?;
 
-    let context = capability
-        .allowed_domains
-        .iter()
-        .find_map(|domain| {
-            registry.context_options.iter().find(|context| {
-                capability.allowed_context_ids.contains(&context.id)
-                    && context.primary_domains.contains(domain)
-            })
+    let mut contexts = registry.context_options.iter().filter(|context| {
+        capability.allowed_context_ids.contains(&context.id)
+            && context_supports_capability(context, capability)
+    });
+    let context = contexts
+        .find(|context| {
+            requested_context_id.is_none_or(|id| context.id == id)
+                && requested_domain.is_none_or(|domain| {
+                    context.primary_domains.iter().any(|value| value == domain)
+                })
         })
         .ok_or_else(|| {
             Error::Server(
-                StatusCode::INTERNAL_SERVER_ERROR,
+                StatusCode::UNPROCESSABLE_ENTITY,
                 format!(
-                    "no domain/context combination for blueprint slot {}",
-                    capability.blueprint_slot_id
+                    "no active Context supports {} × {} × {} for the requested Domain",
+                    capability.blueprint_slot_id,
+                    capability.item_format_id,
+                    capability.primary_can_do_id
                 ),
             )
         })?;
-    let domain = capability
-        .allowed_domains
-        .iter()
-        .find(|domain| context.primary_domains.contains(domain))
-        .expect("selected context belongs to an allowed domain");
+    let domain = requested_domain
+        .map(str::to_string)
+        .or_else(|| context.primary_domains.first().cloned())
+        .ok_or_else(|| {
+            Error::Server(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                format!("Context {} does not belong to a Domain", context.id),
+            )
+        })?;
+    if !capability.allowed_domains.contains(&domain) {
+        return Err(Error::Server(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            format!("Domain {domain} is not allowed for the selected capability"),
+        ));
+    }
 
     package.blueprint_slot_id = capability.blueprint_slot_id.clone();
     package.task_family_id = capability.task_family_id.clone();
@@ -351,12 +395,51 @@ fn draft_for_capability(
     package.content.primary_can_do_id = capability.primary_can_do_id.clone();
     package.content.primary_reported_skill = capability.primary_reported_skill.clone();
     package.content.communicative_activity = capability.communicative_activity.clone();
-    package.content.primary_domain = domain.clone();
+    package.content.primary_domain = domain;
     package.content.context_id = context.id.clone();
     package.content.target_content_ids.clear();
     package.content.supporting_content_refs.clear();
     package.content.required_information_points.clear();
     package.delivery_policy_refs = capability.delivery_policy_refs.clone();
+    let standards = difficulty_standards_for_capability(registry, capability);
+    let difficulty_standard = requested_difficulty_band
+        .and_then(|band| standards.iter().find(|standard| standard.id == band))
+        .or_else(|| standards.iter().find(|standard| standard.id == "TypicalA1"))
+        .or_else(|| standards.first())
+        .ok_or_else(|| {
+            Error::Server(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "the selected capability has no difficulty profiles".to_string(),
+            )
+        })?;
+    if requested_difficulty_band.is_some_and(|band| band != difficulty_standard.id) {
+        return Err(Error::Server(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "the requested difficulty band is not allowed for the selected capability".to_string(),
+        ));
+    }
+    let mut difficulty = package
+        .content
+        .difficulty
+        .take()
+        .unwrap_or_else(DifficultyProfile::r_a1_1_typical);
+    difficulty.intended_band = difficulty_standard.id.clone();
+    difficulty.status = "AuthorEstimated".to_string();
+    difficulty.drivers.input_length = difficulty_standard.default_drivers.input_length.clone();
+    difficulty.drivers.information_points = difficulty_standard.default_drivers.information_points;
+    difficulty.drivers.support_level = difficulty_standard.default_drivers.support_level.clone();
+    difficulty.drivers.distractor_similarity = difficulty_standard
+        .default_drivers
+        .distractor_similarity
+        .clone();
+    difficulty.drivers.independence_level = difficulty_standard
+        .default_drivers
+        .independence_level
+        .clone();
+    difficulty.drivers.inference_required = difficulty_standard.default_drivers.inference_required;
+    difficulty.rationale = vec![difficulty_standard.description.clone()];
+    package.content.difficulty_band = difficulty_standard.id.clone();
+    package.content.difficulty = Some(difficulty);
     if let Some(contract) = registry.scoring_contracts.iter().find(|contract| {
         contract.scoring_contract_template_id == capability.scoring_contract_template_id
     }) {
@@ -368,22 +451,22 @@ fn draft_for_capability(
 }
 
 fn apply_locked_capability_contract(package: &mut TaskPackage) -> Result<(), Error> {
-    let capability = snapshot()
-        .capabilities
-        .iter()
-        .find(|capability| {
-            capability.blueprint_slot_id == package.blueprint_slot_id
-                && capability.item_format_id == package.item_format_id
-        })
-        .ok_or_else(|| {
-            Error::Server(
-                StatusCode::UNPROCESSABLE_ENTITY,
-                format!(
-                    "item format {} is not allowed for blueprint slot {}",
-                    package.item_format_id, package.blueprint_slot_id
-                ),
-            )
-        })?;
+    let registry = pinned_registry(&package.spec_versions.registry_bundle_version)?;
+    let capability = capability_for(
+        &registry,
+        &package.blueprint_slot_id,
+        &package.item_format_id,
+        Some(&package.content.primary_can_do_id),
+    )
+    .ok_or_else(|| {
+        Error::Server(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            format!(
+                "item format {} is not allowed for blueprint slot {}",
+                package.item_format_id, package.blueprint_slot_id
+            ),
+        )
+    })?;
 
     // These values are Registry-owned, not author input. Reapplying them on
     // every save also repairs mutable drafts created under an older Registry.
@@ -391,7 +474,7 @@ fn apply_locked_capability_contract(package: &mut TaskPackage) -> Result<(), Err
     package.renderer.renderer_id = capability.renderer_id.clone();
     package.scoring_package.scoring_contract_template_id =
         capability.scoring_contract_template_id.clone();
-    if let Some(contract) = snapshot().scoring_contracts.iter().find(|contract| {
+    if let Some(contract) = registry.scoring_contracts.iter().find(|contract| {
         contract.scoring_contract_template_id == capability.scoring_contract_template_id
     }) {
         package.scoring_package.scoring_contract_template_version =
@@ -428,23 +511,21 @@ pub async fn post_item(
 ) -> Result<Json<LanguageItem>, Error> {
     let id = format!("LI-{}", Uuid::new_v4());
     let timestamp = now();
+    let registry = active_snapshot();
     let selected_capability = match (&body.blueprint_slot_id, &body.item_format_id) {
         (Some(slot_id), Some(format_id)) => Some(
-            snapshot()
-                .capabilities
-                .iter()
-                .find(|capability| {
-                    capability.blueprint_slot_id == *slot_id
-                        && capability.item_format_id == *format_id
-                })
-                .ok_or_else(|| {
-                    Error::Server(
-                        StatusCode::BAD_REQUEST,
-                        format!(
-                            "item format {format_id} is not allowed for blueprint slot {slot_id}"
-                        ),
-                    )
-                })?,
+            capability_for(
+                &registry,
+                slot_id,
+                format_id,
+                body.primary_can_do_id.as_deref(),
+            )
+            .ok_or_else(|| {
+                Error::Server(
+                    StatusCode::BAD_REQUEST,
+                    format!("item format {format_id} is not allowed for blueprint slot {slot_id}"),
+                )
+            })?,
         ),
         (None, None) => None,
         _ => {
@@ -455,20 +536,28 @@ pub async fn post_item(
         }
     };
     let draft = if let Some(capability) = selected_capability {
-        draft_for_capability(id.clone(), capability, snapshot())?
+        draft_for_capability(
+            id.clone(),
+            capability,
+            &registry,
+            body.primary_domain.as_deref(),
+            body.context_id.as_deref(),
+            body.difficulty_band.as_deref(),
+        )?
     } else {
         let template_id = body
             .template_id
             .as_deref()
             .unwrap_or("reading-single-select");
-        let draft = TaskPackage::from_template(id.clone(), template_id).ok_or_else(|| {
+        TaskPackage::from_template(id.clone(), template_id).ok_or_else(|| {
             Error::Server(
                 StatusCode::BAD_REQUEST,
                 format!("unsupported language item template: {template_id}"),
             )
-        })?;
-        draft
+        })?
     };
+    let mut draft = draft;
+    draft.spec_versions.registry_bundle_version = registry.bundle_version.clone();
     let item = LanguageItem {
         id: id.clone(),
         title: body
@@ -988,8 +1077,10 @@ pub async fn post_revise_version(
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AiGenerationBody {
     count: Option<u8>,
+    idempotency_key: Option<String>,
 }
 
 pub async fn post_ai_generation(
@@ -1007,6 +1098,32 @@ pub async fn post_ai_generation(
         .ok_or_else(|| not_found("language item", &item_id))?;
     require_owner(&item, &user)?;
     require_active_item(&item)?;
+    let idempotency_key = body
+        .idempotency_key
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty());
+    if idempotency_key
+        .as_ref()
+        .is_some_and(|value| value.chars().count() > 128)
+    {
+        return Err(Error::Server(
+            StatusCode::BAD_REQUEST,
+            "AI generation idempotency key must not exceed 128 characters".to_string(),
+        ));
+    }
+    if let Some(key) = &idempotency_key
+        && let Some(existing) = state
+            .workbench_database
+            .ai_generation_runs
+            .find_one(doc! {
+                "itemId": &item_id,
+                "createdBy": &user.email,
+                "idempotencyKey": key,
+            })
+            .await?
+    {
+        return Ok(Json(existing));
+    }
     require_mutable_draft(&item)?;
     let count = body.count.unwrap_or(3);
     if !(1..=5).contains(&count) {
@@ -1020,21 +1137,11 @@ pub async fn post_ai_generation(
         return Err(Error::Server(
             StatusCode::UNPROCESSABLE_ENTITY,
             serde_json::to_string(&setup_validation)
-                .unwrap_or_else(|_| "命题设置未完成".to_string()),
+                .unwrap_or_else(|_| "The authoring setup is incomplete".to_string()),
         ));
     }
     let metadata = ai::provider_metadata(&state.env_vars.language_item_ai);
-    let generation = ai::generate_candidates(
-        &state.env_vars.language_item_ai,
-        &http_client,
-        &item.draft,
-        count,
-    )
-    .await;
-    let (candidates, status, generation_error) = match generation {
-        Ok(candidates) => (candidates, "completed".to_string(), None),
-        Err(error) => (Vec::new(), "failed".to_string(), Some(error.to_string())),
-    };
+    let timestamp = now();
     let run = AiGenerationRun {
         id: format!("AIR-{}", Uuid::new_v4()),
         item_id: item_id.clone(),
@@ -1062,12 +1169,18 @@ pub async fn post_ai_generation(
             .map(|point| point.label.clone())
             .collect(),
         requested_count: count,
-        candidates,
+        candidates: Vec::new(),
         adopted_candidate_id: None,
-        status,
-        error: generation_error,
+        status: "queued".to_string(),
+        error: None,
+        idempotency_key,
+        attempt_count: 0,
+        retry_count: 0,
+        candidate_errors: Vec::new(),
         created_by: user.email.clone(),
-        created_at: now(),
+        created_at: timestamp.clone(),
+        updated_at: timestamp,
+        completed_at: None,
     };
     state
         .workbench_database
@@ -1078,16 +1191,105 @@ pub async fn post_ai_generation(
         &state,
         &item_id,
         None,
-        if run.status == "completed" {
-            "ai.generation.completed"
-        } else {
-            "ai.generation.failed"
-        },
+        "ai.generation.queued",
         &user.email,
         json!({ "runId": run.id, "count": count }),
     )
     .await?;
+    let background_state = state.clone();
+    let background_client = http_client.clone();
+    let background_run_id = run.id.clone();
+    let background_package = item.draft.clone();
+    let background_actor = user.email;
+    tokio::spawn(async move {
+        if let Err(error) = execute_ai_generation(
+            background_state,
+            background_client,
+            background_run_id,
+            background_package,
+            background_actor,
+            count,
+        )
+        .await
+        {
+            tracing::error!(error = %error, "background language-item AI generation failed");
+        }
+    });
     Ok(Json(run))
+}
+
+async fn execute_ai_generation(
+    state: ServerState,
+    http_client: reqwest::Client,
+    run_id: String,
+    package: TaskPackage,
+    actor_email: String,
+    count: u8,
+) -> Result<(), Error> {
+    let Some(mut run) = state
+        .workbench_database
+        .ai_generation_runs
+        .find_one(doc! { "id": &run_id })
+        .await?
+    else {
+        return Ok(());
+    };
+    run.status = "running".to_string();
+    run.updated_at = now();
+    state
+        .workbench_database
+        .ai_generation_runs
+        .replace_one(doc! { "id": &run_id }, &run)
+        .await?;
+
+    let report = ai::generate_candidates_independently(
+        &state.env_vars.language_item_ai,
+        &http_client,
+        &package,
+        count,
+    )
+    .await;
+    let completed_at = now();
+    run.status = if report.candidates.is_empty() {
+        "failed"
+    } else if report.candidates.len() != usize::from(count) || !report.errors.is_empty() {
+        "partial"
+    } else {
+        "completed"
+    }
+    .to_string();
+    run.error = (!report.errors.is_empty()).then(|| report.errors.join("; "));
+    run.candidate_errors = report.errors;
+    run.candidates = report.candidates;
+    run.attempt_count = report.attempt_count;
+    run.retry_count = report.retry_count;
+    run.updated_at = completed_at.clone();
+    run.completed_at = Some(completed_at);
+    state
+        .workbench_database
+        .ai_generation_runs
+        .replace_one(doc! { "id": &run_id }, &run)
+        .await?;
+    write_audit(
+        &state,
+        &run.item_id,
+        None,
+        match run.status.as_str() {
+            "completed" => "ai.generation.completed",
+            "partial" => "ai.generation.partial",
+            _ => "ai.generation.failed",
+        },
+        &actor_email,
+        json!({
+            "runId": run.id,
+            "requestedCount": count,
+            "candidateCount": run.candidates.len(),
+            "attemptCount": run.attempt_count,
+            "retryCount": run.retry_count,
+            "errors": run.candidate_errors,
+        }),
+    )
+    .await
 }
 
 pub async fn get_ai_runs(
@@ -1447,16 +1649,11 @@ pub async fn post_review_discussion(
     if item.status == LanguageItemStatus::ExportedToStaging {
         return Err(conflict("an exported item can no longer be discussed"));
     }
-    if !snapshot().required_review_gate_ids.contains(&body.gate_id) {
+    let registry = pinned_registry(&version.package.spec_versions.registry_bundle_version)?;
+    if !registry.required_review_gate_ids.contains(&body.gate_id) {
         return Err(Error::Server(
             StatusCode::BAD_REQUEST,
             format!("unsupported review gate: {}", body.gate_id),
-        ));
-    }
-    if body.kind == ReviewDiscussionKind::ChangeRequest && user.email == item.owner_email {
-        return Err(Error::Server(
-            StatusCode::FORBIDDEN,
-            "authors cannot create change requests for their own item".to_string(),
         ));
     }
     let subject = require_discussion_text(&body.subject, "discussion subject", 160)?;
@@ -1560,14 +1757,13 @@ pub async fn post_review_discussion_event(
         .try_collect()
         .await?;
     let current_status = discussion_status(&current_events);
-    let is_author = user.email == item.owner_email;
     match body.kind {
         ReviewDiscussionEventKind::Comment => {}
         ReviewDiscussionEventKind::Addressed => {
-            if !is_author || discussion.kind != ReviewDiscussionKind::ChangeRequest {
+            if discussion.kind != ReviewDiscussionKind::ChangeRequest {
                 return Err(Error::Server(
-                    StatusCode::FORBIDDEN,
-                    "only the item author can mark a change request as addressed".to_string(),
+                    StatusCode::BAD_REQUEST,
+                    "only a change request can be marked as addressed".to_string(),
                 ));
             }
             if current_status == ReviewDiscussionStatus::Resolved {
@@ -1575,23 +1771,11 @@ pub async fn post_review_discussion_event(
             }
         }
         ReviewDiscussionEventKind::Resolved => {
-            if is_author {
-                return Err(Error::Server(
-                    StatusCode::FORBIDDEN,
-                    "the item author cannot confirm a discussion as resolved".to_string(),
-                ));
-            }
             if current_status == ReviewDiscussionStatus::Resolved {
                 return Err(conflict("discussion is already resolved"));
             }
         }
         ReviewDiscussionEventKind::Reopened => {
-            if is_author {
-                return Err(Error::Server(
-                    StatusCode::FORBIDDEN,
-                    "the item author cannot reopen a review discussion".to_string(),
-                ));
-            }
             if current_status == ReviewDiscussionStatus::Open {
                 return Err(conflict("discussion is already open"));
             }
@@ -1704,6 +1888,13 @@ async fn refresh_item_review_status(
 ) -> Result<(), Error> {
     let decisions = latest_gate_decisions(state, version_id).await?;
     let has_unresolved_change_requests = unresolved_change_request_count(state, item_id).await? > 0;
+    let version = state
+        .workbench_database
+        .versions
+        .find_one(doc! { "id": version_id })
+        .await?
+        .ok_or_else(|| not_found("language item version", version_id))?;
+    let registry = pinned_registry(&version.package.spec_versions.registry_bundle_version)?;
     if let Some(mut item) = state
         .workbench_database
         .language_items
@@ -1712,7 +1903,11 @@ async fn refresh_item_review_status(
         && item.latest_version_id.as_deref() == Some(version_id)
         && item.status != LanguageItemStatus::ExportedToStaging
     {
-        item.status = review_lifecycle_status(&decisions, has_unresolved_change_requests);
+        item.status = review_lifecycle_status(
+            &decisions,
+            has_unresolved_change_requests,
+            &registry.required_review_gate_ids,
+        );
         item.updated_at = now();
         state
             .workbench_database
@@ -1726,9 +1921,9 @@ async fn refresh_item_review_status(
 fn review_lifecycle_status(
     decisions: &HashMap<String, ReviewDecision>,
     has_unresolved_change_requests: bool,
+    required_review_gate_ids: &[String],
 ) -> LanguageItemStatus {
-    let all_approved = snapshot()
-        .required_review_gate_ids
+    let all_approved = required_review_gate_ids
         .iter()
         .all(|gate| decisions.get(gate) == Some(&ReviewDecision::Approved));
     let has_revision_decision = decisions
@@ -1765,12 +1960,6 @@ pub async fn post_review(
         .find_one(doc! { "id": &version_id })
         .await?
         .ok_or_else(|| not_found("language item version", &version_id))?;
-    if version.author_email == user.email {
-        return Err(Error::Server(
-            StatusCode::FORBIDDEN,
-            "authors cannot review their own version".to_string(),
-        ));
-    }
     let current_item = state
         .workbench_database
         .language_items
@@ -1790,7 +1979,8 @@ pub async fn post_review(
     {
         return Err(conflict("an exported version can no longer be reviewed"));
     }
-    if !snapshot().required_review_gate_ids.contains(&body.gate_id) {
+    let registry = pinned_registry(&version.package.spec_versions.registry_bundle_version)?;
+    if !registry.required_review_gate_ids.contains(&body.gate_id) {
         return Err(Error::Server(
             StatusCode::BAD_REQUEST,
             format!("unsupported review gate: {}", body.gate_id),
@@ -1882,7 +2072,8 @@ pub async fn post_staging_export(
         }
     } else {
         let decisions = latest_gate_decisions(&state, &version_id).await?;
-        let missing: Vec<&String> = snapshot()
+        let registry = pinned_registry(&version.package.spec_versions.registry_bundle_version)?;
+        let missing: Vec<&String> = registry
             .required_review_gate_ids
             .iter()
             .filter(|gate| decisions.get(*gate) != Some(&ReviewDecision::Approved))
@@ -2109,26 +2300,27 @@ mod tests {
     #[test]
     fn review_lifecycle_separates_revision_from_approval() {
         let mut decisions = HashMap::new();
+        let required_review_gate_ids = &snapshot().required_review_gate_ids;
         assert_eq!(
-            review_lifecycle_status(&decisions, false),
+            review_lifecycle_status(&decisions, false, required_review_gate_ids),
             LanguageItemStatus::InReview
         );
 
         decisions.insert("editorial".to_string(), ReviewDecision::Revise);
         assert_eq!(
-            review_lifecycle_status(&decisions, false),
+            review_lifecycle_status(&decisions, false, required_review_gate_ids),
             LanguageItemStatus::NeedsRevision
         );
 
         decisions.insert("editorial".to_string(), ReviewDecision::Blocked);
         assert_eq!(
-            review_lifecycle_status(&decisions, false),
+            review_lifecycle_status(&decisions, false, required_review_gate_ids),
             LanguageItemStatus::ReviewBlocked
         );
 
         decisions.insert("editorial".to_string(), ReviewDecision::Rejected);
         assert_eq!(
-            review_lifecycle_status(&decisions, false),
+            review_lifecycle_status(&decisions, false, required_review_gate_ids),
             LanguageItemStatus::Rejected
         );
 
@@ -2136,11 +2328,11 @@ mod tests {
             decisions.insert(gate.clone(), ReviewDecision::Approved);
         }
         assert_eq!(
-            review_lifecycle_status(&decisions, false),
+            review_lifecycle_status(&decisions, false, required_review_gate_ids),
             LanguageItemStatus::ApprovedForExport
         );
         assert_eq!(
-            review_lifecycle_status(&decisions, true),
+            review_lifecycle_status(&decisions, true, required_review_gate_ids),
             LanguageItemStatus::NeedsRevision
         );
     }
@@ -2155,8 +2347,15 @@ mod tests {
                 entry.blueprint_slot_id == "R-A1-2" && entry.item_format_id == "IF-MATCHING"
             })
             .expect("R-A1-2 matching capability");
-        let package = draft_for_capability("LI-test".to_string(), capability, registry)
-            .expect("valid package");
+        let package = draft_for_capability(
+            "LI-test".to_string(),
+            capability,
+            registry,
+            None,
+            None,
+            None,
+        )
+        .expect("valid package");
 
         assert_eq!(package.blueprint_slot_id, "R-A1-2");
         assert_eq!(package.task_family_id, "TF-SHORT-MESSAGE-COMPREHENSION");
@@ -2167,7 +2366,7 @@ mod tests {
         );
         assert_eq!(package.content.primary_can_do_id, "A1-R2");
         assert_eq!(package.content.primary_domain, "Personal");
-        assert_eq!(package.content.context_id, "D01");
+        assert_eq!(package.content.context_id, "D03");
     }
 
     #[test]
@@ -2180,8 +2379,15 @@ mod tests {
                 entry.blueprint_slot_id == "L-A1-3" && entry.item_format_id == "IF-RESTRICTED-INPUT"
             })
             .expect("L-A1-3 restricted input capability");
-        let package = draft_for_capability("LI-test".to_string(), capability, registry)
-            .expect("valid package");
+        let package = draft_for_capability(
+            "LI-test".to_string(),
+            capability,
+            registry,
+            None,
+            None,
+            None,
+        )
+        .expect("valid package");
 
         assert_eq!(package.content.primary_reported_skill, "Listening");
         assert_eq!(
@@ -2209,6 +2415,9 @@ mod tests {
                 ),
                 capability,
                 registry,
+                None,
+                None,
+                None,
             )
             .expect("every exposed capability must be creatable");
 
@@ -2284,8 +2493,15 @@ mod tests {
                 entry.blueprint_slot_id == "R-A1-3" && entry.item_format_id == "IF-MATCHING"
             })
             .expect("R-A1-3 matching capability");
-        let mut package = draft_for_capability("LI-test".to_string(), capability, registry)
-            .expect("valid package");
+        let mut package = draft_for_capability(
+            "LI-test".to_string(),
+            capability,
+            registry,
+            None,
+            None,
+            None,
+        )
+        .expect("valid package");
         package.delivery_policy_refs.input_policy_id = "INPUT-RESTRICTED-FIELD-v0.1".to_string();
         package.task_family_id = "tampered".to_string();
         package.scoring_package.scoring_points[0].points = 99;

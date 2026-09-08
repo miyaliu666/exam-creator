@@ -1,5 +1,6 @@
 import type { RegistrySnapshot, TaskPackage } from "./types";
 import { isContentOptionCompatible } from "./content-compatibility";
+import { capabilityForDraft, contextSupportsCapability, difficultyStandardsForCapability } from "./registry-capability";
 
 export interface AuthoringSetupIssue {
   path: string;
@@ -15,22 +16,22 @@ export function validateAuthoringSetup(
 
   const issues: AuthoringSetupIssue[] = [];
   const addIssue = (path: string, message: string) => issues.push({ path, message });
-  const capability = registry.capabilities.find(
-    (entry) =>
-      entry.blueprintSlotId === draft.blueprintSlotId &&
-      entry.itemFormatId === draft.itemFormatId,
-  );
+  const capability = capabilityForDraft(registry, draft);
   const context = registry.contextOptions.find(
     (entry) => entry.id === draft.content.contextId,
   );
 
   if (!title.trim()) addIssue("title", "Enter an item title");
-  if (!capability?.allowedDomains.includes(draft.content.primaryDomain)) {
+  if (
+    !registry.allowedDomains.includes(draft.content.primaryDomain) ||
+    !capability?.allowedDomains.includes(draft.content.primaryDomain)
+  ) {
     addIssue("content.primaryDomain", "Select an applicable domain");
   }
   if (
     !capability?.allowedContextIds.includes(draft.content.contextId) ||
-    !context?.primaryDomains.includes(draft.content.primaryDomain)
+    !context?.primaryDomains.includes(draft.content.primaryDomain) ||
+    (!!context && !!capability && !contextSupportsCapability(context, capability))
   ) {
     addIssue("content.contextId", "Select a context that matches the domain");
   }
@@ -39,7 +40,7 @@ export function validateAuthoringSetup(
   } else if (
     draft.content.targetContentIds.some((id) => {
       const entry = registry.contentIdOptions.find((option) => option.id === id);
-      return entry && (
+      return !entry || (
         entry.kind === "supported" ||
         !isContentOptionCompatible(entry, capability, draft.content.contextId)
       );
@@ -51,7 +52,47 @@ export function validateAuthoringSetup(
     );
   }
 
-  const expectedPoints = draft.content.difficulty?.drivers.informationPoints ?? 1;
+  if ((draft.content.supportingContentRefs ?? []).some((id) => {
+    const entry = registry.contentIdOptions.find((option) => option.id === id);
+    return !entry || entry.kind !== "supported" ||
+      !isContentOptionCompatible(entry, capability, draft.content.contextId);
+  })) {
+    addIssue("content.supportingContentRefs", "Remove supporting content that is unavailable for this task or context");
+  }
+
+  const standard = difficultyStandardsForCapability(registry, capability).find(
+    (entry) => entry.id === draft.content.difficultyBand,
+  );
+  if (!standard) {
+    addIssue("content.difficultyBand", "Select a difficulty available for this task");
+  }
+  const difficulty = draft.content.difficulty;
+  if (difficulty && standard) {
+    if (difficulty.intendedBand !== standard.id) {
+      addIssue("content.difficultyBand", "The difficulty profile must match the selected difficulty");
+    }
+    const drivers = difficulty.drivers;
+    if (!standard.allowedInputLengths.includes(drivers.inputLength)) {
+      addIssue("content.difficulty.drivers.inputLength", "Choose an input length allowed for this difficulty");
+    }
+    if (!standard.allowedSupportLevels.includes(drivers.supportLevel)) {
+      addIssue("content.difficulty.drivers.supportLevel", "Choose contextual support allowed for this difficulty");
+    }
+    if (!Number.isInteger(drivers.informationPoints) ||
+      drivers.informationPoints < standard.informationPointsMin ||
+      drivers.informationPoints > standard.informationPointsMax) {
+      addIssue("content.difficulty.drivers.informationPoints", "Choose an information-point count allowed for this difficulty");
+    }
+    if (["IF-SINGLE-SELECT", "IF-MATCHING"].includes(draft.itemFormatId) &&
+      !standard.allowedDistractorSimilarities.includes(drivers.distractorSimilarity)) {
+      addIssue("content.difficulty.drivers.distractorSimilarity", "Choose distractor similarity allowed for this difficulty");
+    }
+    if (drivers.inferenceRequired !== standard.defaultDrivers.inferenceRequired) {
+      addIssue("content.difficulty.drivers.inferenceRequired", "The inference requirement must match the selected difficulty");
+    }
+  }
+
+  const expectedPoints = difficulty?.drivers.informationPoints ?? standard?.defaultDrivers.informationPoints ?? 1;
   const points = draft.content.requiredInformationPoints;
   if (
     points.length !== expectedPoints ||

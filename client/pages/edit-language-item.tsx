@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Center,
+  Field,
   Grid,
   Heading,
   HStack,
@@ -42,6 +43,7 @@ import {
 } from "../features/language-items/api";
 import { CandidateRenderer } from "../features/language-items/renderer-registry";
 import { AuthoringPanel } from "../features/language-items/authoring-panel";
+import { CapabilityContractPanel } from "../features/language-items/capability-contract-panel";
 import { AuditPanel } from "../features/language-items/audit-panel";
 import { GithubReviewPanel } from "../features/language-items/github-review-panel";
 import { validateAuthoringSetup } from "../features/language-items/setup-validation";
@@ -107,13 +109,13 @@ function EditLanguageItem() {
     <Box minH="100vh" bg="bg" py={10} px={4}>
       <HStack position="fixed" top={3} left={8} zIndex={101} gap={3}>
         <Button size="sm" variant="outline" colorPalette="teal" onClick={() => navigate({ to: languageItemsRoute.to })}>
-          Back to Workbench
+          Back to item bank
         </Button>
         <Button size="sm" variant="outline" colorPalette="red" onClick={() => logout()}>
           Sign out / switch account
         </Button>
         <Text fontSize="xs" color="fg.muted">
-          Current: {user?.email}
+          Signed in as {user?.email}
         </Text>
       </HStack>
       <Center>
@@ -140,7 +142,7 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
   const [notice, setNotice] = useState<string | null>(null);
   const [section, setSection] = useState<EditorSection>(() =>
     item.status === "draft"
-      ? "setup"
+      ? "content"
       : item.status === "exportedToStaging"
         ? "history"
         : "review",
@@ -154,7 +156,11 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
   const canEditDraft = item.status === "draft" && user?.email === item.ownerEmail;
 
-  const registryQuery = useQuery({ queryKey: ["language-item-registry"], queryFn: getLanguageItemRegistry });
+  const registryVersion = item.draft.specVersions.registryBundleVersion;
+  const registryQuery = useQuery({
+    queryKey: ["language-item-registry", registryVersion],
+    queryFn: () => getLanguageItemRegistry(registryVersion),
+  });
   const previewQuery = useQuery({
     queryKey: ["language-item-candidate-preview", item.id],
     queryFn: () => getLanguageItemCandidatePreview(item.id),
@@ -170,6 +176,12 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
   const runsQuery = useQuery({
     queryKey: ["language-item-ai-runs", item.id],
     queryFn: () => getAiGenerationRuns(item.id),
+    refetchInterval: (query) =>
+      query.state.data?.some((run) =>
+        run.status === "queued" || run.status === "running"
+      )
+        ? 1_000
+        : false,
   });
   const auditQuery = useQuery({
     queryKey: ["language-item-audit", item.id],
@@ -301,7 +313,7 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
       setNotice(
         run.error
           ? `AI candidate generation failed: ${run.error}`
-          : "AI candidates generated.",
+          : "AI generation queued. You can keep working while candidates are created.",
       );
       setSection("setup");
       await refreshItem(saved);
@@ -350,7 +362,7 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
     onSuccess: async ({ saved, run }) => {
       setNotice(
         run.error ??
-          `AI draft review completed with ${run.findings.length} findings.`,
+          `AI draft review completed with ${run.findings.length} ${run.findings.length === 1 ? "finding" : "findings"}.`,
       );
       await refreshItem(saved);
       await queryClient.invalidateQueries({
@@ -411,7 +423,7 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
       setAutosaveState("saved");
       draftDirtyRef.current = false;
       setNotice("A new revision draft was created from the reviewed version.");
-      setSection("setup");
+      setSection("content");
       await refreshItem(saved);
     },
   });
@@ -482,15 +494,30 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
     <Stack w="full" maxW="7xl" gap={7}>
       <Box pt={5}>
         <HStack justify="space-between" align="start" flexWrap="wrap">
-          <Stack gap={1}>
-            <Heading size="2xl">{title || "Untitled item"}</Heading>
+          <Stack gap={2} w="full">
+            {canEditDraft ? (
+              <Field.Root invalid={!!setupIssues.find((issue) => issue.path === "title")}>
+                <Field.Label>Item title</Field.Label>
+                <Input
+                  value={title}
+                  placeholder="Item title"
+                  fontSize="xl"
+                  onChange={(event) => {
+                    setValidation(null);
+                    draftDirtyRef.current = true;
+                    setTitle(event.target.value);
+                  }}
+                />
+                <Field.ErrorText>{setupIssues.find((issue) => issue.path === "title")?.message}</Field.ErrorText>
+              </Field.Root>
+            ) : <Heading size="2xl">{title || "Untitled item"}</Heading>}
             <HStack flexWrap="wrap">
               <Badge>{ITEM_STATUS_LABELS[item.status]}</Badge>
               {item.hasStagingExport || item.status === "exportedToStaging" ? (
                 <Badge colorPalette="teal">Exported to Staging</Badge>
               ) : null}
               <Text color="fg.muted">
-                Revision {revision} · Author {item.ownerEmail} · {autosaveLabel}
+                Revision {revision} · Owner {item.ownerEmail} · {autosaveLabel}
               </Text>
             </HStack>
           </Stack>
@@ -502,7 +529,7 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
             {errorValidationIssues.length > 0 ? (
               errorValidationIssues.map((issue) => (
                 <Text key={`${issue.code}-${issue.path}`} mt={1} color="fg.error" fontSize="sm">
-                  {issue.path}：{issue.message}
+                  {issue.path}: {issue.message}
                 </Text>
               ))
             ) : (
@@ -512,17 +539,9 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
         ) : null}
       </Box>
 
+      {registryQuery.data ? <CapabilityContractPanel draft={draft} registry={registryQuery.data} /> : null}
+
       <HStack borderBottomWidth="1px" flexWrap="wrap" gap={1}>
-          <Button
-            size="sm"
-            variant="ghost"
-            borderRadius="0"
-            borderBottomWidth="3px"
-            borderBottomColor={section === "setup" ? "teal.solid" : "transparent"}
-            onClick={() => setSection("setup")}
-          >
-            1 Author
-          </Button>
           <Button
             size="sm"
             variant="ghost"
@@ -531,7 +550,17 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
             borderBottomColor={section === "content" ? "purple.solid" : "transparent"}
             onClick={() => setSection("content")}
           >
-            2 Content & answers
+            Edit &amp; Preview
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            borderRadius="0"
+            borderBottomWidth="3px"
+            borderBottomColor={section === "setup" ? "teal.solid" : "transparent"}
+            onClick={() => setSection("setup")}
+          >
+            Language targets &amp; AI
           </Button>
           <Button
             size="sm"
@@ -541,7 +570,7 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
             borderBottomColor={section === "review" ? "orange.solid" : "transparent"}
             onClick={() => setSection("review")}
           >
-            3 Review
+            Validate &amp; Review
           </Button>
           <Button
             size="sm"
@@ -551,7 +580,7 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
             borderBottomColor={section === "history" ? "gray.solid" : "transparent"}
             onClick={() => setSection("history")}
           >
-            4 History
+            History &amp; Delivery
           </Button>
       </HStack>
 
@@ -565,14 +594,8 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
         >
           <AuthoringPanel
             mode="setup"
-            title={title}
             draft={draft}
             registry={registryQuery.data}
-            setTitle={(nextTitle) => {
-              setValidation(null);
-              draftDirtyRef.current = true;
-              setTitle(nextTitle);
-            }}
             updateDraft={updateDraft}
             readOnly={!canEditDraft}
             setupIssues={setupIssues}
@@ -619,7 +642,6 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
                 </Button>
               </HStack>
             </HStack>
-            <Button variant="ghost" onClick={() => setSection("content")}>Author manually</Button>
             {setupIssues.length > 0 ? (
               <Text color="fg.warning" fontSize="sm">
                 {setupIssues.map((issue) => issue.message).join(" · ")}
@@ -642,7 +664,10 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
 
       {section === "content" ? (
         <Stack gap={6}>
-          <HStack justify="flex-end" align="start" flexWrap="wrap" gap={3}>
+          <HStack justify="space-between" align="start" flexWrap="wrap" gap={3}>
+            <Button variant="outline" onClick={() => setSection("setup")}>
+              Language targets &amp; AI
+            </Button>
             <HStack flexWrap="wrap">
               <Button
                 disabled={!canEditDraft || autosaveState === "saving"}
@@ -650,7 +675,7 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
                 onClick={() => draftAiReviewMutation.mutate()}
                 loading={draftAiReviewMutation.isPending}
               >
-                AI review
+                AI pre-review
               </Button>
               <Button
                 disabled={!canEditDraft || autosaveState === "saving"}
@@ -681,6 +706,11 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
               </Button>
             </HStack>
           </HStack>
+          {setupIssues.filter((issue) => issue.path !== "title").length > 0 ? (
+            <Text color="fg.warning" fontSize="sm">
+              {setupIssues.filter((issue) => issue.path !== "title").map((issue) => issue.message).join(" · ")}
+            </Text>
+          ) : null}
           <Grid
             templateColumns={{
               base: "1fr",
@@ -690,14 +720,8 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
           >
             <AuthoringPanel
               mode="content"
-              title={title}
               draft={draft}
               registry={registryQuery.data}
-              setTitle={(nextTitle) => {
-                setValidation(null);
-                draftDirtyRef.current = true;
-                setTitle(nextTitle);
-              }}
               updateDraft={updateDraft}
               readOnly={!canEditDraft}
               validationIssues={visibleValidationIssues}
@@ -707,12 +731,9 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
                 <HStack justify="space-between" align="start" mb={2} flexWrap="wrap">
                   <Box>
                     <Heading size="lg">Candidate preview</Heading>
-                    <Text fontSize="sm" color="fg.muted">
-                      Uses the candidate renderer; after saving, candidate data is reloaded from the server for a round-trip check.
-                    </Text>
                   </Box>
                   <Badge colorPalette={previewUsesSavedRoundTrip ? "teal" : "orange"}>
-                    {previewUsesSavedRoundTrip ? "Saved · server round-trip preview" : "Unsaved · local live preview"}
+                    {previewUsesSavedRoundTrip ? "Saved preview" : "Live preview"}
                   </Badge>
                 </HStack>
                 <CandidateRenderer
@@ -748,7 +769,7 @@ function WorkbenchEditor({ item }: { item: LanguageItem }) {
               ) : null}
               {draftAiReviewsQuery.data?.[0] ? (
                 <Box borderWidth="1px" borderRadius="lg" p={4}>
-                  <Heading size="md">AI review</Heading>
+                  <Heading size="md">AI pre-review</Heading>
                   {draftAiReviewsQuery.data[0].findings.map((finding) => (
                     <Text key={`${finding.code}-${finding.fieldPath}`} mt={2}>
                       {finding.message}

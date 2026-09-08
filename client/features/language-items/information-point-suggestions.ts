@@ -1,4 +1,5 @@
 import type { RegistrySnapshot, TaskPackage } from "./types";
+import { capabilityForDraft } from "./registry-capability";
 
 const SLOT_SUGGESTIONS: Record<string, string[]> = {
   "R-A1-1": ["Direct meaning of the sign or notice", "Open, closed, permitted, or prohibited status", "Date or time", "Entrance, exit, floor, or room number"],
@@ -34,11 +35,7 @@ export function informationPointSuggestions(
   draft: TaskPackage,
   registry: RegistrySnapshot | undefined,
 ) {
-  const capability = registry?.capabilities.find(
-    (entry) =>
-      entry.blueprintSlotId === draft.blueprintSlotId &&
-      entry.itemFormatId === draft.itemFormatId,
-  );
+  const capability = capabilityForDraft(registry, draft);
   const context = registry?.contextOptions.find(
     (entry) => entry.id === draft.content.contextId,
   );

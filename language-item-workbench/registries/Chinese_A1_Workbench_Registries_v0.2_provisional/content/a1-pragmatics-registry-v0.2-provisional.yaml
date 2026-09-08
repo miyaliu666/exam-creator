@@ -4,8 +4,8 @@ status: ProvisionalExploratory
 count: 18
 entries:
 - pragmaticFunctionId: PRAG-GREET
-  title: 问候
-  function: 开始简短交流
+  title: Greeting
+  function: Begin a brief exchange
   lexicalIds:
   - LEX-A1-0001
   - LEX-A1-0002
@@ -21,12 +21,12 @@ entries:
   - A1-I2
   contextIds:
   - D01
-  politenessConditions: 普通服务场景可用“你好”；需要直接礼貌称呼时可用“您好”。
+  politenessConditions: Use “你好” in ordinary service interactions; use “您好” when a direct polite form of address is needed.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview
 - pragmaticFunctionId: PRAG-FAREWELL
-  title: 告别
-  function: 结束简短交流
+  title: Farewell
+  function: End a brief exchange
   lexicalIds:
   - LEX-A1-0005
   exampleForms:
@@ -36,12 +36,12 @@ entries:
   - A1-I2
   contextIds:
   - D01
-  politenessConditions: 直接、友好结束。
+  politenessConditions: End directly and in a friendly manner.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview
 - pragmaticFunctionId: PRAG-THANK
-  title: 感谢
-  function: 对帮助、服务或信息表示感谢
+  title: Thanking
+  function: Express thanks for help, service, or information
   lexicalIds:
   - LEX-A1-0006
   exampleForms:
@@ -58,12 +58,12 @@ entries:
   - D16
   - D18
   - D19
-  politenessConditions: 可单独或句末使用。
+  politenessConditions: May be used independently or at the end of a sentence.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview
 - pragmaticFunctionId: PRAG-RESPOND-THANK
-  title: 回应感谢
-  function: 表示不用谢
+  title: Responding to thanks
+  function: Indicate that no thanks are necessary
   lexicalIds:
   - LEX-A1-0007
   exampleForms:
@@ -78,12 +78,12 @@ entries:
   - D14
   - D16
   - D18
-  politenessConditions: 不要求细分正式程度。
+  politenessConditions: No fine distinction in formality is required.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview
 - pragmaticFunctionId: PRAG-APOLOGISE
-  title: 道歉
-  function: 对迟到、不能参加或小问题道歉
+  title: Apologising
+  function: Apologise for being late, being unable to attend, or a minor problem
   lexicalIds:
   - LEX-A1-0008
   exampleForms:
@@ -98,12 +98,12 @@ entries:
   - D16
   - D18
   - D19
-  politenessConditions: 只处理低风险、直接道歉。
+  politenessConditions: Limit use to direct apologies in low-stakes situations.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview
 - pragmaticFunctionId: PRAG-RESPOND-APOLOGY
-  title: 回应道歉
-  function: 表示不介意
+  title: Responding to an apology
+  function: Indicate that the issue is not a problem
   lexicalIds:
   - LEX-A1-0009
   - LEX-A1-0010
@@ -118,12 +118,12 @@ entries:
   - D13
   - D16
   - D18
-  politenessConditions: 不处理严重事件。
+  politenessConditions: Do not use for serious incidents.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview
 - pragmaticFunctionId: PRAG-POLITE-OPEN
-  title: 礼貌开始提问
-  function: 吸引注意并提出问题
+  title: Opening a question politely
+  function: Attract attention and ask a question
   lexicalIds:
   - LEX-A1-0012
   exampleForms:
@@ -141,12 +141,12 @@ entries:
   - D15
   - D16
   - D18
-  politenessConditions: 不能把是否使用“请问”作为唯一正确形式。
+  politenessConditions: The use of “请问” must not be the sole criterion for correctness.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview
 - pragmaticFunctionId: PRAG-REQUEST
-  title: 提出简单请求
-  function: 请求物品、行动或许可
+  title: Making a simple request
+  function: Request an item, action, or permission
   lexicalIds:
   - LEX-A1-0011
   - LEX-A1-0020
@@ -170,12 +170,12 @@ entries:
   - D18
   - D19
   - D20
-  politenessConditions: 请求必须具体、一步式。
+  politenessConditions: The request must be specific and involve one step.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview
 - pragmaticFunctionId: PRAG-ASK-HELP
-  title: 请求帮助
-  function: 明确表示需要帮助
+  title: Asking for help
+  function: State clearly that help is needed
   lexicalIds:
   - LEX-A1-0025
   - LEX-A1-0026
@@ -195,12 +195,12 @@ entries:
   - D14
   - D16
   - D18
-  politenessConditions: 不要求解释复杂原因。
+  politenessConditions: No complex explanation is required.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview
 - pragmaticFunctionId: PRAG-CONFIRM
-  title: 确认信息
-  function: 确认词语、数字、时间、地点或安排
+  title: Confirming information
+  function: Confirm a word, number, time, place, or arrangement
   lexicalIds:
   - LEX-A1-0019
   - LEX-A1-0020
@@ -221,12 +221,12 @@ entries:
   - D17
   - D18
   - D19
-  politenessConditions: 确认对象必须明确。
+  politenessConditions: The information being confirmed must be explicit.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview
 - pragmaticFunctionId: PRAG-REQUEST-REPEAT
-  title: 请求重复
-  function: 请对方重复刚才的话
+  title: Asking for repetition
+  function: Ask the other person to repeat what was just said
   lexicalIds:
   - LEX-A1-0022
   exampleForms:
@@ -236,12 +236,12 @@ entries:
   contextIds:
   - D16
   - D18
-  politenessConditions: 只能播放预先批准的重复版本。
+  politenessConditions: Only a pre-approved repetition may be played.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview
 - pragmaticFunctionId: PRAG-REQUEST-SLOWER
-  title: 请求放慢
-  function: 请对方说慢一点
+  title: Asking someone to slow down
+  function: Ask the other person to speak more slowly
   lexicalIds:
   - LEX-A1-0023
   exampleForms:
@@ -251,12 +251,12 @@ entries:
   contextIds:
   - D16
   - D18
-  politenessConditions: 不能用故意过快输入诱发。
+  politenessConditions: Do not elicit this function through deliberately over-fast input.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview
 - pragmaticFunctionId: PRAG-NONUNDERSTANDING
-  title: 表示没听懂
-  function: 明确表示理解困难
+  title: Signalling non-understanding
+  function: State clearly that understanding is difficult
   lexicalIds:
   - LEX-A1-0024
   exampleForms:
@@ -266,12 +266,12 @@ entries:
   contextIds:
   - D16
   - D18
-  politenessConditions: 允许固定表达；不要求解释哪里不懂。
+  politenessConditions: Fixed expressions are allowed; explaining the exact source of difficulty is not required.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview
 - pragmaticFunctionId: PRAG-ACCEPT-INVITATION
-  title: 接受邀请
-  function: 表示能够或愿意参加
+  title: Accepting an invitation
+  function: Indicate ability or willingness to attend
   lexicalIds:
   - LEX-A1-0016
   - LEX-A1-0014
@@ -285,12 +285,12 @@ entries:
   contextIds:
   - D13
   - D19
-  politenessConditions: 应结合时间或地点确认。
+  politenessConditions: Confirm the time or place as part of the response.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview
 - pragmaticFunctionId: PRAG-DECLINE-INVITATION
-  title: 拒绝邀请
-  function: 简短表示不能参加
+  title: Declining an invitation
+  function: State briefly that attendance is not possible
   lexicalIds:
   - LEX-A1-0017
   - LEX-A1-0008
@@ -304,12 +304,12 @@ entries:
   contextIds:
   - D13
   - D19
-  politenessConditions: 不要求给出多个理由。
+  politenessConditions: Multiple reasons are not required.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview
 - pragmaticFunctionId: PRAG-ASK-RELATED-QUESTION
-  title: 提出相关问题
-  function: 在个人问答或日常交换中主动提一个简单问题
+  title: Asking a related question
+  function: Initiate one simple question in a personal interview or everyday exchange
   lexicalIds:
   - LEX-A1-0251
   - LEX-A1-0331
@@ -334,12 +334,12 @@ entries:
   - D15
   - D17
   - D19
-  politenessConditions: 问题必须与当前情境直接相关。
+  politenessConditions: The question must relate directly to the current context.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview
 - pragmaticFunctionId: PRAG-ORDER
-  title: 点餐或购买
-  function: 说明所需物品和数量
+  title: Ordering or buying
+  function: State the required item and quantity
   lexicalIds: []
   exampleForms: []
   canDoIds:
@@ -347,12 +347,12 @@ entries:
   contextIds:
   - D08
   - D09
-  politenessConditions: 不处理定制、投诉或复杂偏好。
+  politenessConditions: Do not cover customisation, complaints, or complex preferences.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview
 - pragmaticFunctionId: PRAG-RELAY
-  title: 面向指定对象转告
-  function: 选择并转告与接收者有关的信息
+  title: Relaying information to a specified recipient
+  function: Select and relay information relevant to the recipient
   lexicalIds:
   - LEX-A1-0123
   exampleForms:
@@ -366,6 +366,6 @@ entries:
   - D17
   - D18
   - D20
-  politenessConditions: 必须有源材料、接收者和目的；不等同机械复制。
+  politenessConditions: Source material, a recipient, and a purpose are required; mechanical copying is not sufficient.
   restrictions: ''
   reviewStatus: PendingHumanPragmaticsReview

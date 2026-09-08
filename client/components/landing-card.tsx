@@ -1,13 +1,11 @@
 import { Card, Flex, Text } from "@chakra-ui/react";
 import { ReactNode } from "react";
-import { UsersOnPageAvatars } from "./users-on-page-avatars";
 
 interface LandingCardProps {
-  path: string;
   children: ReactNode;
 }
 
-export function LandingCard({ path, children }: LandingCardProps) {
+export function LandingCard({ children }: LandingCardProps) {
   return (
     <Card.Root
       borderRadius="xl"
@@ -38,9 +36,6 @@ export function LandingCard({ path, children }: LandingCardProps) {
           </Text>
         </Flex>
       </Card.Header>
-      <Card.Body pt={2} pl={0}>
-        <UsersOnPageAvatars path={path} />
-      </Card.Body>
     </Card.Root>
   );
 }

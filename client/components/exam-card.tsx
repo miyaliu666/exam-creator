@@ -11,7 +11,6 @@ import { useNavigate } from "@tanstack/react-router";
 import { editExamRoute } from "../pages/edit-exam";
 import type { ExamCreatorExam } from "@prisma/client";
 import { Tooltip } from "./tooltip";
-import { UsersOnPageAvatars } from "./users-on-page-avatars";
 
 interface ExamCardProps {
   exam: Omit<ExamCreatorExam, "questionSets">;
@@ -107,9 +106,6 @@ export function ExamCard({
             )}
           </Flex>
         </Card.Header>
-        <Card.Body pt={2} padding={1}>
-          <UsersOnPageAvatars path={`/exams/${exam.id}`} />
-        </Card.Body>
         <Card.Footer padding="0" justifyContent={"space-evenly"}>
           {databaseEnvironments.map((env) => (
             <Tooltip

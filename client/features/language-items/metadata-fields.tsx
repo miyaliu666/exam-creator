@@ -14,22 +14,26 @@ import { useState } from "react";
 
 import {
   CONTENT_KIND_LABELS,
-  CONTEXT_LABELS,
-  CONTEXT_SCOPE_LABELS,
-  DIFFICULTY_LABELS,
   DOMAIN_LABELS,
   SUPPORTED_CONTENT_LABELS,
   contentOptionLabel,
 } from "./labels";
 import { isContentOptionCompatible } from "./content-compatibility";
 import { informationPointSuggestions } from "./information-point-suggestions";
+import { registryDisplayText } from "./registry-display-text";
 import type { AuthoringSetupIssue } from "./setup-validation";
 import type {
   DifficultyProfile,
   InformationPoint,
+  RegistryCapability,
   RegistrySnapshot,
   TaskPackage,
 } from "./types";
+import {
+  capabilityForDraft,
+  contextsForCapability,
+  difficultyStandardsForCapability,
+} from "./registry-capability";
 
 const DIFFICULTY_ANCHORS: Record<string, string> = {
   LowerA1: "1 explicit information point · word or phrase · high contextual support",
@@ -95,35 +99,40 @@ function candidateText(value: unknown): string {
 function difficultyProfile(
   band: string,
   current?: DifficultyProfile,
+  registry?: RegistrySnapshot,
+  capability?: RegistryCapability,
 ): DifficultyProfile {
+  const standard = difficultyStandardsForCapability(registry, capability)
+    .find((entry) => entry.id === band);
   const lower = band === "LowerA1";
   const upper = band === "UpperA1";
+  const defaults = standard?.defaultDrivers;
   return {
     intendedBand: band,
     status: "AuthorEstimated",
     drivers: {
-      inputLength: lower
+      inputLength: defaults?.inputLength ?? (lower
         ? "wordOrPhrase"
         : upper
           ? "twoRelatedPhrases"
-          : "shortSentence",
-      informationPoints: upper ? 2 : 1,
-      supportLevel: lower ? "high" : upper ? "limited" : "moderate",
+          : "shortSentence"),
+      informationPoints: defaults?.informationPoints ?? (upper ? 2 : 1),
+      supportLevel: defaults?.supportLevel ?? (lower ? "high" : upper ? "limited" : "moderate"),
       distractorSimilarity:
         current?.drivers.distractorSimilarity === "notApplicable"
           ? "notApplicable"
-          : lower ? "clear" : upper ? "close" : "moderate",
+          : defaults?.distractorSimilarity ?? (lower ? "clear" : upper ? "close" : "moderate"),
       outputLength: current?.drivers.outputLength ?? "selectedOption",
       interactionTurns: current?.drivers.interactionTurns ?? 0,
       preparationTimeSeconds: current?.drivers.preparationTimeSeconds ?? null,
-      independenceLevel: lower
+      independenceLevel: defaults?.independenceLevel ?? (lower
         ? "highlySupported"
         : upper
           ? "independent"
-          : "partlySupported",
-      inferenceRequired: false,
+          : "partlySupported"),
+      inferenceRequired: defaults?.inferenceRequired ?? false,
     },
-    rationale: [DIFFICULTY_ANCHORS[band] ?? "Designed to the current task anchor"],
+    rationale: [standard?.description ?? DIFFICULTY_ANCHORS[band] ?? "Designed to the current task anchor"],
     empiricalDifficulty: {
       status: "NotPiloted",
       sampleId: null,
@@ -153,19 +162,14 @@ export function MetadataFields({
   const [contentKind, setContentKind] = useState<ContentKind>("lexical");
   const [contentSearch, setContentSearch] = useState("");
   const [showAllContent, setShowAllContent] = useState(false);
-  const capability = registry?.capabilities.find(
-    (entry) =>
-      entry.blueprintSlotId === draft.blueprintSlotId &&
-      entry.itemFormatId === draft.itemFormatId,
+  const capability = capabilityForDraft(registry, draft);
+  const capabilityContexts = contextsForCapability(registry, capability);
+  const allowedDomains = (registry?.allowedDomains ?? []).filter((domain) =>
+    capability?.allowedDomains.includes(domain) &&
+    capabilityContexts.some((context) => context.primaryDomains.includes(domain)),
   );
-  const allowedDomains = capability?.allowedDomains ?? [];
-  const allowedContexts = (registry?.contextOptions ?? []).filter(
-    (entry) =>
-      capability?.allowedContextIds.includes(entry.id) &&
-      entry.primaryDomains.includes(draft.content.primaryDomain),
-  );
-  const selectedContext = allowedContexts.find(
-    (entry) => entry.id === draft.content.contextId,
+  const allowedContexts = capabilityContexts.filter((entry) =>
+    entry.primaryDomains.includes(draft.content.primaryDomain),
   );
   const compatibleContent = (registry?.contentIdOptions ?? []).filter(
     (entry) =>
@@ -213,7 +217,14 @@ export function MetadataFields({
     showAllContent ? filteredContent.length : 12,
   );
   const difficulty =
-    draft.content.difficulty ?? difficultyProfile(draft.content.difficultyBand);
+    draft.content.difficulty ?? difficultyProfile(
+      draft.content.difficultyBand,
+      undefined,
+      registry,
+      capability,
+    );
+  const difficultyStandards = difficultyStandardsForCapability(registry, capability);
+  const difficultyStandard = difficultyStandards.find((standard) => standard.id === difficulty.intendedBand);
   const usesDistractors = ["IF-SINGLE-SELECT", "IF-MATCHING"].includes(
     draft.itemFormatId,
   );
@@ -276,6 +287,11 @@ export function MetadataFields({
 
   return (
     <>
+      <Box as="details" borderWidth="1px" borderRadius="lg" p={4}>
+        <Text as="summary" cursor="pointer" fontWeight="semibold">
+          Change context or difficulty
+        </Text>
+        <Stack gap={4} mt={4}>
       <HStack align="start">
         <Field.Root invalid={!!issueFor("content.primaryDomain")}>
           <Field.Label>Domain</Field.Label>
@@ -284,10 +300,8 @@ export function MetadataFields({
               value={draft.content.primaryDomain}
               onChange={(event) => {
                 const domain = event.target.value;
-                const firstContext = (registry?.contextOptions ?? []).find(
-                  (entry) =>
-                    capability?.allowedContextIds.includes(entry.id) &&
-                    entry.primaryDomains.includes(domain),
+                const firstContext = capabilityContexts.find(
+                  (entry) => entry.primaryDomains.includes(domain),
                 );
                 updateDraft((next) => {
                   next.content.primaryDomain = domain;
@@ -325,29 +339,24 @@ export function MetadataFields({
             >
               {allowedContexts.map((context) => (
                 <option key={context.id} value={context.id}>
-                  {CONTEXT_LABELS[context.id] ?? context.label}
+                  {registryDisplayText(context.label)}
                 </option>
               ))}
             </NativeSelect.Field>
             <NativeSelect.Indicator />
           </NativeSelect.Root>
-          {selectedContext?.scope ? (
-            <Field.HelperText>
-              {CONTEXT_SCOPE_LABELS[selectedContext.id] ?? selectedContext.scope}
-            </Field.HelperText>
-          ) : null}
           <Field.ErrorText>{issueFor("content.contextId")}</Field.ErrorText>
         </Field.Root>
       </HStack>
 
       <Box borderWidth="1px" borderRadius="lg" p={4}>
-        <Field.Root maxW="280px" mb={3}>
+        <Field.Root maxW="280px" mb={3} invalid={!!issueFor("content.difficultyBand")}>
           <Field.Label>Target difficulty within A1</Field.Label>
-          <NativeSelect.Root>
+          <NativeSelect.Root disabled={!difficultyStandards.length}>
             <NativeSelect.Field
               value={difficulty.intendedBand}
               onChange={(event) => {
-                const profile = difficultyProfile(event.target.value, difficulty);
+                const profile = difficultyProfile(event.target.value, difficulty, registry, capability);
                 updateDraft((next) => {
                   next.content.difficultyBand = event.target.value;
                   next.content.difficulty = profile;
@@ -355,97 +364,121 @@ export function MetadataFields({
                 });
               }}
             >
-              {registry?.difficultyBands.map((band) => (
-                <option key={band} value={band}>
-                  {DIFFICULTY_LABELS[band] ?? band}
+              {difficultyStandards.map((standard) => (
+                <option key={standard.id} value={standard.id}>
+                  {registryDisplayText(standard.label)}
                 </option>
               ))}
+              {!difficultyStandard ? <option value={difficulty.intendedBand} disabled>Unavailable difficulty</option> : null}
             </NativeSelect.Field>
             <NativeSelect.Indicator />
           </NativeSelect.Root>
+          <Field.ErrorText>{issueFor("content.difficultyBand")}</Field.ErrorText>
         </Field.Root>
+        <Box as="details">
+          <Text as="summary" cursor="pointer" fontWeight="medium" mb={3}>Difficulty tuning</Text>
         <SimpleGrid minChildWidth="180px" gap={3}>
-          <Field.Root>
+          <Field.Root invalid={!!issueFor("content.difficulty.drivers.inputLength")}>
             <Field.Label>Input length</Field.Label>
-            <NativeSelect.Root>
+            <NativeSelect.Root disabled={!difficultyStandard}>
               <NativeSelect.Field
                 value={difficulty.drivers.inputLength}
                 onChange={(event) =>
                   updateDraft((next) => {
-                    const profile = next.content.difficulty ?? difficultyProfile(next.content.difficultyBand);
+                    const profile = next.content.difficulty ?? difficultyProfile(next.content.difficultyBand, undefined, registry, capability);
                     profile.drivers.inputLength = event.target.value as DifficultyProfile["drivers"]["inputLength"];
                     next.content.difficulty = profile;
                   })
                 }
               >
-                <option value="wordOrPhrase">Word or phrase</option>
-                <option value="shortSentence">Short sentence</option>
-                <option value="twoRelatedPhrases">Two related phrases</option>
+                {!difficultyStandard?.allowedInputLengths.includes(difficulty.drivers.inputLength) ? (
+                  <option value={difficulty.drivers.inputLength} disabled>{registryDisplayText(difficulty.drivers.inputLength)} (unavailable)</option>
+                ) : null}
+                {difficultyStandard?.allowedInputLengths.map((value) => (
+                  <option key={value} value={value}>{registryDisplayText(value)}</option>
+                ))}
               </NativeSelect.Field>
               <NativeSelect.Indicator />
             </NativeSelect.Root>
+            <Field.ErrorText>{issueFor("content.difficulty.drivers.inputLength")}</Field.ErrorText>
           </Field.Root>
-          <Field.Root>
+          <Field.Root invalid={!!issueFor("content.difficulty.drivers.informationPoints")}>
             <Field.Label>Explicit information points</Field.Label>
-            <NativeSelect.Root>
+            <NativeSelect.Root disabled={!difficultyStandard}>
               <NativeSelect.Field
                 value={difficulty.drivers.informationPoints}
                 onChange={(event) => {
                   const count = Number(event.target.value);
                   updateDraft((next) => {
-                    const profile = next.content.difficulty ?? difficultyProfile(next.content.difficultyBand);
+                    const profile = next.content.difficulty ?? difficultyProfile(next.content.difficultyBand, undefined, registry, capability);
                     profile.drivers.informationPoints = count;
                     next.content.difficulty = profile;
                     setInformationPointCount(next, count);
                   });
                 }}
               >
-                <option value={1}>1 point</option>
-                <option value={2}>2 points</option>
+                {[1, 2].filter((count) => difficultyStandard &&
+                  count >= difficultyStandard.informationPointsMin &&
+                  count <= difficultyStandard.informationPointsMax).map((count) => (
+                    <option key={count} value={count}>{count} {count === 1 ? "point" : "points"}</option>
+                  ))}
+                {difficultyStandard && (difficulty.drivers.informationPoints < difficultyStandard.informationPointsMin ||
+                  difficulty.drivers.informationPoints > difficultyStandard.informationPointsMax) ? (
+                    <option value={difficulty.drivers.informationPoints} disabled>{difficulty.drivers.informationPoints} (unavailable)</option>
+                  ) : null}
               </NativeSelect.Field>
               <NativeSelect.Indicator />
             </NativeSelect.Root>
+            <Field.ErrorText>{issueFor("content.difficulty.drivers.informationPoints")}</Field.ErrorText>
           </Field.Root>
-          <Field.Root>
+          <Field.Root invalid={!!issueFor("content.difficulty.drivers.supportLevel")}>
             <Field.Label>Contextual support</Field.Label>
-            <NativeSelect.Root>
+            <NativeSelect.Root disabled={!difficultyStandard}>
               <NativeSelect.Field
                 value={difficulty.drivers.supportLevel}
                 onChange={(event) =>
                   updateDraft((next) => {
-                    const profile = next.content.difficulty ?? difficultyProfile(next.content.difficultyBand);
+                    const profile = next.content.difficulty ?? difficultyProfile(next.content.difficultyBand, undefined, registry, capability);
                     profile.drivers.supportLevel = event.target.value as DifficultyProfile["drivers"]["supportLevel"];
                     next.content.difficulty = profile;
                   })
                 }
               >
-                <option value="high">High</option>
-                <option value="moderate">Moderate</option>
-                <option value="limited">Limited</option>
+                {!difficultyStandard?.allowedSupportLevels.includes(difficulty.drivers.supportLevel) ? (
+                  <option value={difficulty.drivers.supportLevel} disabled>{registryDisplayText(difficulty.drivers.supportLevel)} (unavailable)</option>
+                ) : null}
+                {difficultyStandard?.allowedSupportLevels.map((value) => (
+                  <option key={value} value={value}>{registryDisplayText(value)}</option>
+                ))}
               </NativeSelect.Field>
               <NativeSelect.Indicator />
             </NativeSelect.Root>
+            <Field.ErrorText>{issueFor("content.difficulty.drivers.supportLevel")}</Field.ErrorText>
           </Field.Root>
-          <Field.Root>
+          <Field.Root invalid={!!issueFor("content.difficulty.drivers.distractorSimilarity")}>
             <Field.Label>Distractor similarity</Field.Label>
-            <NativeSelect.Root disabled={!usesDistractors}>
+            <NativeSelect.Root disabled={!usesDistractors || !difficultyStandard}>
               <NativeSelect.Field
                 value={difficulty.drivers.distractorSimilarity}
                 onChange={(event) =>
                   updateDraft((next) => {
-                    const profile = next.content.difficulty ?? difficultyProfile(next.content.difficultyBand);
+                    const profile = next.content.difficulty ?? difficultyProfile(next.content.difficultyBand, undefined, registry, capability);
                     profile.drivers.distractorSimilarity = event.target.value as DifficultyProfile["drivers"]["distractorSimilarity"];
                     next.content.difficulty = profile;
                   })
                 }
               >
-                <option value="clear">Clearly different</option>
-                <option value="moderate">Same category and plausible</option>
-                <option value="close">Closely similar</option>
-                <option value="notApplicable">Not applicable</option>
+                {!usesDistractors ? <option value="notApplicable">Not applicable</option> : null}
+                {usesDistractors && !difficultyStandard?.allowedDistractorSimilarities.includes(difficulty.drivers.distractorSimilarity) ? (
+                  <option value={difficulty.drivers.distractorSimilarity} disabled>{registryDisplayText(difficulty.drivers.distractorSimilarity)} (unavailable)</option>
+                ) : null}
+                {usesDistractors && difficultyStandard?.allowedDistractorSimilarities.map((value) => (
+                  <option key={value} value={value}>{registryDisplayText(value)}</option>
+                ))}
               </NativeSelect.Field>
               <NativeSelect.Indicator />
             </NativeSelect.Root>
+            <Field.ErrorText>{issueFor("content.difficulty.drivers.distractorSimilarity")}</Field.ErrorText>
           </Field.Root>
         </SimpleGrid>
         <Field.Root mt={3} invalid={!!issueFor("content.difficulty.rationale")}>
@@ -454,7 +487,7 @@ export function MetadataFields({
             value={difficulty.rationale.join("\n")}
             onChange={(event) =>
               updateDraft((next) => {
-                const profile = next.content.difficulty ?? difficultyProfile(next.content.difficultyBand);
+                const profile = next.content.difficulty ?? difficultyProfile(next.content.difficultyBand, undefined, registry, capability);
                 profile.rationale = event.target.value.split("\n").map((entry) => entry.trim()).filter(Boolean);
                 next.content.difficulty = profile;
               })
@@ -462,13 +495,13 @@ export function MetadataFields({
           />
           <Field.ErrorText>{issueFor("content.difficulty.rationale")}</Field.ErrorText>
         </Field.Root>
+        </Box>
+      </Box>
+        </Stack>
       </Box>
 
       <Field.Root invalid={!!issueFor("content.targetContentIds")}>
-        <Field.Label>Language content</Field.Label>
-        <Field.HelperText mb={2}>
-          Options update automatically with the exam task, Can-do, context, and mastery scope.
-        </Field.HelperText>
+        <Field.Label>Language targets</Field.Label>
         <HStack mb={2} flexWrap="wrap">
           {CONTENT_KINDS.map((kind) => (
             <Button
@@ -507,7 +540,7 @@ export function MetadataFields({
             bg="bg.subtle"
           >
             <Text fontSize="sm" color="fg.muted" mb={3}>
-              {filteredContent.length} available · Select a card to add it to this item
+              {filteredContent.length} available
             </Text>
             <SimpleGrid minChildWidth="220px" gap={3} w="full">
               {matchingContent.map((entry) => (
@@ -574,7 +607,7 @@ export function MetadataFields({
                 <Text fontSize="sm" color="fg.muted">Detected in the item</Text>
                 <Text mt={1} fontSize="sm">
                   {detectedContent.length > 0
-                    ? detectedContent.slice(0, 20).map((entry) => entry.label).join("、")
+                    ? detectedContent.slice(0, 20).map((entry) => entry.label).join(", ")
                     : "No registered target vocabulary or characters detected yet"}
                   {detectedContent.length > 20 ? ` and ${detectedContent.length - 20} more` : ""}
                 </Text>
@@ -583,14 +616,14 @@ export function MetadataFields({
                 <Text fontSize="sm" color="fg.muted">Selected targets not yet used</Text>
                 <Text mt={1} fontSize="sm">
                   {selectedButMissing.length > 0
-                    ? selectedButMissing.map((id) => contentOptionLabel(id, registry)).join("、")
+                    ? selectedButMissing.map((id) => contentOptionLabel(id, registry)).join(", ")
                     : "None"}
                 </Text>
               </Box>
               <Box>
                 <Text fontSize="sm" color="fg.muted">Characters outside the current range</Text>
                 <Text mt={1} fontSize="sm" color={unknownCharacters.length > 0 ? "fg.warning" : undefined}>
-                  {unknownCharacters.length > 0 ? unknownCharacters.join("、") : "None"}
+                  {unknownCharacters.length > 0 ? unknownCharacters.join(", ") : "None"}
                 </Text>
               </Box>
             </SimpleGrid>
@@ -600,9 +633,6 @@ export function MetadataFields({
 
       <Box borderWidth="1px" borderRadius="lg" p={4} bg="blue.subtle">
         <Text fontWeight="semibold">Supporting content (optional)</Text>
-        <Text mt={1} fontSize="sm" color="fg.muted">
-          Names, places, and course names establish context but are not core targets.
-        </Text>
         {selectedSupportingContent.length > 0 ? (
           <SimpleGrid minChildWidth="260px" gap={3} mt={3}>
             {selectedSupportingContent.map((id) => (
@@ -653,9 +683,6 @@ export function MetadataFields({
       <Box borderWidth="1px" borderRadius="lg" p={4}>
         <Stack gap={2}>
           <Text fontWeight="semibold">Required information points ({difficulty.drivers.informationPoints})</Text>
-          <Text fontSize="sm" color="fg.muted">
-            These are the facts candidates must find, select, or express. Suggestions are inferred from the exam task, Can-do, context, and reference task; authors must confirm them.
-          </Text>
           <HStack mt={3} mb={3} flexWrap="wrap" align="start">
             <Text fontSize="sm" fontWeight="semibold">Suggestions:</Text>
             {suggestedInformationPoints.map((suggestion) => (

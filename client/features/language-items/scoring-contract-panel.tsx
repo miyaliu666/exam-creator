@@ -88,11 +88,25 @@ const SCORING_POINT_LABELS: Record<string, string> = {
   "互动与回应": "Interaction and responsiveness",
 };
 
-function scoringPointLabel(description: string, index: number) {
-  if (SCORING_POINT_LABELS[description]) return SCORING_POINT_LABELS[description];
-  if (description.startsWith("正确匹配")) return `Correct match ${index + 1}`;
-  if (description.startsWith("表单字段")) return `Form field ${index + 1}`;
-  return description;
+const SCORING_POINT_ID_LABELS: Record<string, string> = {
+  "SP-ITEM": "Correct response",
+  "SP-COMPREHENSIBILITY": "Comprehensibility",
+  "SP-CONVENTIONS": "Simplified Chinese and basic writing conventions",
+  "SP-INTERACTION": "Interaction and responsiveness",
+  "SP-INTELLIGIBILITY": "Intelligibility and pronunciation control",
+};
+
+function scoringPointLabel(scoringPointId: string, description: string, index: number) {
+  if (SCORING_POINT_ID_LABELS[scoringPointId]) {
+    return SCORING_POINT_ID_LABELS[scoringPointId];
+  }
+  const normalizedDescription = description.trim();
+  if (SCORING_POINT_LABELS[normalizedDescription]) {
+    return SCORING_POINT_LABELS[normalizedDescription];
+  }
+  if (normalizedDescription.startsWith("正确匹配")) return `Correct match ${index + 1}`;
+  if (normalizedDescription.startsWith("表单字段")) return `Form field ${index + 1}`;
+  return normalizedDescription;
 }
 
 function rubricLabel(rubricId: string) {
@@ -149,7 +163,9 @@ export function ScoringContractPanel({ draft, registry }: ScoringContractPanelPr
             </Box>
             <Box borderWidth="1px" borderRadius="lg" p={3} bg="bg.subtle">
               <Text fontSize="sm" color="fg.muted">Total score</Text>
-              <Text mt={1} fontWeight="semibold">{maxRawScore} points · calculated from the item format</Text>
+              <Text mt={1} fontWeight="semibold">
+                {maxRawScore} {maxRawScore === 1 ? "point" : "points"} · calculated from the item format
+              </Text>
             </Box>
           </SimpleGrid>
 
@@ -185,7 +201,7 @@ export function ScoringContractPanel({ draft, registry }: ScoringContractPanelPr
                 <Stack mt={2} gap={1}>
                   {(draft.scoringPackage.scoringPoints ?? []).map((point, index) => (
                     <Text key={point.scoringPointId} fontSize="sm">
-                      {index + 1}. {scoringPointLabel(point.description, index)} — {point.points} {point.points === 1 ? "point" : "points"}
+                      {index + 1}. {scoringPointLabel(point.scoringPointId, point.description, index)} — {point.points} {point.points === 1 ? "point" : "points"}
                     </Text>
                   ))}
                 </Stack>

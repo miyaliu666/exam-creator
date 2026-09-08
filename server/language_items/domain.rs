@@ -478,7 +478,10 @@ impl DifficultyProfile {
                 independence_level: "partlySupported".to_string(),
                 inference_required: false,
             },
-            rationale: vec!["一个直接信息点，使用同类且合理的干扰项".to_string()],
+            rationale: vec![
+                "One explicit information point with plausible distractors from the same category"
+                    .to_string(),
+            ],
             empirical_difficulty: EmpiricalDifficulty {
                 status: "NotPiloted".to_string(),
                 sample_id: None,
@@ -855,8 +858,8 @@ impl TaskPackage {
                         situation: String::new(),
                         instructions: String::new(),
                         roles: SpokenRoles {
-                            system_role: "考官".to_string(),
-                            candidate_role: "考生".to_string(),
+                            system_role: "Examiner".to_string(),
+                            candidate_role: "Candidate".to_string(),
                         },
                         interaction_mode: "fixed".to_string(),
                         start_path_id: "PATH-1".to_string(),
@@ -877,7 +880,9 @@ impl TaskPackage {
                                     prompt_audio_ref: None,
                                     response_id: Some("R1".to_string()),
                                     response_time_seconds: Some(45),
-                                    required_function_ids: vec!["回答个人信息".to_string()],
+                                    required_function_ids: vec![
+                                        "Provide personal information".to_string(),
+                                    ],
                                 },
                             ],
                         }],
@@ -975,7 +980,12 @@ impl TaskPackage {
                     ),
                 ],
                 CandidatePayload::SpokenSingle(_) => vec![
-                    scoring_point("SP-TASK", "Task fulfilment and information accuracy", 3, None),
+                    scoring_point(
+                        "SP-TASK",
+                        "Task fulfilment and information accuracy",
+                        3,
+                        None,
+                    ),
                     scoring_point(
                         "SP-INTELLIGIBILITY",
                         "Intelligibility and pronunciation control",
@@ -1109,7 +1119,10 @@ fn difficulty_for(
         } else {
             "notApplicable".to_string()
         };
-    difficulty.rationale = vec!["题面、支持程度与作答负荷符合所选 A1 内部难度".to_string()];
+    difficulty.rationale = vec![
+        "The item presentation, support level, and response load match the selected A1 difficulty band"
+            .to_string(),
+    ];
     difficulty
 }
 
@@ -1185,6 +1198,22 @@ pub struct GithubReviewBatch {
     pub approval_count: usize,
     pub changes_requested_count: usize,
     pub last_synced_at: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GithubSyncDelivery {
+    pub id: String,
+    pub repository: String,
+    pub pull_request_number: u64,
+    pub batch_id: String,
+    pub merge_commit_sha: Option<String>,
+    pub actor_email: String,
+    pub status: String,
+    pub error: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+    pub completed_at: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1281,8 +1310,20 @@ pub struct AiGenerationRun {
     pub adopted_candidate_id: Option<String>,
     pub status: String,
     pub error: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub idempotency_key: Option<String>,
+    #[serde(default)]
+    pub attempt_count: u32,
+    #[serde(default)]
+    pub retry_count: u32,
+    #[serde(default)]
+    pub candidate_errors: Vec<String>,
     pub created_by: String,
     pub created_at: String,
+    #[serde(default)]
+    pub updated_at: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub completed_at: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1382,33 +1423,6 @@ pub struct LanguageItemExport {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub legacy_question_id: Option<String>,
     pub option_answer_ids: BTreeMap<String, String>,
-    pub result: String,
-    pub exported_by: String,
-    pub created_at: String,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct LanguageItemAssemblySource {
-    pub item_id: String,
-    pub version_id: String,
-    pub item_export_id: String,
-    pub legacy_question_set_id: String,
-    pub legacy_question_id: String,
-    pub option_answer_ids: BTreeMap<String, String>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct LanguageItemAssembly {
-    pub id: String,
-    pub title: String,
-    pub blueprint_slot_id: String,
-    pub target: String,
-    pub artifact_id: String,
-    pub legacy_exam_id: String,
-    pub source_content_hash: String,
-    pub sources: Vec<LanguageItemAssemblySource>,
     pub result: String,
     pub exported_by: String,
     pub created_at: String,

@@ -4,7 +4,7 @@ status: ProvisionalExploratory
 count: 60
 entries:
 - grammarId: GR-A1-001
-  function: 说明身份或类别
+  function: State identity or category
   pattern: A 是 B
   examples:
   - 我是学生。
@@ -27,10 +27,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限具体身份、职业、关系或类别；不处理抽象定义和“是……的”。
+  restrictions: Limited to specific identities, occupations, relationships, or categories; excludes abstract definitions and the 是……的 construction.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-002
-  function: 说明姓名
+  function: State a given name
   pattern: A 叫 X
   examples:
   - 我叫安娜。
@@ -53,10 +53,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: X 为简短姓名或题目提供的名字。
+  restrictions: X is a short name or a name supplied by the item.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-003
-  function: 说明姓氏
+  function: State a surname
   pattern: A 姓 X
   examples:
   - 我姓王。
@@ -79,10 +79,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限一个常见或题目提供的姓氏。
+  restrictions: Limited to one common surname or a surname supplied by the item.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-004
-  function: 表达拥有或关系
+  function: Express possession or a relationship
   pattern: A 有 B
   examples:
   - 我有一个姐姐。
@@ -107,10 +107,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限具体人、物、时间和家庭关系。
+  restrictions: Limited to specific people, objects, times, and family relationships.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-005
-  function: 否定拥有或存在
+  function: Negate possession or existence
   pattern: A 没有 B
   examples:
   - 我没有车。
@@ -138,10 +138,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限明确的没有；不处理复杂时体。
+  restrictions: Limited to explicit absence or non-possession; excludes complex tense and aspect.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-006
-  function: 说明某处有人或物
+  function: State that a person or object is at a location
   pattern: 地点 + 有 + 人／物
   examples:
   - 教室里有十个人。
@@ -176,10 +176,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限一个地点和少量具体人或物。
+  restrictions: Limited to one location and a small number of specific people or objects.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-007
-  function: 说明所在地点
+  function: State a location
   pattern: A 在 B
   examples:
   - 我在学校。
@@ -205,10 +205,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限一个清楚的具体地点。
+  restrictions: Limited to one clearly specified location.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-008
-  function: 说明基本方位
+  function: State a basic spatial relationship
   pattern: A 在 B 里／上／下／前面／后面／左边／右边／旁边
   examples:
   - 洗手间在电梯旁边。
@@ -238,10 +238,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限一步式、单一参照物的方位。
+  restrictions: Limited to a one-step spatial relationship with a single reference object.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-009
-  function: 表达基本动作
+  function: Express a basic action
   pattern: 主语 + 动词 + 宾语
   examples:
   - 我喝茶。
@@ -281,10 +281,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 通常只含一个主要动作和简单宾语。
+  restrictions: Normally limited to one main action and a simple object.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-010
-  function: 表达时间地点动作顺序
+  function: Order time, subject, location, and action
   pattern: 时间 + 主语 + 地点 + 动作
   examples:
   - 明天我在学校上课。
@@ -317,10 +317,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 不处理多重时间状语和复杂语序。
+  restrictions: Excludes multiple time adverbials and complex word order.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-011
-  function: 描述基本性质或状态
+  function: Describe a basic quality or state
   pattern: 主语 + 很 + 形容词；主语 + 形容词
   examples:
   - 这个房间很大。
@@ -347,10 +347,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限高频、具体、可观察或感受的形容词。
+  restrictions: Limited to frequent, concrete adjectives describing observable or felt qualities.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-012
-  function: 表达明显程度或变化
+  function: Express an obvious degree or change
   pattern: 太 + 形容词 + 了
   examples:
   - 太贵了。
@@ -378,10 +378,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限直接、明显的程度。
+  restrictions: Limited to direct and obvious degrees.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-013
-  function: 表达轻微程度
+  function: Express a slight degree
   pattern: 有点儿 + 形容词／状态
   examples:
   - 我有点儿累。
@@ -408,10 +408,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限轻微程度或身体感受。
+  restrictions: Limited to a slight degree or a physical sensation.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-014
-  function: 表达所属或简单修饰
+  function: Express possession or simple modification
   pattern: A 的 B
   examples:
   - 我的手机。
@@ -435,10 +435,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: A 通常为人称、姓名或短名词；不处理长定语。
+  restrictions: A is normally a pronoun, name, or short noun; excludes long modifiers.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-015
-  function: 表示人物复数
+  function: Mark a plural group of people
   pattern: 人称代词／人物名词 + 们
   examples:
   - 我们明天见。
@@ -466,10 +466,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只用于人称代词和常见人物称谓。
+  restrictions: Used only with personal pronouns and common terms for people.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-016
-  function: 表达基本数量
+  function: Express a basic quantity
   pattern: 数词 + 量词 + 名词
   examples:
   - 两杯茶。
@@ -500,10 +500,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只用批准的常见量词。
+  restrictions: Uses only approved common measure words.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-017
-  function: 询问基本数量
+  function: Ask about a basic quantity
   pattern: 几／多少 + 量词 + 名词
   examples:
   - 几个人？
@@ -537,10 +537,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限直接数量、价格或人数。
+  restrictions: Limited to a direct quantity, price, or number of people.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-018
-  function: 表达简单序数
+  function: Express a simple ordinal
   pattern: 第 + 数词 + 量词／名词
   examples:
   - 第三课。
@@ -569,10 +569,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限课程、楼层、房间和小序数。
+  restrictions: Limited to lessons, floors, rooms, and small ordinal numbers.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-019
-  function: 提出一般疑问
+  function: Ask a yes-no question
   pattern: 陈述句 + 吗？
   examples:
   - 你是老师吗？
@@ -593,10 +593,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 问题只含一个主要信息点。
+  restrictions: The question contains only one main information point.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-020
-  function: 提出正反疑问
+  function: Ask an affirmative-negative question
   pattern: 动词／形容词 + 不 + 动词／形容词
   examples:
   - 你去不去？
@@ -617,10 +617,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限短小、对称形式。
+  restrictions: Limited to short, symmetrical forms.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-021
-  function: 确认身份或存在
+  function: Confirm identity or existence
   pattern: 是不是；有没有
   examples:
   - 他是不是老师？
@@ -642,10 +642,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只确认一个明确事实。
+  restrictions: Confirms only one explicit fact.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-022
-  function: 确认能力或许可
+  function: Confirm ability or permission
   pattern: 能不能；可不可以
   examples:
   - 你能不能来？
@@ -680,10 +680,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只处理简单能力、参加和许可。
+  restrictions: Limited to simple ability, participation, and permission.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-023
-  function: 询问人物或事物
+  function: Ask about a person or thing
   pattern: 谁；什么
   examples:
   - 他是谁？
@@ -703,10 +703,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只询问一个具体人物、物品、活动或信息。
+  restrictions: Asks about only one specific person, object, activity, or piece of information.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-024
-  function: 询问选择
+  function: Ask about a choice
   pattern: 哪 + 量词／名词
   examples:
   - 哪一杯？
@@ -741,10 +741,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限少量、清楚候选项。
+  restrictions: Limited to a small number of clearly defined options.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-025
-  function: 询问地点
+  function: Ask about a location
   pattern: 哪里／哪儿
   examples:
   - 洗手间在哪里？
@@ -767,10 +767,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只询问一个地点或位置。
+  restrictions: Asks about only one place or position.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-026
-  function: 询问日期时间价格
+  function: Ask about a date, time, or price
   pattern: 几；多少；几点；几号
   examples:
   - 今天几号？
@@ -797,10 +797,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限直接数字、日期、时间、价格或数量。
+  restrictions: Limited to direct numbers, dates, times, prices, or quantities.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-027
-  function: 询问方法或情况
+  function: Ask about a method or condition
   pattern: 怎么 + 动词；怎么样
   examples:
   - 怎么走？
@@ -833,10 +833,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只处理一步式方法、状态或简单评价。
+  restrictions: Limited to a one-step method, state, or simple evaluation.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-028
-  function: 简单追问
+  function: Ask a simple follow-up question
   pattern: 名词／代词 + 呢？
   examples:
   - 你呢？
@@ -864,10 +864,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只在上下文清楚时追问同类信息。
+  restrictions: Used only to ask for parallel information when the context is clear.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-029
-  function: 否定习惯、意愿或一般事实
+  function: Negate a habit, intention, or general fact
   pattern: 不 + 动词／形容词
   examples:
   - 我不喝咖啡。
@@ -891,10 +891,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只处理一般否定、意愿否定或当前判断。
+  restrictions: Limited to general negation, negated intention, or a current judgement.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-030
-  function: 否定已发生或表示没有
+  function: Negate a completed action or express absence
   pattern: 没（有）+ 动词／名词
   examples:
   - 我没吃早饭。
@@ -916,10 +916,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只处理简单未发生、未完成或没有。
+  restrictions: Limited to a simple action that did not happen or was not completed, or to absence.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-031
-  function: 表达简单禁止或劝阻
+  function: Express a simple prohibition or warning
   pattern: 不要／别 + 动词
   examples:
   - 不要在这里停车。
@@ -948,10 +948,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限一步式、直接、情境清楚的禁止。
+  restrictions: Limited to a direct, one-step prohibition in a clear context.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-032
-  function: 表达意愿、需要或计划
+  function: Express an intention, need, or plan
   pattern: 想／要／需要 + 名词／动词短语
   examples:
   - 我想喝茶。
@@ -976,10 +976,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只处理直接需要和近期简单安排。
+  restrictions: Limited to direct needs and simple near-term arrangements.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-033
-  function: 表达能力或许可
+  function: Express ability or permission
   pattern: 会／能／可以 + 动词
   examples:
   - 我会说一点儿汉语。
@@ -1005,10 +1005,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只处理基本技能、现实可能性或简单许可。
+  restrictions: Limited to a basic skill, realistic possibility, or simple permission.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-034
-  function: 表达当前动作
+  function: Express a current action
   pattern: 在／正在 + 动词
   examples:
   - 我在吃饭。
@@ -1036,10 +1036,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只处理当前可观察或明确说明的动作。
+  restrictions: Limited to a current action that is observable or explicitly stated.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-035
-  function: 表达简单完成
+  function: Express simple completion
   pattern: 动词 + 了 + 宾语
   examples:
   - 我买了两张票。
@@ -1060,10 +1060,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只处理一个已经完成的具体动作；不叙述连续过去经历。
+  restrictions: Limited to one specific completed action; excludes sequences of past events.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-036
-  function: 表达新情况或状态变化
+  function: Express a new situation or change of state
   pattern: 句末了
   examples:
   - 下雨了。
@@ -1086,10 +1086,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只表示显而易见或直接说明的新情况。
+  restrictions: Expresses only a new situation that is obvious or directly stated.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-037
-  function: 连接名词性成分
+  function: Coordinate nominal elements
   pattern: A 和／跟 B
   examples:
   - 我和朋友去。
@@ -1110,10 +1110,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只连接两个简单名词或代词。
+  restrictions: Connects only two simple nouns or pronouns.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-038
-  function: 表达相同或补充情况
+  function: Express a parallel or additional fact
   pattern: 也 + 谓语
   examples:
   - 我也去。
@@ -1134,10 +1134,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只补充一个相同或并行事实。
+  restrictions: Adds only one similar or parallel fact.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-039
-  function: 表达全体或共同情况
+  function: Express a shared situation involving all members
   pattern: 都 + 谓语
   examples:
   - 我们都去。
@@ -1157,10 +1157,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 集合范围必须清楚且很小。
+  restrictions: The group must be clearly defined and small.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-040
-  function: 表达继续、另外或仍然
+  function: Express continuation, addition, or persistence
   pattern: 还 + 谓语／名词
   examples:
   - 我还要一杯水。
@@ -1180,10 +1180,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限继续、另外或仍然的直接意义。
+  restrictions: Limited to the direct meanings of continuation, addition, or persistence.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-041
-  function: 表达再次动作
+  function: Express a repeated or later action
   pattern: 再 + 动词
   examples:
   - 请再说一次。
@@ -1206,10 +1206,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只表示一次简单重复或稍后再做。
+  restrictions: Expresses only one simple repetition or an action to be done later.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-042
-  function: 表达共同参与
+  function: Express joint participation
   pattern: 一起 + 动词
   examples:
   - 我们一起去。
@@ -1240,10 +1240,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限熟悉的共同活动。
+  restrictions: Limited to familiar shared activities.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-043
-  function: 礼貌提出请求
+  function: Make a polite request
   pattern: 请 + 动词／短语
   examples:
   - 请等一下。
@@ -1261,10 +1261,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 一次只提出一个直接请求。
+  restrictions: Makes only one direct request at a time.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-044
-  function: 请求许可或确认可行性
+  function: Request permission or confirm feasibility
   pattern: 可以 + 动词 + 吗？
   examples:
   - 可以进来吗？
@@ -1284,10 +1284,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只处理简单许可或安排可行性。
+  restrictions: Limited to simple permission or the feasibility of an arrangement.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-045
-  function: 弱化简单请求
+  function: Soften a simple request
   pattern: 动词 + 一下
   examples:
   - 请等一下。
@@ -1305,10 +1305,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只用于少量高频请求；不要求语用细微辨析。
+  restrictions: Used only with a small set of frequent requests; no fine-grained pragmatic distinction is required.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-046
-  function: 提出简单建议或确认
+  function: Make a simple suggestion or confirmation
   pattern: 短句 + 吧
   examples:
   - 三点见吧。
@@ -1334,10 +1334,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只用于明显、低风险的建议或确认。
+  restrictions: Used only for obvious, low-risk suggestions or confirmations.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-047
-  function: 给出物品或服务
+  function: Give an item or provide a service
   pattern: 给 + 人 + 物
   examples:
   - 请给我一杯水。
@@ -1356,10 +1356,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只处理具体物品或简单服务。
+  restrictions: Limited to a specific object or simple service.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-048
-  function: 转告信息
+  function: Relay information
   pattern: 告诉 + 人 + 信息
   examples:
   - 请告诉安娜九点上课。
@@ -1384,10 +1384,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 信息限一至三个显性事实；不处理复杂引语。
+  restrictions: Information is limited to one to three explicit facts; excludes complex reported speech.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-049
-  function: 表达移动到地点
+  function: Express movement to a location
   pattern: 去／来 + 地点
   examples:
   - 我去学校。
@@ -1412,10 +1412,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只处理一个目的地。
+  restrictions: Limited to one destination.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-050
-  function: 表达交通方式和目的地
+  function: Express a mode of transport and destination
   pattern: 坐 + 交通工具 + 去 + 地点
   examples:
   - 我坐公交车去学校。
@@ -1442,10 +1442,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 不处理复杂换乘和多段行程。
+  restrictions: Excludes complex transfers and multi-leg journeys.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-051
-  function: 表达起止范围
+  function: Express a range from a starting point to an endpoint
   pattern: 从 + 时间／地点 + 到 + 时间／地点
   examples:
   - 从九点到十点上课。
@@ -1468,10 +1468,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只连接一组明确起点和终点。
+  restrictions: Connects only one clearly defined starting point and endpoint.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-052
-  function: 表达上下交通工具
+  function: Express boarding or alighting from transport
   pattern: 在 + 地点 + 上车／下车
   examples:
   - 在学校门口上车。
@@ -1496,10 +1496,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只处理一个上下车点。
+  restrictions: Limited to one boarding or alighting point.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-053
-  function: 给出一步式方向
+  function: Give a one-step direction
   pattern: 一直走；左转；右转；往 + 地点 + 走
   examples:
   - 一直走。
@@ -1528,10 +1528,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 最多一个转向或一个直接行走指令。
+  restrictions: Limited to one turn or one direct walking instruction.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-054
-  function: 表达具体日期
+  function: Express a specific date
   pattern: 年／月／日／号；星期 + 数字
   examples:
   - 五月三号。
@@ -1558,10 +1558,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只处理常见、清楚的日期格式。
+  restrictions: Limited to common, clearly presented date formats.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-055
-  function: 表达钟点
+  function: Express a clock time
   pattern: 上午／下午／晚上 + 数字 + 点／分／半
   examples:
   - 下午三点半。
@@ -1589,10 +1589,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只处理常见整点、半点和简单分钟。
+  restrictions: Limited to common whole hours, half hours, and simple minute values.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-056
-  function: 表达相对日期
+  function: Express a relative date
   pattern: 今天／明天／昨天 + 谓语
   examples:
   - 明天上课。
@@ -1616,10 +1616,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 不要求连续叙述过去事件。
+  restrictions: Does not require a sequence of past events.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-057
-  function: 表达选择确认
+  function: Confirm a choice between alternatives
   pattern: A 还是 B？
   examples:
   - 茶还是咖啡？
@@ -1646,10 +1646,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只在两个明确选项之间确认。
+  restrictions: Confirms a choice between only two explicit options.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-058
-  function: 表达限制
+  function: Express a limitation
   pattern: 只 + 动词／数量
   examples:
   - 我只要一杯。
@@ -1677,10 +1677,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 限一个清楚的限制范围。
+  restrictions: Limited to one clearly defined scope of restriction.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-059
-  function: 表达简单先后
+  function: Express a simple sequence
   pattern: 先 + 动词，再 + 动词
   examples:
   - 先报名，再上课。
@@ -1703,10 +1703,10 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只用于两个直接步骤；不得发展为多步骤说明。
+  restrictions: Used for only two direct steps; must not expand into multi-step instructions.
   reviewStatus: PendingHumanGrammarReview
 - grammarId: GR-A1-060
-  function: 表示接近或距离
+  function: Express proximity or distance
   pattern: A 离 B 近／远
   examples:
   - 学校离车站很近。
@@ -1731,5 +1731,5 @@ entries:
   - PROJECT-CANDO-CONTEXT-v0.2
   - HSK-L1-CROSSCHECK
   decision: retainOrAdjust
-  restrictions: 只处理整体近远，不要求距离计算。
+  restrictions: Limited to general proximity or distance; no distance calculation is required.
   reviewStatus: PendingHumanGrammarReview

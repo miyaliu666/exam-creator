@@ -11,13 +11,8 @@ import { useQuery } from "@tanstack/react-query";
 
 import { getModerationsCount } from "../../utils/fetch";
 import { Tooltip } from "../tooltip";
-import { UsersOnPageAvatars } from "../users-on-page-avatars";
 
-interface AttemptsLandingCardProps {
-  path: string;
-}
-
-export function AttemptsLandingCard({ path }: AttemptsLandingCardProps) {
+export function AttemptsLandingCard() {
   const moderationsCountQuery = useQuery({
     queryKey: ["moderationsCount"],
     queryFn: getModerationsCount,
@@ -55,9 +50,6 @@ export function AttemptsLandingCard({ path }: AttemptsLandingCardProps) {
           </Text>
         </Flex>
       </Card.Header>
-      <Card.Body pt={2} pl={0}>
-        <UsersOnPageAvatars path={path} />
-      </Card.Body>
       <Card.Footer padding="0" flexDirection="column" pl={0}>
         {moderationsCountQuery.isError ? (
           <Text color="red.400" fontSize="sm">

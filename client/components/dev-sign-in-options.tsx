@@ -11,17 +11,13 @@ import {
 } from "@chakra-ui/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { getDevLoginStatus, loginWithDevIdentity } from "../utils/fetch";
 
 const presetUsers = [
   {
-    name: "Local Author",
+    name: "Local User",
     email: "author@exam-creator.local",
-    label: "Continue as author",
-  },
-  {
-    name: "Local Reviewer",
-    email: "reviewer@exam-creator.local",
-    label: "Continue as reviewer",
+    label: "Continue as local user",
   },
 ] as const;
 
@@ -30,33 +26,12 @@ export function DevSignInOptions() {
   const [email, setEmail] = useState("");
   const statusQuery = useQuery({
     queryKey: ["dev-login-status"],
-    queryFn: async () => {
-      const response = await fetch("/auth/login/dev/status");
-      if (!response.ok) {
-        return { enabled: false };
-      }
-      return (await response.json()) as { enabled: boolean };
-    },
+    queryFn: getDevLoginStatus,
     retry: false,
   });
 
   const signinMutation = useMutation({
-    mutationFn: async (data: { name: string; email: string }) => {
-      const response = await fetch("/auth/login/dev", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error((await response.text()) || "Development sign-in failed");
-      }
-
-      return response;
-    },
+    mutationFn: loginWithDevIdentity,
     retry: false,
     onSuccess: () => {
       window.location.reload();
@@ -73,7 +48,7 @@ export function DevSignInOptions() {
         Local development identities
       </Heading>
       <Text color="fg.muted" fontSize="sm" mb={4}>
-        Create and submit an item as an author, then switch to a reviewer identity for independent review.
+        The same local identity can maintain assessment settings, generate and edit items, and complete review gates.
       </Text>
       <Stack gap={4}>
         <SimpleGrid columns={{ base: 1, sm: 2 }} gap={3}>
@@ -110,7 +85,7 @@ export function DevSignInOptions() {
             <Field.Root>
               <Field.Label>Name</Field.Label>
               <Input
-                placeholder="Example: Reviewer 2"
+                placeholder="Example: Test user 2"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
               />
@@ -119,7 +94,7 @@ export function DevSignInOptions() {
               <Field.Label>Email</Field.Label>
               <Input
                 type="email"
-                placeholder="reviewer2@example.test"
+                placeholder="user2@example.test"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
               />

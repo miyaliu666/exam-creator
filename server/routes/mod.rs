@@ -16,7 +16,7 @@ pub mod auth;
 pub mod events;
 pub mod exam_challenge;
 pub mod exams;
-pub mod language_item_assemblies;
+pub mod language_assessment_settings;
 pub mod language_item_diffs;
 pub mod language_item_github;
 pub mod language_items;

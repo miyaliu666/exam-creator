@@ -28,7 +28,7 @@
       "required": ["planningSpecVersion", "registryBundleVersion", "taskPackageVersion"],
       "properties": {
         "planningSpecVersion": { "type": "string" },
-        "registryBundleVersion": { "const": "0.2-provisional" },
+        "registryBundleVersion": { "type": "string", "minLength": 1 },
         "taskPackageVersion": { "const": "0.1" }
       },
       "additionalProperties": false

@@ -2,13 +2,13 @@ policyId: A1-ZH-TOKENIZER-v0.2-provisional
 status: ProvisionalExploratory
 script: zh-Hans
 rules:
-- 对批准词表采用最长匹配优先，先识别固定表达，再识别较短词项。
-- 同一字符区间不得同时重复计入一个长词和其内部短词，除非人工明确要求交叉标记。
-- 分别记录 stimulus、prompt、options 和 expected response concepts 的词项位置。
-- 标点、数字、拉丁字母和支持性专名单独分段，不自动视为核心词汇。
-- 未匹配片段生成 reviewFinding，而不是自动加入核心范围。
-- 自动匹配只做初筛；多义词、词边界、姓名和语法功能词必须人工确认。
-- visibleCharacterIds 记录题面全部汉字；requiredCharacterIds 只记录无支持条件下完成任务必须认读的字。
-- 简繁转换不得用于自动把考生答案判对，原始文本必须保留。
+- Use longest-match-first against the approved lexicon: identify fixed expressions before shorter entries.
+- Do not count the same character span as both a longer word and an internal shorter word unless a reviewer explicitly requires overlapping annotation.
+- Record token positions separately for the stimulus, prompt, options, and expected response concepts.
+- Segment punctuation, numbers, Latin letters, and supported proper names separately; do not automatically treat them as core vocabulary.
+- Create a reviewFinding for unmatched spans instead of adding them automatically to the core scope.
+- Automated matching is only a first pass; polysemy, word boundaries, names, and grammatical function words require human confirmation.
+- visibleCharacterIds records every Chinese character shown in the item; requiredCharacterIds records only characters that must be recognised to complete the task without support.
+- Do not use simplified/traditional conversion to mark candidate responses correct automatically; retain the original text.
 algorithm: approved-longest-match-with-offsets
 humanConfirmationRequired: true

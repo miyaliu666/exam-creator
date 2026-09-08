@@ -3,98 +3,98 @@ registryVersion: 0.2-provisional
 status: ProvisionalWorkbenchUse
 entries:
 - canDoId: A1-L1
-  title: 理解基本个人和熟悉信息
+  title: Understand basic personal and familiar information
   primarySkill: Listening
   activity: Reception
-  observableEvidence: 从极短、清楚的口头表达中识别姓名、住处、工作或学习、家庭关系、喜好或日常活动。
-  boundary: 输入简短、语速清楚；不要求隐含意义或复杂指代。
+  observableEvidence: Identify names, residence, work or study, family relationships, preferences, or daily activities in very short, clearly delivered spoken texts.
+  boundary: Input is short and clearly delivered; no implied meaning or complex reference is required.
 - canDoId: A1-L2
-  title: 提取明确的实用信息
+  title: Extract explicit practical information
   primarySkill: Listening
   activity: Reception
-  observableEvidence: 从短对话、留言、通知或广播中找到时间、日期、地点、数量、价格、电话、房间号、线路号或简单安排。
-  boundary: 一至三个显性信息点；不要求复杂推断。
+  observableEvidence: Locate times, dates, places, quantities, prices, phone numbers, room numbers, route numbers, or simple arrangements in short dialogues, messages, announcements, or broadcasts.
+  boundary: One to three explicit information points; no complex inference is required.
 - canDoId: A1-L3
-  title: 理解简单交际目的和指示
+  title: Understand simple communicative purposes and instructions
   primarySkill: Listening
   activity: Reception
-  observableEvidence: 理解问候、感谢、道歉、问题、请求、邀请、确认问题和一步式指示。
-  boundary: 只判断直接目的或行动；选择适当回应不构成 Interaction。
+  observableEvidence: Understand greetings, thanks, apologies, questions, requests, invitations, confirmation questions, and one-step instructions.
+  boundary: Assess only the direct purpose or action; selecting an appropriate response does not constitute Interaction.
 - canDoId: A1-R1
-  title: 理解标志、标签和简短通知
+  title: Understand signs, labels, and short notices
   primarySkill: Reading
   activity: Reception
-  observableEvidence: 理解入口、出口、楼层、房间号、营业或上课时间、简单许可和禁止、商品与价格。
-  boundary: 文字很短、结构清楚；不依赖文化知识。
+  observableEvidence: Understand entrances, exits, floors, room numbers, business or class times, simple permissions and prohibitions, products, and prices.
+  boundary: Text is very short and clearly structured; success does not depend on cultural knowledge.
 - canDoId: A1-R2
-  title: 从短消息和实用文本中找到关键信息
+  title: Find key information in short messages and practical texts
   primarySkill: Reading
   activity: Reception
-  observableEvidence: 从消息、菜单、日程、课程表、活动信息、表格、预约和工作安排中定位显性事实。
-  boundary: 材料短、可重读；不要求态度、论证或长篇理解。
+  observableEvidence: Locate explicit facts in messages, menus, schedules, timetables, event information, forms, appointments, and work arrangements.
+  boundary: Materials are short and can be reread; no interpretation of attitude, argument, or extended text is required.
 - canDoId: A1-S1
-  title: 提供基本个人信息
+  title: Provide basic personal information
   primarySkill: Speaking
   activity: Production
-  observableEvidence: 用词语、固定表达和简单句介绍本人或熟悉人物并说明住处、工作、学习、联系方式或日程。
-  boundary: 允许停顿和错误；不要求长篇自我介绍。
+  observableEvidence: Use words, formulaic expressions, and simple sentences to introduce oneself or a familiar person and state residence, work, study, contact details, or schedule.
+  boundary: Pauses and errors are acceptable; an extended self-introduction is not required.
 - canDoId: A1-S2
-  title: 表达直接需要和熟悉内容
+  title: Express direct needs and familiar content
   primarySkill: Speaking
   activity: Production
-  observableEvidence: 表达喜好、想要、需要、能力、当前活动、天气、饮食偏好、身体不适或简单描述。
-  boundary: 一至三个简单句；不要求解释原因或比较。
+  observableEvidence: Express likes, wants, needs, abilities, current activities, weather, food preferences, basic health problems, or simple descriptions.
+  boundary: One to three simple sentences; no explanation of reasons or comparison is required.
 - canDoId: A1-W1
-  title: 填写基本在线表格
+  title: Complete a basic online form
   primarySkill: Writing
   activity: Production
-  observableEvidence: 使用简体中文、数字和日期格式填写姓名、国籍、城市、生日、电话、工作或学习和可参加时间。
-  boundary: 四至六个清楚字段；不要求真实敏感信息。
+  observableEvidence: Use Simplified Chinese, numbers, and date formats to enter a name, nationality, city, birthday, phone number, work or study information, and availability.
+  boundary: Four to six clearly labelled fields; no real sensitive information is required.
 - canDoId: A1-W2
-  title: 编写非常短的实用消息
+  title: Write a very short practical message
   primarySkill: Writing
   activity: Production
-  observableEvidence: 写一条包含一至三个内容点的短消息，用于邀请、确认安排、表达需要、提问或回复课程、预约和工作消息。
-  boundary: 非常短、目的明确；不要求正式长邮件。
+  observableEvidence: Write a short message containing one to three content points to invite, confirm an arrangement, express a need, ask a question, or reply about a course, appointment, or work matter.
+  boundary: The message is very short and has a clear purpose; a formal or extended email is not required.
 - canDoId: A1-I1
-  title: 进行基本个人问答
+  title: Conduct a basic personal exchange
   primarySkill: Speaking
   activity: Interaction
-  observableEvidence: 回答有关本人和熟悉生活的问题，并主动提出一个简单相关问题。
-  boundary: 两至三轮；允许有限重复和帮助。
+  observableEvidence: Answer questions about oneself and familiar daily life, and initiate one simple relevant question.
+  boundary: Two to three turns; limited repetition and assistance are allowed.
 - canDoId: A1-I2
-  title: 完成简单、可预测的日常交换
+  title: Complete a simple, predictable everyday exchange
   primarySkill: Speaking
   activity: Interaction
-  observableEvidence: 在点餐、询价、购票、问路、确认课程或预约、请求物品和求助中完成简短交流。
-  boundary: 高度熟悉场景，两至三轮，不进行复杂协商。
+  observableEvidence: Complete a short exchange when ordering food, asking a price, buying a ticket, asking for directions, confirming a course or appointment, requesting an object, or asking for help.
+  boundary: A highly familiar situation with two to three turns and no complex negotiation.
 - canDoId: A1-I3a
-  title: 口头约定或确认简单安排
+  title: Arrange or confirm a simple plan orally
   primarySkill: Speaking
   activity: Interaction
-  observableEvidence: 口头询问、说明或确认见面、上课、工作、活动、预约和是否参加。
-  boundary: 只处理时间、地点和参加状态等显性安排。
+  observableEvidence: Ask about, state, or confirm a meeting, class, work arrangement, activity, appointment, or attendance orally.
+  boundary: Address only explicit arrangements such as time, place, and attendance status.
 - canDoId: A1-I3b
-  title: 书面约定或确认简单安排
+  title: Arrange or confirm a simple plan in writing
   primarySkill: Writing
   activity: Interaction
-  observableEvidence: 通过非常短的消息询问、说明或确认课程、工作、活动、预约和是否参加。
-  boundary: 必须实际回应消息；不能以选择预设回复代替。
+  observableEvidence: Use a very short message to ask about, state, or confirm a course, work arrangement, activity, appointment, or attendance.
+  boundary: The candidate must produce an actual reply; selecting a predefined response is not sufficient.
 - canDoId: A1-I4
-  title: 维持和修复最基本的交流
+  title: Maintain and repair a basic exchange
   primarySkill: Speaking
   activity: Interaction
-  observableEvidence: 表示没听懂，请求重复、放慢、帮助，或确认词语、数字、时间和地点。
-  boundary: 使用少量固定表达；输入本身不得故意含糊或过快。
+  observableEvidence: Signal a lack of understanding; ask for repetition, slower speech, or help; or confirm a word, number, time, or place.
+  boundary: Use a small set of formulaic expressions; the input itself must not be deliberately ambiguous or excessively fast.
 - canDoId: A1-M1
-  title: 口头转告简单明确信息
+  title: Relay simple explicit information orally
   primarySkill: Speaking
   activity: Mediation
-  observableEvidence: 从短通知、时间表、信息卡或消息中选择一至三个相关信息点并口头告诉指定对象。
-  boundary: 单一短来源和显性信息；不总结、解释或比较。
+  observableEvidence: Select one to three relevant information points from a short notice, timetable, information card, or message and relay them orally to a specified recipient.
+  boundary: Use one short source with explicit information; no summarising, explaining, or comparing is required.
 - canDoId: A1-M2
-  title: 书面转告简单明确信息
+  title: Relay simple explicit information in writing
   primarySkill: Writing
   activity: Mediation
-  observableEvidence: 从短源材料选择时间、地点、价格、数量或安排并写成一条给指定对象的短消息。
-  boundary: 必须形成面向接收者的消息；机械复制不能单独证明中介。
+  observableEvidence: Select a time, place, price, quantity, or arrangement from a short source and write a short message to a specified recipient.
+  boundary: The response must be a recipient-oriented message; mechanical copying alone does not demonstrate mediation.

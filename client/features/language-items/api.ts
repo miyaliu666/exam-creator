@@ -8,7 +8,6 @@ import type {
   GithubReviewBatch,
   LanguageItem,
   LanguageItemRecordState,
-  LanguageItemAssembly,
   LanguageItemAuditEvent,
   LanguageItemExport,
   LanguageItemReview,
@@ -16,6 +15,11 @@ import type {
   LanguageItemVersion,
   LanguageItemVersionDiff,
   RegistrySnapshot,
+  RegistryAuditEvent,
+  RegistryImpact,
+  RegistryValidationResult,
+  RegistryVersionRecord,
+  RegistryVersionSummary,
   ReviewDecision,
   ReviewDiscussionEventKind,
   ReviewDiscussionKind,
@@ -27,8 +31,98 @@ async function readJson<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
-export async function getLanguageItemRegistry(): Promise<RegistrySnapshot> {
-  return readJson(await authorizedFetch("/api/language-items/registry"));
+export async function getLanguageItemRegistry(
+  version?: string,
+): Promise<RegistrySnapshot> {
+  const suffix = version ? `/${encodeURIComponent(version)}` : "";
+  return readJson(await authorizedFetch(`/api/language-items/registry${suffix}`));
+}
+
+export async function getActiveLanguageAssessmentRegistry(): Promise<RegistrySnapshot> {
+  return readJson(await authorizedFetch("/api/language-assessment/registry/active"));
+}
+
+export async function getLanguageAssessmentRegistryVersions(): Promise<RegistryVersionSummary[]> {
+  return readJson(await authorizedFetch("/api/language-assessment/registry/versions"));
+}
+
+export async function getLanguageAssessmentRegistryVersion(
+  id: string,
+): Promise<RegistryVersionRecord> {
+  return readJson(
+    await authorizedFetch(`/api/language-assessment/registry/versions/${id}`),
+  );
+}
+
+export async function getLanguageAssessmentRegistryAudit(
+  id: string,
+): Promise<RegistryAuditEvent[]> {
+  return readJson(
+    await authorizedFetch(`/api/language-assessment/registry/versions/${id}/audit`),
+  );
+}
+
+export async function createLanguageAssessmentRegistryDraft(
+  version?: string,
+): Promise<RegistryVersionRecord> {
+  return readJson(
+    await authorizedFetch("/api/language-assessment/registry/drafts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ version }),
+    }),
+  );
+}
+
+export async function saveLanguageAssessmentRegistryDraft(input: {
+  id: string;
+  expectedRevision: number;
+  version: string;
+  snapshot: RegistrySnapshot;
+}): Promise<RegistryVersionRecord> {
+  return readJson(
+    await authorizedFetch(`/api/language-assessment/registry/drafts/${input.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  );
+}
+
+export async function validateLanguageAssessmentRegistryDraft(
+  id: string,
+  expectedRevision: number,
+): Promise<RegistryValidationResult> {
+  return readJson(
+    await authorizedFetch(`/api/language-assessment/registry/drafts/${id}/validate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ expectedRevision }),
+    }),
+  );
+}
+
+export async function getLanguageAssessmentRegistryImpact(
+  id: string,
+  expectedRevision: number,
+): Promise<RegistryImpact> {
+  return readJson(
+    await authorizedFetch(`/api/language-assessment/registry/drafts/${id}/impact?expectedRevision=${expectedRevision}`),
+  );
+}
+
+export async function publishLanguageAssessmentRegistryDraft(
+  id: string,
+  expectedRevision: number,
+  expectedActiveVersion: string,
+): Promise<RegistryVersionRecord> {
+  return readJson(
+    await authorizedFetch(`/api/language-assessment/registry/drafts/${id}/publish`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ expectedRevision, expectedActiveVersion }),
+    }),
+  );
 }
 
 export async function getLanguageItemAiProvider(): Promise<AiProviderStatus> {
@@ -72,27 +166,14 @@ export async function getLanguageItemReviewQueue(): Promise<LanguageItem[]> {
   return readJson(await authorizedFetch("/api/language-item-review-queue"));
 }
 
-export async function getLanguageItemAssemblies(): Promise<LanguageItemAssembly[]> {
-  return readJson(await authorizedFetch("/api/language-item-assemblies"));
-}
-
-export async function createLanguageItemStagingAssembly(input: {
-  title: string;
-  versionIds: string[];
-}): Promise<LanguageItemAssembly> {
-  return readJson(
-    await authorizedFetch("/api/language-item-assemblies/staging", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
-    }),
-  );
-}
-
 export async function createLanguageItem(
   input: {
     blueprintSlotId: string;
     itemFormatId: string;
+    primaryCanDoId: string;
+    primaryDomain: string;
+    contextId: string;
+    difficultyBand: string;
     title?: string;
   },
 ): Promise<LanguageItem> {
@@ -219,12 +300,13 @@ export async function getAiGenerationRuns(id: string): Promise<AiGenerationRun[]
 export async function generateAiCandidates(
   id: string,
   count: number,
+  idempotencyKey = crypto.randomUUID(),
 ): Promise<AiGenerationRun> {
   return readJson(
     await authorizedFetch(`/api/language-items/${id}/ai-runs`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ count }),
+      body: JSON.stringify({ count, idempotencyKey }),
     }),
   );
 }

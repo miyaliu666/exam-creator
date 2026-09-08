@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
 
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
@@ -99,7 +102,7 @@ struct Manifest {
     limitations: Vec<String>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorkbenchCapability {
     pub blueprint_slot_id: String,
@@ -129,7 +132,7 @@ pub struct WorkbenchCapability {
     pub delivery_policy_refs: DeliveryPolicyRefs,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ContentIdOption {
     pub id: String,
@@ -140,14 +143,18 @@ pub struct ContentIdOption {
     pub mastery_scope: Option<String>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RegistryLabelOption {
     pub id: String,
     pub label: String,
+    #[serde(default)]
+    pub primary_skill: Option<String>,
+    #[serde(default)]
+    pub activity: Option<String>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ScoringPolicySummary {
     pub policy_id: String,
@@ -155,10 +162,12 @@ pub struct ScoringPolicySummary {
     pub details: Vec<String>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ScoringContractSummary {
     pub scoring_contract_template_id: String,
+    #[serde(default)]
+    pub display_name: String,
     pub template_version: String,
     pub blueprint_slot_id: String,
     pub item_format_id: String,
@@ -175,7 +184,7 @@ pub struct ScoringContractSummary {
     pub status: String,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ContextOption {
     pub id: String,
@@ -183,25 +192,483 @@ pub struct ContextOption {
     pub primary_domains: Vec<String>,
     pub can_do_ids: Vec<String>,
     pub scope: String,
+    #[serde(default)]
+    pub exclusions: Vec<String>,
+    #[serde(default)]
+    pub retired: bool,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DifficultyDriverDefaults {
+    pub input_length: String,
+    pub information_points: u8,
+    pub support_level: String,
+    pub distractor_similarity: String,
+    pub independence_level: String,
+    pub inference_required: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DifficultyBandStandard {
+    pub id: String,
+    pub label: String,
+    pub description: String,
+    pub default_drivers: DifficultyDriverDefaults,
+    pub allowed_input_lengths: Vec<String>,
+    pub information_points_min: u8,
+    pub information_points_max: u8,
+    pub allowed_support_levels: Vec<String>,
+    pub allowed_distractor_similarities: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CapabilityDifficultyProfileSet {
+    pub id: String,
+    pub blueprint_slot_id: String,
+    pub item_format_id: String,
+    pub primary_can_do_id: String,
+    pub standards: Vec<DifficultyBandStandard>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BlueprintSlot {
+    pub id: String,
+    pub display_name: String,
+    pub description: String,
+    pub allowed_item_format_ids: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NamedRegistryReference {
+    pub id: String,
+    pub display_name: String,
+    #[serde(default)]
+    pub kind: String,
+    #[serde(default)]
+    pub blueprint_slot_ids: Vec<String>,
+    #[serde(default)]
+    pub allowed_item_format_ids: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RegistrySnapshot {
+    #[serde(default)]
+    pub settings_schema_version: u32,
     pub bundle_version: String,
     pub status: String,
     pub limitations: Vec<String>,
     pub source_fingerprint: String,
     pub capabilities: Vec<WorkbenchCapability>,
+    #[serde(default)]
+    pub blueprint_slots: Vec<BlueprintSlot>,
+    #[serde(default)]
+    pub task_family_options: Vec<NamedRegistryReference>,
+    #[serde(default)]
+    pub reference_labels: Vec<NamedRegistryReference>,
     pub candidate_schemas: Vec<Value>,
     pub task_package_schema: Value,
     pub allowed_domains: Vec<String>,
     pub difficulty_bands: Vec<String>,
+    #[serde(default)]
+    pub difficulty_standards: Vec<DifficultyBandStandard>,
+    #[serde(default)]
+    pub capability_difficulty_profile_sets: Vec<CapabilityDifficultyProfileSet>,
     pub content_id_options: Vec<ContentIdOption>,
     pub context_options: Vec<ContextOption>,
     pub can_do_options: Vec<RegistryLabelOption>,
     pub scoring_contracts: Vec<ScoringContractSummary>,
     pub required_review_gate_ids: Vec<String>,
+}
+
+fn default_difficulty_standards() -> Vec<DifficultyBandStandard> {
+    vec![
+        DifficultyBandStandard {
+            id: "LowerA1".to_string(),
+            label: "Lower A1".to_string(),
+            description:
+                "One explicit information point, word or phrase input, and strong contextual support."
+                    .to_string(),
+            default_drivers: DifficultyDriverDefaults {
+                input_length: "wordOrPhrase".to_string(),
+                information_points: 1,
+                support_level: "high".to_string(),
+                distractor_similarity: "clear".to_string(),
+                independence_level: "highlySupported".to_string(),
+                inference_required: false,
+            },
+            allowed_input_lengths: vec!["wordOrPhrase".to_string()],
+            information_points_min: 1,
+            information_points_max: 1,
+            allowed_support_levels: vec!["high".to_string()],
+            allowed_distractor_similarities: vec![
+                "clear".to_string(),
+                "notApplicable".to_string(),
+            ],
+        },
+        DifficultyBandStandard {
+            id: "TypicalA1".to_string(),
+            label: "Typical A1".to_string(),
+            description:
+                "One or two explicit information points, short-sentence input, and moderate contextual support."
+                    .to_string(),
+            default_drivers: DifficultyDriverDefaults {
+                input_length: "shortSentence".to_string(),
+                information_points: 1,
+                support_level: "moderate".to_string(),
+                distractor_similarity: "moderate".to_string(),
+                independence_level: "partlySupported".to_string(),
+                inference_required: false,
+            },
+            allowed_input_lengths: vec!["shortSentence".to_string()],
+            information_points_min: 1,
+            information_points_max: 2,
+            allowed_support_levels: vec!["high".to_string(), "moderate".to_string()],
+            allowed_distractor_similarities: vec![
+                "clear".to_string(),
+                "moderate".to_string(),
+                "notApplicable".to_string(),
+            ],
+        },
+        DifficultyBandStandard {
+            id: "UpperA1".to_string(),
+            label: "Upper A1".to_string(),
+            description:
+                "Two explicit information points, related phrases, and limited contextual support while remaining within A1."
+                    .to_string(),
+            default_drivers: DifficultyDriverDefaults {
+                input_length: "twoRelatedPhrases".to_string(),
+                information_points: 2,
+                support_level: "limited".to_string(),
+                distractor_similarity: "close".to_string(),
+                independence_level: "independent".to_string(),
+                inference_required: false,
+            },
+            allowed_input_lengths: vec![
+                "shortSentence".to_string(),
+                "twoRelatedPhrases".to_string(),
+            ],
+            information_points_min: 2,
+            information_points_max: 2,
+            allowed_support_levels: vec!["moderate".to_string(), "limited".to_string()],
+            allowed_distractor_similarities: vec![
+                "moderate".to_string(),
+                "close".to_string(),
+                "notApplicable".to_string(),
+            ],
+        },
+    ]
+}
+
+fn difficulty_profile_set_id(capability: &WorkbenchCapability) -> String {
+    format!(
+        "DPS-{}-{}-{}",
+        capability.blueprint_slot_id, capability.item_format_id, capability.primary_can_do_id
+    )
+}
+
+pub fn item_format_name(id: &str) -> &str {
+    match id {
+        "IF-SINGLE-SELECT" => "Single select",
+        "IF-MATCHING" => "Matching",
+        "IF-RESTRICTED-INPUT" => "Restricted input",
+        "IF-FORM-ENTRY" => "Form entry",
+        "IF-TYPED-MESSAGE" => "Typed message",
+        "IF-SPOKEN-SINGLE" => "Spoken response",
+        "IF-SPOKEN-MULTITURN" => "Spoken exchange",
+        _ => "Item format",
+    }
+}
+
+fn populate_readable_metadata(snapshot: &mut RegistrySnapshot) {
+    // Old snapshots only stored the slot title on each capability. Materialize one
+    // slot record on read; subsequent edits use that record as the title authority.
+    if snapshot.blueprint_slots.is_empty() {
+        for capability in &snapshot.capabilities {
+            if let Some(slot) = snapshot
+                .blueprint_slots
+                .iter_mut()
+                .find(|slot| slot.id == capability.blueprint_slot_id)
+            {
+                if !slot
+                    .allowed_item_format_ids
+                    .contains(&capability.item_format_id)
+                {
+                    slot.allowed_item_format_ids
+                        .push(capability.item_format_id.clone());
+                }
+            } else {
+                snapshot.blueprint_slots.push(BlueprintSlot {
+                    id: capability.blueprint_slot_id.clone(),
+                    display_name: capability.title.clone(),
+                    description: capability.task_family_core_behavior.clone(),
+                    allowed_item_format_ids: vec![capability.item_format_id.clone()],
+                });
+            }
+        }
+    }
+    for capability in &mut snapshot.capabilities {
+        if let Some(slot) = snapshot
+            .blueprint_slots
+            .iter()
+            .find(|slot| slot.id == capability.blueprint_slot_id)
+        {
+            capability.title.clone_from(&slot.display_name);
+        }
+        if !snapshot
+            .task_family_options
+            .iter()
+            .any(|family| family.id == capability.task_family_id)
+        {
+            snapshot.task_family_options.push(NamedRegistryReference {
+                id: capability.task_family_id.clone(),
+                display_name: capability.task_family_core_behavior.clone(),
+                kind: "taskFamily".to_string(),
+                blueprint_slot_ids: Vec::new(),
+                allowed_item_format_ids: Vec::new(),
+            });
+        }
+    }
+    for (id, block) in entry_blocks(TASK_FAMILY_REGISTRY, "taskFamilyId") {
+        if let Some(family) = snapshot.task_family_options.iter_mut().find(|family| family.id == id) {
+            if family.blueprint_slot_ids.is_empty() {
+                family.blueprint_slot_ids = block_list(&block, "blueprintSlotIds", &HashMap::new());
+            }
+            if family.allowed_item_format_ids.is_empty() {
+                family.allowed_item_format_ids = block_list(&block, "allowedItemFormatIds", &HashMap::new());
+            }
+        }
+    }
+    for contract in &mut snapshot.scoring_contracts {
+        if contract.display_name.trim().is_empty() {
+            let slot_name = snapshot
+                .blueprint_slots
+                .iter()
+                .find(|slot| slot.id == contract.blueprint_slot_id)
+                .map(|slot| slot.display_name.as_str())
+                .unwrap_or("Assessment task");
+            contract.display_name = format!(
+                "{slot_name} · {} scoring",
+                item_format_name(&contract.item_format_id)
+            );
+        }
+    }
+    for (id, display_name, kind) in [
+        ("REN-SINGLE-SELECT", "Single-select preview", "renderer"),
+        ("REN-MATCHING", "Matching preview", "renderer"),
+        (
+            "REN-RESTRICTED-INPUT",
+            "Restricted-input preview",
+            "renderer",
+        ),
+        ("REN-FORM-ENTRY", "Form-entry preview", "renderer"),
+        ("REN-TYPED-MESSAGE", "Typed-message preview", "renderer"),
+        ("REN-SPOKEN-SINGLE", "Spoken-response preview", "renderer"),
+        (
+            "REN-SPOKEN-MULTITURN",
+            "Spoken-exchange preview",
+            "renderer",
+        ),
+        (
+            "NAV-FORWARD-TASK-v0.1",
+            "Forward through listening tasks",
+            "deliveryPolicy",
+        ),
+        (
+            "NAV-FORWARD-RECORDING-v0.1",
+            "Forward through recordings",
+            "deliveryPolicy",
+        ),
+        (
+            "NAV-REVIEW-WITHIN-MODULE-v0.1",
+            "Review within the module",
+            "deliveryPolicy",
+        ),
+        (
+            "INPUT-RESTRICTED-FIELD-v0.1",
+            "Restricted text fields",
+            "deliveryPolicy",
+        ),
+        (
+            "INPUT-EXAM-STANDARDIZED-PINYIN-v0.1",
+            "Standardized Pinyin input",
+            "deliveryPolicy",
+        ),
+        (
+            "PLAY-COMPLETE-TWICE-v0.1",
+            "Play the complete audio twice",
+            "deliveryPolicy",
+        ),
+        (
+            "REC-MULTITURN-A1-v0.1",
+            "Record each turn of the exchange",
+            "deliveryPolicy",
+        ),
+        (
+            "REC-SINGLE-A1-v0.1",
+            "Record one spoken response",
+            "deliveryPolicy",
+        ),
+        (
+            "RATE-A1-CLEAR-SLOW-v0.1",
+            "Clear, slow A1 speech",
+            "deliveryPolicy",
+        ),
+        (
+            "PAUSE-A1-DIALOGUE-v0.1",
+            "A1 dialogue pauses",
+            "deliveryPolicy",
+        ),
+        (
+            "PAUSE-A1-SENTENCE-v0.1",
+            "A1 sentence pauses",
+            "deliveryPolicy",
+        ),
+        ("notApplicable", "Not applicable", "policy"),
+        ("editorial", "Editorial review", "reviewGate"),
+        ("constructAndLevel", "Can-do and level review", "reviewGate"),
+        ("content", "Language content review", "reviewGate"),
+        ("scoring", "Scoring review", "reviewGate"),
+        (
+            "fairnessAccessibility",
+            "Fairness and accessibility review",
+            "reviewGate",
+        ),
+        ("technicalSecurity", "Technical review", "reviewGate"),
+    ] {
+        if !snapshot.reference_labels.iter().any(|entry| entry.id == id) {
+            snapshot.reference_labels.push(NamedRegistryReference {
+                id: id.to_string(),
+                display_name: display_name.to_string(),
+                kind: kind.to_string(),
+                blueprint_slot_ids: Vec::new(),
+                allowed_item_format_ids: Vec::new(),
+            });
+        }
+    }
+    for contract in &snapshot.scoring_contracts {
+        for policy in [
+            &contract.normalization,
+            &contract.partial_credit,
+            &contract.invalid_response,
+            &contract.technical_incident,
+            &contract.adjudication,
+            &contract.rater_qualification,
+        ] {
+            if !snapshot
+                .reference_labels
+                .iter()
+                .any(|entry| entry.id == policy.policy_id)
+            {
+                snapshot.reference_labels.push(NamedRegistryReference {
+                    id: policy.policy_id.clone(),
+                    display_name: policy.summary.clone(),
+                    kind: "scoringPolicy".to_string(),
+                    blueprint_slot_ids: Vec::new(),
+                    allowed_item_format_ids: Vec::new(),
+                });
+            }
+        }
+    }
+}
+
+pub fn normalize_registry_snapshot(snapshot: &mut RegistrySnapshot) {
+    // Compatibility upgrades only apply to records written before the structured
+    // settings schema. Authored values, including invalid ones, must survive reads.
+    if snapshot.settings_schema_version >= 1 {
+        return;
+    }
+    let canonical = &*REGISTRY;
+    for can_do in &mut snapshot.can_do_options {
+        if let Some(source) = canonical.can_do_options.iter().find(|entry| entry.id == can_do.id) {
+            if can_do.primary_skill.is_none() {
+                can_do.primary_skill.clone_from(&source.primary_skill);
+            }
+            if can_do.activity.is_none() {
+                can_do.activity.clone_from(&source.activity);
+            }
+        }
+    }
+    if snapshot.capability_difficulty_profile_sets.is_empty() {
+        snapshot.capability_difficulty_profile_sets = snapshot.capabilities.iter()
+            .map(|capability| CapabilityDifficultyProfileSet {
+                id: difficulty_profile_set_id(capability),
+                blueprint_slot_id: capability.blueprint_slot_id.clone(),
+                item_format_id: capability.item_format_id.clone(),
+                primary_can_do_id: capability.primary_can_do_id.clone(),
+                standards: snapshot.difficulty_standards.clone(),
+            }).collect();
+    }
+    populate_readable_metadata(snapshot);
+    snapshot.settings_schema_version = 1;
+}
+
+pub fn prepare_registry_draft(snapshot: &mut RegistrySnapshot) {
+    normalize_registry_snapshot(snapshot);
+    // Historical slot lists described broad candidates. A newly authored draft
+    // starts with exactly the contexts item creation can actually select.
+    for capability in &mut snapshot.capabilities {
+        let primary_can_do_id = &capability.primary_can_do_id;
+        capability.allowed_context_ids.retain(|id| snapshot.context_options.iter().any(|context| {
+            context.id == *id && !context.retired && context.can_do_ids.contains(primary_can_do_id)
+                && context.primary_domains.len() == 1
+                && snapshot.allowed_domains.contains(&context.primary_domains[0])
+        }));
+        capability.allowed_domains = snapshot.allowed_domains.iter().filter(|domain| {
+            snapshot.context_options.iter().any(|context| capability.allowed_context_ids.contains(&context.id)
+                && context.primary_domains.contains(domain))
+        }).cloned().collect();
+    }
+}
+
+pub fn capability_for<'a>(
+    snapshot: &'a RegistrySnapshot,
+    blueprint_slot_id: &str,
+    item_format_id: &str,
+    primary_can_do_id: Option<&str>,
+) -> Option<&'a WorkbenchCapability> {
+    if let Some(primary_can_do_id) = primary_can_do_id {
+        return snapshot.capabilities.iter().find(|capability| {
+            capability.blueprint_slot_id == blueprint_slot_id
+                && capability.item_format_id == item_format_id
+                && capability.primary_can_do_id == primary_can_do_id
+        });
+    }
+
+    let mut matches = snapshot.capabilities.iter().filter(|capability| {
+        capability.blueprint_slot_id == blueprint_slot_id
+            && capability.item_format_id == item_format_id
+    });
+    let capability = matches.next()?;
+    matches.next().is_none().then_some(capability)
+}
+
+pub fn context_supports_capability(
+    context: &ContextOption,
+    capability: &WorkbenchCapability,
+) -> bool {
+    !context.retired && context.can_do_ids.contains(&capability.primary_can_do_id)
+}
+
+pub fn difficulty_standards_for_capability<'a>(
+    snapshot: &'a RegistrySnapshot,
+    capability: &WorkbenchCapability,
+) -> &'a [DifficultyBandStandard] {
+    snapshot
+        .capability_difficulty_profile_sets
+        .iter()
+        .find(|profile| {
+            profile.blueprint_slot_id == capability.blueprint_slot_id
+                && profile.item_format_id == capability.item_format_id
+                && profile.primary_can_do_id == capability.primary_can_do_id
+        })
+        .map(|profile| profile.standards.as_slice())
+        .unwrap_or(snapshot.difficulty_standards.as_slice())
 }
 
 pub static REGISTRY: Lazy<RegistrySnapshot> = Lazy::new(|| {
@@ -263,13 +730,29 @@ pub static REGISTRY: Lazy<RegistrySnapshot> = Lazy::new(|| {
     ));
     let context_options = context_options(CONTEXT_REGISTRY);
     let can_do_options = label_options(CAN_DO_REGISTRY, "canDoId", &["title"]);
+    let capabilities = capabilities();
+    let difficulty_standards = default_difficulty_standards();
+    let capability_difficulty_profile_sets = capabilities
+        .iter()
+        .map(|capability| CapabilityDifficultyProfileSet {
+            id: difficulty_profile_set_id(capability),
+            blueprint_slot_id: capability.blueprint_slot_id.clone(),
+            item_format_id: capability.item_format_id.clone(),
+            primary_can_do_id: capability.primary_can_do_id.clone(),
+            standards: difficulty_standards.clone(),
+        })
+        .collect();
 
-    RegistrySnapshot {
+    let mut registry = RegistrySnapshot {
+        settings_schema_version: 1,
         bundle_version: manifest.bundle_version,
         status: manifest.status,
         limitations: manifest.limitations,
-        source_fingerprint: "a1-registry:0.2-provisional:authoring-contracts-0.4".to_string(),
-        capabilities: capabilities(),
+        source_fingerprint: "a1-registry:0.2-provisional:authoring-contracts-0.5".to_string(),
+        capabilities,
+        blueprint_slots: Vec::new(),
+        task_family_options: Vec::new(),
+        reference_labels: Vec::new(),
         candidate_schemas,
         task_package_schema,
         allowed_domains: ["Personal", "Public", "Educational", "Occupational"]
@@ -280,6 +763,8 @@ pub static REGISTRY: Lazy<RegistrySnapshot> = Lazy::new(|| {
             .into_iter()
             .map(str::to_string)
             .collect(),
+        difficulty_standards,
+        capability_difficulty_profile_sets,
         content_id_options,
         context_options,
         can_do_options,
@@ -295,8 +780,55 @@ pub static REGISTRY: Lazy<RegistrySnapshot> = Lazy::new(|| {
         .into_iter()
         .map(str::to_string)
         .collect(),
-    }
+    };
+    populate_readable_metadata(&mut registry);
+    registry
 });
+
+#[derive(Default)]
+struct RegistryCatalog {
+    active_version: String,
+    versions: HashMap<String, Arc<RegistrySnapshot>>,
+}
+
+static REGISTRY_CATALOG: Lazy<RwLock<RegistryCatalog>> = Lazy::new(|| {
+    let baseline = Arc::new(REGISTRY.clone());
+    let mut versions = HashMap::new();
+    versions.insert(baseline.bundle_version.clone(), Arc::clone(&baseline));
+    RwLock::new(RegistryCatalog {
+        active_version: baseline.bundle_version.clone(),
+        versions,
+    })
+});
+
+pub fn active_snapshot() -> Arc<RegistrySnapshot> {
+    let catalog = REGISTRY_CATALOG.read().expect("registry catalog read lock");
+    catalog
+        .versions
+        .get(&catalog.active_version)
+        .cloned()
+        .unwrap_or_else(|| Arc::new(REGISTRY.clone()))
+}
+
+pub fn snapshot_for(version: &str) -> Option<Arc<RegistrySnapshot>> {
+    REGISTRY_CATALOG
+        .read()
+        .expect("registry catalog read lock")
+        .versions
+        .get(version)
+        .cloned()
+}
+
+pub fn install_published_snapshot(snapshot: RegistrySnapshot, make_active: bool) {
+    let version = snapshot.bundle_version.clone();
+    let mut catalog = REGISTRY_CATALOG
+        .write()
+        .expect("registry catalog write lock");
+    catalog.versions.insert(version.clone(), Arc::new(snapshot));
+    if make_active {
+        catalog.active_version = version;
+    }
+}
 
 fn capabilities() -> Vec<WorkbenchCapability> {
     let slot_anchors = list_anchors(SLOT_REGISTRY);
@@ -482,23 +1014,30 @@ fn delivery_policy_for(slot_id: &str, item_format_id: &str) -> DeliveryPolicyRef
 
 fn implementation_for(item_format_id: &str) -> Option<(&'static str, &'static str)> {
     match item_format_id {
-        "IF-SINGLE-SELECT" => Some(("REN-SINGLE-SELECT", "一份材料、一个问题和至少两个选项。")),
-        "IF-MATCHING" => Some(("REN-MATCHING", "至少两项左侧材料与右侧答案进行匹配。")),
-        "IF-RESTRICTED-INPUT" => {
-            Some(("REN-RESTRICTED-INPUT", "读取或听取短材料，并填写直接信息。"))
-        }
-        "IF-FORM-ENTRY" => Some(("REN-FORM-ENTRY", "填写 4–6 个简短表单字段。")),
+        "IF-SINGLE-SELECT" => Some((
+            "REN-SINGLE-SELECT",
+            "One stimulus, one question, and at least two options.",
+        )),
+        "IF-MATCHING" => Some((
+            "REN-MATCHING",
+            "Match at least two prompts with the available answers.",
+        )),
+        "IF-RESTRICTED-INPUT" => Some((
+            "REN-RESTRICTED-INPUT",
+            "Read or listen to a short stimulus and enter explicit information.",
+        )),
+        "IF-FORM-ENTRY" => Some(("REN-FORM-ENTRY", "Complete four to six short form fields.")),
         "IF-TYPED-MESSAGE" => Some((
             "REN-TYPED-MESSAGE",
-            "按收件人、目的和内容点写一条简短消息。",
+            "Write a short message for the specified recipient, purpose, and content points.",
         )),
         "IF-SPOKEN-SINGLE" => Some((
             "REN-SPOKEN-SINGLE",
-            "按可见提示或音频提示完成一段简短口语表达。",
+            "Give one short spoken response to a visible or audio prompt.",
         )),
         "IF-SPOKEN-MULTITURN" => Some((
             "REN-SPOKEN-MULTITURN",
-            "考官与考生按固定路径完成至少一问一答。",
+            "Complete a fixed-path exchange with at least one prompt and response.",
         )),
         _ => None,
     }
@@ -514,12 +1053,12 @@ fn scoring_contracts() -> Vec<ScoringContractSummary> {
     .map(|(id, block)| {
         let mut details = block_list(&block, "allowedProcessing", &HashMap::new())
             .into_iter()
-            .map(|rule| format!("允许：{rule}"))
+            .map(|rule| format!("Allowed: {rule}"))
             .collect::<Vec<_>>();
         details.extend(
             block_list(&block, "prohibitedProcessing", &HashMap::new())
                 .into_iter()
-                .map(|rule| format!("禁止：{rule}")),
+                .map(|rule| format!("Prohibited: {rule}")),
         );
         (
             id.clone(),
@@ -559,7 +1098,8 @@ fn scoring_contracts() -> Vec<ScoringContractSummary> {
             id.clone(),
             ScoringPolicySummary {
                 policy_id: id,
-                summary: "无效作答按合同统一处理".to_string(),
+                summary: "Invalid responses are handled consistently under the contract"
+                    .to_string(),
                 details: block_map(&block, "rules")
                     .into_iter()
                     .map(|(condition, result)| format!("{condition}: {result}"))
@@ -639,6 +1179,7 @@ fn scoring_contracts() -> Vec<ScoringContractSummary> {
 
         ScoringContractSummary {
             scoring_contract_template_id: id,
+            display_name: String::new(),
             template_version: block_scalar(&block, &["templateVersion"]).unwrap_or_default(),
             blueprint_slot_id,
             item_format_id: block_scalar(&block, &["itemFormatId"]).unwrap_or_default(),
@@ -680,7 +1221,7 @@ fn policy_or_not_applicable(
         .cloned()
         .unwrap_or_else(|| ScoringPolicySummary {
             policy_id: policy_id.to_string(),
-            summary: "评分策略详情缺失".to_string(),
+            summary: "Scoring policy details are unavailable".to_string(),
             details: Vec::new(),
         })
 }
@@ -688,7 +1229,7 @@ fn policy_or_not_applicable(
 fn not_applicable_policy() -> ScoringPolicySummary {
     ScoringPolicySummary {
         policy_id: "notApplicable".to_string(),
-        summary: "不适用".to_string(),
+        summary: "Not applicable".to_string(),
         details: Vec::new(),
     }
 }
@@ -723,6 +1264,8 @@ fn context_options(source: &str) -> Vec<ContextOption> {
                 .collect(),
             can_do_ids: block_list(&block, "canDoIds", &anchors),
             scope: block_scalar(&block, &["scope"]).unwrap_or_default(),
+            exclusions: block_list(&block, "exclusions", &anchors),
+            retired: false,
             id,
         })
         .collect()
@@ -733,6 +1276,8 @@ fn label_options(source: &str, key: &str, label_keys: &[&str]) -> Vec<RegistryLa
         .into_iter()
         .map(|(id, block)| RegistryLabelOption {
             label: block_scalar(&block, label_keys).unwrap_or_else(|| id.clone()),
+            primary_skill: block_scalar(&block, &["primarySkill"]),
+            activity: block_scalar(&block, &["activity"]),
             id,
         })
         .collect()
@@ -886,6 +1431,113 @@ mod tests {
     use super::*;
 
     #[test]
+    fn explicit_primary_can_do_never_falls_back_to_a_different_capability() {
+        let mut registry = snapshot().clone();
+        let first = registry.capabilities[0].clone();
+        assert!(
+            capability_for(
+                &registry,
+                &first.blueprint_slot_id,
+                &first.item_format_id,
+                Some("unknown")
+            )
+            .is_none()
+        );
+        assert!(
+            capability_for(
+                &registry,
+                &first.blueprint_slot_id,
+                &first.item_format_id,
+                None
+            )
+            .is_some()
+        );
+        let mut second = first.clone();
+        second.primary_can_do_id = "A1-R2".to_string();
+        registry.capabilities.push(second);
+        assert!(
+            capability_for(
+                &registry,
+                &first.blueprint_slot_id,
+                &first.item_format_id,
+                None
+            )
+            .is_none()
+        );
+        assert_eq!(
+            capability_for(
+                &registry,
+                &first.blueprint_slot_id,
+                &first.item_format_id,
+                Some("A1-R2")
+            )
+            .unwrap()
+            .primary_can_do_id,
+            "A1-R2"
+        );
+    }
+
+    #[test]
+    fn legacy_snapshot_adds_readable_metadata_without_changing_identifiers() {
+        let mut serialized = serde_json::to_value(snapshot()).unwrap();
+        for field in [
+            "blueprintSlots",
+            "taskFamilyOptions",
+            "referenceLabels",
+            "capabilityDifficultyProfileSets",
+        ] {
+            serialized.as_object_mut().unwrap().remove(field);
+        }
+        for context in serialized["contextOptions"].as_array_mut().unwrap() {
+            context.as_object_mut().unwrap().remove("retired");
+            context.as_object_mut().unwrap().remove("exclusions");
+        }
+        for contract in serialized["scoringContracts"].as_array_mut().unwrap() {
+            contract.as_object_mut().unwrap().remove("displayName");
+        }
+        let mut restored: RegistrySnapshot = serde_json::from_value(serialized).unwrap();
+        normalize_registry_snapshot(&mut restored);
+        assert_eq!(restored.bundle_version, snapshot().bundle_version);
+        assert_eq!(restored.blueprint_slots.len(), 15);
+        assert_eq!(
+            restored.capabilities.len(),
+            restored.capability_difficulty_profile_sets.len()
+        );
+        assert_eq!(
+            restored.capabilities[0].blueprint_slot_id,
+            snapshot().capabilities[0].blueprint_slot_id
+        );
+        assert!(
+            restored
+                .scoring_contracts
+                .iter()
+                .all(|contract| !contract.display_name.is_empty())
+        );
+        let before = serde_json::to_value(&restored).unwrap();
+        normalize_registry_snapshot(&mut restored);
+        assert_eq!(before, serde_json::to_value(&restored).unwrap());
+    }
+
+    #[test]
+    fn retired_context_is_unavailable_in_new_configuration_only() {
+        let registry = snapshot();
+        let capability = &registry.capabilities[0];
+        let mut context = registry
+            .context_options
+            .iter()
+            .find(|context| context_supports_capability(context, capability))
+            .unwrap()
+            .clone();
+        let original = serde_json::to_value(&context).unwrap();
+        context.retired = true;
+        assert!(!context_supports_capability(&context, capability));
+        assert!(context_supports_capability(
+            &serde_json::from_value(original).unwrap(),
+            capability
+        ));
+    }
+
+    #[test]
     fn registry_snapshot_exposes_all_supported_formats() {
         let registry = snapshot();
         let capability = &registry.capabilities[0];
@@ -944,7 +1596,7 @@ mod tests {
                 .iter()
                 .find(|entry| entry.id == "D09")
                 .map(|entry| entry.label.as_str()),
-            Some("完成简单购买")
+            Some("Complete a simple purchase")
         );
         let context = registry
             .context_options
@@ -957,7 +1609,7 @@ mod tests {
             .iter()
             .find(|entry| entry.id == "D19")
             .expect("D19 context");
-        assert_eq!(cross_domain_context.primary_domains.len(), 4);
+        assert_eq!(cross_domain_context.primary_domains, vec!["Personal"]);
         let lexical = registry
             .content_id_options
             .iter()

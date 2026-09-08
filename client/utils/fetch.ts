@@ -332,7 +332,9 @@ export async function getUsers(): Promise<User[]> {
   return deserialized;
 }
 
-export async function getSessionUser(): Promise<SessionUser> {
+export async function getSessionUser(options?: {
+  allowUnauthenticated?: boolean;
+}): Promise<SessionUser | null> {
   if (import.meta.env.VITE_MOCK_DATA === "true") {
     await delayForTesting(300);
 
@@ -353,12 +355,46 @@ export async function getSessionUser(): Promise<SessionUser> {
     return res.json();
   }
 
-  const res = await authorizedFetch("/api/users/session");
+  const res = options?.allowUnauthenticated
+    ? await fetch("/api/users/session", { credentials: "include" })
+    : await authorizedFetch("/api/users/session");
+  if (options?.allowUnauthenticated && res.status === 401) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error(`${res.status} - ${(await res.text()) || res.statusText}`);
+  }
   const json = await res.json();
   // TODO: This breaks { settings: Settings } in User
   // const deserialized = deserializeToPrisma<SessionUser>(json);
   // return deserialized;
   return json;
+}
+
+export async function getDevLoginStatus(): Promise<{ enabled: boolean }> {
+  const response = await fetch("/auth/login/dev/status");
+  if (!response.ok) {
+    return { enabled: false };
+  }
+  return response.json();
+}
+
+export async function loginWithDevIdentity(data: {
+  name: string;
+  email: string;
+}): Promise<void> {
+  const response = await fetch("/auth/login/dev", {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error((await response.text()) || "Development sign-in failed");
+  }
 }
 
 export async function putUserSettings(

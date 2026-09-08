@@ -34,7 +34,6 @@ const ACTION_LABELS: Record<string, string> = {
   "export.staging.failed": "Staging export failed",
   "export.staging.completed": "Exported to Staging",
   "export.production.rejected": "Production export rejected",
-  "assembly.staging.completed": "Added to a Staging test",
 };
 
 export function AuditPanel({ events, exports }: AuditPanelProps) {

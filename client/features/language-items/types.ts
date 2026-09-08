@@ -314,6 +314,7 @@ export interface GithubIntegrationStatus {
   repository: string | null;
   baseBranch: string | null;
   reviewMode: "pullRequest";
+  automaticSync: boolean;
 }
 
 export interface ValidationIssue {
@@ -394,8 +395,14 @@ export interface AiGenerationRun {
   adoptedCandidateId: string | null;
   status: string;
   error: string | null;
+  idempotencyKey?: string;
+  attemptCount: number;
+  retryCount: number;
+  candidateErrors: string[];
   createdBy: string;
   createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
 }
 
 export interface AiFinding {
@@ -486,29 +493,6 @@ export interface LanguageItemExport {
   createdAt: string;
 }
 
-export interface LanguageItemAssemblySource {
-  itemId: string;
-  versionId: string;
-  itemExportId: string;
-  legacyQuestionSetId: string;
-  legacyQuestionId: string;
-  optionAnswerIds: Record<string, string>;
-}
-
-export interface LanguageItemAssembly {
-  id: string;
-  title: string;
-  blueprintSlotId: string;
-  target: string;
-  artifactId: string;
-  legacyExamId: string;
-  sourceContentHash: string;
-  sources: LanguageItemAssemblySource[];
-  result: string;
-  exportedBy: string;
-  createdAt: string;
-}
-
 export interface LanguageItemAuditEvent {
   id: string;
   itemId: string;
@@ -527,6 +511,7 @@ export interface ScoringPolicySummary {
 
 export interface ScoringContractSummary {
   scoringContractTemplateId: string;
+  displayName?: string;
   templateVersion: string;
   blueprintSlotId: string;
   itemFormatId: string;
@@ -543,42 +528,95 @@ export interface ScoringContractSummary {
   status: string;
 }
 
+export interface DifficultyDriverDefaults {
+  inputLength: "wordOrPhrase" | "shortSentence" | "twoRelatedPhrases";
+  informationPoints: number;
+  supportLevel: "high" | "moderate" | "limited";
+  distractorSimilarity: "clear" | "moderate" | "close" | "notApplicable";
+  independenceLevel: "highlySupported" | "partlySupported" | "independent";
+  inferenceRequired: boolean;
+}
+
+export interface DifficultyBandStandard {
+  id: string;
+  label: string;
+  description: string;
+  defaultDrivers: DifficultyDriverDefaults;
+  allowedInputLengths: string[];
+  informationPointsMin: number;
+  informationPointsMax: number;
+  allowedSupportLevels: string[];
+  allowedDistractorSimilarities: string[];
+}
+
+export interface RegistryCapability {
+  blueprintSlotId: string;
+  title: string;
+  taskFamilyId: string;
+  itemFormatId: string;
+  rendererId: string;
+  scoringContractTemplateId: string;
+  /** A capability variant always has exactly one primary Can-do. */
+  primaryCanDoId: string;
+  supportingCanDoIds?: string[];
+  primaryReportedSkill: string;
+  communicativeActivity: string;
+  communicativeActivities?: string[];
+  allowedDomains: string[];
+  allowedContextIds: string[];
+  observableEvidence: string;
+  a1Boundary?: string;
+  taskFamilyCoreBehavior?: string;
+  taskStructure: string;
+  prohibitedUses: string[];
+  referenceTask: string;
+  invalidReferenceTask?: string;
+  authoringReadiness?: string;
+  stagingReadiness?: string;
+  rendererImplementationStatus?: string;
+  rendererRequiredWork?: string[];
+  deliveryPolicyRefs?: DeliveryPolicyRefs;
+}
+
+export interface RegistryContext {
+  id: string;
+  label: string;
+  /** Kept as an array for stored-snapshot compatibility; publication requires one Domain. */
+  primaryDomains: string[];
+  canDoIds: string[];
+  scope: string;
+  exclusions: string[];
+  retired: boolean;
+}
+
+export interface CapabilityDifficultyProfileSet {
+  id: string;
+  blueprintSlotId: string;
+  itemFormatId: string;
+  primaryCanDoId: string;
+  standards: DifficultyBandStandard[];
+}
+
 export interface RegistrySnapshot {
   bundleVersion: string;
   status: string;
   limitations: string[];
   sourceFingerprint: string;
-  capabilities: Array<{
-    blueprintSlotId: string;
-    title: string;
-    taskFamilyId: string;
-    itemFormatId: string;
-    rendererId: string;
-    scoringContractTemplateId: string;
-    primaryCanDoId: string;
-    supportingCanDoIds?: string[];
-    primaryReportedSkill: string;
-    communicativeActivity: string;
-    communicativeActivities?: string[];
-    allowedDomains: string[];
-    allowedContextIds: string[];
-    observableEvidence: string;
-    a1Boundary?: string;
-    taskFamilyCoreBehavior?: string;
-    taskStructure: string;
-    prohibitedUses: string[];
-    referenceTask: string;
-    invalidReferenceTask?: string;
-    authoringReadiness?: string;
-    stagingReadiness?: string;
-    rendererImplementationStatus?: string;
-    rendererRequiredWork?: string[];
-    deliveryPolicyRefs?: DeliveryPolicyRefs;
+  capabilities: RegistryCapability[];
+  blueprintSlots?: Array<{
+    id: string;
+    displayName: string;
+    description: string;
+    allowedItemFormatIds: string[];
   }>;
+  taskFamilyOptions?: Array<{ id: string; displayName: string }>;
+  referenceLabels?: Array<{ id: string; displayName: string; kind: string }>;
   candidateSchemas: unknown[];
   taskPackageSchema: unknown;
   allowedDomains: string[];
   difficultyBands: string[];
+  difficultyStandards: DifficultyBandStandard[];
+  capabilityDifficultyProfileSets?: CapabilityDifficultyProfileSet[];
   contentIdOptions: Array<{
     id: string;
     kind: string;
@@ -587,16 +625,66 @@ export interface RegistrySnapshot {
     contextIds: string[];
     masteryScope: string | null;
   }>;
-  contextOptions: Array<{
+  contextOptions: RegistryContext[];
+  canDoOptions: Array<{
     id: string;
     label: string;
-    primaryDomains: string[];
-    canDoIds: string[];
-    scope: string;
+    primarySkill?: string | null;
+    activity?: string | null;
   }>;
-  canDoOptions: Array<{ id: string; label: string }>;
   scoringContracts?: ScoringContractSummary[];
   requiredReviewGateIds: string[];
+}
+
+export interface RegistryVersionSummary {
+  id: string;
+  version: string;
+  status: "draft" | "published" | "retired";
+  active: boolean;
+  revision: number;
+  baseVersion: string | null;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string | null;
+}
+
+export interface RegistryVersionRecord extends RegistryVersionSummary {
+  snapshot: RegistrySnapshot;
+}
+
+export interface RegistryAuditEvent {
+  id: string;
+  registryVersionId: string;
+  action: string;
+  actorEmail: string;
+  revision: number;
+  createdAt: string;
+}
+
+export interface RegistryValidationIssue {
+  severity: "error" | "warning";
+  code: string;
+  path: string;
+  message: string;
+}
+
+export interface RegistryValidationResult {
+  valid: boolean;
+  issues: RegistryValidationIssue[];
+}
+
+export interface RegistryImpact {
+  activeVersion: string;
+  draftVersion: string;
+  itemsPinnedToActiveVersion: number;
+  capabilityChanges: number;
+  canDoChanges: number;
+  contextChanges: number;
+  scoringContractChanges: number;
+  difficultyStandardChanges: number;
+  difficultyConfigurationChanges?: string[];
 }
 
 export interface AiProviderStatus {

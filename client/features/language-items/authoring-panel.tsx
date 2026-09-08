@@ -1,12 +1,10 @@
 import {
   Field,
-  Input,
   Stack,
   Text,
   Textarea,
 } from "@chakra-ui/react";
 
-import { CapabilityContractPanel } from "./capability-contract-panel";
 import { itemTemplateForFormat } from "./item-template-registry";
 import { MetadataFields } from "./metadata-fields";
 import { ScoringContractPanel } from "./scoring-contract-panel";
@@ -15,10 +13,8 @@ import type { RegistrySnapshot, TaskPackage, ValidationIssue } from "./types";
 
 interface AuthoringPanelProps {
   mode: "setup" | "content";
-  title: string;
   draft: TaskPackage;
   registry: RegistrySnapshot | undefined;
-  setTitle: (title: string) => void;
   updateDraft: (mutate: (next: TaskPackage) => void) => void;
   readOnly: boolean;
   setupIssues?: AuthoringSetupIssue[];
@@ -27,10 +23,8 @@ interface AuthoringPanelProps {
 
 export function AuthoringPanel({
   mode,
-  title,
   draft,
   registry,
-  setTitle,
   updateDraft,
   readOnly,
   setupIssues = [],
@@ -45,18 +39,6 @@ export function AuthoringPanel({
         {readOnly ? <Text color="fg.warning">This version is read-only.</Text> : null}
         {mode === "setup" ? (
           <>
-            <Field.Root invalid={setupIssues.some((issue) => issue.path === "title")}>
-              <Field.Label>Item title</Field.Label>
-              <Input
-                value={title}
-                placeholder="Used for authoring, review, and history; not shown to candidates."
-                onChange={(event) => setTitle(event.target.value)}
-              />
-              <Field.ErrorText>
-                {setupIssues.find((issue) => issue.path === "title")?.message}
-              </Field.ErrorText>
-            </Field.Root>
-            <CapabilityContractPanel draft={draft} registry={registry} />
             <MetadataFields
               draft={draft}
               registry={registry}
@@ -67,16 +49,6 @@ export function AuthoringPanel({
         ) : null}
         {mode === "content" ? (
           <>
-            {template ? (
-              <Stack borderWidth="1px" borderRadius="lg" px={4} py={3} gap={1} bg="bg.subtle">
-                <Text fontWeight="semibold">
-                  Exercise template: {template.label} · {template.exerciseType(draft)}
-                </Text>
-                <Text fontSize="sm" color="fg.muted">
-                  The exercise template defines the fields below; the candidate preview updates alongside them.
-                </Text>
-              </Stack>
-            ) : null}
             {Editor && templateMatchesRenderer ? (
               <Editor
                 draft={draft}
@@ -102,10 +74,7 @@ export function AuthoringPanel({
             </Field.Root>
             <Stack as="details" borderWidth="1px" borderRadius="lg" p={4} gap={3}>
               <Text as="summary" cursor="pointer" fontWeight="semibold">
-                Advanced: view full TaskPackage (read-only)
-              </Text>
-              <Text fontSize="sm" color="fg.muted">
-                Inspect the saved contract and review payload. Candidate previews never receive scoring or author partitions.
+                Technical data
               </Text>
               <Textarea
                 aria-label="Full TaskPackage"

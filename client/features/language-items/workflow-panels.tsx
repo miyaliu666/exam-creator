@@ -45,9 +45,30 @@ export function AiCandidatesPanel({
       <Separator />
       <Stack gap={4}>
         <Heading size="lg">AI candidates</Heading>
+        {run && (run.status === "queued" || run.status === "running") ? (
+          <Box borderWidth="1px" borderColor="border.info" borderRadius="lg" p={4}>
+            <Text color="fg.info" fontWeight="semibold">
+              {run.status === "queued" ? "Generation queued" : "Generating independent candidates…"}
+            </Text>
+            <Text color="fg.muted" fontSize="sm" mt={1}>
+              This run is saved. You may continue editing while it finishes.
+            </Text>
+          </Box>
+        ) : null}
+        {run?.status === "partial" ? (
+          <Box borderWidth="1px" borderColor="border.warning" borderRadius="lg" p={4}>
+            <Text color="fg.warning" fontWeight="semibold">Generation partially completed</Text>
+            <Text color="fg.muted" fontSize="sm" mt={1}>
+              {run.candidates.length}/{run.requestedCount} candidates are available after {run.attemptCount}{" "}
+              {run.attemptCount === 1 ? "attempt" : "attempts"}.
+            </Text>
+          </Box>
+        ) : null}
         {run?.error ? (
           <Box borderWidth="1px" borderColor="border.error" borderRadius="lg" p={4}>
-            <Text color="fg.error" fontWeight="semibold">This AI run failed</Text>
+            <Text color="fg.error" fontWeight="semibold">
+              {run.status === "failed" ? "This AI run failed" : "Some candidate calls failed"}
+            </Text>
             <Text color="fg.muted" fontSize="sm" mt={1}>{run.error}</Text>
           </Box>
         ) : null}
@@ -193,13 +214,8 @@ export function ReviewPanel(props: ReviewPanelProps) {
           <Text color="fg.warning" fontSize="sm">
             Export pending: {approvedCount}/{props.requiredGateIds.length} review areas approved
             {props.openChangeRequestCount > 0
-              ? ` · ${props.openChangeRequestCount} open change requests`
+              ? ` · ${props.openChangeRequestCount} open change ${props.openChangeRequestCount === 1 ? "request" : "requests"}`
               : ""}
-          </Text>
-        ) : null}
-        {latestVersion && props.currentUserEmail === latestVersion.authorEmail ? (
-          <Text color="fg.warning">
-            Authors cannot review their own items. Sign in with another development account to review.
           </Text>
         ) : null}
         {latestVersion ? (
@@ -219,7 +235,8 @@ export function ReviewPanel(props: ReviewPanelProps) {
         {props.latestAiReview ? (
           <Box as="details" borderWidth="1px" borderRadius="lg" p={4}>
             <Box as="summary" cursor="pointer" fontWeight="semibold">
-              View latest AI pre-review ({props.latestAiReview.findings.length} findings)
+              View latest AI pre-review ({props.latestAiReview.findings.length}{" "}
+              {props.latestAiReview.findings.length === 1 ? "finding" : "findings"})
             </Box>
             <Stack mt={3} gap={2}>
               {props.latestAiReview.findings.map((finding) => (
@@ -232,7 +249,7 @@ export function ReviewPanel(props: ReviewPanelProps) {
         ) : null}
         <Box as="details" borderWidth="1px" borderRadius="lg" p={4}>
           <Box as="summary" cursor="pointer" fontWeight="semibold">
-            Review comment location (optional)
+            Review details
           </Box>
           <HStack mt={3}>
             <Input
@@ -268,17 +285,14 @@ export function ReviewPanel(props: ReviewPanelProps) {
               </HStack>
               {props.latestReviews.get(gateId) ? (
                 <Text fontSize="xs" color="fg.muted" mt={1}>
-                  Latest review: {props.latestReviews.get(gateId)?.reviewerEmail}
+                  Latest decision by {props.latestReviews.get(gateId)?.reviewerEmail}
                 </Text>
               ) : null}
               <HStack mt={3} flexWrap="wrap">
                 <Button
                   size="sm"
                   colorPalette="green"
-                  disabled={
-                    !latestVersion ||
-                    props.currentUserEmail === latestVersion.authorEmail
-                  }
+                  disabled={!latestVersion}
                   loading={props.isReviewing}
                   onClick={() =>
                     props.onReview(gateId, "approved", fieldPath, ruleRef, comment)
@@ -292,7 +306,6 @@ export function ReviewPanel(props: ReviewPanelProps) {
                   variant="outline"
                   disabled={
                     !latestVersion ||
-                    props.currentUserEmail === latestVersion.authorEmail ||
                     !comment.trim()
                   }
                   loading={props.isReviewing}
@@ -308,7 +321,6 @@ export function ReviewPanel(props: ReviewPanelProps) {
                   variant="outline"
                   disabled={
                     !latestVersion ||
-                    props.currentUserEmail === latestVersion.authorEmail ||
                     !comment.trim()
                   }
                   loading={props.isReviewing}
@@ -323,7 +335,6 @@ export function ReviewPanel(props: ReviewPanelProps) {
                   variant="outline"
                   disabled={
                     !latestVersion ||
-                    props.currentUserEmail === latestVersion.authorEmail ||
                     !comment.trim()
                   }
                   loading={props.isReviewing}

@@ -2,16 +2,43 @@ use std::collections::HashSet;
 
 use super::{
     domain::{CandidatePayload, Stimulus, TaskPackage, ValidationIssue, ValidationResult},
-    registry::snapshot,
+    registry::{
+        RegistrySnapshot, capability_for, context_supports_capability,
+        difficulty_standards_for_capability, snapshot_for,
+    },
 };
+
+#[cfg(test)]
+use super::registry::snapshot;
+
+fn missing_registry_result(package: &TaskPackage) -> ValidationResult {
+    ValidationResult {
+        valid: false,
+        registry_bundle_version: package.spec_versions.registry_bundle_version.clone(),
+        issues: vec![ValidationIssue {
+            severity: "error".to_string(),
+            code: "registry.versionUnavailable".to_string(),
+            path: "specVersions.registryBundleVersion".to_string(),
+            rule_ref: "registry.version".to_string(),
+            message: format!(
+                "Registry version {} is unavailable; the item cannot be reinterpreted against a different version",
+                package.spec_versions.registry_bundle_version
+            ),
+        }],
+    }
+}
 
 pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
     let mut issues = Vec::new();
-    let registry = snapshot();
-    let capability = registry.capabilities.iter().find(|entry| {
-        entry.blueprint_slot_id == package.blueprint_slot_id
-            && entry.item_format_id == package.item_format_id
-    });
+    let Some(registry) = snapshot_for(&package.spec_versions.registry_bundle_version) else {
+        return missing_registry_result(package);
+    };
+    let capability = capability_for(
+        &registry,
+        &package.blueprint_slot_id,
+        &package.item_format_id,
+        Some(&package.content.primary_can_do_id),
+    );
     if let Some(capability) = capability {
         for (code, path, actual, expected) in [
             (
@@ -101,7 +128,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                 &mut issues,
                 "registry.domain",
                 "content.primaryDomain",
-                "使用领域不适用于当前考试任务",
+                "The selected domain is not available for this exam task",
             );
         }
         if !capability
@@ -112,7 +139,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                 &mut issues,
                 "registry.context",
                 "content.contextId",
-                "具体情境不适用于当前考试任务",
+                "The selected context is not available for this exam task",
             );
         }
     } else {
@@ -120,7 +147,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
             &mut issues,
             "registry.capability",
             "itemFormatId",
-            "题型与考试任务的组合未注册",
+            "This item format is not registered for the selected exam task",
         );
     }
     check_equal(
@@ -144,7 +171,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
         &package.spec_versions.task_package_version,
         "0.1",
     );
-    validate_authoring_setup(package, &mut issues);
+    validate_authoring_setup(package, &registry, &mut issues);
     if !registry
         .difficulty_bands
         .contains(&package.content.difficulty_band)
@@ -153,10 +180,10 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
             &mut issues,
             "registry.difficulty",
             "content.difficultyBand",
-            "Difficulty 不在允许范围内",
+            "Difficulty is not in the allowed range",
         );
     }
-    validate_difficulty_profile(package, &mut issues);
+    validate_difficulty_profile(package, &registry, &mut issues);
     let registered_content_ids: HashSet<&str> = registry
         .content_id_options
         .iter()
@@ -169,7 +196,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                 &mut issues,
                 "schema.uniqueItems",
                 &format!("content.targetContentIds.{index}"),
-                &format!("Content ID 不得重复: {content_id}"),
+                &format!("Content ID must be unique: {content_id}"),
             );
         }
         if !registered_content_ids.contains(content_id.as_str()) {
@@ -177,7 +204,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                 &mut issues,
                 "registry.contentId",
                 &format!("content.targetContentIds.{index}"),
-                &format!("未在当前 Registry 找到 Content ID: {content_id}"),
+                &format!("Content ID was not found in the current Registry: {content_id}"),
             );
         } else if let (Some(capability), Some(content_option)) = (
             capability,
@@ -191,7 +218,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                     &mut issues,
                     "registry.contentPartition",
                     &format!("content.targetContentIds.{index}"),
-                    "支持性内容不能作为核心考查内容",
+                    "Supporting content cannot be used as core target content",
                 );
             }
             let relevant_can_do = content_option.can_do_ids.is_empty()
@@ -215,7 +242,9 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                     &mut issues,
                     "registry.contentCompatibility",
                     &format!("content.targetContentIds.{index}"),
-                    &format!("Content ID 与当前 Can-do、掌握范围或具体情境不兼容: {content_id}"),
+                    &format!(
+                        "Content ID is incompatible with the current Can-do, mastery scope, or context: {content_id}"
+                    ),
                 );
             }
         }
@@ -227,7 +256,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                 &mut issues,
                 "schema.uniqueItems",
                 &format!("content.supportingContentRefs.{index}"),
-                &format!("支持性 Content ID 不得重复: {content_id}"),
+                &format!("Supporting content ID must be unique: {content_id}"),
             );
         }
         match registry
@@ -240,13 +269,15 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                 &mut issues,
                 "registry.contentPartition",
                 &format!("content.supportingContentRefs.{index}"),
-                "核心语言内容不能放入支持性内容",
+                "Core language content cannot be placed in supporting content",
             ),
             None => issue(
                 &mut issues,
                 "registry.contentId",
                 &format!("content.supportingContentRefs.{index}"),
-                &format!("未在当前 Registry 找到支持性 Content ID: {content_id}"),
+                &format!(
+                    "Supporting content ID was not found in the current Registry: {content_id}"
+                ),
             ),
         }
     }
@@ -268,7 +299,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                 &mut issues,
                 "schema.uniqueId",
                 &format!("content.requiredInformationPoints.{index}.id"),
-                "信息点 ID 不能为空或重复",
+                "Information point IDs must be present and unique",
             );
         }
         if point.label.trim().is_empty() {
@@ -276,7 +307,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                 &mut issues,
                 "schema.minLength",
                 &format!("content.requiredInformationPoints.{index}.label"),
-                "Required information point 不能为空",
+                "Required information point cannot be empty",
             );
         }
         if ![
@@ -288,7 +319,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                 &mut issues,
                 "schema.enum",
                 &format!("content.requiredInformationPoints.{index}.pointType"),
-                "信息点类型无效",
+                "Information point type is invalid",
             );
         }
         if point
@@ -300,7 +331,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                 &mut issues,
                 "scoring.informationPointRef",
                 &format!("content.requiredInformationPoints.{index}.scoringPointId"),
-                "信息点引用了不存在的计分点",
+                "Information point references a scoring point that does not exist",
             );
         }
     }
@@ -312,14 +343,19 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
         "0.1",
     );
     if package.task_id.trim().is_empty() {
-        issue(&mut issues, "schema.required", "taskId", "taskId 不能为空");
+        issue(
+            &mut issues,
+            "schema.required",
+            "taskId",
+            "taskId is required",
+        );
     }
     if package.task_version.trim().is_empty() {
         issue(
             &mut issues,
             "schema.required",
             "taskVersion",
-            "taskVersion 不能为空",
+            "taskVersion is required",
         );
     }
     validate_candidate_payload(package, &mut issues);
@@ -337,13 +373,13 @@ fn validate_item_scoring_spec(package: &TaskPackage, issues: &mut Vec<Validation
     required(
         &scoring.item_scoring_version,
         "scoringPackage.itemScoringVersion",
-        "本题评分规范版本不能为空",
+        "Item scoring specification version is required",
         issues,
     );
     required(
         &scoring.scoring_contract_template_version,
         "scoringPackage.scoringContractTemplateVersion",
-        "评分合同模板版本不能为空",
+        "Scoring contract template version is required",
         issues,
     );
     if scoring.scoring_points.is_empty() {
@@ -351,7 +387,7 @@ fn validate_item_scoring_spec(package: &TaskPackage, issues: &mut Vec<Validation
             issues,
             "scoring.points",
             "scoringPackage.scoringPoints",
-            "至少需要一个计分点",
+            "At least one scoring point is required",
         );
     }
     let mut ids = HashSet::new();
@@ -362,7 +398,7 @@ fn validate_item_scoring_spec(package: &TaskPackage, issues: &mut Vec<Validation
                 issues,
                 "scoring.pointId",
                 &format!("scoringPackage.scoringPoints.{index}.scoringPointId"),
-                "计分点 ID 不能为空或重复",
+                "Scoring point IDs must be present and unique",
             );
         }
         if point.description.trim().is_empty() {
@@ -370,7 +406,7 @@ fn validate_item_scoring_spec(package: &TaskPackage, issues: &mut Vec<Validation
                 issues,
                 "scoring.pointDescription",
                 &format!("scoringPackage.scoringPoints.{index}.description"),
-                "计分点说明不能为空",
+                "Scoring point description is required",
             );
         }
         if point.points == 0 {
@@ -378,7 +414,7 @@ fn validate_item_scoring_spec(package: &TaskPackage, issues: &mut Vec<Validation
                 issues,
                 "scoring.pointValue",
                 &format!("scoringPackage.scoringPoints.{index}.points"),
-                "计分点分值必须大于 0",
+                "Scoring point value must be greater than 0",
             );
         }
         total = total.saturating_add(point.points);
@@ -388,7 +424,7 @@ fn validate_item_scoring_spec(package: &TaskPackage, issues: &mut Vec<Validation
             issues,
             "scoring.maxRawScore",
             "scoringPackage.maxRawScore",
-            "最高原始分必须等于全部计分点分值之和",
+            "Maximum raw score must equal the sum of all scoring point values",
         );
     }
     if scoring
@@ -400,7 +436,7 @@ fn validate_item_scoring_spec(package: &TaskPackage, issues: &mut Vec<Validation
             issues,
             "scoring.answerKeyRef",
             "scoringPackage.answerKeyRef",
-            "必须保存题目专属答案引用",
+            "An item-specific answer key reference is required",
         );
     }
     if scoring.rubric_id.is_some()
@@ -413,7 +449,7 @@ fn validate_item_scoring_spec(package: &TaskPackage, issues: &mut Vec<Validation
             issues,
             "scoring.benchmark",
             "scoringPackage.benchmarkSetVersion",
-            "量表评分任务必须记录适用 benchmark 版本",
+            "Rubric-scored tasks must specify an applicable benchmark version",
         );
     }
 
@@ -444,7 +480,7 @@ fn validate_item_scoring_spec(package: &TaskPackage, issues: &mut Vec<Validation
                 issues,
                 "scoring.missingResponseUnit",
                 "scoringPackage.scoringPoints",
-                &format!("题目作答单元 {expected_id} 缺少对应计分点"),
+                &format!("Response unit {expected_id} does not have a corresponding scoring point"),
             );
         }
     }
@@ -457,7 +493,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
             required(
                 &payload.prompt,
                 "candidatePayload.prompt",
-                "题干不能为空",
+                "Prompt is required",
                 issues,
             );
             if payload.options.len() < 2 {
@@ -465,7 +501,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                     issues,
                     "schema.minItems",
                     "candidatePayload.options",
-                    "至少需要两个选项",
+                    "At least two options are required",
                 );
             }
             let mut ids = HashSet::new();
@@ -484,7 +520,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                         issues,
                         "schema.optionContent",
                         &format!("candidatePayload.options.{index}"),
-                        "选项至少需要文本或图片",
+                        "Each option must include text or an image",
                     );
                 }
             }
@@ -498,7 +534,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                     issues,
                     "business.correctOption",
                     "scoringPackage.correctOptionId",
-                    "正确答案必须引用现有选项",
+                    "The correct answer must reference an existing option",
                 );
             }
             if payload.shuffle_options {
@@ -506,7 +542,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                     issues,
                     "delivery.optionOrderVariant",
                     "candidatePayload.shuffleOptions",
-                    "随机排列会形成新的交付变体，请在组卷时复核",
+                    "Randomizing the options creates a delivery variant; review it before delivery",
                 );
             }
         }
@@ -515,7 +551,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
             required(
                 &payload.prompt,
                 "candidatePayload.prompt",
-                "题干不能为空",
+                "Prompt is required",
                 issues,
             );
             if payload.left_items.len() < 2 || payload.right_items.len() < 2 {
@@ -523,7 +559,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                     issues,
                     "schema.minItems",
                     "candidatePayload",
-                    "匹配题左右两侧都至少需要两项",
+                    "Matching items require at least two entries on each side",
                 );
             }
             let mut left_ids = HashSet::new();
@@ -559,7 +595,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                         issues,
                         "business.correctMatch",
                         "scoringPackage.correctMatches",
-                        "每个左侧项目都必须匹配一个现有右侧项目",
+                        "Each left-side item must match an existing right-side item",
                     );
                 }
             }
@@ -569,7 +605,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
             required(
                 &payload.prompt,
                 "candidatePayload.prompt",
-                "题干不能为空",
+                "Prompt is required",
                 issues,
             );
             if payload.response_fields.is_empty() {
@@ -577,7 +613,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                     issues,
                     "schema.minItems",
                     "candidatePayload.responseFields",
-                    "至少需要一个作答字段",
+                    "At least one response field is required",
                 );
             }
             let mut ids = HashSet::new();
@@ -592,7 +628,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                 required(
                     &field.input_type,
                     &format!("candidatePayload.responseFields.{index}.inputType"),
-                    "输入类型不能为空",
+                    "Input type is required",
                     issues,
                 );
                 if package
@@ -605,7 +641,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                         issues,
                         "business.acceptedResponse",
                         &format!("scoringPackage.acceptedResponses.{}", field.response_id),
-                        "每个作答字段至少需要一个可接受答案",
+                        "Each response field must have at least one accepted answer",
                     );
                 }
             }
@@ -614,13 +650,13 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
             required(
                 &payload.situation,
                 "candidatePayload.situation",
-                "情境不能为空",
+                "Situation is required",
                 issues,
             );
             required(
                 &payload.instructions,
                 "candidatePayload.instructions",
-                "作答说明不能为空",
+                "Instructions are required",
                 issues,
             );
             if !(4..=6).contains(&payload.fields.len()) {
@@ -628,7 +664,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                     issues,
                     "business.formFieldCount",
                     "candidatePayload.fields",
-                    "表单题需要 4–6 个字段",
+                    "Form-entry items require 4–6 fields",
                 );
             }
             let mut ids = HashSet::new();
@@ -637,7 +673,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                 required(
                     &field.label,
                     &format!("candidatePayload.fields.{index}.label"),
-                    "字段名称不能为空",
+                    "Field name is required",
                     issues,
                 );
             }
@@ -646,25 +682,25 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
             required(
                 &payload.situation,
                 "candidatePayload.situation",
-                "情境不能为空",
+                "Situation is required",
                 issues,
             );
             required(
                 &payload.instructions,
                 "candidatePayload.instructions",
-                "作答说明不能为空",
+                "Instructions are required",
                 issues,
             );
             required(
                 &payload.recipient,
                 "candidatePayload.recipient",
-                "收件人不能为空",
+                "Recipient is required",
                 issues,
             );
             required(
                 &payload.purpose,
                 "candidatePayload.purpose",
-                "写作目的不能为空",
+                "Writing purpose is required",
                 issues,
             );
             validate_content_points(&payload.required_content_points, issues);
@@ -675,7 +711,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                     issues,
                     "business.lengthGuidance",
                     "candidatePayload.lengthGuidance",
-                    "字数范围必须有效",
+                    "Character-count range must be valid",
                 );
             }
             require_rubric(package, issues);
@@ -684,13 +720,13 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
             required(
                 &payload.situation,
                 "candidatePayload.situation",
-                "情境不能为空",
+                "Situation is required",
                 issues,
             );
             required(
                 &payload.instructions,
                 "candidatePayload.instructions",
-                "作答说明不能为空",
+                "Instructions are required",
                 issues,
             );
             if payload
@@ -706,7 +742,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                     issues,
                     "schema.prompt",
                     "candidatePayload",
-                    "口语题至少需要可见提示或音频提示",
+                    "Spoken-response items require a visible or audio prompt",
                 );
             }
             if payload.response_time_seconds == 0 {
@@ -714,7 +750,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                     issues,
                     "business.responseTime",
                     "candidatePayload.responseTimeSeconds",
-                    "作答时间必须大于 0",
+                    "Response time must be greater than 0",
                 );
             }
             validate_content_points(&payload.required_content_points, issues);
@@ -724,25 +760,25 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
             required(
                 &payload.situation,
                 "candidatePayload.situation",
-                "情境不能为空",
+                "Situation is required",
                 issues,
             );
             required(
                 &payload.instructions,
                 "candidatePayload.instructions",
-                "作答说明不能为空",
+                "Instructions are required",
                 issues,
             );
             required(
                 &payload.roles.system_role,
                 "candidatePayload.roles.systemRole",
-                "系统角色不能为空",
+                "System role is required",
                 issues,
             );
             required(
                 &payload.roles.candidate_role,
                 "candidatePayload.roles.candidateRole",
-                "考生角色不能为空",
+                "Candidate role is required",
                 issues,
             );
             let Some(path) = payload
@@ -754,7 +790,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                     issues,
                     "business.startPath",
                     "candidatePayload.startPathId",
-                    "起始路径必须引用现有路径",
+                    "The start path must reference an existing path",
                 );
                 require_rubric(package, issues);
                 return;
@@ -764,14 +800,14 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                     issues,
                     "business.spokenTurns",
                     "candidatePayload.paths",
-                    "多轮口语至少需要一轮系统提示和一轮考生作答",
+                    "Spoken interactions require at least one system prompt and one candidate response",
                 );
             }
             for (index, turn) in path.turns.iter().enumerate() {
                 required(
                     &turn.turn_id,
                     &format!("candidatePayload.paths.0.turns.{index}.turnId"),
-                    "轮次编号不能为空",
+                    "Turn ID is required",
                     issues,
                 );
                 if turn.speaker == "system"
@@ -784,7 +820,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                         issues,
                         "schema.prompt",
                         &format!("candidatePayload.paths.0.turns.{index}.promptAudioRef"),
-                        "系统轮次需要提示文本或音频引用",
+                        "System turns require prompt text or an audio reference",
                     );
                 }
                 if turn.speaker == "candidate"
@@ -797,7 +833,7 @@ fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<Validation
                         issues,
                         "schema.response",
                         &format!("candidatePayload.paths.0.turns.{index}.responseId"),
-                        "考生轮次需要作答编号",
+                        "Candidate turns require a response ID",
                     );
                 }
             }
@@ -824,7 +860,7 @@ fn validate_stimulus(stimulus: &Stimulus, path: &str, issues: &mut Vec<Validatio
             issues,
             "schema.stimulus",
             path,
-            "材料至少需要文本、图片或音频",
+            "The stimulus must include text, an image, or audio",
         );
     }
 }
@@ -841,7 +877,7 @@ fn unique_id<'a>(
             issues,
             "schema.required",
             &format!("candidatePayload.{collection}.{index}"),
-            "编号不能为空",
+            "ID is required",
         );
     } else if !ids.insert(id) {
         issue(
@@ -852,7 +888,7 @@ fn unique_id<'a>(
                 "business.duplicateId"
             },
             &format!("candidatePayload.{collection}.{index}"),
-            "编号必须唯一",
+            "ID must be unique",
         );
     }
 }
@@ -871,7 +907,7 @@ fn item_content(
             issues,
             "schema.itemContent",
             &format!("candidatePayload.{collection}.{index}"),
-            "项目至少需要文本或图片",
+            "Each item must include text or an image",
         );
     }
 }
@@ -885,14 +921,14 @@ fn validate_content_points(
             issues,
             "schema.minItems",
             "candidatePayload.requiredContentPoints",
-            "至少需要一个内容点",
+            "At least one content point is required",
         );
     }
     for (index, point) in points.iter().enumerate() {
         required(
             &point.description,
             &format!("candidatePayload.requiredContentPoints.{index}.description"),
-            "内容点不能为空",
+            "Content point cannot be empty",
             issues,
         );
     }
@@ -909,7 +945,7 @@ fn require_rubric(package: &TaskPackage, issues: &mut Vec<ValidationIssue>) {
             issues,
             "business.rubric",
             "scoringPackage.rubricId",
-            "开放作答题必须引用评分量表",
+            "Open-response items must reference a scoring rubric",
         );
     }
 }
@@ -922,8 +958,10 @@ fn required(value: &str, path: &str, message: &str, issues: &mut Vec<ValidationI
 
 pub fn validate_generation_setup(package: &TaskPackage) -> ValidationResult {
     let mut issues = Vec::new();
-    let registry = snapshot();
-    validate_authoring_setup(package, &mut issues);
+    let Some(registry) = snapshot_for(&package.spec_versions.registry_bundle_version) else {
+        return missing_registry_result(package);
+    };
+    validate_authoring_setup(package, &registry, &mut issues);
     if !registry
         .difficulty_bands
         .contains(&package.content.difficulty_band)
@@ -932,10 +970,10 @@ pub fn validate_generation_setup(package: &TaskPackage) -> ValidationResult {
             &mut issues,
             "authoring.difficulty",
             "content.difficultyBand",
-            "请选择有效的 A1 内部难度",
+            "Select a valid A1 difficulty band",
         );
     }
-    validate_difficulty_profile(package, &mut issues);
+    validate_difficulty_profile(package, &registry, &mut issues);
     let mut seen = HashSet::new();
     for (index, content_id) in package.content.target_content_ids.iter().enumerate() {
         if !seen.insert(content_id) {
@@ -943,7 +981,7 @@ pub fn validate_generation_setup(package: &TaskPackage) -> ValidationResult {
                 &mut issues,
                 "authoring.duplicateContent",
                 &format!("content.targetContentIds.{index}"),
-                "语言内容不能重复选择",
+                "Language content cannot be selected more than once",
             );
         }
         if !registry
@@ -955,23 +993,28 @@ pub fn validate_generation_setup(package: &TaskPackage) -> ValidationResult {
                 &mut issues,
                 "authoring.unknownContent",
                 &format!("content.targetContentIds.{index}"),
-                "所选语言内容不在当前注册表中",
+                "The selected language content was not found in the current Registry",
             );
         }
     }
     ValidationResult {
         valid: !issues.iter().any(|issue| issue.severity == "error"),
-        registry_bundle_version: snapshot().bundle_version.clone(),
+        registry_bundle_version: registry.bundle_version.clone(),
         issues,
     }
 }
 
-fn validate_authoring_setup(package: &TaskPackage, issues: &mut Vec<ValidationIssue>) {
-    let registry = snapshot();
-    let capability = registry.capabilities.iter().find(|entry| {
-        entry.blueprint_slot_id == package.blueprint_slot_id
-            && entry.item_format_id == package.item_format_id
-    });
+fn validate_authoring_setup(
+    package: &TaskPackage,
+    registry: &RegistrySnapshot,
+    issues: &mut Vec<ValidationIssue>,
+) {
+    let capability = capability_for(
+        registry,
+        &package.blueprint_slot_id,
+        &package.item_format_id,
+        Some(&package.content.primary_can_do_id),
+    );
     let context = registry
         .context_options
         .iter()
@@ -986,7 +1029,7 @@ fn validate_authoring_setup(package: &TaskPackage, issues: &mut Vec<ValidationIs
             issues,
             "authoring.domain",
             "content.primaryDomain",
-            "所选使用领域不适用于当前考试任务",
+            "The selected domain is not available for this exam task",
         );
     }
     if capability.is_none_or(|entry| {
@@ -998,18 +1041,19 @@ fn validate_authoring_setup(package: &TaskPackage, issues: &mut Vec<ValidationIs
             issues,
             "authoring.context",
             "content.contextId",
-            "所选具体情境不适用于当前考试任务",
+            "The selected context is not available for this exam task",
         );
     } else if context.is_none_or(|entry| {
         !entry
             .primary_domains
             .contains(&package.content.primary_domain)
+            || capability.is_none_or(|capability| !context_supports_capability(entry, capability))
     }) {
         issue(
             issues,
             "authoring.domainContext",
             "content.contextId",
-            "具体情境与使用领域不一致",
+            "The selected context does not match the domain",
         );
     }
 
@@ -1018,7 +1062,7 @@ fn validate_authoring_setup(package: &TaskPackage, issues: &mut Vec<ValidationIs
             issues,
             "authoring.targetContent",
             "content.targetContentIds",
-            "至少选择一项词汇、语法、汉字或语用内容",
+            "Select at least one vocabulary, grammar, character, or pragmatic target",
         );
     }
     for (index, content_id) in package.content.target_content_ids.iter().enumerate() {
@@ -1032,7 +1076,7 @@ fn validate_authoring_setup(package: &TaskPackage, issues: &mut Vec<ValidationIs
                     issues,
                     "authoring.contentPartition",
                     &format!("content.targetContentIds.{index}"),
-                    "支持性内容应放入“支持性内容”，不能代替核心语言内容",
+                    "Supporting content belongs in the Supporting content section and cannot replace core language content",
                 );
             }
             let context_matches = content.context_ids.is_empty()
@@ -1059,7 +1103,10 @@ fn validate_authoring_setup(package: &TaskPackage, issues: &mut Vec<ValidationIs
                     issues,
                     "authoring.contentCompatibility",
                     &format!("content.targetContentIds.{index}"),
-                    &format!("“{}”不适用于当前 Can-do、掌握范围或具体情境", content.label),
+                    &format!(
+                        "\"{}\" is incompatible with the current Can-do, mastery scope, or context",
+                        content.label
+                    ),
                 );
             }
         }
@@ -1084,12 +1131,16 @@ fn validate_authoring_setup(package: &TaskPackage, issues: &mut Vec<ValidationIs
             issues,
             "authoring.informationPoints",
             "content.requiredInformationPoints",
-            &format!("请填写 {expected_points} 项要考查的信息点"),
+            &format!("Enter the required number of information points ({expected_points})"),
         );
     }
 }
 
-fn validate_difficulty_profile(package: &TaskPackage, issues: &mut Vec<ValidationIssue>) {
+fn validate_difficulty_profile(
+    package: &TaskPackage,
+    registry: &RegistrySnapshot,
+    issues: &mut Vec<ValidationIssue>,
+) {
     let Some(difficulty) = &package.content.difficulty else {
         return;
     };
@@ -1098,7 +1149,7 @@ fn validate_difficulty_profile(package: &TaskPackage, issues: &mut Vec<Validatio
             issues,
             "difficulty.intendedBandMismatch",
             "content.difficulty.intendedBand",
-            "预期难度带必须与兼容字段 difficultyBand 一致",
+            "The intended difficulty band must match the compatibility field difficultyBand",
         );
     }
     if ![
@@ -1113,7 +1164,7 @@ fn validate_difficulty_profile(package: &TaskPackage, issues: &mut Vec<Validatio
             issues,
             "difficulty.status",
             "content.difficulty.status",
-            "难度状态无效",
+            "Difficulty status is invalid",
         );
     }
     if difficulty
@@ -1125,7 +1176,7 @@ fn validate_difficulty_profile(package: &TaskPackage, issues: &mut Vec<Validatio
             issues,
             "difficulty.rationale",
             "content.difficulty.rationale",
-            "必须记录预期难度依据",
+            "An intended-difficulty rationale is required",
         );
     }
     let drivers = &difficulty.drivers;
@@ -1134,7 +1185,7 @@ fn validate_difficulty_profile(package: &TaskPackage, issues: &mut Vec<Validatio
             issues,
             "difficulty.a1Boundary",
             "content.difficulty.drivers.inferenceRequired",
-            "A1 题项不能把复杂推断作为必要处理要求",
+            "A1 items cannot require complex inference",
         );
     }
     if !(1..=2).contains(&drivers.information_points) {
@@ -1142,7 +1193,7 @@ fn validate_difficulty_profile(package: &TaskPackage, issues: &mut Vec<Validatio
             issues,
             "difficulty.informationPoints",
             "content.difficulty.drivers.informationPoints",
-            "A1 题项必须包含 1–2 个直接信息点",
+            "A1 items must contain 1–2 explicit information points",
         );
     }
     if !["wordOrPhrase", "shortSentence", "twoRelatedPhrases"]
@@ -1152,7 +1203,7 @@ fn validate_difficulty_profile(package: &TaskPackage, issues: &mut Vec<Validatio
             issues,
             "difficulty.inputLength",
             "content.difficulty.drivers.inputLength",
-            "A1 输入长度必须是词语、短句或两个紧密相关短语",
+            "A1 input length must be a word or phrase, a short sentence, or two closely related phrases",
         );
     }
     if !["high", "moderate", "limited"].contains(&drivers.support_level.as_str()) {
@@ -1160,7 +1211,7 @@ fn validate_difficulty_profile(package: &TaskPackage, issues: &mut Vec<Validatio
             issues,
             "difficulty.supportLevel",
             "content.difficulty.drivers.supportLevel",
-            "情境支持程度无效",
+            "Contextual-support level is invalid",
         );
     }
     if !["clear", "moderate", "close", "notApplicable"]
@@ -1170,7 +1221,7 @@ fn validate_difficulty_profile(package: &TaskPackage, issues: &mut Vec<Validatio
             issues,
             "difficulty.distractorSimilarity",
             "content.difficulty.drivers.distractorSimilarity",
-            "干扰项相似度无效；开放作答题应使用 notApplicable",
+            "Distractor similarity is invalid; open-response items should use notApplicable",
         );
     }
     if difficulty.empirical_difficulty.status == "NotPiloted"
@@ -1182,7 +1233,7 @@ fn validate_difficulty_profile(package: &TaskPackage, issues: &mut Vec<Validatio
             issues,
             "difficulty.empiricalState",
             "content.difficulty.empiricalDifficulty",
-            "未预试状态不能包含实测难度结果",
+            "Unpiloted items cannot include empirical difficulty results",
         );
     }
 
@@ -1190,32 +1241,38 @@ fn validate_difficulty_profile(package: &TaskPackage, issues: &mut Vec<Validatio
         package.candidate_payload,
         CandidatePayload::SingleSelect(_) | CandidatePayload::Matching(_)
     );
-    let anchor_mismatch = match difficulty.intended_band.as_str() {
-        "LowerA1" => {
-            drivers.information_points != 1
-                || drivers.input_length != "wordOrPhrase"
-                || drivers.support_level != "high"
-                || (uses_distractors && drivers.distractor_similarity != "clear")
-        }
-        "TypicalA1" => {
-            drivers.input_length != "shortSentence"
-                || drivers.support_level == "limited"
-                || (uses_distractors && drivers.distractor_similarity == "close")
-        }
-        "UpperA1" => {
-            drivers.information_points != 2
-                || drivers.input_length == "wordOrPhrase"
-                || drivers.support_level == "high"
-                || (uses_distractors && drivers.distractor_similarity == "clear")
-        }
-        _ => false,
-    };
+    let standards = capability_for(
+        registry,
+        &package.blueprint_slot_id,
+        &package.item_format_id,
+        Some(&package.content.primary_can_do_id),
+    )
+    .map(|capability| difficulty_standards_for_capability(registry, capability))
+    .unwrap_or(registry.difficulty_standards.as_slice());
+    let anchor_mismatch = standards
+        .iter()
+        .find(|standard| standard.id == difficulty.intended_band)
+        .is_some_and(|standard| {
+            drivers.information_points < standard.information_points_min
+                || drivers.information_points > standard.information_points_max
+                || !standard
+                    .allowed_input_lengths
+                    .contains(&drivers.input_length)
+                || !standard
+                    .allowed_support_levels
+                    .contains(&drivers.support_level)
+                || (uses_distractors
+                    && !standard
+                        .allowed_distractor_similarities
+                        .contains(&drivers.distractor_similarity))
+                || drivers.inference_required != standard.default_drivers.inference_required
+        });
     if anchor_mismatch {
         warning(
             issues,
             "difficulty.anchorMismatch",
             "content.difficulty.drivers",
-            "实际难度驱动因素与所选 A1 内部难度锚点不完全一致，请人工确认",
+            "The actual difficulty drivers do not fully match the selected A1 difficulty anchor; review them manually",
         );
     }
 }
@@ -1232,7 +1289,7 @@ fn check_equal(
             issues,
             code,
             path,
-            &format!("必须为 {expected}，当前为 {actual}"),
+            &format!("Expected {expected}; found {actual}"),
         );
     }
 }

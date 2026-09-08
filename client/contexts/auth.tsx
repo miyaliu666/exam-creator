@@ -1,14 +1,22 @@
 import { createContext, useEffect, useMemo, useState } from "react";
 import { SessionUser } from "../types";
 import {
+  getDevLoginStatus,
   getSessionUser,
+  loginWithDevIdentity,
   loginWithGitHub,
   logout as deleteLogout,
 } from "../utils/fetch";
 
+const defaultDevIdentity = {
+  name: "Local User",
+  email: "author@exam-creator.local",
+};
+
 export const AuthContext = createContext<{
   user: SessionUser | null;
   isLoading: boolean;
+  isDevelopmentAuth: boolean;
   login: () => Promise<void>;
   logout: () => void;
   checkLoginUser: () => Promise<void>;
@@ -17,10 +25,17 @@ export const AuthContext = createContext<{
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDevelopmentAuth, setIsDevelopmentAuth] = useState(false);
 
   async function checkLoginUser() {
     try {
-      const sessionUser = await getSessionUser();
+      const devLoginStatus = await getDevLoginStatus();
+      setIsDevelopmentAuth(devLoginStatus.enabled);
+      let sessionUser = await getSessionUser({ allowUnauthenticated: true });
+      if (!sessionUser && devLoginStatus.enabled) {
+        await loginWithDevIdentity(defaultDevIdentity);
+        sessionUser = await getSessionUser();
+      }
       setUser(sessionUser);
     } catch (e) {
       console.debug(e);
@@ -66,11 +81,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       user,
       isLoading,
+      isDevelopmentAuth,
       login,
       logout,
       checkLoginUser,
     }),
-    [user, isLoading]
+    [user, isLoading, isDevelopmentAuth]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

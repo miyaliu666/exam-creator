@@ -1,4 +1,5 @@
 import type { RegistrySnapshot } from "./types";
+import { registryDisplayText } from "./registry-display-text";
 
 export const CONTENT_KIND_LABELS: Record<string, string> = {
   lexical: "Vocabulary",
@@ -157,7 +158,8 @@ export function optionLabel(
   id: string,
   options: Array<{ id: string; label: string }> | undefined,
 ) {
-  return CAN_DO_LABELS[id] ?? options?.find((option) => option.id === id)?.label ?? id;
+  const label = options?.find((option) => option.id === id)?.label;
+  return label ? registryDisplayText(label) : CAN_DO_LABELS[id] ?? id;
 }
 
 export function contentOptionLabel(
@@ -182,5 +184,5 @@ export function slotLabel(
       entry.blueprintSlotId === id &&
       (!itemFormatId || entry.itemFormatId === itemFormatId),
   );
-  return SLOT_LABELS[id] ?? capability?.title ?? id;
+  return capability?.title ? registryDisplayText(capability.title) : SLOT_LABELS[id] ?? id;
 }

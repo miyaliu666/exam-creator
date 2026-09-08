@@ -136,7 +136,9 @@ export function GithubReviewPanel(props: GithubReviewPanelProps) {
           <HStack justify="space-between" flexWrap="wrap">
             <Text fontWeight="semibold">Review result</Text>
             <Text color="fg.muted" fontSize="sm">
-              {review.approvalCount} approvals · {review.changesRequestedCount} change requests
+              {review.approvalCount} {review.approvalCount === 1 ? "approval" : "approvals"} ·{" "}
+              {review.changesRequestedCount}{" "}
+              {review.changesRequestedCount === 1 ? "change request" : "change requests"}
             </Text>
           </HStack>
           {review.syncError ? <Text color="fg.error" mt={2}>{review.syncError}</Text> : null}
@@ -158,7 +160,8 @@ export function GithubReviewPanel(props: GithubReviewPanelProps) {
       {props.latestAiReview ? (
         <Box as="details" borderWidth="1px" borderRadius="lg" p={4}>
           <Box as="summary" cursor="pointer" fontWeight="semibold">
-            AI pre-review ({props.latestAiReview.findings.length} findings)
+            AI pre-review ({props.latestAiReview.findings.length}{" "}
+            {props.latestAiReview.findings.length === 1 ? "finding" : "findings"})
           </Box>
           <Stack mt={3} gap={2}>
             {props.latestAiReview.findings.map((finding) => (

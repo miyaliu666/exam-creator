@@ -97,6 +97,10 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
     };
 
     let workbench_database = database::WorkbenchDatabase {
+        registry_versions: staging_mongodb_database
+            .collection("LanguageAssessmentRegistryVersions"),
+        registry_audit_events: staging_mongodb_database
+            .collection("LanguageAssessmentRegistryAuditEvents"),
         language_items: staging_mongodb_database.collection("LanguageItems"),
         versions: staging_mongodb_database.collection("LanguageItemVersions"),
         ai_generation_runs: staging_mongodb_database.collection("LanguageItemAiRuns"),
@@ -106,11 +110,38 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         review_discussion_events: staging_mongodb_database
             .collection("LanguageItemReviewDiscussionEvents"),
         exports: staging_mongodb_database.collection("LanguageItemExports"),
-        assemblies: staging_mongodb_database.collection("LanguageItemAssemblies"),
         audit_events: staging_mongodb_database.collection("LanguageItemAuditEvents"),
+        github_sync_deliveries: staging_mongodb_database
+            .collection("LanguageItemGithubSyncDeliveries"),
         staging_items: staging_mongodb_database.collection("LanguageItemStaging"),
     };
     workbench_database.ensure_indexes().await?;
+    crate::language_items::registry_store::initialize(&workbench_database).await?;
+    let interrupted_at = chrono::Utc::now().to_rfc3339();
+    workbench_database
+        .ai_generation_runs
+        .update_many(
+            mongodb::bson::doc! { "status": { "$in": ["queued", "running"] } },
+            mongodb::bson::doc! { "$set": {
+                "status": "failed",
+                "error": "The server restarted before this AI run completed. Start a new run.",
+                "updatedAt": &interrupted_at,
+                "completedAt": &interrupted_at,
+            } },
+        )
+        .await?;
+    workbench_database
+        .github_sync_deliveries
+        .update_many(
+            mongodb::bson::doc! { "status": { "$in": ["queued", "running"] } },
+            mongodb::bson::doc! { "$set": {
+                "status": "failed",
+                "error": "The server restarted before this GitHub synchronization completed. Redeliver the webhook or use Sync PRs.",
+                "updatedAt": &interrupted_at,
+                "completedAt": &interrupted_at,
+            } },
+        )
+        .await?;
 
     let client_sync = Arc::new(Mutex::new(ClientSync {
         users: Vec::new(),
@@ -203,12 +234,56 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
             get(routes::language_items::get_registry),
         )
         .route(
+            "/api/language-items/registry/{registry_version}",
+            get(routes::language_items::get_registry_version),
+        )
+        .route(
+            "/api/language-assessment/registry/active",
+            get(routes::language_assessment_settings::get_active),
+        )
+        .route(
+            "/api/language-assessment/registry/versions",
+            get(routes::language_assessment_settings::get_versions),
+        )
+        .route(
+            "/api/language-assessment/registry/versions/{version_id}",
+            get(routes::language_assessment_settings::get_version),
+        )
+        .route(
+            "/api/language-assessment/registry/versions/{version_id}/audit",
+            get(routes::language_assessment_settings::get_audit),
+        )
+        .route(
+            "/api/language-assessment/registry/drafts",
+            post(routes::language_assessment_settings::post_draft),
+        )
+        .route(
+            "/api/language-assessment/registry/drafts/{version_id}",
+            put(routes::language_assessment_settings::put_draft),
+        )
+        .route(
+            "/api/language-assessment/registry/drafts/{version_id}/validate",
+            post(routes::language_assessment_settings::post_validate),
+        )
+        .route(
+            "/api/language-assessment/registry/drafts/{version_id}/impact",
+            get(routes::language_assessment_settings::get_impact),
+        )
+        .route(
+            "/api/language-assessment/registry/drafts/{version_id}/publish",
+            post(routes::language_assessment_settings::post_publish),
+        )
+        .route(
             "/api/language-items/ai-provider",
             get(routes::language_items::get_ai_provider_status),
         )
         .route(
             "/api/language-items/github-review/status",
             get(routes::language_item_github::get_status),
+        )
+        .route(
+            "/api/integrations/github/webhook",
+            post(routes::language_item_github::post_webhook),
         )
         .route(
             "/api/language-items/github-review/batches",
@@ -225,18 +300,6 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .route(
             "/api/language-item-review-queue",
             get(routes::language_items::get_review_queue),
-        )
-        .route(
-            "/api/language-item-assemblies",
-            get(routes::language_item_assemblies::get_assemblies),
-        )
-        .route(
-            "/api/language-item-assemblies/staging",
-            post(routes::language_item_assemblies::post_staging_assembly),
-        )
-        .route(
-            "/api/language-item-assemblies/{assembly_id}",
-            get(routes::language_item_assemblies::get_assembly),
         )
         .route(
             "/api/language-items/{item_id}",

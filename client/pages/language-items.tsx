@@ -37,7 +37,6 @@ import {
   syncGithubReviewBatch,
   updateLanguageItemRecordState,
 } from "../features/language-items/api";
-import { AssemblyPanel } from "../features/language-items/assembly-panel";
 import {
   DIFFICULTY_LABELS,
   ITEM_FORMAT_LABELS,
@@ -49,6 +48,8 @@ import {
   NewLanguageItemDialog,
   type NewLanguageItemSelection,
 } from "../features/language-items/new-language-item-dialog";
+import { clearNewItemDraft } from "../features/language-items/new-item-draft";
+import { RegistrySettingsPanel } from "../features/language-items/registry-settings-panel";
 import type {
   GithubReviewState,
   LanguageItem,
@@ -59,8 +60,6 @@ import type {
 import { editLanguageItemRoute } from "./edit-language-item";
 import { landingRoute } from "./landing";
 import { rootRoute } from "./root";
-
-type WorkbenchView = "items" | "assembly";
 type RecordStateFilter = LanguageItemRecordState;
 type SkillFilter = "all" | "Reading" | "Listening" | "Writing" | "Speaking";
 type DifficultyFilter = "all" | "LowerA1" | "TypicalA1" | "UpperA1";
@@ -249,7 +248,6 @@ function LanguageItems() {
   const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [view, setView] = useState<WorkbenchView>("items");
   const [recordStateFilter, setRecordStateFilter] =
     useState<RecordStateFilter>("active");
   const [search, setSearch] = useState("");
@@ -257,6 +255,8 @@ function LanguageItems() {
   const [skillFilter, setSkillFilter] = useState<SkillFilter>("all");
   const [difficultyFilter, setDifficultyFilter] = useState<DifficultyFilter>("all");
   const [createOpen, setCreateOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsDirty, setSettingsDirty] = useState(false);
   const itemsQuery = useQuery({
     queryKey: ["language-items"],
     queryFn: getLanguageItems,
@@ -265,7 +265,7 @@ function LanguageItems() {
   });
   const registryQuery = useQuery({
     queryKey: ["language-item-registry"],
-    queryFn: getLanguageItemRegistry,
+    queryFn: () => getLanguageItemRegistry(),
     enabled: !!user,
   });
   const githubQuery = useQuery({
@@ -281,6 +281,7 @@ function LanguageItems() {
         title: `Untitled: ${SLOT_LABELS[selection.blueprintSlotId] ?? "Registered exam task"} · ${ITEM_FORMAT_LABELS[selection.itemFormatId] ?? "Item"}`,
       }),
     onSuccess: async (item) => {
+      clearNewItemDraft(user?.email ?? "local");
       setCreateOpen(false);
       await queryClient.invalidateQueries({ queryKey: ["language-items"] });
       navigate({ to: editLanguageItemRoute.to, params: { id: item.id } });
@@ -330,7 +331,6 @@ function LanguageItems() {
   }, []);
 
   const items = itemsQuery.data ?? [];
-  const activeItems = items.filter((item) => item.recordState === "active");
   const normalizedSearch = search.trim().toLocaleLowerCase();
   const visibleItems = items.filter(
     (item) =>
@@ -338,7 +338,7 @@ function LanguageItems() {
       matchesStatus(item, statusFilter) &&
       (skillFilter === "all" || item.draft.content.primaryReportedSkill === skillFilter) &&
       (difficultyFilter === "all" || item.draft.content.difficultyBand === difficultyFilter) &&
-      (!normalizedSearch || [item.title, item.id, item.ownerEmail]
+      (!normalizedSearch || [item.title, item.id]
         .some((value) => value.toLocaleLowerCase().includes(normalizedSearch))),
   );
   const mutationError =
@@ -373,51 +373,57 @@ function LanguageItems() {
       </HStack>
       <Center>
         <Stack gap={6} w="full" maxW="7xl">
-          <Header title="Language Exam Item Creator" showPresence={false}>
-            <Button
-              colorPalette="teal"
-              disabled={!registryQuery.data}
-              onClick={() => setCreateOpen(true)}
-            >
-              <Plus size={18} /> New item
-            </Button>
+          <Header title="Language Exam Item Creator">
+            <HStack>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (settingsOpen && settingsDirty && !window.confirm("Discard unsaved settings and close Assessment Settings?")) return;
+                  setSettingsOpen((open) => !open);
+                }}
+              >
+                {settingsOpen ? "Close Settings" : "Assessment Settings"}
+              </Button>
+              <Button
+                colorPalette="teal"
+                disabled={!registryQuery.data}
+                onClick={() => setCreateOpen(true)}
+              >
+                <Plus size={18} /> New item
+              </Button>
+            </HStack>
           </Header>
 
+          {settingsOpen ? <RegistrySettingsPanel onDirtyChange={setSettingsDirty} /> : null}
+
           <NewLanguageItemDialog
+            key={user?.email ?? "local"}
+            draftScope={user?.email ?? "local"}
             open={createOpen}
             registry={registryQuery.data}
             isPending={createMutation.isPending}
+            error={createMutation.error}
             onClose={() => setCreateOpen(false)}
             onCreate={(selection) => createMutation.mutate(selection)}
           />
 
           <HStack justify="space-between" flexWrap="wrap" gap={3}>
-            <HStack flexWrap="wrap">
-              <Button size="sm" variant={view === "items" ? "solid" : "ghost"} colorPalette="teal" onClick={() => setView("items")}>
-                Item bank {activeItems.length}
+            <Text fontWeight="semibold">Item bank</Text>
+            {githubQuery.data?.enabled ? (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={batchIds.length === 0}
+                loading={syncMutation.isPending}
+                onClick={() => syncMutation.mutate()}
+              >
+                <RefreshCw size={16} /> Sync PRs
               </Button>
-              <Button size="sm" variant={view === "assembly" ? "solid" : "ghost"} colorPalette="purple" onClick={() => setView("assembly")}>
-                Assemble
-              </Button>
-            </HStack>
-            {view === "items" && githubQuery.data?.enabled ? (
-              <HStack>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={batchIds.length === 0}
-                  loading={syncMutation.isPending}
-                  onClick={() => syncMutation.mutate()}
-                >
-                  <RefreshCw size={16} /> Sync PRs
-                </Button>
-              </HStack>
             ) : null}
           </HStack>
 
-          {view === "items" ? (
-            <HStack gap={3} flexWrap="wrap">
-              <Input maxW="320px" size="sm" placeholder="Search items" value={search} onChange={(event) => setSearch(event.target.value)} />
+          <HStack gap={3} flexWrap="wrap">
+              <Input maxW="320px" size="sm" placeholder="Search by title or item ID" value={search} onChange={(event) => setSearch(event.target.value)} />
               <NativeSelect.Root size="sm" maxW="160px">
                 <NativeSelect.Field
                   value={recordStateFilter}
@@ -463,16 +469,13 @@ function LanguageItems() {
                 </NativeSelect.Field>
                 <NativeSelect.Indicator />
               </NativeSelect.Root>
-            </HStack>
-          ) : null}
+          </HStack>
 
-          {view === "assembly" ? (
-            <AssemblyPanel items={activeItems} />
-          ) : itemsQuery.isPending ? (
+          {itemsQuery.isPending ? (
             <Spinner />
           ) : itemsQuery.isError ? (
             <Box borderWidth="1px" borderColor="border.error" borderRadius="xl" p={5}>
-              <Text color="fg.error" fontWeight="semibold">Workbench data failed to load</Text>
+              <Text color="fg.error" fontWeight="semibold">Failed to load language items</Text>
               <Text color="fg.muted" fontSize="sm" mt={1}>{itemsQuery.error.message}</Text>
             </Box>
           ) : (
@@ -487,7 +490,7 @@ function LanguageItems() {
           )}
 
           {githubQuery.data && !githubQuery.data.enabled ? (
-            <Text color="fg.warning">GitHub review is not configured</Text>
+            <Text color="fg.warning">GitHub review is not configured.</Text>
           ) : null}
           {mutationError ? <Text color="fg.error">{mutationError.message}</Text> : null}
         </Stack>

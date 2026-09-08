@@ -1,3 +1,6 @@
+use std::sync::Arc;
+
+use futures_util::future::join_all;
 use http::StatusCode;
 use reqwest::Client;
 use serde::Deserialize;
@@ -11,24 +14,41 @@ use super::{
         AiCandidate, AiFinding, CandidatePayload, ScoringPackage, SingleSelectCandidatePayload,
         SingleSelectOption, Stimulus, TaskPackage,
     },
-    registry::snapshot,
+    registry::{
+        RegistrySnapshot, capability_for, difficulty_standards_for_capability, snapshot_for,
+    },
     validation::validate_task_package,
 };
+
+#[cfg(test)]
+use super::registry::snapshot;
 
 pub const PROVIDER: &str = "deterministic-mock";
 pub const MODEL: &str = "workbench-fixture-v1";
 pub const MODEL_VERSION: &str = "1";
 pub const GENERATION_PROMPT_ID: &str = "a1-item-generation";
-pub const GENERATION_PROMPT_VERSION: &str = "0.4";
+pub const GENERATION_PROMPT_VERSION: &str = "0.5";
 pub const REVIEW_PROMPT_ID: &str = "a1-item-independent-review";
-pub const REVIEW_PROMPT_VERSION: &str = "0.2";
+pub const REVIEW_PROMPT_VERSION: &str = "0.3";
 pub const REVIEW_SCHEMA_VERSION: &str = "0.1";
 pub const GENERATION_OUTPUT_SCHEMA_VERSION: &str = "0.2";
-pub const GENERATION_PROMPT: &str = include_str!("prompts/generation-v0.4.md");
+pub const GENERATION_PROMPT: &str = include_str!("prompts/generation-v0.5.md");
 pub const GENERATION_OUTPUT_SCHEMA: &str =
     include_str!("prompts/generation-output-v0.2.schema.json");
-pub const REVIEW_PROMPT: &str = include_str!("prompts/review-v0.2.md");
+pub const REVIEW_PROMPT: &str = include_str!("prompts/review-v0.3.md");
 pub const REVIEW_OUTPUT_SCHEMA: &str = include_str!("prompts/review-output-v0.1.schema.json");
+
+fn pinned_registry(package: &TaskPackage) -> Result<Arc<RegistrySnapshot>, Error> {
+    snapshot_for(&package.spec_versions.registry_bundle_version).ok_or_else(|| {
+        Error::Server(
+            StatusCode::CONFLICT,
+            format!(
+                "Registry version {} is unavailable; the item cannot use a different rule version",
+                package.spec_versions.registry_bundle_version
+            ),
+        )
+    })
+}
 
 pub struct ProviderMetadata<'a> {
     pub provider: &'a str,
@@ -75,16 +95,82 @@ struct ReviewOutput {
     findings: Vec<AiFinding>,
 }
 
-pub async fn generate_candidates(
+pub struct CandidateGenerationReport {
+    pub candidates: Vec<AiCandidate>,
+    pub errors: Vec<String>,
+    pub attempt_count: u32,
+    pub retry_count: u32,
+}
+
+pub async fn generate_candidates_independently(
     config: &LanguageItemAiProviderConfig,
     http_client: &Client,
     package: &TaskPackage,
     count: u8,
-) -> Result<Vec<AiCandidate>, Error> {
+) -> CandidateGenerationReport {
     match config {
-        LanguageItemAiProviderConfig::DeterministicMock => {
-            Ok(generate_mock_candidates(package, count))
+        LanguageItemAiProviderConfig::DeterministicMock => CandidateGenerationReport {
+            candidates: generate_mock_candidates(package, count),
+            errors: Vec::new(),
+            attempt_count: u32::from(count),
+            retry_count: 0,
+        },
+        LanguageItemAiProviderConfig::DeepSeek { .. }
+        | LanguageItemAiProviderConfig::OpenAi { .. } => {
+            let initial_results = join_all((1..=count).map(|ordinal| {
+                generate_provider_candidate(config, http_client, package, ordinal, None)
+            }))
+            .await;
+            let mut candidates = Vec::with_capacity(usize::from(count));
+            let mut errors = Vec::new();
+            let mut retry_count = 0_u32;
+
+            for (index, result) in initial_results.into_iter().enumerate() {
+                let ordinal = index as u8 + 1;
+                match result {
+                    Ok(candidate) if candidate.validation.valid => candidates.push(candidate),
+                    Ok(candidate) => {
+                        retry_count += 1;
+                        match generate_provider_candidate(
+                            config,
+                            http_client,
+                            package,
+                            ordinal,
+                            Some(&candidate),
+                        )
+                        .await
+                        {
+                            Ok(repaired) => candidates.push(repaired),
+                            Err(error) => {
+                                errors.push(format!("Candidate {ordinal} repair failed: {error}"));
+                                candidates.push(candidate);
+                            }
+                        }
+                    }
+                    Err(error) => {
+                        errors.push(format!("Candidate {ordinal} generation failed: {error}"));
+                    }
+                }
+            }
+            candidates.sort_by_key(|candidate| candidate.ordinal);
+            CandidateGenerationReport {
+                candidates,
+                errors,
+                attempt_count: u32::from(count) + retry_count,
+                retry_count,
+            }
         }
+    }
+}
+
+async fn generate_provider_candidate(
+    config: &LanguageItemAiProviderConfig,
+    http_client: &Client,
+    package: &TaskPackage,
+    ordinal: u8,
+    repair_candidate: Option<&AiCandidate>,
+) -> Result<AiCandidate, Error> {
+    let (api_key, base_url, model) = match config {
         LanguageItemAiProviderConfig::DeepSeek {
             api_key,
             base_url,
@@ -94,120 +180,141 @@ pub async fn generate_candidates(
             api_key,
             base_url,
             model,
-        } => {
-            let registry = snapshot();
-            let mut output_schema: Value = serde_json::from_str(GENERATION_OUTPUT_SCHEMA)
-                .expect("generation output schema is valid JSON");
-            let schema_index = match package.item_format_id.as_str() {
-                "IF-SINGLE-SELECT" => 0,
-                "IF-MATCHING" => 1,
-                "IF-RESTRICTED-INPUT" => 2,
-                "IF-FORM-ENTRY" => 3,
-                "IF-TYPED-MESSAGE" => 4,
-                "IF-SPOKEN-SINGLE" => 5,
-                "IF-SPOKEN-MULTITURN" => 6,
-                _ => 0,
-            };
-            output_schema["properties"]["candidates"]["items"]["properties"]["candidatePayload"] =
-                registry.candidate_schemas[schema_index].clone();
-            let selected_content = package
-                .content
-                .target_content_ids
+        } => (api_key, base_url, model),
+        LanguageItemAiProviderConfig::DeterministicMock => unreachable!(),
+    };
+    let registry = pinned_registry(package)?;
+    let mut output_schema: Value = serde_json::from_str(GENERATION_OUTPUT_SCHEMA)
+        .expect("generation output schema is valid JSON");
+    let schema_index = match package.item_format_id.as_str() {
+        "IF-SINGLE-SELECT" => 0,
+        "IF-MATCHING" => 1,
+        "IF-RESTRICTED-INPUT" => 2,
+        "IF-FORM-ENTRY" => 3,
+        "IF-TYPED-MESSAGE" => 4,
+        "IF-SPOKEN-SINGLE" => 5,
+        "IF-SPOKEN-MULTITURN" => 6,
+        _ => 0,
+    };
+    output_schema["properties"]["candidates"]["minItems"] = json!(1);
+    output_schema["properties"]["candidates"]["maxItems"] = json!(1);
+    output_schema["properties"]["candidates"]["items"]["properties"]["candidatePayload"] =
+        registry.candidate_schemas[schema_index].clone();
+    let selected_content = package
+        .content
+        .target_content_ids
+        .iter()
+        .filter_map(|id| {
+            registry
+                .content_id_options
                 .iter()
-                .filter_map(|id| {
-                    registry
-                        .content_id_options
-                        .iter()
-                        .find(|entry| &entry.id == id)
-                })
-                .collect::<Vec<_>>();
-            let context = registry
-                .context_options
-                .iter()
-                .find(|entry| entry.id == package.content.context_id);
-            let capability = registry.capabilities.iter().find(|entry| {
-                entry.blueprint_slot_id == package.blueprint_slot_id
-                    && entry.item_format_id == package.item_format_id
-            });
-            let scoring_contract = registry.scoring_contracts.iter().find(|entry| {
-                entry.scoring_contract_template_id
-                    == package.scoring_package.scoring_contract_template_id
-            });
-            let input = json!({
-                "requestedCandidateCount": count,
-                "lockedConstraints": {
-                    "blueprintSlotId": package.blueprint_slot_id,
-                    "taskFamilyId": package.task_family_id,
-                    "itemFormatId": package.item_format_id,
-                    "rendererId": package.renderer.renderer_id,
-                    "primaryCanDoId": package.content.primary_can_do_id,
-                    "primaryDomain": package.content.primary_domain,
-                    "contextId": package.content.context_id,
-                    "context": context,
-                    "difficultyBand": package.content.difficulty_band,
-                    "difficulty": package.content.difficulty,
-                    "targetContentIds": package.content.target_content_ids,
-                    "targetContent": selected_content,
-                    "requiredInformationPoints": package.content.required_information_points,
-                    "supportingContentRefs": package.content.supporting_content_refs,
-                },
-                "taskBrief": {
-                    "capability": capability,
-                    "scoringContract": scoring_contract,
-                },
-                "currentCandidatePayload": package.candidate_payload,
-                "currentScoringPackage": package.scoring_package,
-                "instruction": format!("Generate exactly {count} independent candidates."),
-            });
-            let request = StructuredOutputRequest {
-                api_key,
-                base_url,
-                model,
-                instructions: GENERATION_PROMPT,
-                input,
-                format_name: "language_item_generation",
-                schema: output_schema,
-                example: json!({
-                    "candidates": [{
-                        "candidatePayload": package.candidate_payload,
-                        "proposedScoringPackage": package.scoring_package,
-                    }],
-                }),
-            };
-            let value = match config {
-                LanguageItemAiProviderConfig::DeepSeek { .. } => {
-                    deepseek_chat_structured_output(http_client, request).await?
-                }
-                LanguageItemAiProviderConfig::OpenAi { .. } => {
-                    responses_structured_output(http_client, request).await?
-                }
-                LanguageItemAiProviderConfig::DeterministicMock => unreachable!(),
-            };
-            let output: GenerationOutput = serde_json::from_value(value).map_err(|error| {
-                Error::Server(
-                    StatusCode::BAD_GATEWAY,
-                    format!("AI generation output did not match the application contract: {error}"),
-                )
-            })?;
-            if output.candidates.len() != usize::from(count) {
-                return Err(Error::Server(
-                    StatusCode::BAD_GATEWAY,
-                    format!(
-                        "AI returned {} candidates; exactly {count} were requested",
-                        output.candidates.len()
-                    ),
-                ));
-            }
-            Ok(output
-                .candidates
-                .into_iter()
-                .enumerate()
-                .map(|(index, generated)| {
-                    candidate_from_provider(package, generated, index as u8 + 1)
-                })
-                .collect())
+                .find(|entry| &entry.id == id)
+        })
+        .collect::<Vec<_>>();
+    let context = registry
+        .context_options
+        .iter()
+        .find(|entry| entry.id == package.content.context_id);
+    let capability = capability_for(
+        &registry,
+        &package.blueprint_slot_id,
+        &package.item_format_id,
+        Some(&package.content.primary_can_do_id),
+    );
+    let scoring_contract = registry.scoring_contracts.iter().find(|entry| {
+        entry.scoring_contract_template_id == package.scoring_package.scoring_contract_template_id
+    });
+    let variation_focus = [
+        "Use a distinct everyday setting and wording while preserving the locked context.",
+        "Vary names, times, or concrete details without changing difficulty or construct.",
+        "Use a different communicative micro-situation within the locked context.",
+        "Prefer a concise alternative structure and avoid overlap with earlier candidates.",
+        "Use fresh surface details while keeping all information points directly observable.",
+    ][usize::from(ordinal.saturating_sub(1)) % 5];
+    let current_payload = repair_candidate
+        .map(|candidate| &candidate.candidate_payload)
+        .unwrap_or(&package.candidate_payload);
+    let current_scoring = repair_candidate
+        .and_then(|candidate| candidate.proposed_scoring_package.as_ref())
+        .unwrap_or(&package.scoring_package);
+    let repair_issues = repair_candidate.map(|candidate| &candidate.validation.issues);
+    let input = json!({
+        "requestedCandidateCount": 1,
+        "candidateOrdinal": ordinal,
+        "variationFocus": variation_focus,
+        "lockedConstraints": {
+            "blueprintSlotId": package.blueprint_slot_id,
+            "taskFamilyId": package.task_family_id,
+            "itemFormatId": package.item_format_id,
+            "rendererId": package.renderer.renderer_id,
+            "primaryCanDoId": package.content.primary_can_do_id,
+            "primaryDomain": package.content.primary_domain,
+            "contextId": package.content.context_id,
+            "context": context,
+            "difficultyBand": package.content.difficulty_band,
+            "difficulty": package.content.difficulty,
+            "targetContentIds": package.content.target_content_ids,
+            "targetContent": selected_content,
+            "requiredInformationPoints": package.content.required_information_points,
+            "supportingContentRefs": package.content.supporting_content_refs,
+        },
+        "taskBrief": {
+            "capability": capability,
+            "scoringContract": scoring_contract,
+        },
+        "currentCandidatePayload": current_payload,
+        "currentScoringPackage": current_scoring,
+        "repairValidationIssues": repair_issues,
+        "instruction": if repair_candidate.is_some() {
+            "Repair this candidate once so every supplied deterministic validation issue is resolved. Return exactly one candidate."
+        } else {
+            "Generate exactly one independent candidate."
+        },
+    });
+    let request = StructuredOutputRequest {
+        api_key,
+        base_url,
+        model,
+        instructions: GENERATION_PROMPT,
+        input,
+        format_name: "language_item_generation",
+        schema: output_schema,
+        example: json!({
+            "candidates": [{
+                "candidatePayload": current_payload,
+                "proposedScoringPackage": current_scoring,
+            }],
+        }),
+    };
+    let value = match config {
+        LanguageItemAiProviderConfig::DeepSeek { .. } => {
+            deepseek_chat_structured_output(http_client, request).await?
         }
+        LanguageItemAiProviderConfig::OpenAi { .. } => {
+            responses_structured_output(http_client, request).await?
+        }
+        LanguageItemAiProviderConfig::DeterministicMock => unreachable!(),
+    };
+    let mut output: GenerationOutput = serde_json::from_value(value).map_err(|error| {
+        Error::Server(
+            StatusCode::BAD_GATEWAY,
+            format!("AI generation output did not match the application contract: {error}"),
+        )
+    })?;
+    if output.candidates.len() != 1 {
+        return Err(Error::Server(
+            StatusCode::BAD_GATEWAY,
+            format!(
+                "AI returned {} candidates; exactly one was requested for candidate {ordinal}",
+                output.candidates.len()
+            ),
+        ));
     }
+    Ok(candidate_from_provider(
+        package,
+        output.candidates.remove(0),
+        ordinal,
+    ))
 }
 
 pub async fn review(
@@ -227,11 +334,93 @@ pub async fn review(
             base_url,
             model,
         } => {
-            let output_schema: Value = serde_json::from_str(REVIEW_OUTPUT_SCHEMA)
+            let registry = pinned_registry(package)?;
+            let validation = validate_task_package(package);
+            let context = registry
+                .context_options
+                .iter()
+                .find(|entry| entry.id == package.content.context_id);
+            let capability = capability_for(
+                &registry,
+                &package.blueprint_slot_id,
+                &package.item_format_id,
+                Some(&package.content.primary_can_do_id),
+            );
+            let scoring_contract = registry.scoring_contracts.iter().find(|entry| {
+                entry.scoring_contract_template_id
+                    == package.scoring_package.scoring_contract_template_id
+            });
+            let difficulty_standard = capability
+                .and_then(|capability| {
+                    difficulty_standards_for_capability(&registry, capability)
+                        .iter()
+                        .find(|entry| entry.id == package.content.difficulty_band)
+                })
+                .or_else(|| {
+                    registry
+                        .difficulty_standards
+                        .iter()
+                        .find(|entry| entry.id == package.content.difficulty_band)
+                });
+            let selected_content = package
+                .content
+                .target_content_ids
+                .iter()
+                .filter_map(|id| {
+                    registry
+                        .content_id_options
+                        .iter()
+                        .find(|entry| &entry.id == id)
+                })
+                .collect::<Vec<_>>();
+            let mut allowed_rule_refs = vec![
+                format!("slot.{}", package.blueprint_slot_id),
+                format!("canDo.{}", package.content.primary_can_do_id),
+                format!("context.{}", package.content.context_id),
+                format!("difficulty.{}", package.content.difficulty_band),
+                format!(
+                    "scoring.{}",
+                    package.scoring_package.scoring_contract_template_id
+                ),
+                "review.automatedPrecheck".to_string(),
+            ];
+            allowed_rule_refs.extend(
+                registry
+                    .required_review_gate_ids
+                    .iter()
+                    .map(|gate| format!("review.{gate}")),
+            );
+            allowed_rule_refs.extend(validation.issues.iter().map(|issue| issue.rule_ref.clone()));
+            allowed_rule_refs.sort();
+            allowed_rule_refs.dedup();
+
+            let mut output_schema: Value = serde_json::from_str(REVIEW_OUTPUT_SCHEMA)
                 .expect("review output schema is valid JSON");
+            output_schema["properties"]["findings"]["items"]["properties"]["ruleRef"]["enum"] =
+                json!(allowed_rule_refs);
+            output_schema["properties"]["findings"]["items"]["properties"]["category"]["enum"] =
+                json!([
+                    "validation",
+                    "constructAndLevel",
+                    "content",
+                    "scoring",
+                    "fairnessAccessibility",
+                    "technicalSecurity",
+                    "automatedPrecheck"
+                ]);
             let input = json!({
                 "taskPackage": package,
-                "deterministicValidation": validate_task_package(package),
+                "registryRules": {
+                    "bundleVersion": registry.bundle_version,
+                    "capability": capability,
+                    "context": context,
+                    "difficultyStandard": difficulty_standard,
+                    "targetContent": selected_content,
+                    "scoringContract": scoring_contract,
+                    "requiredReviewGateIds": registry.required_review_gate_ids,
+                },
+                "allowedRuleRefs": allowed_rule_refs,
+                "deterministicValidation": validation,
             });
             let request = StructuredOutputRequest {
                 api_key,
@@ -258,6 +447,19 @@ pub async fn review(
                     format!("AI review output did not match the application contract: {error}"),
                 )
             })?;
+            if let Some(finding) = output
+                .findings
+                .iter()
+                .find(|finding| !allowed_rule_refs.contains(&finding.rule_ref))
+            {
+                return Err(Error::Server(
+                    StatusCode::BAD_GATEWAY,
+                    format!(
+                        "AI review referenced a rule that was not supplied: {}",
+                        finding.rule_ref
+                    ),
+                ));
+            }
             Ok(output.findings)
         }
     }
@@ -291,7 +493,8 @@ async fn deepseek_chat_structured_output(
     });
     let user_content =
         serde_json::to_string(&user_content).expect("DeepSeek input is serializable");
-    let mut last_empty_detail = "响应中没有可用的完成内容".to_string();
+    let mut last_empty_detail =
+        "The response did not contain usable completion content".to_string();
 
     for attempt in 0..DEEPSEEK_JSON_ATTEMPTS {
         let retry_instruction = if attempt == 0 {
@@ -336,7 +539,7 @@ async fn deepseek_chat_structured_output(
     Err(Error::Server(
         StatusCode::BAD_GATEWAY,
         format!(
-            "DeepSeek 连续 {DEEPSEEK_JSON_ATTEMPTS} 次返回空内容（{last_empty_detail}），请重试"
+            "DeepSeek returned empty content on all {DEEPSEEK_JSON_ATTEMPTS} attempts ({last_empty_detail}); try again"
         ),
     ))
 }
@@ -358,11 +561,11 @@ fn deepseek_empty_response_detail(response: &Value) -> String {
         .and_then(Value::as_array)
         .and_then(|choices| choices.first())
     else {
-        return "响应中没有 choices".to_string();
+        return "The response did not contain choices".to_string();
     };
 
     match choice.get("finish_reason").and_then(Value::as_str) {
-        Some("length") => "输出达到长度上限".to_string(),
+        Some("length") => "The output reached the maximum length".to_string(),
         Some(reason) => {
             let returned_reasoning = choice
                 .get("message")
@@ -370,12 +573,12 @@ fn deepseek_empty_response_detail(response: &Value) -> String {
                 .and_then(Value::as_str)
                 .is_some_and(|content| !content.trim().is_empty());
             if returned_reasoning {
-                format!("模型只返回了推理内容，finish_reason={reason}")
+                format!("The model returned reasoning content only; finish_reason={reason}")
             } else {
                 format!("finish_reason={reason}")
             }
         }
-        None => "响应未提供 finish_reason".to_string(),
+        None => "The response did not provide finish_reason".to_string(),
     }
 }
 
@@ -427,13 +630,13 @@ async fn read_provider_response(
             .collect();
         return Err(Error::Server(
             StatusCode::BAD_GATEWAY,
-            format!("{provider} 返回 {status}: {detail}"),
+            format!("{provider} returned {status}: {detail}"),
         ));
     }
     response.json().await.map_err(|error| {
         Error::Server(
             StatusCode::BAD_GATEWAY,
-            format!("{provider} 返回了无法读取的数据: {error}"),
+            format!("{provider} returned unreadable data: {error}"),
         )
     })
 }
@@ -442,20 +645,20 @@ fn parse_structured_output(output_text: &str, provider: &str) -> Result<Value, E
     serde_json::from_str(output_text).map_err(|error| {
         Error::Server(
             StatusCode::BAD_GATEWAY,
-            format!("{provider} 返回内容不符合 JSON 格式: {error}"),
+            format!("{provider} returned content that is not valid JSON: {error}"),
         )
     })
 }
 
 fn provider_request_error(provider: &str, error: &reqwest::Error) -> Error {
     let reason = if error.is_timeout() {
-        "请求超时，请重试；如持续出现，请增大 REQUEST_TIMEOUT_IN_MS"
+        "The request timed out; try again, or increase REQUEST_TIMEOUT_IN_MS if the problem persists"
     } else if error.is_connect() {
-        "无法建立网络连接，请检查代理、防火墙或 API 域名访问"
+        "The network connection could not be established; check the proxy, firewall, and API host access"
     } else if error.is_request() {
-        "请求无法发送，请检查 API 地址配置"
+        "The request could not be sent; check the API base URL"
     } else {
-        "请求失败，请检查网络与服务状态"
+        "The request failed; check the network and service status"
     };
     Error::Server(StatusCode::BAD_GATEWAY, format!("{provider} {reason}"))
 }
@@ -668,7 +871,9 @@ pub fn review_mock(package: &TaskPackage) -> Vec<AiFinding> {
             code: "a1.longStimulus".to_string(),
             field_path: "candidatePayload.stimulus.text".to_string(),
             rule_ref: "R-A1-1.materialLength".to_string(),
-            message: "刺激文本偏长，请人工确认其仍属于简短标志或通知。".to_string(),
+            message:
+                "The stimulus is long; confirm that it still qualifies as a short sign or notice."
+                    .to_string(),
         });
     }
     if findings.is_empty() {
@@ -678,7 +883,8 @@ pub fn review_mock(package: &TaskPackage) -> Vec<AiFinding> {
             code: "precheck.noMechanicalIssues".to_string(),
             field_path: "candidatePayload".to_string(),
             rule_ref: "review.automatedPrecheck".to_string(),
-            message: "未发现机械性问题；仍需人工完成所有 review gates。".to_string(),
+            message: "No mechanical issues were found; all human review gates are still required."
+                .to_string(),
         });
     }
     findings
@@ -757,7 +963,7 @@ mod tests {
             .map(|(index, point)| {
                 crate::language_items::domain::InformationPoint::new(
                     index,
-                    format!("信息点 {point}"),
+                    format!("Information point {point}"),
                 )
             })
             .collect();
@@ -766,8 +972,10 @@ mod tests {
 
     #[test]
     fn prompts_and_output_schemas_are_versioned_and_parseable() {
-        assert!(GENERATION_PROMPT.contains("v0.4"));
-        assert!(REVIEW_PROMPT.contains("v0.2"));
+        assert_eq!(GENERATION_PROMPT_VERSION, "0.5");
+        assert_eq!(REVIEW_PROMPT_VERSION, "0.3");
+        assert!(GENERATION_PROMPT.starts_with("# Chinese A1 Item Generation Prompt v0.5"));
+        assert!(REVIEW_PROMPT.starts_with("# A1 Independent Review Prompt v0.3"));
         let generation: serde_json::Value =
             serde_json::from_str(GENERATION_OUTPUT_SCHEMA).expect("generation schema is JSON");
         let review: serde_json::Value =
@@ -817,6 +1025,23 @@ mod tests {
         assert_eq!(package.task_family_id, original.task_family_id);
     }
 
+    #[tokio::test]
+    async fn independent_mock_generation_reports_attempts() {
+        let package = generation_ready_package("reading-single-select");
+        let report = generate_candidates_independently(
+            &LanguageItemAiProviderConfig::DeterministicMock,
+            &Client::new(),
+            &package,
+            3,
+        )
+        .await;
+
+        assert_eq!(report.candidates.len(), 3);
+        assert_eq!(report.attempt_count, 3);
+        assert_eq!(report.retry_count, 0);
+        assert!(report.errors.is_empty());
+    }
+
     #[test]
     fn provider_candidate_preserves_locked_item_scoring_metadata_before_validation() {
         let mut package = TaskPackage::new("LI-AI-SCORING".to_string());
@@ -862,7 +1087,7 @@ mod tests {
         let mut package = generation_ready_package("writing-typed-message");
         populate_mock_candidate(&mut package, 0);
         package.scoring_package.task_specific_criteria =
-            vec!["作者要求：同时覆盖时间与地点".to_string()];
+            vec!["Author requirement: cover both time and location".to_string()];
         let expected = package.scoring_package.clone();
         let mut sparse_provider_scoring = expected.clone();
         sparse_provider_scoring.item_scoring_version.clear();
@@ -984,7 +1209,10 @@ mod tests {
 
         assert_eq!(deepseek_chat_output_text(&response), None);
         let detail = deepseek_empty_response_detail(&response);
-        assert_eq!(detail, "模型只返回了推理内容，finish_reason=stop");
+        assert_eq!(
+            detail,
+            "The model returned reasoning content only; finish_reason=stop"
+        );
         assert!(!detail.contains("private reasoning"));
     }
 
@@ -1000,7 +1228,7 @@ mod tests {
         assert_eq!(deepseek_chat_output_text(&response), None);
         assert_eq!(
             deepseek_empty_response_detail(&response),
-            "输出达到长度上限"
+            "The output reached the maximum length"
         );
     }
 

@@ -28,7 +28,7 @@ import type {
 
 const statusLabels = {
   open: "Open",
-  addressed: "Addressed by author; awaiting confirmation",
+  addressed: "Addressed; awaiting confirmation",
   resolved: "Resolved",
 } as const;
 
@@ -41,8 +41,6 @@ const eventLabels = {
 
 interface DiscussionCardProps {
   discussion: LanguageItemReviewDiscussion;
-  currentUserEmail: string | undefined;
-  ownerEmail: string;
   pending: boolean;
   onEvent: (
     discussionId: string,
@@ -54,7 +52,6 @@ interface DiscussionCardProps {
 function DiscussionCard(props: DiscussionCardProps) {
   const { discussion } = props;
   const [reply, setReply] = useState("");
-  const isAuthor = props.currentUserEmail === props.ownerEmail;
   const submit = (kind: ReviewDiscussionEventKind, message?: string) => {
     props.onEvent(discussion.id, kind, message);
     setReply("");
@@ -94,7 +91,7 @@ function DiscussionCard(props: DiscussionCardProps) {
           <Box key={event.id} bg="bg.subtle" borderRadius="md" p={3}>
             <Text fontSize="xs" color="fg.muted">
               {event.actorEmail} · {eventLabels[event.kind]} ·{" "}
-              {new Date(event.createdAt).toLocaleString("zh-CN")}
+              {new Date(event.createdAt).toLocaleString("en-GB")}
             </Text>
             {event.message ? <Text mt={1}>{event.message}</Text> : null}
           </Box>
@@ -119,7 +116,6 @@ function DiscussionCard(props: DiscussionCardProps) {
           Reply
         </Button>
         {discussion.kind === "changeRequest" &&
-        isAuthor &&
         discussion.status !== "resolved" ? (
           <Button
             size="sm"
@@ -131,17 +127,17 @@ function DiscussionCard(props: DiscussionCardProps) {
             Mark addressed
           </Button>
         ) : null}
-        {!isAuthor && discussion.status !== "resolved" ? (
+        {discussion.status !== "resolved" ? (
           <Button
             size="sm"
             colorPalette="green"
             loading={props.pending}
             onClick={() => submit("resolved", reply || undefined)}
           >
-            Confirm resolved
+            Mark resolved
           </Button>
         ) : null}
-        {!isAuthor && discussion.status === "resolved" ? (
+        {discussion.status === "resolved" ? (
           <Button
             size="sm"
             colorPalette="orange"
@@ -159,8 +155,6 @@ function DiscussionCard(props: DiscussionCardProps) {
 
 interface ReviewDiscussionsPanelProps {
   itemId: string;
-  ownerEmail: string;
-  currentUserEmail: string | undefined;
   latestVersion: LanguageItemVersion | undefined;
   requiredGateIds: string[];
   discussions: LanguageItemReviewDiscussion[];
@@ -169,10 +163,7 @@ interface ReviewDiscussionsPanelProps {
 
 export function ReviewDiscussionsPanel(props: ReviewDiscussionsPanelProps) {
   const queryClient = useQueryClient();
-  const isAuthor = props.currentUserEmail === props.ownerEmail;
-  const [kind, setKind] = useState<ReviewDiscussionKind>(
-    isAuthor ? "discussion" : "changeRequest",
-  );
+  const [kind, setKind] = useState<ReviewDiscussionKind>("discussion");
   const [gateId, setGateId] = useState(props.requiredGateIds[0] ?? "");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -236,16 +227,14 @@ export function ReviewDiscussionsPanel(props: ReviewDiscussionsPanelProps) {
             >
               Start discussion
             </Button>
-            {!isAuthor ? (
-              <Button
-                size="sm"
-                colorPalette="red"
-                variant={kind === "changeRequest" ? "solid" : "outline"}
-                onClick={() => setKind("changeRequest")}
-              >
-                Request changes
-              </Button>
-            ) : null}
+            <Button
+              size="sm"
+              colorPalette="red"
+              variant={kind === "changeRequest" ? "solid" : "outline"}
+              onClick={() => setKind("changeRequest")}
+            >
+              Request changes
+            </Button>
           </HStack>
           <Stack gap={3}>
             <HStack align="end" flexWrap="wrap">
@@ -314,8 +303,6 @@ export function ReviewDiscussionsPanel(props: ReviewDiscussionsPanelProps) {
             <DiscussionCard
               key={discussion.id}
               discussion={discussion}
-              currentUserEmail={props.currentUserEmail}
-              ownerEmail={props.ownerEmail}
               pending={eventMutation.isPending}
               onEvent={(discussionId, eventKind, eventMessage) =>
                 eventMutation.mutate({

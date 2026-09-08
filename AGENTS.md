@@ -13,7 +13,7 @@ Exam Creator is a Rust (Axum) + React (Vite + TypeScript) application for creati
 - GitHub OAuth (or mock auth in debug) with session management
 - Real-time collaboration via WebSockets (exam state sync, user presence)
 - Moderation workflow with approval/denial/feedback
-- Language Exam Item Creator with seven registered task formats, versioned authoring, optional real AI, deterministic validation, GitHub pull-request review, idempotent Staging export, and R-A1-1 assembly
+- Language Exam Item Creator with integrated versioned Assessment Settings, seven registered task formats, AI-first candidate generation, deterministic validation, human review, and idempotent Staging export
 
 ## Repository Structure
 
@@ -28,7 +28,7 @@ server/          Rust Axum backend
   ├── database/  DB helpers, Prisma bridging
   ├── state.rs   Shared in-memory state (ClientSync)
   ├── errors.rs  Unified error handling
-  └── language_items/ Registry, domain, validation, and AI provider boundary
+  └── language_items/ Versioned Registry store, domain, validation, and AI provider boundary
 prisma/          Schema & JS client generation
 public/          Static assets
 language-item-workbench/
@@ -96,6 +96,7 @@ sample.env       Environment variable template
 
 - `GITHUB_REVIEW_TOKEN` - fine-grained token with Contents and Pull requests read/write access
 - `GITHUB_REVIEW_REPOSITORY` - private review repository in `owner/repository` form
+- `GITHUB_REVIEW_WEBHOOK_SECRET` when automatic merged-PR synchronization is enabled
 
 **Optional (with defaults):**
 
@@ -127,14 +128,17 @@ sample.env       Environment variable template
 - WebSocket state in `Arc<Mutex<ClientSync>>` with 5-min cleanup task
 - Static file serving: Built frontend (`dist/`) served by Rust server
 - Workbench canonical data uses dedicated collections in the Staging MongoDB database and is independent of the user's database-environment setting
-- Workbench AI runs, exports, assemblies, and audit events use append-only records; GitHub PR commits are the configured submission-history and human-review authority, and merged files are revalidated before replacing the same item's current approved content
+- The Workbench has one authenticated user role. Central-rule maintenance, item setup, AI generation, editing, validation, and review are workflow operations rather than separate author/assessment-admin roles; record ownership still protects mutable drafts from unrelated users.
+- Central Blueprint, Can-do, Domain/Context, A1 difficulty, language-content, scoring, schema, review, and delivery rules are maintained in the structured Assessment Settings panel inside `/language-items`. Draft Registry versions must validate before publication, published versions are immutable, and every new item pins the active version.
+- Assessment Settings manages version identifiers internally and displays named rules. Configurations bind Slot × Item Format × exactly one Primary Can-do, derive skill/activity, allow centrally maintained active Contexts, and require Lower/Typical/Upper A1 profiles. New-item selections survive dismissal and refresh within the browser session; creation opens Edit & Preview with a single setup summary.
+- Workbench AI runs, exports, and audit events use append-only records; GitHub PR commits are the configured submission-history and human-review authority, and merged files are revalidated before replacing the same item's current approved content
 - Workbench item record state is independent from content/review status: owners can archive, soft-delete, and restore items while immutable versions, PR links, exports, and audits remain intact
 - Seven Item Formats are authorable and previewable: single select, matching, restricted input, form entry, typed message, spoken single, and spoken multiturn
 - A single fixed template registry binds each Item Format to its authoring editor and candidate-safe renderer; canonical TaskPackage metadata, scoring, delivery, and review partitions remain outside the candidate template
 - Language content separates core target refs from supporting context refs; structured information points can reference item-level scoring points, while registry scoring policy stays locked and author-visible
 - Workbench capability snapshots expose author-readable Can-do evidence, all communicative activities, Task Family/reference constraints, Slot × Item Format delivery policy, and complete scoring-contract summaries; locked rules remain visible to every author
 - Language-content compatibility is enforced on both client and server by context, primary/supporting Can-do, and receptive/productive mastery scope; saved candidate previews are reread through the candidate-safe preview API
-- Workbench AI defaults to a deterministic offline provider. DeepSeek uses server-side Chat Completions JSON mode; OpenAI uses Responses API structured outputs with `store: false`. All output is revalidated and provider errors are persisted as failed runs.
+- Workbench AI defaults to a deterministic offline provider. DeepSeek uses server-side Chat Completions JSON mode; OpenAI uses Responses API structured outputs with `store: false`. Candidate calls are independent and run asynchronously after a durable `queued` record is created; invalid candidates receive at most one focused repair, and final state is persisted as `partial`, `completed`, or `failed`.
 
 **WebSockets:**
 
@@ -210,8 +214,17 @@ sample.env       Environment variable template
 
 **Language Items:**
 
+- `GET /api/language-assessment/registry/active` - Get the active published central-rule snapshot
+- `GET /api/language-assessment/registry/versions` - List Registry draft and published versions
+- `GET /api/language-assessment/registry/versions/{version_id}` - Get a complete Registry version
+- `POST /api/language-assessment/registry/drafts` - Create a draft cloned from the active Registry
+- `PUT /api/language-assessment/registry/drafts/{version_id}` - Save a Registry draft with revision checking
+- `POST /api/language-assessment/registry/drafts/{version_id}/validate` - Validate cross-Registry references and template coverage
+- `GET /api/language-assessment/registry/drafts/{version_id}/impact` - Compare a draft with the active Registry
+- `POST /api/language-assessment/registry/drafts/{version_id}/publish` - Publish and activate an immutable Registry version
 - `GET|POST /api/language-items` - List items or create one from a required `blueprintSlotId` + allowed `itemFormatId` pair
 - `GET /api/language-items/registry` - Get the implemented registry capability snapshot
+- `GET /api/language-items/registry/{registry_version}` - Get the published Registry snapshot pinned by an existing item
 - `GET /api/language-items/ai-provider` - Get the active AI provider/model status without credentials
 - `GET /api/language-items/github-review/status` - Get GitHub review configuration status without credentials
 - `POST /api/language-items/github-review/batches` - Validate drafts, create submission snapshots, commit 1–50 items, and create a review PR; drafts lock only after PR creation succeeds
@@ -226,7 +239,7 @@ sample.env       Environment variable template
 - `GET /api/language-item-review-queue` - List items whose latest frozen version awaits review
 - `GET /api/language-items/{item_id}/audit` - Query item audit history
 - `GET /api/language-items/{item_id}/exports` - Query item export mappings
-- `GET|POST /api/language-items/{item_id}/ai-runs` - List or generate AI candidates
+- `GET|POST /api/language-items/{item_id}/ai-runs` - List AI runs or queue idempotent independent candidate generation
 - `GET|POST /api/language-items/{item_id}/ai-review` - List or run independent advisory review on a mutable draft
 - `GET|POST /api/language-item-versions/{version_id}/ai-review` - List or run isolated AI pre-review
 - `GET /api/language-item-versions/{version_id}/diff` - Compare a frozen TaskPackage with its prior frozen version
@@ -237,9 +250,6 @@ sample.env       Environment variable template
 - `POST /api/language-item-versions/{version_id}/revise` - Start a new mutable draft from a frozen version
 - `POST /api/language-item-versions/{version_id}/exports/staging` - Idempotent Staging export
 - `POST /api/language-item-versions/{version_id}/exports/production` - Explicitly rejected in MVP
-- `GET /api/language-item-assemblies` - List idempotent Slot assemblies
-- `GET /api/language-item-assemblies/{assembly_id}` - Get one Slot assembly and all source mappings
-- `POST /api/language-item-assemblies/staging` - Assemble 5–6 distinct exported R-A1-1 versions into a Staging legacy exam
 
 **Auth:**
 
@@ -295,6 +305,7 @@ sample.env       Environment variable template
 
 - Respect env var constraints (COOKIE_KEY length, required secrets)
 - Run `tsc` before shipping code changes
+- After every code update, proactively run the application build, restart affected running services when needed, and verify the updated page in the browser before handoff; do not wait for the user to request a rebuild.
 - Avoid `any` or `unsafe` without justification
 - No sweeping refactors
 - Update this file when changing architecture, env vars, or major modules

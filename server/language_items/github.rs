@@ -111,7 +111,7 @@ impl<'a> GithubClient<'a> {
                 Method::POST,
                 "git/commits",
                 Some(json!({
-                    "message": format!("提交题项审核批次 {batch_id}"),
+                    "message": format!("Submit item-review batch {batch_id}"),
                     "tree": tree.sha,
                     "parents": [base_ref.object.sha],
                 })),

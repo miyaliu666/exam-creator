@@ -150,20 +150,20 @@ uploadPolicies:
   status: NewCapabilityRequired
 speakingRateProfiles:
 - speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
-  description: 清楚、自然、较慢，适用于关键信息密集的 A1 输入。
+  description: Clear, natural, and slower, for A1 input containing dense key information.
   numericParameters: PendingVoiceSpecificCalibration
   status: Provisional
 - speakingRateProfileId: RATE-A1-CLEAR-NATURAL-v0.1
-  description: 清楚、自然、不急促，适用于极短熟悉表达。
+  description: Clear, natural, and unhurried, for very short familiar expressions.
   numericParameters: PendingVoiceSpecificCalibration
   status: Provisional
 pauseProfiles:
 - pauseProfileId: PAUSE-A1-SENTENCE-v0.1
-  description: 按自然短句和信息组停顿，不在答案前后异常停顿。
+  description: Pause by natural short sentences and information groups, with no unusual pause before or after the answer.
   numericParameters: PendingVoiceSpecificCalibration
   status: Provisional
 - pauseProfileId: PAUSE-A1-DIALOGUE-v0.1
-  description: 说话人轮次清楚，轮次间有一致自然停顿。
+  description: Keep speaker turns clear, with consistent natural pauses between turns.
   numericParameters: PendingVoiceSpecificCalibration
   status: Provisional
 slotPolicyMap:

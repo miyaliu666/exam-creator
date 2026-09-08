@@ -4,4 +4,5 @@ pub mod domain;
 pub mod export;
 pub mod github;
 pub mod registry;
+pub mod registry_store;
 pub mod validation;

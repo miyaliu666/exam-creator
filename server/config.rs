@@ -53,6 +53,7 @@ pub struct GithubReviewConfig {
     pub repository: String,
     pub base_branch: String,
     pub api_base_url: String,
+    pub webhook_secret: Option<String>,
 }
 
 impl fmt::Debug for GithubReviewConfig {
@@ -63,6 +64,10 @@ impl fmt::Debug for GithubReviewConfig {
             .field("repository", &self.repository)
             .field("base_branch", &self.base_branch)
             .field("api_base_url", &self.api_base_url)
+            .field(
+                "webhook_secret",
+                &self.webhook_secret.as_ref().map(|_| "[REDACTED]"),
+            )
             .finish()
     }
 }
@@ -246,11 +251,15 @@ impl EnvVars {
                 .unwrap_or_else(|_| "https://api.github.com".to_string())
                 .trim_end_matches('/')
                 .to_string();
+            let webhook_secret = var("GITHUB_REVIEW_WEBHOOK_SECRET")
+                .ok()
+                .filter(|value| !value.trim().is_empty());
             Some(GithubReviewConfig {
                 token,
                 repository,
                 base_branch,
                 api_base_url,
+                webhook_secret,
             })
         } else {
             None
