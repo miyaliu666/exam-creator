@@ -203,6 +203,13 @@ export interface InformationPoint {
   scoringPointId?: string;
 }
 
+/** Author/reviewer metadata; never part of CandidatePayload or CandidatePreview. */
+export interface EnglishTranslation {
+  path: string;
+  sourceText: string;
+  englishText: string;
+}
+
 export interface TaskPackage {
   taskId: string;
   taskVersion: string;
@@ -219,7 +226,7 @@ export interface TaskPackage {
     rendererVersion: string;
   };
   candidatePayload: CandidatePayload;
-  authoringPackage: { notes: string[] };
+  authoringPackage: { notes: string[]; englishTranslations?: EnglishTranslation[] };
   scoringPackage: {
     itemScoringVersion?: string;
     scoringContractTemplateId: string;
@@ -285,6 +292,7 @@ export interface GithubReviewLink {
   baseRef: string;
   headRef: string;
   headSha: string;
+  submissionHeadSha?: string;
   repositoryPath: string;
   sourceVersionId: string;
   sourceContentHash: string;
@@ -365,9 +373,23 @@ export interface AiCandidate {
   ordinal: number;
   status: string;
   candidatePayload: CandidatePayload;
+  englishTranslations?: EnglishTranslation[];
   proposedCorrectOptionId?: string;
   proposedScoringPackage?: TaskPackage["scoringPackage"];
   validation: ValidationResult;
+}
+
+export interface AiProviderCall {
+  candidateOrdinal: number;
+  phase: "initial" | "repair";
+  elapsedMilliseconds: number;
+  outcome: string;
+  httpStatus: number | null;
+  providerRequestId: string | null;
+  providerResponseId: string | null;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  totalTokens: number | null;
 }
 
 export interface AiGenerationRun {
@@ -390,6 +412,7 @@ export interface AiGenerationRun {
   difficultyBand: string;
   targetContentIds: string[];
   requiredInformationPoints: string[];
+  generationSetupSnapshot?: AiGenerationSetupSnapshot;
   requestedCount: number;
   candidates: AiCandidate[];
   adoptedCandidateId: string | null;
@@ -399,10 +422,28 @@ export interface AiGenerationRun {
   attemptCount: number;
   retryCount: number;
   candidateErrors: string[];
+  elapsedMilliseconds?: number | null;
+  providerCalls?: AiProviderCall[];
   createdBy: string;
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
+}
+
+export interface AiGenerationSetupSnapshot {
+  specVersions: TaskPackage["specVersions"];
+  blueprintSlotId: string;
+  taskFamilyId: string;
+  itemFormatId: string;
+  rendererId: string;
+  primaryCanDoId: string;
+  primaryDomain: string;
+  contextId: string;
+  difficultyBand: string;
+  difficulty: DifficultyProfile | null;
+  targetContentIds: string[];
+  supportingContentRefs: string[];
+  requiredInformationPoints: InformationPoint[];
 }
 
 export interface AiFinding {
@@ -598,6 +639,7 @@ export interface CapabilityDifficultyProfileSet {
 }
 
 export interface RegistrySnapshot {
+  settingsSchemaVersion?: number;
   bundleVersion: string;
   status: string;
   limitations: string[];
@@ -609,7 +651,7 @@ export interface RegistrySnapshot {
     description: string;
     allowedItemFormatIds: string[];
   }>;
-  taskFamilyOptions?: Array<{ id: string; displayName: string }>;
+  taskFamilyOptions?: Array<{ id: string; displayName: string; blueprintSlotIds?: string[]; allowedItemFormatIds?: string[] }>;
   referenceLabels?: Array<{ id: string; displayName: string; kind: string }>;
   candidateSchemas: unknown[];
   taskPackageSchema: unknown;
@@ -652,6 +694,7 @@ export interface RegistryVersionSummary {
 
 export interface RegistryVersionRecord extends RegistryVersionSummary {
   snapshot: RegistrySnapshot;
+  publicationWarnings?: string[];
 }
 
 export interface RegistryAuditEvent {
@@ -678,6 +721,10 @@ export interface RegistryValidationResult {
 export interface RegistryImpact {
   activeVersion: string;
   draftVersion: string;
+  draftRevision: number;
+  baseVersion: string | null;
+  staleBase: boolean;
+  additionalChanges: Array<{ label: string; count: number }>;
   itemsPinnedToActiveVersion: number;
   capabilityChanges: number;
   canDoChanges: number;

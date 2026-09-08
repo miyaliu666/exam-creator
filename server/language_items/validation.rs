@@ -128,7 +128,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                 &mut issues,
                 "registry.domain",
                 "content.primaryDomain",
-                "The selected domain is not available for this exam task",
+                "The selected domain is not available for this task configuration",
             );
         }
         if !capability
@@ -139,7 +139,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                 &mut issues,
                 "registry.context",
                 "content.contextId",
-                "The selected context is not available for this exam task",
+                "The selected context is not available for this task configuration",
             );
         }
     } else {
@@ -147,7 +147,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
             &mut issues,
             "registry.capability",
             "itemFormatId",
-            "This item format is not registered for the selected exam task",
+            "This item format is not registered for the selected blueprint slot",
         );
     }
     check_equal(
@@ -230,13 +230,10 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                 || content_option
                     .context_ids
                     .contains(&package.content.context_id);
-            let receptive_skill = matches!(
-                capability.primary_reported_skill.as_str(),
-                "Reading" | "Listening"
+            let mastery_matches = mastery_scope_matches(
+                content_option.mastery_scope.as_deref(),
+                &capability.primary_reported_skill,
             );
-            let mastery_matches = content_option.mastery_scope.as_deref().is_none_or(|scope| {
-                scope == "receptiveProductive" || (receptive_skill && scope == "receptive")
-            });
             if !relevant_can_do || !context_matches || !mastery_matches {
                 issue(
                     &mut issues,
@@ -360,6 +357,11 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
     }
     validate_candidate_payload(package, &mut issues);
     validate_item_scoring_spec(package, &mut issues);
+    issues.extend(super::english_translations::validate_english_translations(
+        &package.candidate_payload,
+        &package.authoring_package.english_translations,
+        false,
+    ));
 
     ValidationResult {
         valid: !issues.iter().any(|issue| issue.severity == "error"),
@@ -486,7 +488,79 @@ fn validate_item_scoring_spec(package: &TaskPackage, issues: &mut Vec<Validation
     }
 }
 
+fn validate_candidate_private_metadata(
+    value: &serde_json::Value,
+    path: &str,
+    issues: &mut Vec<ValidationIssue>,
+) {
+    match value {
+        serde_json::Value::Object(fields) => {
+            for (key, child) in fields {
+                // Keep this normalized key boundary aligned with review-repository candidate-checks.mjs.
+                let normalized: String = key
+                    .chars()
+                    .filter(char::is_ascii_alphanumeric)
+                    .map(|character| character.to_ascii_lowercase())
+                    .collect();
+                let child_path = format!("{path}.{key}");
+                if matches!(
+                    normalized.as_str(),
+                    "answer"
+                        | "answers"
+                        | "answerkey"
+                        | "answerkeyref"
+                        | "correctanswer"
+                        | "correctoptionid"
+                        | "correctmatches"
+                        | "acceptedresponses"
+                        | "iscorrect"
+                        | "scoring"
+                        | "scoringpackage"
+                        | "scoringpoints"
+                        | "maxrawscore"
+                        | "rubric"
+                        | "rubricid"
+                        | "benchmarksetversion"
+                        | "review"
+                        | "reviewpackage"
+                        | "reviewgates"
+                        | "gates"
+                        | "authoringpackage"
+                        | "englishtranslations"
+                        | "authornotes"
+                        | "internalnotes"
+                        | "explanation"
+                        | "rationale"
+                ) {
+                    issue(
+                        issues,
+                        "contract.candidatePrivateMetadata",
+                        &child_path,
+                        "Candidate-visible content cannot contain answer, scoring, review, or internal author metadata",
+                    );
+                }
+                validate_candidate_private_metadata(child, &child_path, issues);
+            }
+        }
+        serde_json::Value::Array(entries) => {
+            for (index, child) in entries.iter().enumerate() {
+                validate_candidate_private_metadata(child, &format!("{path}.{index}"), issues);
+            }
+        }
+        _ => {}
+    }
+}
+
+pub fn validate_candidate_privacy(package: &TaskPackage) -> Vec<ValidationIssue> {
+    let mut issues = Vec::new();
+    let candidate = serde_json::to_value(&package.candidate_payload)
+        .expect("candidate payload is serializable");
+    validate_candidate_private_metadata(&candidate, "candidatePayload", &mut issues);
+    issues
+}
+
 fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<ValidationIssue>) {
+    issues.extend(validate_candidate_privacy(package));
     match &package.candidate_payload {
         CandidatePayload::SingleSelect(payload) => {
             validate_stimulus(&payload.stimulus, "candidatePayload.stimulus", issues);
@@ -974,29 +1048,6 @@ pub fn validate_generation_setup(package: &TaskPackage) -> ValidationResult {
         );
     }
     validate_difficulty_profile(package, &registry, &mut issues);
-    let mut seen = HashSet::new();
-    for (index, content_id) in package.content.target_content_ids.iter().enumerate() {
-        if !seen.insert(content_id) {
-            issue(
-                &mut issues,
-                "authoring.duplicateContent",
-                &format!("content.targetContentIds.{index}"),
-                "Language content cannot be selected more than once",
-            );
-        }
-        if !registry
-            .content_id_options
-            .iter()
-            .any(|entry| &entry.id == content_id)
-        {
-            issue(
-                &mut issues,
-                "authoring.unknownContent",
-                &format!("content.targetContentIds.{index}"),
-                "The selected language content was not found in the current Registry",
-            );
-        }
-    }
     ValidationResult {
         valid: !issues.iter().any(|issue| issue.severity == "error"),
         registry_bundle_version: registry.bundle_version.clone(),
@@ -1029,7 +1080,7 @@ fn validate_authoring_setup(
             issues,
             "authoring.domain",
             "content.primaryDomain",
-            "The selected domain is not available for this exam task",
+            "The selected domain is not available for this task configuration",
         );
     }
     if capability.is_none_or(|entry| {
@@ -1041,7 +1092,7 @@ fn validate_authoring_setup(
             issues,
             "authoring.context",
             "content.contextId",
-            "The selected context is not available for this exam task",
+            "The selected context is not available for this task configuration",
         );
     } else if context.is_none_or(|entry| {
         !entry
@@ -1065,48 +1116,75 @@ fn validate_authoring_setup(
             "Select at least one vocabulary, grammar, character, or pragmatic target",
         );
     }
-    for (index, content_id) in package.content.target_content_ids.iter().enumerate() {
-        if let Some(content) = registry
-            .content_id_options
-            .iter()
-            .find(|entry| &entry.id == content_id)
-        {
-            if content.kind == "supported" {
+    for (field, supporting, references) in [
+        (
+            "targetContentIds",
+            false,
+            &package.content.target_content_ids,
+        ),
+        (
+            "supportingContentRefs",
+            true,
+            &package.content.supporting_content_refs,
+        ),
+    ] {
+        let mut seen = HashSet::new();
+        for (index, content_id) in references.iter().enumerate() {
+            let path = format!("content.{field}.{index}");
+            if !seen.insert(content_id) {
                 issue(
                     issues,
-                    "authoring.contentPartition",
-                    &format!("content.targetContentIds.{index}"),
-                    "Supporting content belongs in the Supporting content section and cannot replace core language content",
+                    "authoring.duplicateContent",
+                    &path,
+                    "Language content cannot be selected more than once",
                 );
             }
-            let context_matches = content.context_ids.is_empty()
-                || content.context_ids.contains(&package.content.context_id);
-            let can_do_matches = capability.is_some_and(|capability| {
-                content.can_do_ids.is_empty()
-                    || content.can_do_ids.contains(&capability.primary_can_do_id)
-                    || content
-                        .can_do_ids
-                        .iter()
-                        .any(|id| capability.supporting_can_do_ids.contains(id))
-            });
-            let receptive_skill = capability.is_some_and(|capability| {
-                matches!(
-                    capability.primary_reported_skill.as_str(),
-                    "Reading" | "Listening"
-                )
-            });
-            let mastery_matches = content.mastery_scope.as_deref().is_none_or(|scope| {
-                scope == "receptiveProductive" || (receptive_skill && scope == "receptive")
-            });
-            if !context_matches || !can_do_matches || !mastery_matches {
+            if let Some(content) = registry
+                .content_id_options
+                .iter()
+                .find(|entry| &entry.id == content_id)
+            {
+                if (content.kind == "supported") != supporting {
+                    issue(
+                        issues,
+                        "authoring.contentPartition",
+                        &path,
+                        "Core language targets and supporting content must remain in their respective sections",
+                    );
+                }
+                let context_matches = content.context_ids.is_empty()
+                    || content.context_ids.contains(&package.content.context_id);
+                let can_do_matches = capability.is_some_and(|capability| {
+                    content.can_do_ids.is_empty()
+                        || content.can_do_ids.contains(&capability.primary_can_do_id)
+                        || content
+                            .can_do_ids
+                            .iter()
+                            .any(|id| capability.supporting_can_do_ids.contains(id))
+                });
+                let mastery_matches = capability.is_some_and(|capability| {
+                    mastery_scope_matches(
+                        content.mastery_scope.as_deref(),
+                        &capability.primary_reported_skill,
+                    )
+                });
+                if !context_matches || !can_do_matches || !mastery_matches {
+                    issue(
+                        issues,
+                        "authoring.contentCompatibility",
+                        &path,
+                        &format!(
+                            "\"{}\" is incompatible with the current Can-do, mastery scope, or context",
+                            content.label
+                        ),
+                    );
+                }
+            } else {
                 issue(
                     issues,
-                    "authoring.contentCompatibility",
-                    &format!("content.targetContentIds.{index}"),
-                    &format!(
-                        "\"{}\" is incompatible with the current Can-do, mastery scope, or context",
-                        content.label
-                    ),
+                    "authoring.unknownContent",
+                    &path,
+                    "The selected language content was not found in the current Registry",
                 );
             }
         }
@@ -1136,12 +1214,49 @@ fn validate_authoring_setup(
     }
 }
 
+fn mastery_scope_matches(scope: Option<&str>, primary_skill: &str) -> bool {
+    match scope {
+        None | Some("receptiveProductive") => true,
+        Some("receptive") => matches!(primary_skill, "Reading" | "Listening"),
+        Some("productive") => matches!(primary_skill, "Writing" | "Speaking"),
+        _ => false,
+    }
+}
+
 fn validate_difficulty_profile(
     package: &TaskPackage,
     registry: &RegistrySnapshot,
     issues: &mut Vec<ValidationIssue>,
 ) {
+    let standard = capability_for(
+        registry,
+        &package.blueprint_slot_id,
+        &package.item_format_id,
+        Some(&package.content.primary_can_do_id),
+    )
+    .and_then(|capability| {
+        difficulty_standards_for_capability(registry, capability)
+            .iter()
+            .find(|standard| standard.id == package.content.difficulty_band)
+    });
+    let Some(standard) = standard else {
+        issue(
+            issues,
+            "difficulty.bandUnavailable",
+            "content.difficultyBand",
+            "The selected difficulty is unavailable for this task in its saved assessment settings",
+        );
+        return;
+    };
     let Some(difficulty) = &package.content.difficulty else {
+        if registry.settings_schema_version >= 1 {
+            issue(
+                issues,
+                "difficulty.profileRequired",
+                "content.difficulty",
+                "Select a difficulty profile for this task",
+            );
+        }
         return;
     };
     if difficulty.intended_band != package.content.difficulty_band {
@@ -1188,7 +1303,7 @@ fn validate_difficulty_profile(
             "A1 items cannot require complex inference",
         );
     }
-    if !(1..=2).contains(&drivers.information_points) {
+    if registry.settings_schema_version == 0 && !(1..=2).contains(&drivers.information_points) {
         issue(
             issues,
             "difficulty.informationPoints",
@@ -1241,39 +1356,35 @@ fn validate_difficulty_profile(
         package.candidate_payload,
         CandidatePayload::SingleSelect(_) | CandidatePayload::Matching(_)
     );
-    let standards = capability_for(
-        registry,
-        &package.blueprint_slot_id,
-        &package.item_format_id,
-        Some(&package.content.primary_can_do_id),
-    )
-    .map(|capability| difficulty_standards_for_capability(registry, capability))
-    .unwrap_or(registry.difficulty_standards.as_slice());
-    let anchor_mismatch = standards
-        .iter()
-        .find(|standard| standard.id == difficulty.intended_band)
-        .is_some_and(|standard| {
-            drivers.information_points < standard.information_points_min
-                || drivers.information_points > standard.information_points_max
-                || !standard
-                    .allowed_input_lengths
-                    .contains(&drivers.input_length)
-                || !standard
-                    .allowed_support_levels
-                    .contains(&drivers.support_level)
-                || (uses_distractors
-                    && !standard
-                        .allowed_distractor_similarities
-                        .contains(&drivers.distractor_similarity))
-                || drivers.inference_required != standard.default_drivers.inference_required
-        });
+    let anchor_mismatch = drivers.information_points < standard.information_points_min
+        || drivers.information_points > standard.information_points_max
+        || !standard
+            .allowed_input_lengths
+            .contains(&drivers.input_length)
+        || !standard
+            .allowed_support_levels
+            .contains(&drivers.support_level)
+        || (uses_distractors
+            && !standard
+                .allowed_distractor_similarities
+                .contains(&drivers.distractor_similarity))
+        || drivers.inference_required != standard.default_drivers.inference_required;
     if anchor_mismatch {
-        warning(
-            issues,
-            "difficulty.anchorMismatch",
-            "content.difficulty.drivers",
-            "The actual difficulty drivers do not fully match the selected A1 difficulty anchor; review them manually",
-        );
+        if registry.settings_schema_version >= 1 {
+            issue(
+                issues,
+                "difficulty.anchorMismatch",
+                "content.difficulty.drivers",
+                "The difficulty drivers must stay within the selected task's configured difficulty ranges",
+            );
+        } else {
+            warning(
+                issues,
+                "difficulty.anchorMismatch",
+                "content.difficulty.drivers",
+                "The difficulty drivers do not fully match the saved A1 difficulty anchor; review them manually",
+            );
+        }
     }
 }
 
@@ -1341,6 +1452,221 @@ mod tests {
     #[test]
     fn valid_single_select_passes() {
         assert!(validate_task_package(&valid_package()).valid);
+    }
+
+    #[test]
+    fn candidate_source_profiles_reject_nested_private_metadata_but_allow_public_fields() {
+        let mut package =
+            TaskPackage::from_template("LI-PROFILE-BOUNDARY".to_string(), "writing-form-entry")
+                .unwrap();
+        let CandidatePayload::FormEntry(payload) = &mut package.candidate_payload else {
+            panic!("form fixture");
+        };
+        payload.situation = "报名参加中文课。".to_string();
+        payload.instructions = "请填写报名表。".to_string();
+        for (index, field) in payload.fields.iter_mut().enumerate() {
+            field.label = format!("字段{}", index + 1);
+        }
+        payload.source_profile = Some(serde_json::json!({
+            "person": { "name": "小林", "age": 18 },
+            "details": [{ "label": "上课时间", "value": "下午三点" }]
+        }));
+        let mut issues = Vec::new();
+        validate_candidate_payload(&package, &mut issues);
+        assert!(issues.is_empty(), "{issues:?}");
+
+        for key in [
+            "correctOptionId",
+            "Correct_Option_ID",
+            "review-package",
+            "scoringPoints",
+            "rationale",
+            "authorNotes",
+            "englishTranslations",
+            "English_Translations",
+        ] {
+            let CandidatePayload::FormEntry(payload) = &mut package.candidate_payload else {
+                unreachable!();
+            };
+            payload.source_profile = Some(
+                serde_json::json!({ "details": [{ key: "private value must not appear in the error" }] }),
+            );
+            issues.clear();
+            validate_candidate_payload(&package, &mut issues);
+            let issue = issues
+                .iter()
+                .find(|issue| issue.code == "contract.candidatePrivateMetadata")
+                .expect("nested private metadata must be rejected");
+            assert_eq!(issue.severity, "error");
+            assert_eq!(
+                issue.path,
+                format!("candidatePayload.sourceProfile.details.0.{key}")
+            );
+            assert!(!issue.message.contains("private value must not appear"));
+        }
+    }
+
+    #[test]
+    fn configured_difficulty_ranges_are_enforced_instead_of_global_defaults() {
+        let package = valid_package();
+        let mut registry = snapshot().clone();
+        registry.settings_schema_version = 1;
+        let profile = registry
+            .capability_difficulty_profile_sets
+            .iter_mut()
+            .find(|profile| {
+                profile.blueprint_slot_id == package.blueprint_slot_id
+                    && profile.item_format_id == package.item_format_id
+                    && profile.primary_can_do_id == package.content.primary_can_do_id
+            })
+            .expect("configured task difficulty");
+        let standard = profile
+            .standards
+            .iter_mut()
+            .find(|standard| standard.id == "TypicalA1")
+            .expect("typical difficulty");
+        standard.information_points_min = 2;
+        standard.default_drivers.information_points = 2;
+
+        let mut issues = Vec::new();
+        validate_difficulty_profile(&package, &registry, &mut issues);
+        assert!(issues.iter().any(|issue| issue.code == "difficulty.anchorMismatch" && issue.severity == "error"));
+    }
+
+    #[test]
+    fn missing_configured_band_does_not_fall_back_to_global_difficulty() {
+        let package = valid_package();
+        let mut registry = snapshot().clone();
+        registry.settings_schema_version = 1;
+        for profile in &mut registry.capability_difficulty_profile_sets {
+            profile
+                .standards
+                .retain(|standard| standard.id != package.content.difficulty_band);
+        }
+
+        let mut issues = Vec::new();
+        validate_difficulty_profile(&package, &registry, &mut issues);
+        assert!(
+            issues.iter().any(
+                |issue| issue.code == "difficulty.bandUnavailable" && issue.severity == "error"
+            )
+        );
+    }
+
+    #[test]
+    fn legacy_global_difficulty_remains_valid_without_modern_profiles() {
+        let package = valid_package();
+        let mut registry = snapshot().clone();
+        registry.settings_schema_version = 0;
+        registry.capability_difficulty_profile_sets.clear();
+
+        let mut issues = Vec::new();
+        validate_difficulty_profile(&package, &registry, &mut issues);
+        assert!(issues.is_empty(), "{issues:?}");
+    }
+
+    #[test]
+    fn modern_settings_require_an_explicit_item_difficulty_profile() {
+        let mut package = valid_package();
+        package.content.difficulty = None;
+        let mut registry = snapshot().clone();
+        registry.settings_schema_version = 1;
+
+        let mut issues = Vec::new();
+        validate_difficulty_profile(&package, &registry, &mut issues);
+        assert!(
+            issues
+                .iter()
+                .any(|issue| issue.code == "difficulty.profileRequired")
+        );
+    }
+
+    #[test]
+    fn pinned_legacy_difficulty_deviations_remain_warnings() {
+        let mut package = valid_package();
+        package
+            .content
+            .difficulty
+            .as_mut()
+            .unwrap()
+            .drivers
+            .input_length = "wordOrPhrase".to_string();
+        let mut registry = snapshot().clone();
+        registry.settings_schema_version = 0;
+
+        let mut issues = Vec::new();
+        validate_difficulty_profile(&package, &registry, &mut issues);
+        assert!(
+            issues
+                .iter()
+                .any(|issue| issue.code == "difficulty.anchorMismatch"
+                    && issue.severity == "warning")
+        );
+        assert!(!issues.iter().any(|issue| issue.severity == "error"));
+
+        package.content.difficulty = None;
+        issues.clear();
+        validate_difficulty_profile(&package, &registry, &mut issues);
+        assert!(issues.is_empty());
+    }
+
+    #[test]
+    fn modern_configured_three_information_points_are_valid_but_legacy_cap_remains() {
+        let mut package = valid_package();
+        package
+            .content
+            .difficulty
+            .as_mut()
+            .unwrap()
+            .drivers
+            .information_points = 3;
+        let mut registry = snapshot().clone();
+        registry.settings_schema_version = 1;
+        let profile = registry
+            .capability_difficulty_profile_sets
+            .iter_mut()
+            .find(|profile| {
+                profile.blueprint_slot_id == package.blueprint_slot_id
+                    && profile.item_format_id == package.item_format_id
+                    && profile.primary_can_do_id == package.content.primary_can_do_id
+            })
+            .unwrap();
+        let standard = profile
+            .standards
+            .iter_mut()
+            .find(|standard| standard.id == package.content.difficulty_band)
+            .unwrap();
+        standard.information_points_max = 3;
+        let mut issues = Vec::new();
+        validate_difficulty_profile(&package, &registry, &mut issues);
+        assert!(issues.is_empty(), "{issues:?}");
+
+        registry.settings_schema_version = 0;
+        validate_difficulty_profile(&package, &registry, &mut issues);
+        assert!(
+            issues
+                .iter()
+                .any(|issue| issue.code == "difficulty.informationPoints"
+                    && issue.severity == "error")
+        );
+    }
+
+    #[test]
+    fn mastery_scope_accepts_productive_content_only_for_productive_skills() {
+        for skill in ["Writing", "Speaking"] {
+            assert!(mastery_scope_matches(Some("productive"), skill));
+            assert!(!mastery_scope_matches(Some("receptive"), skill));
+            assert!(mastery_scope_matches(Some("receptiveProductive"), skill));
+        }
+        for skill in ["Reading", "Listening"] {
+            assert!(!mastery_scope_matches(Some("productive"), skill));
+            assert!(mastery_scope_matches(Some("receptive"), skill));
+            assert!(mastery_scope_matches(Some("receptiveProductive"), skill));
+        }
+        assert!(!mastery_scope_matches(
+            Some("productive"),
+            "Unregistered skill"
+        ));
     }
 
     #[test]
@@ -1464,6 +1790,44 @@ mod tests {
                 .issues
                 .iter()
                 .any(|issue| issue.code == "authoring.domainContext")
+        );
+    }
+
+    #[test]
+    fn preserved_supporting_content_must_match_setup_before_generation_or_submission() {
+        let mut registry = snapshot().clone();
+        registry.bundle_version = "registry-test-supporting-compatibility".to_string();
+        let supporting = registry
+            .content_id_options
+            .iter_mut()
+            .find(|entry| entry.kind == "supported")
+            .unwrap();
+        supporting.context_ids = vec!["incompatible-context".to_string()];
+        let mut package = valid_package();
+        package.spec_versions.registry_bundle_version = registry.bundle_version.clone();
+        package.content.supporting_content_refs = vec![supporting.id.clone()];
+        crate::language_items::registry::install_published_snapshot(registry, false);
+
+        for result in [
+            validate_generation_setup(&package),
+            validate_task_package(&package),
+        ] {
+            assert!(!result.valid);
+            assert!(
+                result
+                    .issues
+                    .iter()
+                    .any(|issue| issue.code == "authoring.contentCompatibility"
+                        && issue.path == "content.supportingContentRefs.0")
+            );
+        }
+        package.content.supporting_content_refs =
+            vec!["unregistered-supporting-content".to_string()];
+        assert!(
+            validate_generation_setup(&package)
+                .issues
+                .iter()
+                .any(|issue| issue.code == "authoring.unknownContent")
         );
     }
 }

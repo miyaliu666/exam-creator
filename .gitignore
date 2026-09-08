@@ -32,3 +32,4 @@ target/
 # Local-only planning and Workbench documentation
 /docs/
 /language-item-workbench/docs/
+/language-item-workbench/WORKSPACE-COMPLETION.md

@@ -1,4 +1,12 @@
-import type { RegistryVersionRecord } from "./types";
+import type { RegistryVersionRecord, RegistryVersionSummary } from "./types";
+
+export function selectRegistryForEditing(versions: RegistryVersionSummary[], email?: string) {
+  const active = versions.find((entry) => entry.active);
+  const draft = active && versions.find((entry) =>
+    entry.status === "draft" && entry.createdBy === email && entry.baseVersion === active.version,
+  );
+  return draft || active;
+}
 
 export function registryRecordKey(record: RegistryVersionRecord) {
   return `${record.id}:${record.revision}:${record.status}:${record.active}`;

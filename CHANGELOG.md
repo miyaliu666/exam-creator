@@ -2,100 +2,38 @@
 
 ## [Unreleased]
 
-- render shipped legacy Registry names and rule descriptions in English throughout Assessment Settings without rewriting saved versions or Chinese vocabulary; preserve unchanged list fields on focus/blur
-- require proactive builds and running-page verification after code updates
-- remove online-user initial avatars from headers, dashboard cards, exam cards, and moderation views
-- automatically enter the app with the local Workbench identity when debug mock authentication is enabled, while preserving production authentication
-
 ### Added
 
-- add a versioned Assessment Settings backend for draft, validation, impact analysis, immutable publication, audit, and runtime loading of Blueprint, Can-do, Domain/Context, difficulty, content, scoring, schema, review, and delivery rules
-- add durable asynchronous AI candidate runs with idempotency keys, independent per-candidate provider calls, one deterministic-error repair pass, partial-success tracking, restart recovery, and client polling
-- add publication validation for all seven classified Exercise Template schemas and complete Slot × Domain × Context coverage; add the missing `S-A1-2 × Educational → D16` mapping in the provisional Registry
-- relocate versioned Workbench registries and compile-time contracts under `language-item-workbench/`; keep planning and software documentation local-only
-- rename the product-facing workbench title to `Language Exam Item Creator`
-- add Language Exam Item Creator software requirements, architecture, implementation plan, and strict TaskPackage contract
-- add registry-backed `R-A1-1` single-select authoring, revision-safe autosave, constraint validation, safe candidate preview, locked immutable versions, content hashes, and revision workflow
-- add deterministic provider-neutral AI candidate generation/adoption plus independent Draft/Version AI review with versioned prompts and output schemas
-- add review queue and append-only human gates with four decisions, field/rule references, and `ApprovedForExport` lifecycle
-- add compensating, idempotent Staging export to canonical handoff plus legacy Exam Creator/Environment collections, including source-to-legacy ID mappings and generator smoke coverage
-- add Workbench database indexes, API routes, dashboard entry, item list, editor, registry guidance, audit history, and export history UI
-- add MVP acceptance report and exercise-template clean-room adoption record
-- add Phase 2B immutable TaskPackage version diffs, reviewer Before/After UI, and candidate renderer registry dispatch for editor and AI previews
-- add Phase 2C task-oriented Chinese Workbench navigation, workflow sections, human-readable registry labels, and bounded content search
-- add optional Phase 2D DeepSeek and OpenAI Responses API providers with structured outputs, server-only credentials, deterministic revalidation, failure runs, and offline mock fallback
-- add Phase 2E local test identities, visible current identity, and per-gate latest-actor attribution
-- add platform-native review discussions with replies, addressed/resolved/reopened states, reviewer confirmation, audit events, and unresolved change-request export blocking
-- add private GitHub review-repository integration with atomic item batches, pull-request creation, review-state synchronization, merged-content revalidation/import, and audit links
-- add all seven registered Chinese A1 Item Formats across creation, authoring, candidate preview, deterministic validation, mock/DeepSeek generation, freezing, GitHub review, and Workbench Staging export
-- add a dependency-free GitHub Action template that validates item identities, format structure, scoring separation, and review manifests
-- add Slot-first creation for all 15 A1 Blueprint Slots and all 21 allowed Slot/Item-Format combinations, with server-locked Can-do, renderer, scoring, delivery, domain and context contracts
-- add author-visible scoring contracts in both authoring stages, including policy explanations, immutable/editable separation, task-specific criteria, rubric, version, and current item scoring coverage
-- add complete author-facing capability briefs with all communicative activities, supporting Can-dos, evidence, A1 boundaries, Task Family behavior, delivery rules, prohibitions, and valid/invalid reference tasks
-- add deterministic information-point suggestions plus server-confirmed Candidate Preview round trips and field-level validation feedback
-- add a single fixed Item-Format template registry that binds all seven authoring editors and candidate-safe renderers while retaining the complete Workbench TaskPackage contract
-- add structured information points with type and scoring-point linkage, separate supporting-content references, and author-editable item scoring points with automatic total-score calculation
-- add owner-controlled active, archived, and recoverable deleted item states with audit history, Workbench filters, restore actions, and exclusion from review queues
-- add signed GitHub pull-request webhooks with durable delivery records and idempotent automatic merge synchronization, while retaining manual PR sync as a recovery path
-- add Registry audit-history APIs/UI, unsaved-change protection, and add/retire/delete controls for central Blueprint, Can-do, and Context rules
-- add pull-request CI for frontend type/build checks and Rust formatting, checking, and tests
+- add the Chinese A1 Language Exam Item Creator with seven item formats, 15 Blueprint slots, and 21 allowed slot/format combinations
+- add versioned Assessment Settings for Blueprint, Can-do, Context, difficulty, language content, scoring, review, and delivery rules; each item pins its published Registry version
+- add structured authoring, candidate-safe previews, deterministic validation, immutable item versions, and audit history
+- add asynchronous AI candidate generation with offline mock, DeepSeek and OpenAI providers, generation-setup snapshots, bounded repair, and provider telemetry
+- add Chinese-English target search and author/reviewer translations while keeping candidate-facing content separate
+- add GitHub PR submission and review, pinned validation assets, merged-content revalidation, and signed-webhook synchronization with retries
+- add review discussions, owner-controlled archive/delete/restore operations, and idempotent Staging export
+- add frontend, Rust, and review-validator regression tests and CI checks
+- document local startup, item creation, Assessment Settings, and review-repository setup
 
 ### Changed
 
-- remove Rule version and Version label from Assessment Settings; manage bounded version identifiers internally while retaining validation, impact review, and immutable publication
-- configure Slot × Item Format × exactly one Primary Can-do using business names, derived skill/activity, extensible domain-scoped contexts, and three complete per-configuration A1 difficulty profiles
-- limit New item to six creation criteria, preserve unfinished selections for the browser session, prevent outside-click dismissal, and open created drafts directly in Edit & Preview with a single criteria summary
-- protect unsaved Assessment Settings changes across navigation, refresh, sign-out, and background data refetches
-- keep Assessment Settings beside `+ New item` inside `/language-items`, show business names instead of internal Registry IDs, and replace raw Registry JSON editing with structured fields
-- remove the R-A1-1 Assemble workflow feature, its client UI/API, server routes, persistence bindings, and legacy assembly adapter; complete-exam composition remains outside Language Exam Item Creator
-- limit free-text item search to title and Item ID while fixed categories remain explicit dropdown filters
-- use one authenticated Workbench role across central-rule maintenance, item creation, AI generation, editing, validation, and review; remove the application-level prohibition on reviewing or opening change requests for one's own item
-- make the active published Registry the source for new items while preserving each item's pinned Registry version for validation, AI generation, review gates, and export
-- make AI generation the primary queued workflow and keep manual item entry as a fallback; AI remains limited to candidate content and answer proposals while people select, edit, validate, review, publish, and export
-- make validated drafts directly submittable to GitHub review, keep editing and AI regeneration available until PR creation succeeds, and lock only after successful PR creation
-- use the item title plus English capability/checklist context in review PRs; import merged GitHub edits back into the same logical item/current version while Git commits preserve the original submission snapshot
-- use English-only Workbench chrome, generated draft titles, and pull-request metadata; replace Slot, Can-do, and Item Format codes with business names in reviewer-facing PR summaries while retaining canonical codes inside machine-validated item files
-- treat the checked-in exercise-template catalog as the primary question-structure source through TaskPackage adapters, remove parallel `TPL-A1-*` identities, and add form-entry and spoken-multiturn template coverage
-- simplify authoring pages and the item list by hiding internal readiness/delivery labels and low-value operational metadata; keep capability details in a disclosure and low-frequency item actions in a menu
-- make language-content choices depend on Slot, Can-do, skill, mastery scope, format, and context, and add candidate-text coverage hints
-- replace editable per-item scoring policy with a concise author-visible answer/scoring summary; scoring points, totals, normalization, rubrics, and benchmark references are regenerated from the locked registry contract on save and AI adoption
-
-- use repository-local Prisma schemas for reproducible Rust type generation
-- allow Staging generation to load Staging-only Workbench smoke exams while preserving production fallback for existing exams
-- keep mock GitHub authentication on the current localhost/127.0.0.1 host so development cookies are not lost across hostnames
-- show the active AI provider truthfully inside the editor and use Chinese copy in candidate previews
-- make constraint selection followed by AI generation the primary authoring path, with manual authoring as a fallback
-- expose vocabulary, grammar, character, and pragmatic targets as category-based selectors and send their human-readable registry entries plus the full difficulty profile to the AI provider
-- default new single-select items to a fixed reviewed option order; shuffled orders now produce a validation warning
-- use DeepSeek Chat Completions JSON mode with non-thinking structured requests, schema-shaped examples, and one automatic retry for empty JSON responses; return actionable connection, timeout, and provider errors without exposing credentials
-- validate AI authoring settings before a paid request; cascade domain-to-context choices and filter/count vocabulary, grammar, character, and pragmatic targets by context
-- replace item-card grids with a searchable table; separate content lifecycle labels from Staging delivery and add explicit revision, blocked, rejected, and approved states
-- make GitHub pull requests the configured human-review surface; keep legacy in-platform review APIs only as a fallback when GitHub review is disabled
-- treat Workbench Staging export as the canonical handoff for every format; create legacy Exam Environment records only when a lossless single-select adapter exists
-- persist GitHub synchronization failures as a blocked lifecycle state, skip completed batches during bulk sync, and allow merged items to begin a fresh auditable revision
-- import reviewer-edited merged content into a new immutable approved version instead of rewriting the submitted snapshot, and refuse to overwrite a newer Draft
-- replace the type-first new-item menu with an explicit Blueprint task selector, no default task, task-scoped formats, human-readable locked capability details, and cascading domain/context choices
-- derive and validate delivery policy from the final Slot × Item Format capability, so matching and selection items do not inherit restricted-input policies from another format in the same Slot
-- filter authoring content by Can-do, supporting Can-dos, receptive/productive mastery scope, and context on both client and server; send the complete capability and scoring Task Brief to real AI providers
-- separate the four skill headings from Blueprint selection as explicit browse filters, show capability/scoring context before creation, and reapply locked Registry fields when saving legacy drafts
-- render language-content candidates and selected targets as responsive full-width grids instead of a narrow single column
-- tolerate a newly built Workbench client connecting temporarily to an older Registry snapshot, and ignore locked Rust targets in the Vite watcher on Windows
-- show independent authoring, Staging-package, and formal-renderer readiness instead of collapsing them into one implementation badge
-- add per-format array reordering and synchronize matching, restricted-input, and form response units with their item scoring points
-- streamline Workbench authoring with decision-first creation, compact capability and language-content guidance, and progressive disclosure for fixed scoring, delivery, readiness, reference, and technical metadata
-- simplify the Workbench header and item table by hiding the presence avatar, removing the updated timestamp, exposing archive and delete as separate action columns, and placing PR links below status badges
-- start new items with an empty title and show the authoring/history guidance inside the title input as its placeholder
+- organize authoring as Prepare → Edit & preview → Check & submit, with autosave, unsaved-change protection, and current validation required for submission
+- use one authenticated Workbench role while retaining draft ownership checks
+- apply staged Domain, Context, and Difficulty corrections through Edit item setup, preserving authored content and requiring explicit conflict repair
+- simplify Assessment Settings with named configurations, searchable selections, fixed A1 difficulty tabs, and explicit publication
+- lock scoring policy and complete difficulty schemes to the item's pinned Registry version
+- use English Workbench controls and Chinese candidate content, with shared field labels and readable rule names
+- use one fixed editor and candidate renderer per item format; remove the separate R-A1-1 Assemble workflow
+- serve frontend development on IPv4 loopback port 8001 and align development configuration
+- use repository-local Prisma schemas and a consistent Debian base for Docker builds
+- keep development process reports local while retaining operational guides
 
 ### Fixed
 
-- reject unknown explicit Primary Can-do selections instead of silently falling back; validate active compatible contexts, complete difficulty bands and ranges, and readable registry names; compare publication impact by Slot × Format × Primary Can-do
-- standardize English Workbench copy, punctuation, date formatting, terminology, and singular/plural forms; translate Registry labels and rules, legacy published snapshots, user-visible validation, and AI-provider errors while preserving Chinese learning content
-
-- remove the remaining internal Workbench name from user-facing loading and local sign-in copy
-- honor `SESSION_TTL_IN_S` for inactivity expiry, allow the development `sid` cookie over local HTTP, clear authentication on 401, and replace raw `no sid in jar` failures with an explicit Chinese re-login path
-- prevent incomplete legacy scoring packages and AI candidate adoption from bypassing item-level scoring initialization and response-unit coverage validation
-- merge real-provider answer proposals into the existing item scoring package so AI generation cannot erase the fixed scoring contract, rubric, benchmark, item-level scoring metadata, or author criteria
-- prevent React Strict Mode from creating a no-op draft revision when an author only opens an item, and avoid empty avatar image URLs in local test identities
+- prevent stale Registry publication, silent rule normalization, and overwriting newer drafts during GitHub synchronization
+- reject invalid content bindings, candidate-private metadata, stale AI adoption, and incompatible difficulty configurations
+- preserve original submission snapshots, pinned legacy validation behavior, and locked scoring during generation and review
+- honor session expiry, handle unauthenticated responses, and retain local mock-login cookies on the current host
+- avoid no-op draft revisions in React Strict Mode and ignore locked Rust build files in Vite's Windows watcher
 
 ### TODO
 

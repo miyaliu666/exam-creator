@@ -33,13 +33,13 @@
       }
     }
   },
-  "forwardPorts": [3001, 1420],
+  "forwardPorts": [3001, 8001],
   "portsAttributes": {
     "3001": {
       "label": "Backend Server",
       "onAutoForward": "notify"
     },
-    "1420": {
+    "8001": {
       "label": "Vite Dev Server",
       "onAutoForward": "notify"
     }

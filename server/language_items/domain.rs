@@ -292,6 +292,16 @@ impl CandidatePayload {
 pub struct AuthoringPackage {
     #[serde(default)]
     pub notes: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub english_translations: Vec<EnglishTranslation>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct EnglishTranslation {
+    pub path: String,
+    pub source_text: String,
+    pub english_text: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1171,6 +1181,8 @@ pub struct GithubReviewLink {
     pub base_ref: String,
     pub head_ref: String,
     pub head_sha: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub submission_head_sha: Option<String>,
     pub repository_path: String,
     pub source_version_id: String,
     pub source_content_hash: String,
@@ -1276,11 +1288,47 @@ pub struct AiCandidate {
     pub ordinal: u8,
     pub status: String,
     pub candidate_payload: CandidatePayload,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub english_translations: Vec<EnglishTranslation>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub proposed_correct_option_id: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub proposed_scoring_package: Option<ScoringPackage>,
     pub validation: ValidationResult,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AiProviderCall {
+    pub candidate_ordinal: u8,
+    pub phase: String,
+    pub elapsed_milliseconds: u64,
+    pub outcome: String,
+    pub http_status: Option<u16>,
+    pub provider_request_id: Option<String>,
+    pub provider_response_id: Option<String>,
+    pub input_tokens: Option<u64>,
+    pub output_tokens: Option<u64>,
+    pub total_tokens: Option<u64>,
+}
+
+pub fn ai_generation_setup_snapshot(package: &TaskPackage) -> Value {
+    // Candidate adoption remains valid after wording edits only while its generation brief is unchanged.
+    serde_json::json!({
+        "specVersions": package.spec_versions,
+        "blueprintSlotId": package.blueprint_slot_id,
+        "taskFamilyId": package.task_family_id,
+        "itemFormatId": package.item_format_id,
+        "rendererId": package.renderer.renderer_id,
+        "primaryCanDoId": package.content.primary_can_do_id,
+        "primaryDomain": package.content.primary_domain,
+        "contextId": package.content.context_id,
+        "difficultyBand": package.content.difficulty_band,
+        "difficulty": package.content.difficulty,
+        "targetContentIds": package.content.target_content_ids,
+        "supportingContentRefs": package.content.supporting_content_refs,
+        "requiredInformationPoints": package.content.required_information_points,
+    })
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -1305,6 +1353,8 @@ pub struct AiGenerationRun {
     pub difficulty_band: String,
     pub target_content_ids: Vec<String>,
     pub required_information_points: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub generation_setup_snapshot: Option<Value>,
     pub requested_count: u8,
     pub candidates: Vec<AiCandidate>,
     pub adopted_candidate_id: Option<String>,
@@ -1318,6 +1368,10 @@ pub struct AiGenerationRun {
     pub retry_count: u32,
     #[serde(default)]
     pub candidate_errors: Vec<String>,
+    #[serde(default)]
+    pub elapsed_milliseconds: Option<u64>,
+    #[serde(default)]
+    pub provider_calls: Vec<AiProviderCall>,
     pub created_by: String,
     pub created_at: String,
     #[serde(default)]

@@ -22,10 +22,14 @@ export function isContentOptionCompatible(
   const isReceptiveSkill = ["Reading", "Listening"].includes(
     capability.primaryReportedSkill,
   );
+  const isProductiveSkill = ["Writing", "Speaking"].includes(
+    capability.primaryReportedSkill,
+  );
   const masteryMatches =
     !option.masteryScope ||
     option.masteryScope === "receptiveProductive" ||
-    (isReceptiveSkill && option.masteryScope === "receptive");
+    (isReceptiveSkill && option.masteryScope === "receptive") ||
+    (isProductiveSkill && option.masteryScope === "productive");
 
   return contextMatches && canDoMatches && masteryMatches;
 }

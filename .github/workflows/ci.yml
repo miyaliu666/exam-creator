@@ -4,6 +4,11 @@ on:
   pull_request:
   push:
     branches: [dev, main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -18,9 +23,13 @@ jobs:
         with:
           bun-version: latest
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt
+          components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
 
@@ -30,11 +39,31 @@ jobs:
       - name: Build frontend
         run: bun run build
 
+      - name: Test frontend workflow logic and item templates
+        run: bun test ./tests
+
+      - name: Install trusted review validator dependencies
+        working-directory: language-item-workbench/review-repository
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Test review repository validation
+        working-directory: language-item-workbench/review-repository
+        run: npm test
+
       - name: Check Rust formatting
-        run: cargo fmt --check
+        run: cargo fmt --all --check
 
       - name: Check Rust
-        run: cargo check --all-targets
+        run: cargo clippy --locked --no-default-features --all-targets
 
       - name: Test Rust
-        run: cargo test --all-targets
+        run: cargo test --locked --no-default-features --all-targets
+
+  package:
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build application image without publishing
+        run: docker build --tag exam-creator:${{ github.sha }} .

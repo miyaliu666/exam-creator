@@ -118,6 +118,17 @@ impl<'a> GithubClient<'a> {
             )
             .await?;
         let head_ref = format!("item-review/{batch_id}");
+        // Repository rules protect this tag from updates/deletion so CI can
+        // compare reviewer edits with the original submission and pinned rules.
+        let _: GitRef = self
+            .request(
+                Method::POST,
+                "git/refs",
+                Some(json!({
+                    "ref": format!("refs/tags/item-submission/{batch_id}"), "sha": commit.sha,
+                })),
+            )
+            .await?;
         let _: GitRef = self
             .request(
                 Method::POST,
@@ -156,9 +167,23 @@ impl<'a> GithubClient<'a> {
         let pull: PullRequest = self
             .request(Method::GET, &format!("pulls/{number}"), None)
             .await?;
-        let reviews: Vec<PullRequestReview> = self
-            .request(Method::GET, &format!("pulls/{number}/reviews"), None)
-            .await?;
+        let mut reviews = Vec::new();
+        let mut page = 1;
+        loop {
+            let mut batch: Vec<PullRequestReview> = self
+                .request(
+                    Method::GET,
+                    &format!("pulls/{number}/reviews?per_page=100&page={page}"),
+                    None,
+                )
+                .await?;
+            let last_page = batch.len() < 100;
+            reviews.append(&mut batch);
+            if last_page {
+                break;
+            }
+            page += 1;
+        }
         let (state, approval_count, changes_requested_count) = review_state(&pull, &reviews);
         Ok(RemotePullRequestSummary {
             number: pull.number,
@@ -265,6 +290,9 @@ fn review_state(
 ) -> (GithubReviewState, usize, usize) {
     let mut latest_by_reviewer = HashMap::new();
     for review in reviews {
+        if review.state == "DISMISSED" {
+            latest_by_reviewer.remove(&review.user.login);
+        }
         if matches!(review.state.as_str(), "APPROVED" | "CHANGES_REQUESTED") {
             latest_by_reviewer.insert(review.user.login.clone(), review.state.as_str());
         }
@@ -401,5 +429,17 @@ mod tests {
             review_state(&pull("closed", true), &reviews).0,
             GithubReviewState::Merged
         );
+    }
+
+    #[test]
+    fn dismissed_review_no_longer_counts_as_approval_or_changes_requested() {
+        for decisive in ["APPROVED", "CHANGES_REQUESTED"] {
+            let reviews = vec![review("a", decisive), review("a", "DISMISSED")];
+            let (state, approvals, changes) = review_state(&pull("open", false), &reviews);
+            assert_eq!(state, GithubReviewState::Open);
+            assert_eq!((approvals, changes), (0, 0));
+        }
+        let reviews = vec![review("a", "APPROVED"), review("a", "COMMENTED")];
+        assert_eq!(review_state(&pull("open", false), &reviews).1, 1);
     }
 }

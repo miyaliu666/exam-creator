@@ -76,7 +76,8 @@ export default defineConfig(async () => ({
   ],
   clearScreen: false,
   server: {
-    port: 1420,
+    host: "127.0.0.1",
+    port: 8001,
     strictPort: true,
     watch: {
       // Chokidar resolves Windows paths before matching. The recursive form
@@ -119,7 +120,7 @@ export default defineConfig(async () => ({
     hmr: {
       host: "127.0.0.1",
       // Keep the HMR port equal to Vite's port so connections are stable
-      port: 1420,
+      port: 8001,
     },
   },
   optimizeDeps: {

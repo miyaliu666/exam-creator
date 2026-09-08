@@ -1,6 +1,5 @@
 import {
   Box,
-  Button,
   Field,
   Heading,
   HStack,
@@ -23,7 +22,6 @@ import type {
 function PreviewFrame({ children }: { children: React.ReactNode }) {
   return (
     <Box borderWidth="1px" borderRadius="lg" p={5} bg="bg.subtle">
-      <Text fontSize="xs" color="fg.muted" mb={3}>Candidate preview</Text>
       <Stack gap={4}>{children}</Stack>
     </Box>
   );
@@ -86,7 +84,7 @@ export function SpokenSinglePreview({ payload }: { payload: SpokenSingleCandidat
       <Text>{payload.instructions}</Text>
       <Box borderWidth="1px" borderRadius="md" p={4}>{payload.visiblePromptText || payload.promptAudioRef || "(Prompt not entered)"}</Box>
       <Text color="fg.muted">Preparation: {payload.preparationTimeSeconds}s · Response: {payload.responseTimeSeconds}s</Text>
-      <Button colorPalette="red" alignSelf="start">Start recording</Button>
+      <Text fontSize="sm" color="fg.muted">Candidate records a spoken response.</Text>
     </PreviewFrame>
   );
 }
@@ -100,10 +98,9 @@ export function SpokenMultiturnPreview({ payload }: { payload: SpokenMultiturnCa
       {path?.turns.map((turn) => (
         <Box key={turn.turnId} borderWidth="1px" borderRadius="md" p={3} alignSelf={turn.speaker === "system" ? "start" : "end"} maxW="80%">
           <Text fontSize="xs" color="fg.muted">{turn.speaker === "system" ? payload.roles.systemRole : payload.roles.candidateRole}</Text>
-          <Text>{turn.speaker === "system" ? turn.promptAudioRef || "(Empty prompt)" : turn.requiredFunctionIds.join(", ") || "Respond"}</Text>
+          <Text>{turn.speaker === "system" ? turn.promptAudioRef || "(Empty prompt)" : "Candidate responds"}</Text>
         </Box>
       ))}
-      <Button colorPalette="red" alignSelf="start">Start interaction</Button>
     </PreviewFrame>
   );
 }

@@ -8,7 +8,6 @@ const EMPTY_DRAFT = {
   contextId: "",
   difficultyBand: "",
   skillFilter: "",
-  slotSearch: "",
 };
 
 function storageKey(scope: string) {

@@ -43,6 +43,8 @@ interface GithubReviewPanelProps {
   isRunningAiReview: boolean;
   isRevising: boolean;
   isExporting: boolean;
+  canSubmit: boolean;
+  canManage: boolean;
   onCreate: () => void;
   onSync: () => void;
   onAiReview: () => void;
@@ -53,9 +55,9 @@ interface GithubReviewPanelProps {
 export function GithubReviewPanel(props: GithubReviewPanelProps) {
   const review = props.item.githubReview;
   const reviewState = review ? REVIEW_STATE[review.state] : undefined;
-  const canCreate = props.item.status === "draft" && !review;
+  const canCreate = ["draft", "readyForReview", "rejected"].includes(props.item.status) && !review && props.canSubmit;
   const canRevise =
-    !!props.latestVersion &&
+    props.canManage && props.item.status !== "draft" && !!props.latestVersion &&
     (!review || review.state === "merged" || review.state === "closed");
   const canExport =
     !!props.latestVersion &&
@@ -67,7 +69,7 @@ export function GithubReviewPanel(props: GithubReviewPanelProps) {
     <Stack gap={5}>
       <HStack justify="space-between" align="start" flexWrap="wrap">
         <Stack gap={1}>
-          <Heading size="lg">GitHub review</Heading>
+          <Heading size="lg">Human review</Heading>
           <HStack>
             {reviewState ? (
               <Badge colorPalette={reviewState.colorPalette}>{reviewState.label}</Badge>
@@ -77,7 +79,7 @@ export function GithubReviewPanel(props: GithubReviewPanelProps) {
             {props.latestVersion ? (
               <Text color="fg.muted">Version {props.latestVersion.versionNumber}</Text>
             ) : props.item.status === "draft" ? (
-              <Text color="fg.muted">A review snapshot is created automatically with the PR</Text>
+              <Text fontSize="sm" color="fg.muted">Submitting creates a GitHub pull request and locks this draft for review.</Text>
             ) : null}
           </HStack>
         </Stack>
@@ -89,7 +91,7 @@ export function GithubReviewPanel(props: GithubReviewPanelProps) {
               loading={props.isCreating}
               onClick={props.onCreate}
             >
-              <GitPullRequest size={16} /> Submit for review & create PR
+              <GitPullRequest size={16} /> Submit for review
             </Button>
           ) : (
             <>
@@ -101,36 +103,33 @@ export function GithubReviewPanel(props: GithubReviewPanelProps) {
               </Link>
             </>
           )}
-          <Button
+          {props.latestVersion ? <Button
             variant="outline"
             disabled={!props.latestVersion}
             loading={props.isRunningAiReview}
             onClick={props.onAiReview}
           >
-            AI pre-review
-          </Button>
-          <Button
+            AI feedback
+          </Button> : null}
+          {canRevise ? <Button
             variant="outline"
             disabled={!canRevise}
             loading={props.isRevising}
             onClick={props.onRevise}
           >
             Create revision draft
-          </Button>
-          <Button
+          </Button> : null}
+          {canExport ? <Button
             colorPalette="teal"
             disabled={!canExport}
             loading={props.isExporting}
             onClick={props.onExport}
           >
             Export to Staging
-          </Button>
+          </Button> : null}
         </HStack>
       </HStack>
 
-      {!props.latestVersion ? (
-        <Text color="fg.warning">Validate the draft before submitting it for review.</Text>
-      ) : null}
       {review ? (
         <Box borderWidth="1px" borderRadius="lg" p={4}>
           <HStack justify="space-between" flexWrap="wrap">

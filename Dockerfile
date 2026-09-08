@@ -20,7 +20,8 @@ COPY public/ public/
 # Build frontend
 RUN bun run build
 
-FROM rust:1 AS builder
+# Match the runtime's libc distribution so a successful build is also runnable.
+FROM rust:1-bookworm AS builder
 WORKDIR /app
 
 COPY server/ server/
@@ -32,7 +33,7 @@ COPY Cargo.toml Cargo.lock ./
 COPY --from=frontend_builder /app/dist /app/dist
 
 # Build application
-RUN cargo build --release
+RUN cargo build --locked --release
 
 # FROM gcr.io/distroless/cc-debian12 AS runtime
 FROM debian:bookworm-slim AS runtime

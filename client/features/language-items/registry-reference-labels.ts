@@ -1,14 +1,14 @@
 import { createContext } from "react";
 
-import { ITEM_FORMAT_LABELS } from "./labels";
+import { ITEM_FORMAT_LABELS, WORKBENCH_LABELS, slotLabel } from "./labels";
 import { registryDisplayText } from "./registry-display-text";
 import type { RegistryCapability, RegistrySnapshot, RegistryValidationIssue } from "./types";
 
 export const RegistryTextContext = createContext(registryDisplayText);
 
 export function registrySlotName(snapshot: RegistrySnapshot, slotId: string) {
-  return registryDisplayText(snapshot.blueprintSlots?.find((slot) => slot.id === slotId)?.displayName
-    ?? snapshot.capabilities.find((entry) => entry.blueprintSlotId === slotId)?.title ?? "Exam task");
+  const name = slotLabel(slotId, snapshot);
+  return name === slotId ? WORKBENCH_LABELS.blueprintSlot : name;
 }
 
 export function registryCombinationName(snapshot: RegistrySnapshot, capability: Pick<RegistryCapability, "blueprintSlotId" | "itemFormatId" | "primaryCanDoId">) {

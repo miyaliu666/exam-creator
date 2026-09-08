@@ -1,11 +1,25 @@
 import type { RegistrySnapshot } from "./types";
 import { registryDisplayText } from "./registry-display-text";
+import { languageTargetDisplayText } from "./language-target-labels";
+
+// Shared field names distinguish the blueprint target, response format, and rule configuration.
+export const WORKBENCH_LABELS = {
+  blueprintSlot: "Blueprint slot",
+  itemFormat: "Item format",
+  primaryCanDo: "Primary Can-do",
+  domain: "Domain",
+  context: "Context",
+  difficulty: "Difficulty",
+  taskConfiguration: "Task configuration",
+  taskFamily: "Task family",
+  scoringContract: "Scoring contract",
+} as const;
 
 export const CONTENT_KIND_LABELS: Record<string, string> = {
-  lexical: "Vocabulary",
-  character: "Characters",
-  grammar: "Grammar",
-  pragmatics: "Pragmatic functions",
+  lexical: "词汇 / Vocabulary",
+  character: "汉字 / Characters",
+  grammar: "语法 / Grammar",
+  pragmatics: "语用 / Pragmatic functions",
   supported: "Supporting content",
 };
 
@@ -170,7 +184,7 @@ export function contentOptionLabel(
   if (!option) return id;
   const label = option.kind === "supported"
     ? SUPPORTED_CONTENT_LABELS[option.label] ?? option.label
-    : option.label;
+    : languageTargetDisplayText(option);
   return `${CONTENT_KIND_LABELS[option.kind] ?? option.kind}: ${label}`;
 }
 
@@ -179,6 +193,8 @@ export function slotLabel(
   registry: RegistrySnapshot | undefined,
   itemFormatId?: string,
 ) {
+  const slot = registry?.blueprintSlots?.find((entry) => entry.id === id);
+  if (slot?.displayName) return registryDisplayText(slot.displayName);
   const capability = registry?.capabilities.find(
     (entry) =>
       entry.blueprintSlotId === id &&

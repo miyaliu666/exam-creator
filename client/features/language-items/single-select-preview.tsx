@@ -19,9 +19,6 @@ export function SingleSelectPreview({ payload }: SingleSelectPreviewProps) {
 
   return (
     <Box borderWidth="1px" borderRadius="lg" p={5} bg="bg.subtle">
-      <Text fontSize="xs" color="fg.muted" mb={3}>
-        Candidate preview · answers and author data are isolated
-      </Text>
       {payload.stimulus.audioRef ? (
         <audio controls src={payload.stimulus.audioRef} style={{ width: "100%" }} />
       ) : null}

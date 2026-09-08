@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use axum::{
     Json,
-    extract::{Path, State},
+    extract::{Path, Query, State},
 };
 use chrono::Utc;
 use futures_util::TryStreamExt;
@@ -20,12 +20,14 @@ use crate::{
     errors::Error,
     language_items::{
         registry::{
-            RegistrySnapshot, active_snapshot, install_published_snapshot, item_format_name,
-            normalize_registry_snapshot,
+            RegistrySnapshot, active_snapshot, hydrate_published_registry_snapshot,
+            install_published_snapshot, item_format_name, normalize_registry_snapshot,
+            prepare_registry_draft, upgrade_draft_context_schema,
         },
         registry_store::{
             REGISTRY_STATUS_DRAFT, REGISTRY_STATUS_PUBLISHED, RegistryAuditEvent, RegistryImpact,
-            RegistryValidationResult, RegistryVersionRecord, validate_registry, write_audit,
+            RegistrySectionChange, RegistryValidationResult, RegistryVersionRecord,
+            validate_registry, write_audit,
         },
     },
     state::ServerState,
@@ -44,6 +46,40 @@ fn not_found(id: &str) -> Error {
 
 fn conflict(message: impl Into<String>) -> Error {
     Error::Server(StatusCode::CONFLICT, message.into())
+}
+
+fn check_revision(record: &RegistryVersionRecord, expected_revision: u64) -> Result<(), Error> {
+    if record.revision != expected_revision {
+        return Err(conflict(
+            "Assessment Settings changed. Reload the saved draft before continuing.",
+        ));
+    }
+    Ok(())
+}
+
+fn check_draft_owner(record: &RegistryVersionRecord, actor: &str) -> Result<(), Error> {
+    if record.created_by != actor {
+        return Err(Error::Server(
+            StatusCode::FORBIDDEN,
+            "Only the owner may change this Assessment Settings draft".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+fn check_publish_base(
+    record: &RegistryVersionRecord,
+    active_version: &str,
+    expected_active_version: &str,
+) -> Result<(), Error> {
+    if active_version != expected_active_version
+        || record.base_version.as_deref() != Some(active_version)
+    {
+        return Err(conflict(
+            "Published Assessment Settings changed. Start a draft from the latest published settings before publishing.",
+        ));
+    }
+    Ok(())
 }
 
 fn validate_version_label(version: &str) -> Result<(), Error> {
@@ -132,7 +168,11 @@ pub async fn get_version(
         .find_one(doc! { "id": &id })
         .await?
         .ok_or_else(|| not_found(&id))?;
-    normalize_registry_snapshot(&mut record.snapshot);
+    if record.status == REGISTRY_STATUS_PUBLISHED {
+        hydrate_published_registry_snapshot(&mut record.snapshot);
+    } else {
+        normalize_registry_snapshot(&mut record.snapshot);
+    }
     Ok(Json(record))
 }
 
@@ -173,13 +213,16 @@ pub async fn post_draft(
     Json(body): Json<CreateDraftBody>,
 ) -> Result<Json<RegistryVersionRecord>, Error> {
     let active = active_snapshot();
-    let version = body.version.unwrap_or_else(|| {
-        format!(
-            "assessment-{}-{}",
-            Utc::now().format("%Y%m%d%H%M%S"),
-            &Uuid::new_v4().simple().to_string()[..8],
-        )
-    });
+    let version = body
+        .version
+        .map(|value| value.trim().to_string())
+        .unwrap_or_else(|| {
+            format!(
+                "assessment-{}-{}",
+                Utc::now().format("%Y%m%d%H%M%S"),
+                &Uuid::new_v4().simple().to_string()[..8],
+            )
+        });
     validate_version_label(&version)?;
     if state
         .workbench_database
@@ -196,7 +239,7 @@ pub async fn post_draft(
     let mut draft_snapshot = (*active).clone();
     draft_snapshot.bundle_version = version.clone();
     draft_snapshot.status = REGISTRY_STATUS_DRAFT.to_string();
-    normalize_registry_snapshot(&mut draft_snapshot);
+    prepare_registry_draft(&mut draft_snapshot);
     let record = RegistryVersionRecord {
         id: format!("LARV-{}", Uuid::new_v4()),
         version,
@@ -240,7 +283,8 @@ pub async fn put_draft(
     Path(id): Path<String>,
     Json(body): Json<UpdateDraftBody>,
 ) -> Result<Json<RegistryVersionRecord>, Error> {
-    validate_version_label(&body.version)?;
+    let version = body.version.trim();
+    validate_version_label(version)?;
     let mut record = state
         .workbench_database
         .registry_versions
@@ -250,28 +294,25 @@ pub async fn put_draft(
     if record.status != REGISTRY_STATUS_DRAFT {
         return Err(conflict("Published Registry versions are immutable"));
     }
-    if record.revision != body.expected_revision {
-        return Err(conflict(format!(
-            "Registry draft revision changed; expected {}, found {}",
-            body.expected_revision, record.revision
-        )));
-    }
-    if body.version != record.version
+    check_draft_owner(&record, &user.email)?;
+    check_revision(&record, body.expected_revision)?;
+    if version != record.version
         && state
             .workbench_database
             .registry_versions
-            .count_documents(doc! { "version": &body.version })
+            .count_documents(doc! { "version": version })
             .await?
             > 0
     {
         return Err(conflict(format!(
             "Registry version {} already exists",
-            body.version
+            version
         )));
     }
-    record.version = body.version.trim().to_string();
+    record.version = version.to_string();
     record.snapshot = body.snapshot;
-    normalize_registry_snapshot(&mut record.snapshot);
+    upgrade_draft_context_schema(&mut record.snapshot);
+    record.snapshot.settings_schema_version = 1;
     record.snapshot.bundle_version = record.version.clone();
     record.snapshot.status = REGISTRY_STATUS_DRAFT.to_string();
     record.revision += 1;
@@ -302,17 +343,26 @@ pub async fn put_draft(
     Ok(Json(record))
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExpectedRevisionBody {
+    expected_revision: u64,
+}
+
 pub async fn post_validate(
     _: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
     Path(id): Path<String>,
+    Json(body): Json<ExpectedRevisionBody>,
 ) -> Result<Json<RegistryValidationResult>, Error> {
-    let record = state
+    let mut record = state
         .workbench_database
         .registry_versions
         .find_one(doc! { "id": &id })
         .await?
         .ok_or_else(|| not_found(&id))?;
+    check_revision(&record, body.expected_revision)?;
+    normalize_registry_snapshot(&mut record.snapshot);
     Ok(Json(validate_registry(&record.snapshot)))
 }
 
@@ -380,17 +430,99 @@ fn difficulty_configuration_changes(
     changes
 }
 
+fn additional_changes(
+    left: &RegistrySnapshot,
+    right: &RegistrySnapshot,
+) -> Vec<RegistrySectionChange> {
+    let left_value = serde_json::to_value(left).expect("RegistrySnapshot serializes");
+    let right_value = serde_json::to_value(right).expect("RegistrySnapshot serializes");
+    let mut changes = Vec::new();
+    for (label, fields) in [
+        ("Slots", &["blueprintSlots"][..]),
+        ("Language content", &["contentIdOptions"][..]),
+        ("Schemas", &["candidateSchemas", "taskPackageSchema"][..]),
+        ("Review gates", &["requiredReviewGateIds"][..]),
+        (
+            "Domain and difficulty options",
+            &["allowedDomains", "difficultyBands"][..],
+        ),
+        (
+            "Named references",
+            &["taskFamilyOptions", "referenceLabels"][..],
+        ),
+        ("Registry rules", &["limitations", "sourceFingerprint"][..]),
+    ] {
+        let count = fields
+            .iter()
+            .map(|field| {
+                match (
+                    left_value.get(*field).and_then(serde_json::Value::as_array),
+                    right_value
+                        .get(*field)
+                        .and_then(serde_json::Value::as_array),
+                ) {
+                    (Some(before), Some(after)) => changed_count(
+                        before.iter().enumerate().map(|(index, value)| {
+                            (
+                                value
+                                    .get("id")
+                                    .or_else(|| value.get("$id"))
+                                    .and_then(serde_json::Value::as_str)
+                                    .or_else(|| value.as_str())
+                                    .map(str::to_string)
+                                    .unwrap_or_else(|| index.to_string()),
+                                value.to_string(),
+                            )
+                        }),
+                        after.iter().enumerate().map(|(index, value)| {
+                            (
+                                value
+                                    .get("id")
+                                    .or_else(|| value.get("$id"))
+                                    .and_then(serde_json::Value::as_str)
+                                    .or_else(|| value.as_str())
+                                    .map(str::to_string)
+                                    .unwrap_or_else(|| index.to_string()),
+                                value.to_string(),
+                            )
+                        }),
+                    ),
+                    _ => usize::from(left_value.get(*field) != right_value.get(*field)),
+                }
+            })
+            .sum();
+        if count > 0 {
+            changes.push(RegistrySectionChange {
+                label: label.to_string(),
+                count,
+            });
+        }
+    }
+    changes
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImpactQuery {
+    expected_revision: Option<u64>,
+}
+
 pub async fn get_impact(
     _: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
     Path(id): Path<String>,
+    Query(query): Query<ImpactQuery>,
 ) -> Result<Json<RegistryImpact>, Error> {
-    let record = state
+    let mut record = state
         .workbench_database
         .registry_versions
         .find_one(doc! { "id": &id })
         .await?
         .ok_or_else(|| not_found(&id))?;
+    if let Some(expected_revision) = query.expected_revision {
+        check_revision(&record, expected_revision)?;
+    }
+    normalize_registry_snapshot(&mut record.snapshot);
     let active = active_snapshot();
     let items_pinned_to_active_version = state
         .workbench_database
@@ -400,6 +532,10 @@ pub async fn get_impact(
         })
         .await?;
     Ok(Json(RegistryImpact {
+        draft_revision: record.revision,
+        base_version: record.base_version.clone(),
+        stale_base: record.base_version.as_deref() != Some(active.bundle_version.as_str()),
+        additional_changes: additional_changes(&active, &record.snapshot),
         difficulty_configuration_changes: difficulty_configuration_changes(
             &active,
             &record.snapshot,
@@ -490,11 +626,70 @@ pub async fn get_impact(
     }))
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PublishBody {
+    expected_revision: u64,
+    expected_active_version: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PublishResponse {
+    #[serde(flatten)]
+    record: RegistryVersionRecord,
+    publication_warnings: Vec<String>,
+}
+
+fn is_same_publication(record: &RegistryVersionRecord, body: &PublishBody) -> bool {
+    record.status == REGISTRY_STATUS_PUBLISHED
+        && body.expected_revision.checked_add(1) == Some(record.revision)
+        && record.base_version.as_deref() == Some(body.expected_active_version.as_str())
+}
+
+async fn finish_committed_publication(
+    state: &ServerState,
+    mut record: RegistryVersionRecord,
+) -> PublishResponse {
+    let mut warnings = Vec::new();
+    match state.workbench_database.registry_versions.find_one(doc! { "status": REGISTRY_STATUS_PUBLISHED, "active": true })
+        .sort(doc! { "publishedAt": -1, "updatedAt": -1, "id": -1 }).await {
+        Ok(Some(mut active)) => {
+            hydrate_published_registry_snapshot(&mut active.snapshot);
+            install_published_snapshot(active.snapshot, true);
+            record.active = active.id == record.id;
+            if state.workbench_database.registry_versions.update_many(
+                doc! { "active": true, "id": { "$ne": &active.id } },
+                doc! { "$set": { "active": false } },
+            ).await.is_err() {
+                warnings.push("Settings are published. Previous active-version flags still need cleanup; retry Publish to complete it.".to_string());
+            }
+        }
+        _ => warnings.push("Settings are published, but the active-version status could not be reconciled. Retry Publish to complete it.".to_string()),
+    }
+    if write_audit(
+        &state.workbench_database,
+        &record,
+        "registry.version.published",
+        &record.updated_by,
+    )
+    .await
+    .is_err()
+    {
+        warnings.push("Settings are published, but the publication audit event has not been confirmed. Retry Publish to record it.".to_string());
+    }
+    PublishResponse {
+        record,
+        publication_warnings: warnings,
+    }
+}
+
 pub async fn post_publish(
     user: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
     Path(id): Path<String>,
-) -> Result<Json<RegistryVersionRecord>, Error> {
+    Json(body): Json<PublishBody>,
+) -> Result<Json<PublishResponse>, Error> {
     let _publish_guard = REGISTRY_PUBLISH_LOCK.lock().await;
     let mut record = state
         .workbench_database
@@ -502,10 +697,19 @@ pub async fn post_publish(
         .find_one(doc! { "id": &id })
         .await?
         .ok_or_else(|| not_found(&id))?;
+    check_draft_owner(&record, &user.email)?;
+    if is_same_publication(&record, &body) {
+        return Ok(Json(finish_committed_publication(&state, record).await));
+    }
     if record.status != REGISTRY_STATUS_DRAFT {
         return Err(conflict("Only a Registry draft can be published"));
     }
-    normalize_registry_snapshot(&mut record.snapshot);
+    check_revision(&record, body.expected_revision)?;
+    check_publish_base(
+        &record,
+        &active_snapshot().bundle_version,
+        &body.expected_active_version,
+    )?;
     validate_version_label(&record.version)?;
     let validation = validate_registry(&record.snapshot);
     if !validation.valid {
@@ -543,29 +747,148 @@ pub async fn post_publish(
             "Registry draft changed while it was being published",
         ));
     }
-    state
-        .workbench_database
-        .registry_versions
-        .update_many(
-            doc! { "active": true, "id": { "$ne": &record.id } },
-            doc! { "$set": { "active": false } },
-        )
-        .await?;
+    // The replacement is the durable commit. Runtime visibility must not depend
+    // on the recoverable cleanup and audit operations that follow it.
     install_published_snapshot(record.snapshot.clone(), true);
-    write_audit(
-        &state.workbench_database,
-        &record,
-        "registry.version.published",
-        &user.email,
-    )
-    .await?;
-    Ok(Json(record))
+    Ok(Json(finish_committed_publication(&state, record).await))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::language_items::registry::snapshot;
+
+    fn draft_record() -> RegistryVersionRecord {
+        RegistryVersionRecord {
+            id: "draft-record".to_string(),
+            version: "draft-version".to_string(),
+            status: REGISTRY_STATUS_DRAFT.to_string(),
+            active: false,
+            revision: 7,
+            base_version: Some("published-version".to_string()),
+            snapshot: snapshot().clone(),
+            created_by: "owner@example.test".to_string(),
+            updated_by: "owner@example.test".to_string(),
+            created_at: "2026-09-08T00:00:00Z".to_string(),
+            updated_at: "2026-09-08T00:00:00Z".to_string(),
+            published_at: None,
+        }
+    }
+
+    #[test]
+    fn publication_rejects_a_stale_browser_revision_or_published_base() {
+        let record = draft_record();
+        assert!(check_revision(&record, 7).is_ok());
+        assert!(check_revision(&record, 6).is_err());
+        assert!(check_publish_base(&record, "published-version", "published-version").is_ok());
+        assert!(check_publish_base(&record, "new-publication", "published-version").is_err());
+        assert!(check_publish_base(&record, "new-publication", "new-publication").is_err());
+    }
+
+    #[test]
+    fn mutable_settings_are_owned_by_the_draft_creator() {
+        let record = draft_record();
+        assert!(check_draft_owner(&record, "owner@example.test").is_ok());
+        assert!(check_draft_owner(&record, "different@example.test").is_err());
+    }
+
+    #[test]
+    fn publication_retry_matches_the_committed_revision_and_original_base() {
+        let mut record = draft_record();
+        let request = PublishBody {
+            expected_revision: 7,
+            expected_active_version: "published-version".to_string(),
+        };
+        assert!(!is_same_publication(&record, &request));
+        record.status = REGISTRY_STATUS_PUBLISHED.to_string();
+        record.revision = 8;
+        assert!(is_same_publication(&record, &request));
+        record.active = false;
+        assert!(is_same_publication(&record, &request));
+        record.revision = 9;
+        assert!(!is_same_publication(&record, &request));
+        record.revision = 8;
+        record.base_version = Some("different-base".to_string());
+        assert!(!is_same_publication(&record, &request));
+    }
+
+    #[test]
+    fn interrupted_publication_selects_latest_active_record_deterministically() {
+        let mut previous = draft_record();
+        previous.status = REGISTRY_STATUS_PUBLISHED.to_string();
+        previous.active = true;
+        previous.id = "previous".to_string();
+        previous.published_at = Some("2026-09-08T00:00:00Z".to_string());
+        let mut committed = previous.clone();
+        committed.id = "committed".to_string();
+        committed.published_at = Some("2026-09-08T00:01:00Z".to_string());
+        let records = vec![committed.clone(), previous.clone()];
+        assert_eq!(
+            crate::language_items::registry_store::preferred_published_record(&records)
+                .unwrap()
+                .id,
+            "committed"
+        );
+        let reversed = vec![previous, committed];
+        assert_eq!(
+            crate::language_items::registry_store::preferred_published_record(&reversed)
+                .unwrap()
+                .id,
+            "committed"
+        );
+    }
+
+    #[test]
+    fn committed_publication_can_report_unconfirmed_audit_without_a_false_failure() {
+        let mut record = draft_record();
+        record.status = REGISTRY_STATUS_PUBLISHED.to_string();
+        let response = serde_json::to_value(PublishResponse {
+            record,
+            publication_warnings: vec!["Audit event not confirmed".to_string()],
+        })
+        .unwrap();
+        assert_eq!(response["status"], "published");
+        assert_eq!(
+            response["publicationWarnings"][0],
+            "Audit event not confirmed"
+        );
+    }
+
+    #[test]
+    fn impact_covers_content_schema_and_review_rules() {
+        let active = snapshot().clone();
+        let mut draft = active.clone();
+        draft.content_id_options[0].label.push_str(" changed");
+        draft.content_id_options[1].label.push_str(" changed");
+        draft.task_package_schema["title"] = serde_json::json!("Changed schema title");
+        draft.required_review_gate_ids.pop();
+        let changes = additional_changes(&active, &draft);
+        assert_eq!(
+            changes
+                .iter()
+                .find(|change| change.label == "Language content")
+                .unwrap()
+                .count,
+            2
+        );
+        assert_eq!(
+            changes
+                .iter()
+                .find(|change| change.label == "Schemas")
+                .unwrap()
+                .count,
+            1
+        );
+        assert_eq!(
+            changes
+                .iter()
+                .find(|change| change.label == "Review gates")
+                .unwrap()
+                .count,
+            1
+        );
+        assert!(additional_changes(&active, &active).is_empty());
+    }
 
     #[test]
     fn difficulty_impact_names_the_changed_primary_can_do_configuration() {

@@ -412,14 +412,7 @@ fn populate_readable_metadata(snapshot: &mut RegistrySnapshot) {
             }
         }
     }
-    for capability in &mut snapshot.capabilities {
-        if let Some(slot) = snapshot
-            .blueprint_slots
-            .iter()
-            .find(|slot| slot.id == capability.blueprint_slot_id)
-        {
-            capability.title.clone_from(&slot.display_name);
-        }
+    for capability in &snapshot.capabilities {
         if !snapshot
             .task_family_options
             .iter()
@@ -435,13 +428,30 @@ fn populate_readable_metadata(snapshot: &mut RegistrySnapshot) {
         }
     }
     for (id, block) in entry_blocks(TASK_FAMILY_REGISTRY, "taskFamilyId") {
-        if let Some(family) = snapshot.task_family_options.iter_mut().find(|family| family.id == id) {
+        if let Some(family) = snapshot
+            .task_family_options
+            .iter_mut()
+            .find(|family| family.id == id)
+        {
             if family.blueprint_slot_ids.is_empty() {
                 family.blueprint_slot_ids = block_list(&block, "blueprintSlotIds", &HashMap::new());
             }
             if family.allowed_item_format_ids.is_empty() {
-                family.allowed_item_format_ids = block_list(&block, "allowedItemFormatIds", &HashMap::new());
+                family.allowed_item_format_ids =
+                    block_list(&block, "allowedItemFormatIds", &HashMap::new());
             }
+        } else {
+            snapshot.task_family_options.push(NamedRegistryReference {
+                id,
+                display_name: block_scalar(&block, &["coreBehavior"]).unwrap_or_default(),
+                kind: "taskFamily".to_string(),
+                blueprint_slot_ids: block_list(&block, "blueprintSlotIds", &HashMap::new()),
+                allowed_item_format_ids: block_list(
+                    &block,
+                    "allowedItemFormatIds",
+                    &HashMap::new(),
+                ),
+            });
         }
     }
     for contract in &mut snapshot.scoring_contracts {
@@ -585,7 +595,11 @@ pub fn normalize_registry_snapshot(snapshot: &mut RegistrySnapshot) {
     }
     let canonical = &*REGISTRY;
     for can_do in &mut snapshot.can_do_options {
-        if let Some(source) = canonical.can_do_options.iter().find(|entry| entry.id == can_do.id) {
+        if let Some(source) = canonical
+            .can_do_options
+            .iter()
+            .find(|entry| entry.id == can_do.id)
+        {
             if can_do.primary_skill.is_none() {
                 can_do.primary_skill.clone_from(&source.primary_skill);
             }
@@ -595,35 +609,122 @@ pub fn normalize_registry_snapshot(snapshot: &mut RegistrySnapshot) {
         }
     }
     if snapshot.capability_difficulty_profile_sets.is_empty() {
-        snapshot.capability_difficulty_profile_sets = snapshot.capabilities.iter()
+        snapshot.capability_difficulty_profile_sets = snapshot
+            .capabilities
+            .iter()
             .map(|capability| CapabilityDifficultyProfileSet {
                 id: difficulty_profile_set_id(capability),
                 blueprint_slot_id: capability.blueprint_slot_id.clone(),
                 item_format_id: capability.item_format_id.clone(),
                 primary_can_do_id: capability.primary_can_do_id.clone(),
                 standards: snapshot.difficulty_standards.clone(),
-            }).collect();
+            })
+            .collect();
     }
     populate_readable_metadata(snapshot);
     snapshot.settings_schema_version = 1;
 }
 
 pub fn prepare_registry_draft(snapshot: &mut RegistrySnapshot) {
+    migrate_legacy_context_domains(snapshot);
     normalize_registry_snapshot(snapshot);
+    upgrade_draft_context_schema(snapshot);
     // Historical slot lists described broad candidates. A newly authored draft
     // starts with exactly the contexts item creation can actually select.
     for capability in &mut snapshot.capabilities {
         let primary_can_do_id = &capability.primary_can_do_id;
-        capability.allowed_context_ids.retain(|id| snapshot.context_options.iter().any(|context| {
-            context.id == *id && !context.retired && context.can_do_ids.contains(primary_can_do_id)
-                && context.primary_domains.len() == 1
-                && snapshot.allowed_domains.contains(&context.primary_domains[0])
-        }));
-        capability.allowed_domains = snapshot.allowed_domains.iter().filter(|domain| {
-            snapshot.context_options.iter().any(|context| capability.allowed_context_ids.contains(&context.id)
-                && context.primary_domains.contains(domain))
-        }).cloned().collect();
+        capability.allowed_context_ids.retain(|id| {
+            snapshot.context_options.iter().any(|context| {
+                context.id == *id
+                    && !context.retired
+                    && context.can_do_ids.contains(primary_can_do_id)
+                    && context.primary_domains.len() == 1
+                    && snapshot
+                        .allowed_domains
+                        .contains(&context.primary_domains[0])
+            })
+        });
+        capability.allowed_domains = snapshot
+            .allowed_domains
+            .iter()
+            .filter(|domain| {
+                snapshot.context_options.iter().any(|context| {
+                    capability.allowed_context_ids.contains(&context.id)
+                        && context.primary_domains.contains(domain)
+                })
+            })
+            .cloned()
+            .collect();
     }
+}
+
+fn migrate_legacy_context_domains(snapshot: &mut RegistrySnapshot) {
+    if snapshot.settings_schema_version != 0 {
+        return;
+    }
+    // These two original contexts used a cross-domain list. New drafts require
+    // their canonical primary domain before filtering selectable context refs.
+    // Match the original metadata as well as IDs so authored changes stay visible.
+    for (id, original_label, original_scope) in [
+        (
+            "D19",
+            "阅读和回复非常短的在线消息",
+            "确认时间、告知地点、接受拒绝邀请、说明参加和简单提问。",
+        ),
+        (
+            "D20",
+            "填写表格并转告关键信息",
+            "填写基本资料并从短材料找到和转告显性实用信息。",
+        ),
+    ] {
+        let Some(canonical) = REGISTRY.context_options.iter().find(|entry| entry.id == id) else {
+            continue;
+        };
+        let Some(context) = snapshot
+            .context_options
+            .iter_mut()
+            .find(|entry| entry.id == id)
+        else {
+            continue;
+        };
+        if context.primary_domains == ["Personal", "Public", "Educational", "Occupational"]
+            && (context.label == canonical.label || context.label == original_label)
+            && (context.scope == canonical.scope || context.scope == original_scope)
+            && context.can_do_ids == canonical.can_do_ids
+            && context.exclusions.is_empty()
+            && !context.retired
+        {
+            context
+                .primary_domains
+                .clone_from(&canonical.primary_domains);
+        }
+    }
+}
+
+pub fn upgrade_draft_context_schema(snapshot: &mut RegistrySnapshot) {
+    // Technical contracts are read-only in Settings. Upgrade only the known
+    // obsolete built-in-ID restriction, never a published snapshot or other rules.
+    let Some(context) = snapshot
+        .task_package_schema
+        .pointer_mut("/properties/content/properties/contextId")
+        .and_then(Value::as_object_mut)
+    else {
+        return;
+    };
+    if context.get("pattern").and_then(Value::as_str) != Some("^D(0[1-9]|1[0-9]|20)$") {
+        return;
+    }
+    context.remove("pattern");
+    context.insert("minLength".to_string(), Value::from(1));
+    context.insert("description".to_string(), Value::from(
+        "Context identifier in the pinned Assessment Settings registry; includes built-in and user-created contexts.",
+    ));
+}
+
+pub fn hydrate_published_registry_snapshot(snapshot: &mut RegistrySnapshot) {
+    let published_schema_version = snapshot.settings_schema_version;
+    normalize_registry_snapshot(snapshot);
+    snapshot.settings_schema_version = published_schema_version;
 }
 
 pub fn capability_for<'a>(
@@ -668,7 +769,15 @@ pub fn difficulty_standards_for_capability<'a>(
                 && profile.primary_can_do_id == capability.primary_can_do_id
         })
         .map(|profile| profile.standards.as_slice())
-        .unwrap_or(snapshot.difficulty_standards.as_slice())
+        .unwrap_or_else(|| {
+            if snapshot.settings_schema_version == 0
+                && snapshot.capability_difficulty_profile_sets.is_empty()
+            {
+                snapshot.difficulty_standards.as_slice()
+            } else {
+                &[]
+            }
+        })
 }
 
 pub static REGISTRY: Lazy<RegistrySnapshot> = Lazy::new(|| {
@@ -744,7 +853,7 @@ pub static REGISTRY: Lazy<RegistrySnapshot> = Lazy::new(|| {
         .collect();
 
     let mut registry = RegistrySnapshot {
-        settings_schema_version: 1,
+        settings_schema_version: 0,
         bundle_version: manifest.bundle_version,
         status: manifest.status,
         limitations: manifest.limitations,
@@ -1481,6 +1590,7 @@ mod tests {
     fn legacy_snapshot_adds_readable_metadata_without_changing_identifiers() {
         let mut serialized = serde_json::to_value(snapshot()).unwrap();
         for field in [
+            "settingsSchemaVersion",
             "blueprintSlots",
             "taskFamilyOptions",
             "referenceLabels",
@@ -1535,6 +1645,200 @@ mod tests {
             &serde_json::from_value(original).unwrap(),
             capability
         ));
+    }
+
+    #[test]
+    fn authored_snapshot_reads_preserve_invalid_and_non_english_values() {
+        let mut registry = snapshot().clone();
+        registry.settings_schema_version = 1;
+        registry.can_do_options[0].label = "自定义能力描述".to_string();
+        registry.can_do_options[0].primary_skill = None;
+        registry.capability_difficulty_profile_sets.pop();
+        registry.scoring_contracts[0].normalization.summary = "自定义评分规则".to_string();
+        let before = serde_json::to_value(&registry).unwrap();
+        normalize_registry_snapshot(&mut registry);
+        assert_eq!(before, serde_json::to_value(&registry).unwrap());
+        let missing = registry.capabilities.last().unwrap();
+        assert!(difficulty_standards_for_capability(&registry, missing).is_empty());
+    }
+
+    #[test]
+    fn published_legacy_hydration_preserves_pinned_validation_semantics() {
+        let mut published = snapshot().clone();
+        published.settings_schema_version = 0;
+        published.blueprint_slots.clear();
+        published.capability_difficulty_profile_sets.clear();
+        let contexts = published.capabilities[0].allowed_context_ids.clone();
+        hydrate_published_registry_snapshot(&mut published);
+        assert_eq!(published.settings_schema_version, 0);
+        assert!(!published.blueprint_slots.is_empty());
+        assert_eq!(published.capabilities[0].allowed_context_ids, contexts);
+        let mut draft = published.clone();
+        prepare_registry_draft(&mut draft);
+        assert_eq!(draft.settings_schema_version, 1);
+        assert_eq!(published.settings_schema_version, 0);
+    }
+
+    #[test]
+    fn custom_context_contract_upgrade_is_draft_only_and_narrow() {
+        let pointer = "/properties/content/properties/contextId";
+        let mut published = snapshot().clone();
+        *published.task_package_schema.pointer_mut(pointer).unwrap() = serde_json::json!({
+            "type": "string", "pattern": "^D(0[1-9]|1[0-9]|20)$"
+        });
+        let original_schema = published.task_package_schema.clone();
+        hydrate_published_registry_snapshot(&mut published);
+        assert_eq!(published.task_package_schema, original_schema);
+        let mut draft = published.clone();
+        prepare_registry_draft(&mut draft);
+        let context = draft.task_package_schema.pointer(pointer).unwrap();
+        assert!(context.get("pattern").is_none());
+        assert_eq!(context["minLength"], 1);
+        let upgraded = draft.task_package_schema.clone();
+        upgrade_draft_context_schema(&mut draft);
+        assert_eq!(draft.task_package_schema, upgraded);
+        draft.task_package_schema.pointer_mut(pointer).unwrap()["pattern"] =
+            Value::from("^CUSTOM-");
+        upgrade_draft_context_schema(&mut draft);
+        assert_eq!(
+            draft.task_package_schema.pointer(pointer).unwrap()["pattern"],
+            "^CUSTOM-"
+        );
+    }
+
+    #[test]
+    fn new_draft_initializes_usable_contexts_without_changing_published_snapshot() {
+        let original = snapshot();
+        let before = serde_json::to_value(original).unwrap();
+        let mut draft = original.clone();
+        prepare_registry_draft(&mut draft);
+        for capability in &draft.capabilities {
+            assert!(!capability.allowed_context_ids.is_empty());
+            for id in &capability.allowed_context_ids {
+                let context = draft
+                    .context_options
+                    .iter()
+                    .find(|context| context.id == *id)
+                    .unwrap();
+                assert!(context_supports_capability(context, capability));
+                assert!(
+                    context
+                        .primary_domains
+                        .iter()
+                        .all(|domain| capability.allowed_domains.contains(domain))
+                );
+            }
+        }
+        assert_eq!(before, serde_json::to_value(original).unwrap());
+    }
+
+    #[test]
+    fn legacy_cross_domain_contexts_are_migrated_before_draft_reference_filtering() {
+        for chinese_metadata in [false, true] {
+            let mut published = snapshot().clone();
+            for (id, label, scope) in [
+                (
+                    "D19",
+                    "阅读和回复非常短的在线消息",
+                    "确认时间、告知地点、接受拒绝邀请、说明参加和简单提问。",
+                ),
+                (
+                    "D20",
+                    "填写表格并转告关键信息",
+                    "填写基本资料并从短材料找到和转告显性实用信息。",
+                ),
+            ] {
+                let context = published
+                    .context_options
+                    .iter_mut()
+                    .find(|entry| entry.id == id)
+                    .unwrap();
+                context.primary_domains = ["Personal", "Public", "Educational", "Occupational"]
+                    .into_iter()
+                    .map(str::to_string)
+                    .collect();
+                if chinese_metadata {
+                    context.label = label.to_string();
+                    context.scope = scope.to_string();
+                }
+            }
+            hydrate_published_registry_snapshot(&mut published);
+            let original = serde_json::to_value(&published).unwrap();
+            assert!(
+                published
+                    .context_options
+                    .iter()
+                    .filter(|entry| ["D19", "D20"].contains(&entry.id.as_str()))
+                    .all(|entry| entry.primary_domains.len() == 4)
+            );
+            let mut draft = published.clone();
+            prepare_registry_draft(&mut draft);
+            for (slot, context_id) in [("W-A1-2", "D19"), ("W-A1-3", "D20"), ("S-A1-4", "D20")] {
+                let context = draft
+                    .context_options
+                    .iter()
+                    .find(|entry| entry.id == context_id)
+                    .unwrap();
+                assert_eq!(context.primary_domains, ["Personal"]);
+                assert!(
+                    draft
+                        .capabilities
+                        .iter()
+                        .filter(|entry| entry.blueprint_slot_id == slot)
+                        .all(|entry| entry.allowed_context_ids.contains(&context_id.to_string()))
+                );
+            }
+            let validation = super::super::registry_store::validate_registry(&draft);
+            assert!(validation.valid, "{:?}", validation.issues);
+            assert_eq!(serde_json::to_value(&published).unwrap(), original);
+        }
+    }
+
+    #[test]
+    fn legacy_context_migration_preserves_modern_and_user_authored_domains() {
+        for variant in 0..6 {
+            let mut draft = snapshot().clone();
+            let context = draft
+                .context_options
+                .iter_mut()
+                .find(|entry| entry.id == "D19")
+                .unwrap();
+            context.primary_domains = ["Personal", "Public", "Educational", "Occupational"]
+                .into_iter()
+                .map(str::to_string)
+                .collect();
+            match variant {
+                0 => draft.settings_schema_version = 1,
+                1 => context.label = "My messaging context".to_string(),
+                2 => context.scope = "A custom scope".to_string(),
+                3 => {
+                    context.can_do_ids.pop();
+                }
+                4 => context.primary_domains = vec!["Personal".to_string(), "Public".to_string()],
+                _ => context.retired = true,
+            }
+            let original = serde_json::to_value(
+                draft
+                    .context_options
+                    .iter()
+                    .find(|entry| entry.id == "D19")
+                    .unwrap(),
+            )
+            .unwrap();
+            prepare_registry_draft(&mut draft);
+            assert_eq!(
+                serde_json::to_value(
+                    draft
+                        .context_options
+                        .iter()
+                        .find(|entry| entry.id == "D19")
+                        .unwrap()
+                )
+                .unwrap(),
+                original,
+                "variant {variant}"
+            );
+        }
     }
 
     #[test]

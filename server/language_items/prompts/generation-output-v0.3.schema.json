@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fcc:language-item-generation-output:0.3",
+  "type": "object",
+  "required": ["candidates"],
+  "properties": {
+    "candidates": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": ["candidatePayload", "proposedScoringPackage", "englishTranslations"],
+        "properties": {
+          "candidatePayload": { "type": "object" },
+          "englishTranslations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["path", "sourceText", "englishText"],
+              "properties": {
+                "path": { "type": "string", "pattern": "^/", "minLength": 2 },
+                "sourceText": { "type": "string", "minLength": 1 },
+                "englishText": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "proposedScoringPackage": {
+            "type": "object",
+            "required": ["scoringContractTemplateId"],
+            "properties": {
+              "scoringContractTemplateId": { "type": "string", "minLength": 1 },
+              "correctOptionId": { "type": "string" },
+              "correctMatches": { "type": "object", "additionalProperties": { "type": "string" } },
+              "acceptedResponses": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } },
+              "rubricId": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -23,14 +23,16 @@ use crate::{
             LanguageItemReviewDiscussionView, LanguageItemStatus, LanguageItemVersion,
             ReviewDecision, ReviewDiscussionEventKind, ReviewDiscussionKind,
             ReviewDiscussionStatus, StagingLanguageItem, TaskPackage, ValidationResult,
-            task_package_hash,
+            ai_generation_setup_snapshot, task_package_hash,
         },
         export::build_legacy_export,
         registry::{
             RegistrySnapshot, WorkbenchCapability, active_snapshot, capability_for,
             context_supports_capability, difficulty_standards_for_capability, snapshot_for,
         },
-        validation::{validate_generation_setup, validate_task_package},
+        validation::{
+            validate_candidate_privacy, validate_generation_setup, validate_task_package,
+        },
     },
     state::ServerState,
 };
@@ -418,28 +420,12 @@ fn draft_for_capability(
             "the requested difficulty band is not allowed for the selected capability".to_string(),
         ));
     }
-    let mut difficulty = package
-        .content
-        .difficulty
-        .take()
-        .unwrap_or_else(DifficultyProfile::r_a1_1_typical);
-    difficulty.intended_band = difficulty_standard.id.clone();
-    difficulty.status = "AuthorEstimated".to_string();
-    difficulty.drivers.input_length = difficulty_standard.default_drivers.input_length.clone();
-    difficulty.drivers.information_points = difficulty_standard.default_drivers.information_points;
-    difficulty.drivers.support_level = difficulty_standard.default_drivers.support_level.clone();
-    difficulty.drivers.distractor_similarity = difficulty_standard
-        .default_drivers
-        .distractor_similarity
-        .clone();
-    difficulty.drivers.independence_level = difficulty_standard
-        .default_drivers
-        .independence_level
-        .clone();
-    difficulty.drivers.inference_required = difficulty_standard.default_drivers.inference_required;
-    difficulty.rationale = vec![difficulty_standard.description.clone()];
     package.content.difficulty_band = difficulty_standard.id.clone();
-    package.content.difficulty = Some(difficulty);
+    package.content.difficulty = Some(difficulty_for_selection(
+        capability,
+        registry,
+        &difficulty_standard.id,
+    )?);
     if let Some(contract) = registry.scoring_contracts.iter().find(|contract| {
         contract.scoring_contract_template_id == capability.scoring_contract_template_id
     }) {
@@ -448,6 +434,107 @@ fn draft_for_capability(
     }
     package.ensure_item_scoring_spec();
     Ok(package)
+}
+
+fn difficulty_for_selection(
+    capability: &WorkbenchCapability,
+    registry: &RegistrySnapshot,
+    band: &str,
+) -> Result<DifficultyProfile, Error> {
+    let difficulty_standard = difficulty_standards_for_capability(registry, capability)
+        .iter()
+        .find(|standard| standard.id == band)
+        .ok_or_else(|| Error::Server(StatusCode::UNPROCESSABLE_ENTITY,
+            "the requested difficulty band is unavailable in the item's saved Assessment Settings".to_string()))?;
+    // Response shape belongs to the fixed item template; every configurable
+    // driver and the rationale come from the item's immutable Registry version.
+    let mut difficulty = template_for_format(&capability.item_format_id)
+        .and_then(|template| TaskPackage::from_template(String::new(), template))
+        .and_then(|package| package.content.difficulty)
+        .ok_or_else(|| {
+            Error::Server(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "the selected item format has no difficulty template".to_string(),
+            )
+        })?;
+    difficulty.intended_band = difficulty_standard.id.clone();
+    difficulty.status = "AuthorEstimated".to_string();
+    difficulty.drivers.input_length = difficulty_standard.default_drivers.input_length.clone();
+    difficulty.drivers.information_points = difficulty_standard.default_drivers.information_points;
+    difficulty.drivers.support_level = difficulty_standard.default_drivers.support_level.clone();
+    difficulty.drivers.distractor_similarity = if matches!(
+        capability.item_format_id.as_str(),
+        "IF-SINGLE-SELECT" | "IF-MATCHING"
+    ) {
+        difficulty_standard
+            .default_drivers
+            .distractor_similarity
+            .clone()
+    } else {
+        "notApplicable".to_string()
+    };
+    difficulty.drivers.independence_level = difficulty_standard
+        .default_drivers
+        .independence_level
+        .clone();
+    difficulty.drivers.inference_required = difficulty_standard.default_drivers.inference_required;
+    difficulty.rationale = vec![difficulty_standard.description.clone()];
+    Ok(difficulty)
+}
+
+fn apply_locked_draft_setup(
+    previous: &TaskPackage,
+    proposed: &mut TaskPackage,
+) -> Result<(), Error> {
+    if proposed.blueprint_slot_id != previous.blueprint_slot_id
+        || proposed.item_format_id != previous.item_format_id
+        || proposed.content.primary_can_do_id != previous.content.primary_can_do_id
+        || json!(&proposed.spec_versions) != json!(&previous.spec_versions)
+    {
+        return Err(Error::Server(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "task configuration and saved Assessment Settings are locked after item creation"
+                .to_string(),
+        ));
+    }
+    if proposed.content.difficulty_band == previous.content.difficulty_band {
+        // Keep historical saved profiles intact. Comparing with the persisted
+        // value prevents tuning without silently reinterpreting existing items.
+        if json!(&proposed.content.difficulty) != json!(&previous.content.difficulty) {
+            return Err(Error::Server(StatusCode::UNPROCESSABLE_ENTITY,
+                "difficulty rules cannot be edited on an item; select a complete difficulty profile or change rules in Assessment Settings".to_string()));
+        }
+    } else {
+        let registry = pinned_registry(&previous.spec_versions.registry_bundle_version)?;
+        let capability = capability_for(
+            &registry,
+            &previous.blueprint_slot_id,
+            &previous.item_format_id,
+            Some(&previous.content.primary_can_do_id),
+        )
+        .ok_or_else(|| {
+            Error::Server(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "the item's task configuration is unavailable in its saved Assessment Settings"
+                    .to_string(),
+            )
+        })?;
+        proposed.content.difficulty = Some(difficulty_for_selection(
+            capability,
+            &registry,
+            &proposed.content.difficulty_band,
+        )?);
+    }
+    Ok(())
+}
+
+fn blocks_draft_save(issue: &crate::language_items::domain::ValidationIssue) -> bool {
+    // Setup changes may temporarily leave authored language targets incompatible.
+    // Preserve them in drafts; generation, checking and submission still reject them.
+    (issue.code.starts_with("registry.") && issue.code != "registry.contentCompatibility")
+        || issue.code.starts_with("contract.")
+        || issue.code.starts_with("capability.")
+        || issue.code == "schema.uniqueItems"
 }
 
 fn apply_locked_capability_contract(package: &mut TaskPackage) -> Result<(), Error> {
@@ -549,12 +636,33 @@ pub async fn post_item(
             .template_id
             .as_deref()
             .unwrap_or("reading-single-select");
-        TaskPackage::from_template(id.clone(), template_id).ok_or_else(|| {
+        let template = TaskPackage::from_template(id.clone(), template_id).ok_or_else(|| {
             Error::Server(
                 StatusCode::BAD_REQUEST,
                 format!("unsupported language item template: {template_id}"),
             )
-        })?
+        })?;
+        let capability = capability_for(
+            &registry,
+            &template.blueprint_slot_id,
+            &template.item_format_id,
+            Some(&template.content.primary_can_do_id),
+        )
+        .ok_or_else(|| {
+            Error::Server(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "the requested template is unavailable in the active Assessment Settings"
+                    .to_string(),
+            )
+        })?;
+        draft_for_capability(
+            id.clone(),
+            capability,
+            &registry,
+            body.primary_domain.as_deref(),
+            body.context_id.as_deref(),
+            body.difficulty_band.as_deref(),
+        )?
     };
     let mut draft = draft;
     draft.spec_versions.registry_bundle_version = registry.bundle_version.clone();
@@ -707,7 +815,17 @@ pub async fn get_candidate_preview(
         .find_one(doc! { "id": &item_id })
         .await?
         .ok_or_else(|| not_found("language item", &item_id))?;
-    Ok(Json(CandidatePreview::from(&item.draft)))
+    Ok(Json(checked_candidate_preview(&item.draft)?))
+}
+
+fn checked_candidate_preview(package: &TaskPackage) -> Result<CandidatePreview, Error> {
+    // Incomplete drafts remain previewable, but historical private metadata must
+    // not escape merely because it predates the save-time boundary check.
+    if !validate_candidate_privacy(package).is_empty() {
+        return Err(Error::Server(StatusCode::UNPROCESSABLE_ENTITY,
+            "Candidate content contains private answer or review metadata. Remove it before previewing.".to_string()));
+    }
+    Ok(CandidatePreview::from(package))
 }
 
 #[derive(Deserialize)]
@@ -751,26 +869,14 @@ pub async fn put_draft(
             "title cannot be empty".to_string(),
         ));
     }
-    if body.package.blueprint_slot_id != item.draft.blueprint_slot_id
-        || body.package.item_format_id != item.draft.item_format_id
-    {
-        return Err(Error::Server(
-            StatusCode::UNPROCESSABLE_ENTITY,
-            "blueprint slot and item format are locked after item creation".to_string(),
-        ));
-    }
     let mut proposed_package = body.package;
+    apply_locked_draft_setup(&item.draft, &mut proposed_package)?;
     apply_locked_capability_contract(&mut proposed_package)?;
     let constraint_validation = validate_task_package(&proposed_package);
     let constraint_issues: Vec<_> = constraint_validation
         .issues
         .iter()
-        .filter(|issue| {
-            issue.code.starts_with("registry.")
-                || issue.code.starts_with("contract.")
-                || issue.code.starts_with("capability.")
-                || issue.code == "schema.uniqueItems"
-        })
+        .filter(|issue| blocks_draft_save(issue))
         .collect();
     if !constraint_issues.is_empty() {
         return Err(Error::Server(
@@ -1168,6 +1274,7 @@ pub async fn post_ai_generation(
             .iter()
             .map(|point| point.label.clone())
             .collect(),
+        generation_setup_snapshot: Some(ai_generation_setup_snapshot(&item.draft)),
         requested_count: count,
         candidates: Vec::new(),
         adopted_candidate_id: None,
@@ -1176,6 +1283,8 @@ pub async fn post_ai_generation(
         idempotency_key,
         attempt_count: 0,
         retry_count: 0,
+        elapsed_milliseconds: None,
+        provider_calls: Vec::new(),
         candidate_errors: Vec::new(),
         created_by: user.email.clone(),
         created_at: timestamp.clone(),
@@ -1263,6 +1372,8 @@ async fn execute_ai_generation(
     run.candidates = report.candidates;
     run.attempt_count = report.attempt_count;
     run.retry_count = report.retry_count;
+    run.elapsed_milliseconds = Some(report.elapsed_milliseconds);
+    run.provider_calls = report.provider_calls;
     run.updated_at = completed_at.clone();
     run.completed_at = Some(completed_at);
     state
@@ -1314,6 +1425,31 @@ pub struct AdoptCandidateBody {
     expected_revision: u64,
 }
 
+fn generation_setup_matches(run: &AiGenerationRun, package: &TaskPackage) -> bool {
+    if let Some(snapshot) = &run.generation_setup_snapshot {
+        return snapshot == &ai_generation_setup_snapshot(package);
+    }
+    // Older runs did not persist the full brief. Compare every setup field they
+    // did record without making unrelated title or payload edits stale a run.
+    json!(&run.spec_versions) == json!(&package.spec_versions)
+        && run.blueprint_slot_id == package.blueprint_slot_id
+        && run.task_family_id == package.task_family_id
+        && run.item_format_id == package.item_format_id
+        && run.renderer_id == package.renderer.renderer_id
+        && run.primary_can_do_id == package.content.primary_can_do_id
+        && run.primary_domain == package.content.primary_domain
+        && run.context_id == package.content.context_id
+        && run.difficulty_band == package.content.difficulty_band
+        && run.target_content_ids == package.content.target_content_ids
+        && run.required_information_points
+            == package
+                .content
+                .required_information_points
+                .iter()
+                .map(|point| point.label.clone())
+                .collect::<Vec<_>>()
+}
+
 pub async fn post_adopt_candidate(
     user: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
@@ -1350,8 +1486,14 @@ pub async fn post_adopt_candidate(
     if item.revision != body.expected_revision {
         return Err(conflict("draft revision changed before candidate adoption"));
     }
+    if !generation_setup_matches(&run, &item.draft) {
+        return Err(conflict(
+            "the item setup changed after this AI run; generate new drafts before adopting a candidate",
+        ));
+    }
     let mut proposed = item.draft.clone();
     proposed.candidate_payload = candidate.candidate_payload.clone();
+    proposed.authoring_package.english_translations = candidate.english_translations.clone();
     if let Some(scoring_package) = &candidate.proposed_scoring_package {
         proposed.scoring_package = scoring_package.clone();
     } else {
@@ -2424,6 +2566,22 @@ mod tests {
             assert_eq!(package.blueprint_slot_id, capability.blueprint_slot_id);
             assert_eq!(package.task_family_id, capability.task_family_id);
             assert_eq!(package.item_format_id, capability.item_format_id);
+            if !matches!(
+                capability.item_format_id.as_str(),
+                "IF-SINGLE-SELECT" | "IF-MATCHING"
+            ) {
+                assert_eq!(
+                    package
+                        .content
+                        .difficulty
+                        .as_ref()
+                        .unwrap()
+                        .drivers
+                        .distractor_similarity,
+                    "notApplicable",
+                    "open-response items have no distractors"
+                );
+            }
             assert_eq!(package.renderer.renderer_id, capability.renderer_id);
             assert_eq!(
                 package.scoring_package.scoring_contract_template_id,
@@ -2453,6 +2611,30 @@ mod tests {
                 capability.blueprint_slot_id
             );
         }
+    }
+
+    #[test]
+    fn preview_allows_incomplete_drafts_but_blocks_historical_nested_answers() {
+        let registry = snapshot();
+        let capability = registry
+            .capabilities
+            .iter()
+            .find(|entry| entry.item_format_id == "IF-FORM-ENTRY")
+            .unwrap();
+        let mut package = draft_for_capability(
+            "LI-preview".to_string(),
+            capability,
+            registry,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+        assert!(checked_candidate_preview(&package).is_ok());
+        let mut payload = serde_json::to_value(&package.candidate_payload).unwrap();
+        payload["sourceProfile"] = json!({"nested": [{"correctOptionId": "secret"}]});
+        package.candidate_payload = serde_json::from_value(payload).unwrap();
+        assert!(checked_candidate_preview(&package).is_err());
     }
 
     #[test]
@@ -2525,5 +2707,252 @@ mod tests {
         );
         assert!(package.scoring_package.rubric_id.is_none());
         assert!(package.scoring_package.benchmark_set_version.is_none());
+    }
+
+    #[test]
+    fn difficulty_selection_uses_all_pinned_defaults_for_every_format() {
+        let mut registry = snapshot().clone();
+        for profiles in &mut registry.capability_difficulty_profile_sets {
+            for standard in &mut profiles.standards {
+                standard.default_drivers.input_length = "wordOrPhrase".to_string();
+                standard.default_drivers.information_points = 2;
+                standard.default_drivers.support_level = "high".to_string();
+                standard.default_drivers.distractor_similarity = "clear".to_string();
+                standard.default_drivers.independence_level = "supported".to_string();
+                standard.description = "The team's published complete profile".to_string();
+            }
+        }
+        for capability in &registry.capabilities {
+            for band in ["LowerA1", "TypicalA1", "UpperA1"] {
+                let package = draft_for_capability(
+                    "LI-complete-profile".to_string(),
+                    capability,
+                    &registry,
+                    None,
+                    None,
+                    Some(band),
+                )
+                .unwrap();
+                let profile = package.content.difficulty.unwrap();
+                assert_eq!(profile.intended_band, band);
+                assert_eq!(profile.drivers.input_length, "wordOrPhrase");
+                assert_eq!(profile.drivers.information_points, 2);
+                assert_eq!(profile.drivers.support_level, "high");
+                assert_eq!(profile.drivers.independence_level, "supported");
+                assert!(!profile.drivers.inference_required);
+                assert_eq!(profile.rationale, ["The team's published complete profile"]);
+                let template = TaskPackage::from_template(
+                    String::new(),
+                    template_for_format(&capability.item_format_id).unwrap(),
+                )
+                .unwrap();
+                let template_driver = template.content.difficulty.unwrap().drivers;
+                assert_eq!(profile.drivers.output_length, template_driver.output_length);
+                assert_eq!(
+                    profile.drivers.interaction_turns,
+                    template_driver.interaction_turns
+                );
+                assert_eq!(
+                    profile.drivers.preparation_time_seconds,
+                    template_driver.preparation_time_seconds
+                );
+                assert_eq!(
+                    profile.drivers.distractor_similarity,
+                    if matches!(
+                        capability.item_format_id.as_str(),
+                        "IF-SINGLE-SELECT" | "IF-MATCHING"
+                    ) {
+                        "clear"
+                    } else {
+                        "notApplicable"
+                    }
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn ordinary_draft_edits_preserve_legacy_difficulty_but_reject_tuning() {
+        let mut previous = TaskPackage::new("LI-legacy-profile".to_string());
+        let profile = previous.content.difficulty.as_mut().unwrap();
+        profile.drivers.information_points = 2;
+        profile.rationale = vec!["Existing author's saved estimate".to_string()];
+        let saved = json!(&previous.content.difficulty);
+        let mut proposed = previous.clone();
+        proposed.content.required_information_points.clear();
+        apply_locked_draft_setup(&previous, &mut proposed).unwrap();
+        assert_eq!(json!(&proposed.content.difficulty), saved);
+
+        for field in ["drivers", "rationale", "profile"] {
+            let mut proposed = previous.clone();
+            match field {
+                "drivers" => {
+                    proposed
+                        .content
+                        .difficulty
+                        .as_mut()
+                        .unwrap()
+                        .drivers
+                        .information_points = 1
+                }
+                "rationale" => {
+                    proposed.content.difficulty.as_mut().unwrap().rationale =
+                        vec!["New rule".to_string()]
+                }
+                _ => proposed.content.difficulty = None,
+            }
+            assert!(
+                apply_locked_draft_setup(&previous, &mut proposed).is_err(),
+                "{field}"
+            );
+        }
+        previous.content.difficulty = None;
+        let mut proposed = previous.clone();
+        apply_locked_draft_setup(&previous, &mut proposed).unwrap();
+        assert!(
+            proposed.content.difficulty.is_none(),
+            "legacy reads must not create a new profile"
+        );
+    }
+
+    #[test]
+    fn changing_band_replaces_the_profile_without_removing_authored_content() {
+        let mut previous = TaskPackage::new("LI-change-profile".to_string());
+        previous.content.target_content_ids = vec!["LEX-A1-0208".to_string()];
+        previous.content.supporting_content_refs = vec![
+            snapshot()
+                .content_id_options
+                .iter()
+                .find(|entry| entry.kind == "supported")
+                .unwrap()
+                .id
+                .clone(),
+        ];
+        previous.content.required_information_points = vec![
+            crate::language_items::domain::InformationPoint::new(0, "上午九点开门"),
+            crate::language_items::domain::InformationPoint::new(1, "下午五点关门"),
+        ];
+        let mut proposed = previous.clone();
+        proposed.content.difficulty_band = "LowerA1".to_string();
+        proposed
+            .content
+            .difficulty
+            .as_mut()
+            .unwrap()
+            .drivers
+            .information_points = 99;
+        apply_locked_draft_setup(&previous, &mut proposed).unwrap();
+        let profile = proposed.content.difficulty.as_ref().unwrap();
+        assert_eq!(profile.intended_band, "LowerA1");
+        assert_eq!(profile.drivers.information_points, 1);
+        assert_eq!(profile.empirical_difficulty.status, "NotPiloted");
+        assert_eq!(
+            proposed.content.target_content_ids,
+            previous.content.target_content_ids
+        );
+        assert_eq!(
+            proposed.content.supporting_content_refs,
+            previous.content.supporting_content_refs
+        );
+        assert_eq!(
+            json!(proposed.content.required_information_points),
+            json!(previous.content.required_information_points)
+        );
+        assert_eq!(
+            json!(proposed.candidate_payload),
+            json!(previous.candidate_payload)
+        );
+        let checks = validate_task_package(&proposed);
+        assert!(
+            checks
+                .issues
+                .iter()
+                .any(|issue| issue.code == "authoring.informationPoints")
+        );
+        assert!(
+            !checks.issues.iter().any(blocks_draft_save),
+            "temporary setup mismatches remain saveable"
+        );
+        assert!(!validate_generation_setup(&proposed).valid);
+    }
+
+    #[test]
+    fn draft_cannot_rebind_settings_to_bypass_the_saved_profile() {
+        let previous = TaskPackage::new("LI-pinned-profile".to_string());
+        for field in ["version", "canDo"] {
+            let mut proposed = previous.clone();
+            if field == "version" {
+                proposed.spec_versions.registry_bundle_version = "a-different-version".to_string();
+            } else {
+                proposed.content.primary_can_do_id = "A1-R2".to_string();
+            }
+            assert!(apply_locked_draft_setup(&previous, &mut proposed).is_err());
+        }
+    }
+
+    fn generation_run_for(package: &TaskPackage) -> AiGenerationRun {
+        serde_json::from_value(json!({
+            "id": "AIR-test", "itemId": package.task_id,
+            "provider": "deterministic-mock", "model": "test", "modelVersion": "1",
+            "promptId": "test", "promptVersion": "1", "outputSchemaVersion": "1",
+            "specVersions": package.spec_versions, "blueprintSlotId": package.blueprint_slot_id,
+            "taskFamilyId": package.task_family_id, "itemFormatId": package.item_format_id,
+            "rendererId": package.renderer.renderer_id, "primaryCanDoId": package.content.primary_can_do_id,
+            "primaryDomain": package.content.primary_domain, "contextId": package.content.context_id,
+            "difficultyBand": package.content.difficulty_band, "targetContentIds": package.content.target_content_ids,
+            "requiredInformationPoints": package.content.required_information_points.iter()
+                .map(|point| &point.label).collect::<Vec<_>>(),
+            "generationSetupSnapshot": ai_generation_setup_snapshot(package),
+            "requestedCount": 1, "candidates": [], "status": "completed", "createdBy": "author", "createdAt": "test"
+        })).unwrap()
+    }
+
+    #[test]
+    fn candidate_adoption_rejects_changed_generation_briefs_but_allows_wording_edits() {
+        let mut package = TaskPackage::new("LI-generation-brief".to_string());
+        package.content.target_content_ids = vec!["LEX-A1-0208".to_string()];
+        package.content.required_information_points =
+            vec![crate::language_items::domain::InformationPoint::new(
+                0,
+                "上午九点开门",
+            )];
+        let run = generation_run_for(&package);
+        assert!(generation_setup_matches(&run, &package));
+        for (path, value) in [
+            ("/content/contextId", json!("another-context")),
+            ("/content/difficultyBand", json!("UpperA1")),
+            ("/content/difficulty/drivers/informationPoints", json!(2)),
+            ("/content/targetContentIds", json!(["other-target"])),
+            ("/content/supportingContentRefs", json!(["other-support"])),
+            (
+                "/content/requiredInformationPoints/0/pointType",
+                json!("time"),
+            ),
+            (
+                "/content/requiredInformationPoints/0/label",
+                json!("下午五点关门"),
+            ),
+        ] {
+            let mut changed = json!(&package);
+            *changed.pointer_mut(path).unwrap() = value;
+            let changed = serde_json::from_value(changed).unwrap();
+            assert!(!generation_setup_matches(&run, &changed), "{path}");
+        }
+        let mut changed = package.clone();
+        changed
+            .candidate_payload
+            .as_single_select_mut()
+            .unwrap()
+            .prompt = "新的问题措辞".to_string();
+        assert!(generation_setup_matches(&run, &changed));
+
+        let mut legacy = run;
+        legacy.generation_setup_snapshot = None;
+        assert!(generation_setup_matches(&legacy, &changed));
+        changed.content.context_id = "another-context".to_string();
+        assert!(!generation_setup_matches(&legacy, &changed));
+        changed = package;
+        changed.content.required_information_points[0].label = "Changed information".to_string();
+        assert!(!generation_setup_matches(&legacy, &changed));
     }
 }

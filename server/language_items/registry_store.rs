@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use chrono::Utc;
 use futures_util::TryStreamExt;
@@ -9,8 +9,8 @@ use uuid::Uuid;
 use crate::{database::WorkbenchDatabase, errors::Error};
 
 use super::registry::{
-    DifficultyBandStandard, RegistrySnapshot, install_published_snapshot,
-    context_supports_capability, normalize_registry_snapshot, snapshot,
+    DifficultyBandStandard, RegistrySnapshot, context_supports_capability,
+    hydrate_published_registry_snapshot, install_published_snapshot, snapshot,
 };
 
 pub const REGISTRY_STATUS_DRAFT: &str = "draft";
@@ -72,6 +72,17 @@ pub struct RegistryImpact {
     pub scoring_contract_changes: usize,
     pub difficulty_standard_changes: usize,
     pub difficulty_configuration_changes: Vec<String>,
+    pub draft_revision: u64,
+    pub base_version: Option<String>,
+    pub stale_base: bool,
+    pub additional_changes: Vec<RegistrySectionChange>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RegistrySectionChange {
+    pub label: String,
+    pub count: usize,
 }
 
 fn now() -> String {
@@ -153,6 +164,14 @@ fn validate_difficulty_standard(
             "registry.invalidDifficultyRange",
             path,
             "Difficulty information-point range is invalid",
+        );
+    }
+    if standard.default_drivers.inference_required {
+        issue(
+            issues,
+            "registry.a1InferenceBoundary",
+            format!("{path}.defaultDrivers.inferenceRequired"),
+            "A1 tasks must use explicit information without requiring complex inference",
         );
     }
     if standard.default_drivers.information_points < standard.information_points_min
@@ -422,7 +441,7 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
     check_unique(
         snapshot.blueprint_slots.iter().map(|slot| slot.id.as_str()),
         "blueprintSlots",
-        "Slot",
+        "Blueprint slot",
         &mut issues,
     );
     for (index, slot) in snapshot.blueprint_slots.iter().enumerate() {
@@ -431,8 +450,43 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
                 &mut issues,
                 "registry.slotDetailsRequired",
                 format!("blueprintSlots.{index}"),
-                "Each Slot requires a display name and at least one Item Format",
+                "Each blueprint slot requires a display name and at least one item format",
             );
+        }
+    }
+    let mut scoring_policies = HashMap::new();
+    for (index, contract) in snapshot.scoring_contracts.iter().enumerate() {
+        for (field, policy) in [
+            ("normalization", &contract.normalization),
+            ("partialCredit", &contract.partial_credit),
+            ("invalidResponse", &contract.invalid_response),
+            ("technicalIncident", &contract.technical_incident),
+            ("adjudication", &contract.adjudication),
+            ("raterQualification", &contract.rater_qualification),
+        ] {
+            if policy.policy_id.trim().is_empty() || policy.summary.trim().is_empty() {
+                issue(
+                    &mut issues,
+                    "registry.scoringPolicyRequired",
+                    format!("scoringContracts.{index}.{field}"),
+                    "Each scoring policy requires a reference and a readable rule",
+                );
+            }
+            let content = format!("{policy:?}");
+            if scoring_policies
+                .insert(policy.policy_id.as_str(), content.clone())
+                .is_some_and(|existing| existing != content)
+            {
+                issue(
+                    &mut issues,
+                    "registry.conflictingScoringPolicy",
+                    format!("scoringContracts.{index}.{field}"),
+                    format!(
+                        "“{}” uses a shared scoring policy with different rules; update all contracts that share this policy together",
+                        contract.display_name
+                    ),
+                );
+            }
         }
     }
 
@@ -547,16 +601,17 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
                 &mut issues,
                 "registry.duplicateCapability",
                 &path,
-                format!("Duplicate Slot × Item Format × Primary Can-do capability: {key}"),
+                format!(
+                    "Duplicate Blueprint slot × Item format × Primary Can-do task configuration: {key}"
+                ),
             );
         }
         if !snapshot.blueprint_slots.iter().any(|slot| {
-                slot.id == capability.blueprint_slot_id
-                    && slot
-                        .allowed_item_format_ids
-                        .contains(&capability.item_format_id)
-            })
-        {
+            slot.id == capability.blueprint_slot_id
+                && slot
+                    .allowed_item_format_ids
+                    .contains(&capability.item_format_id)
+        }) {
             issue(
                 &mut issues,
                 "registry.slotFormatMismatch",
@@ -569,16 +624,35 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
         }
         if !snapshot.task_family_options.iter().any(|family| {
             family.id == capability.task_family_id
-                && family.blueprint_slot_ids.contains(&capability.blueprint_slot_id)
-                && family.allowed_item_format_ids.contains(&capability.item_format_id)
+                && family
+                    .blueprint_slot_ids
+                    .contains(&capability.blueprint_slot_id)
+                && family
+                    .allowed_item_format_ids
+                    .contains(&capability.item_format_id)
         }) {
-            issue(&mut issues, "registry.taskFamilyMismatch", format!("{path}.taskFamilyId"), format!("The Task Family selected for “{}” is not registered for this Slot and Item Format", capability.title));
+            issue(
+                &mut issues,
+                "registry.taskFamilyMismatch",
+                format!("{path}.taskFamilyId"),
+                format!(
+                    "The task family selected for “{}” is not registered for this blueprint slot and item format",
+                    capability.title
+                ),
+            );
         }
         if snapshot.capabilities.iter().any(|other| {
-            other.blueprint_slot_id == capability.blueprint_slot_id && other.item_format_id == capability.item_format_id
-                && (other.primary_reported_skill != capability.primary_reported_skill || other.communicative_activity != capability.communicative_activity)
+            other.blueprint_slot_id == capability.blueprint_slot_id
+                && other.item_format_id == capability.item_format_id
+                && (other.primary_reported_skill != capability.primary_reported_skill
+                    || other.communicative_activity != capability.communicative_activity)
         }) {
-            issue(&mut issues, "registry.slotConstructMismatch", format!("{path}.primaryCanDoId"), "Primary Can-do choices for the same Slot and Item Format must retain the registered skill and activity");
+            issue(
+                &mut issues,
+                "registry.slotConstructMismatch",
+                format!("{path}.primaryCanDoId"),
+                "Primary Can-do choices for the same blueprint slot and item format must retain the registered skill and activity",
+            );
         }
         if capability.primary_reported_skill.trim().is_empty() {
             issue(
@@ -755,8 +829,20 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
                     ),
                 );
             }
-            if context.primary_domains.iter().any(|domain| !capability.allowed_domains.contains(domain)) {
-                issue(&mut issues, "registry.contextDomainMismatch", format!("{path}.allowedDomains"), format!("Allowed Domains must include the Domain of selected Context “{}”", context.label));
+            if context
+                .primary_domains
+                .iter()
+                .any(|domain| !capability.allowed_domains.contains(domain))
+            {
+                issue(
+                    &mut issues,
+                    "registry.contextDomainMismatch",
+                    format!("{path}.allowedDomains"),
+                    format!(
+                        "Allowed Domains must include the Domain of selected Context “{}”",
+                        context.label
+                    ),
+                );
             }
         }
     }
@@ -820,7 +906,7 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
                 &mut issues,
                 "registry.exerciseTemplateUnused",
                 "capabilities",
-                format!("No Slot uses required Item Format {item_format_id}"),
+                format!("No blueprint slot uses required item format {item_format_id}"),
             );
         }
         if snapshot
@@ -967,12 +1053,28 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
     }
 }
 
+pub fn preferred_published_record(
+    records: &[RegistryVersionRecord],
+) -> Option<&RegistryVersionRecord> {
+    records
+        .iter()
+        .filter(|record| record.status == REGISTRY_STATUS_PUBLISHED)
+        .max_by_key(|record| {
+            (
+                record.active,
+                record.published_at.as_deref().unwrap_or(""),
+                record.updated_at.as_str(),
+                record.id.as_str(),
+            )
+        })
+}
+
 pub async fn initialize(db: &WorkbenchDatabase) -> Result<(), Error> {
     let baseline = snapshot().clone();
     let current_active = db
         .registry_versions
         .find_one(doc! { "active": true })
-        .sort(doc! { "publishedAt": -1 })
+        .sort(doc! { "publishedAt": -1, "updatedAt": -1, "id": -1 })
         .await?;
     let promote_embedded_baseline = current_active
         .as_ref()
@@ -1023,14 +1125,24 @@ pub async fn initialize(db: &WorkbenchDatabase) -> Result<(), Error> {
         .await?
         .try_collect()
         .await?;
-    let active_version = records
-        .iter()
-        .rev()
-        .find(|record| record.active)
-        .or_else(|| records.last())
-        .map(|record| record.version.clone());
+    let active_record = preferred_published_record(&records);
+    let active_version = active_record.map(|record| record.version.clone());
+    if let Some(active_record) = active_record {
+        db.registry_versions
+            .update_one(
+                doc! { "id": &active_record.id },
+                doc! { "$set": { "active": true } },
+            )
+            .await?;
+        db.registry_versions
+            .update_many(
+                doc! { "active": true, "id": { "$ne": &active_record.id } },
+                doc! { "$set": { "active": false } },
+            )
+            .await?;
+    }
     for mut record in records {
-        normalize_registry_snapshot(&mut record.snapshot);
+        hydrate_published_registry_snapshot(&mut record.snapshot);
         let make_active = active_version.as_deref() == Some(record.version.as_str());
         install_published_snapshot(record.snapshot, make_active);
     }
@@ -1043,15 +1155,24 @@ pub async fn write_audit(
     action: &str,
     actor_email: &str,
 ) -> Result<(), Error> {
-    db.registry_audit_events
-        .insert_one(RegistryAuditEvent {
-            id: format!("LARA-{}", Uuid::new_v4()),
-            registry_version_id: record.id.clone(),
-            action: action.to_string(),
-            actor_email: actor_email.to_string(),
-            revision: record.revision,
-            created_at: now(),
+    if db
+        .registry_audit_events
+        .find_one(doc! {
+            "registryVersionId": &record.id, "action": action, "revision": record.revision as i64,
         })
+        .await?
+        .is_some()
+    {
+        return Ok(());
+    }
+    let id = format!("LARA-{}-{}-{action}", record.id, record.revision);
+    db.registry_audit_events
+        .update_one(doc! { "id": &id }, doc! { "$setOnInsert": {
+            "id": id, "registryVersionId": &record.id, "action": action,
+            "actorEmail": actor_email, "revision": record.revision as i64,
+            "createdAt": if action == "registry.version.published" { record.published_at.as_deref().unwrap_or(&record.updated_at) } else { &record.updated_at },
+        } })
+        .upsert(true)
         .await?;
     Ok(())
 }
@@ -1108,6 +1229,19 @@ mod tests {
     }
 
     #[test]
+    fn a1_difficulty_settings_cannot_require_complex_inference() {
+        let mut standard = snapshot().difficulty_standards[0].clone();
+        standard.default_drivers.inference_required = true;
+        let mut issues = Vec::new();
+        validate_difficulty_standard(&standard, "difficultyStandards.0", &mut issues);
+        assert!(
+            issues
+                .iter()
+                .any(|issue| issue.code == "registry.a1InferenceBoundary")
+        );
+    }
+
+    #[test]
     fn context_requires_one_domain_and_an_available_compatible_configuration() {
         let mut registry = snapshot().clone();
         registry.context_options[0]
@@ -1130,13 +1264,67 @@ mod tests {
     }
 
     #[test]
-    fn embedded_registry_is_publishable() {
-        let validation = validate_registry(snapshot());
+    fn draft_from_embedded_registry_is_publishable() {
+        let mut draft = snapshot().clone();
+        super::super::registry::prepare_registry_draft(&mut draft);
+        let validation = validate_registry(&draft);
         assert!(
             validation.valid,
             "embedded Registry must satisfy its own publication rules: {:?}",
             validation.issues
         );
+    }
+
+    #[test]
+    fn selected_unavailable_contexts_block_publication() {
+        let mut registry = snapshot().clone();
+        super::super::registry::prepare_registry_draft(&mut registry);
+        let first = &registry.capabilities[0];
+        let incompatible_id = registry
+            .context_options
+            .iter()
+            .find(|context| !context.can_do_ids.contains(&first.primary_can_do_id))
+            .unwrap()
+            .id
+            .clone();
+        registry.capabilities[0]
+            .allowed_context_ids
+            .push(incompatible_id);
+        let result = validate_registry(&registry);
+        assert!(!result.valid);
+        assert!(result.issues.iter().any(
+            |issue| issue.code == "registry.contextCanDoMismatch" && issue.severity == "error"
+        ));
+        let compatible_id = registry.capabilities[0].allowed_context_ids[0].clone();
+        registry
+            .context_options
+            .iter_mut()
+            .find(|context| context.id == compatible_id)
+            .unwrap()
+            .retired = true;
+        assert!(
+            validate_registry(&registry)
+                .issues
+                .iter()
+                .any(|issue| issue.code == "registry.retiredContext")
+        );
+    }
+
+    #[test]
+    fn task_family_binding_and_shared_scoring_rules_must_be_consistent() {
+        let mut registry = snapshot().clone();
+        super::super::registry::prepare_registry_draft(&mut registry);
+        registry.capabilities[0].task_family_id = "TF-SHORT-MESSAGE-COMPREHENSION".to_string();
+        registry.scoring_contracts[0].technical_incident.summary =
+            "A conflicting shared rule".to_string();
+        let result = validate_registry(&registry);
+        assert!(!result.valid);
+        for code in [
+            "registry.taskFamilyMismatch",
+            "registry.conflictingScoringPolicy",
+        ] {
+            assert!(result.issues.iter().any(|issue| issue.code == code));
+        }
     }
 
     #[test]

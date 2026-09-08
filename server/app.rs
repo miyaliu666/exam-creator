@@ -136,7 +136,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
             mongodb::bson::doc! { "status": { "$in": ["queued", "running"] } },
             mongodb::bson::doc! { "$set": {
                 "status": "failed",
-                "error": "The server restarted before this GitHub synchronization completed. Redeliver the webhook or use Sync PRs.",
+                "error": "The server restarted before this GitHub synchronization completed. Automatic sync will retry when configured; Sync PRs remains available.",
                 "updatedAt": &interrupted_at,
                 "completedAt": &interrupted_at,
             } },
@@ -215,6 +215,11 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         // Following redirects opens the client up to SSRF vulnerabilities.
         .redirect(reqwest::redirect::Policy::none())
         .build()?;
+
+    routes::language_item_github::start_github_sync_worker(
+        server_state.clone(),
+        http_client.clone(),
+    );
 
     let app = if cfg!(debug_assertions) && env_vars.mock_auth {
         warn!("Debug assertions are enabled; adding dev login route.");

@@ -12,7 +12,9 @@ import {
 } from "@chakra-ui/react";
 import { useState } from "react";
 
-import { CandidateRenderer } from "./renderer-registry";
+import { AuthorPreview } from "./author-preview";
+import { rankAiCandidates } from "./candidate-quality";
+import { AiRunTelemetry } from "./ai-run-telemetry";
 import { VersionDiffPanel } from "./version-diff-panel";
 import {
   REVIEW_DECISION_LABELS,
@@ -31,6 +33,7 @@ interface AiCandidatesPanelProps {
   run: AiGenerationRun | undefined;
   isAdopting: boolean;
   canAdopt: boolean;
+  setupChanged?: boolean;
   onAdopt: (runId: string, candidateId: string) => void;
 }
 
@@ -38,13 +41,16 @@ export function AiCandidatesPanel({
   run,
   isAdopting,
   canAdopt,
+  setupChanged = false,
   onAdopt,
 }: AiCandidatesPanelProps) {
+  const candidates = rankAiCandidates(run?.candidates ?? []);
   return (
     <>
       <Separator />
       <Stack gap={4}>
-        <Heading size="lg">AI candidates</Heading>
+        <Heading size="lg">Generated drafts</Heading>
+        {setupChanged ? <Text role="status" color="fg.warning">These drafts were generated for earlier authoring requirements. Generate new drafts for the current setup.</Text> : null}
         {run && (run.status === "queued" || run.status === "running") ? (
           <Box borderWidth="1px" borderColor="border.info" borderRadius="lg" p={4}>
             <Text color="fg.info" fontWeight="semibold">
@@ -77,7 +83,8 @@ export function AiCandidatesPanel({
             <Text fontWeight="semibold">No candidates yet</Text>
           </Box>
         ) : null}
-        {run?.candidates.map((candidate) => (
+        {run ? <AiRunTelemetry run={run} /> : null}
+        {run && candidates.map(({ candidate, duplicateOfOrdinal, warningCount }) => (
           <Box key={candidate.id} borderWidth="1px" borderRadius="lg" p={4}>
             <Grid
               templateColumns={{ base: "1fr", md: "1fr auto" }}
@@ -86,14 +93,22 @@ export function AiCandidatesPanel({
             >
               <Stack>
                 <HStack>
-                  <Badge colorPalette="purple">Candidate {candidate.ordinal}</Badge>
-                  <Badge colorPalette={candidate.validation.valid ? "green" : "red"}>
-                    {candidate.validation.valid ? "Validation passed" : "Cannot adopt"}
+                  <Badge colorPalette="purple">Option {candidate.ordinal}</Badge>
+                  {candidate.status === "adopted" ? <Badge colorPalette="teal">Selected</Badge> : null}
+                  {candidate.status === "discarded" ? <Badge>Not selected</Badge> : null}
+                  <Badge colorPalette={setupChanged ? "orange" : candidate.validation.valid ? "green" : "red"}>
+                    {setupChanged ? "Earlier requirements" : candidate.validation.valid ? "Checks passed" : "Cannot use"}
                   </Badge>
+                  {warningCount > 0 ? <Badge colorPalette="orange">{warningCount} validation {warningCount === 1 ? "warning" : "warnings"}</Badge> : null}
                 </HStack>
-                <CandidateRenderer
+                {duplicateOfOrdinal !== undefined ? (
+                  <Text fontSize="sm" color="fg.warning">Same visible content as Option {duplicateOfOrdinal}</Text>
+                ) : null}
+                <AuthorPreview
                   rendererId={run.rendererId}
                   payload={candidate.candidatePayload}
+                  englishTranslations={candidate.englishTranslations}
+                  showLegacyHeading={false}
                 />
                 {candidate.validation.issues.map((issue) => (
                   <Text
@@ -109,13 +124,14 @@ export function AiCandidatesPanel({
                 colorPalette="purple"
                 disabled={
                   !canAdopt ||
+                  setupChanged ||
                   !candidate.validation.valid ||
                   candidate.status !== "valid"
                 }
                 loading={isAdopting}
                 onClick={() => onAdopt(run.id, candidate.id)}
               >
-                Adopt this candidate
+                Use this draft
               </Button>
             </Grid>
           </Box>

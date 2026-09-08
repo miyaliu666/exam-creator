@@ -2,20 +2,21 @@ import {
   Button,
   CloseButton,
   Dialog,
-  Field,
   HStack,
-  Input,
-  NativeSelect,
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+
+import { NewItemSelect } from "./new-item-select";
 
 import {
   ITEM_FORMAT_LABELS,
   DOMAIN_LABELS,
   SKILL_LABELS,
+  WORKBENCH_LABELS,
   optionLabel,
+  slotLabel,
 } from "./labels";
 import { registryDisplayText } from "./registry-display-text";
 import { useNewItemDraft } from "./new-item-draft";
@@ -65,9 +66,15 @@ export function NewLanguageItemDialog({
     return [...byId.values()];
   }, [registry]);
   const { draft, setField } = useNewItemDraft(draftScope);
+  const [openField, setOpenField] = useState<keyof NewLanguageItemSelection | null>(null);
+  const dropdownState = (field: keyof NewLanguageItemSelection) => ({
+    open: open && !isPending && openField === field,
+    dimmed: open && !isPending && openField !== null && openField !== field,
+    onOpenChange: (isOpen: boolean) => setOpenField((current) => isOpen ? field : current === field ? null : current),
+  });
   const {
     slotId, formatId, primaryCanDoId, domainId, contextId,
-    difficultyBand, skillFilter, slotSearch,
+    difficultyBand, skillFilter,
   } = draft;
   const setSlotId = (value: string) => setField("slotId", value);
   const setFormatId = (value: string) => setField("formatId", value);
@@ -76,18 +83,14 @@ export function NewLanguageItemDialog({
   const setContextId = (value: string) => setField("contextId", value);
   const setDifficultyBand = (value: string) => setField("difficultyBand", value);
   const setSkillFilter = (value: string) => setField("skillFilter", value);
-  const setSlotSearch = (value: string) => setField("slotSearch", value);
-  const normalizedSlotSearch = slotSearch.trim().toLocaleLowerCase();
   const visibleSlots = slots.filter(
     (entry) =>
       entry.blueprintSlotId === slotId ||
-      ((!skillFilter || (registry?.capabilities ?? []).some(
+      (!skillFilter || (registry?.capabilities ?? []).some(
           (capability) =>
             capability.blueprintSlotId === entry.blueprintSlotId &&
             capability.primaryReportedSkill === skillFilter,
-        )) &&
-        (!normalizedSlotSearch ||
-          registryDisplayText(entry.title).toLocaleLowerCase().includes(normalizedSlotSearch))),
+        )),
   );
   const formats = useMemo(() => {
     const byId = new Map<string, RegistryCapability>();
@@ -160,6 +163,7 @@ export function NewLanguageItemDialog({
   };
   const close = () => {
     if (isPending) return;
+    setOpenField(null);
     onClose();
   };
   const canCreate = !!selectedCapability &&
@@ -185,14 +189,18 @@ export function NewLanguageItemDialog({
           <Dialog.Body>
             <fieldset disabled={isPending} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
             <Stack gap={4}>
-              <Field.Root>
-                <Field.Label>Exam task</Field.Label>
+              <NewItemSelect label={WORKBENCH_LABELS.blueprintSlot} placeholder="Select a blueprint slot"
+                value={slotId} onChange={selectSlot} disabled={isPending || !visibleSlots.length}
+                options={visibleSlots.map((entry) => ({ value: entry.blueprintSlotId, label: skillFilter
+                  ? slotLabel(entry.blueprintSlotId, registry)
+                  : `${SKILL_LABELS[entry.primaryReportedSkill] ?? entry.primaryReportedSkill} · ${slotLabel(entry.blueprintSlotId, registry)}` }))}
+                {...dropdownState("blueprintSlotId")}>
                 <HStack gap={2} mb={3} flexWrap="wrap">
                   <Button
                     size="xs"
                     variant={skillFilter === "" ? "solid" : "outline"}
                     colorPalette={skillFilter === "" ? "blue" : undefined}
-                    onClick={() => setSkillFilter("")}
+                    onClick={() => { setOpenField(null); setSkillFilter(""); }}
                   >
                     All
                   </Button>
@@ -203,6 +211,7 @@ export function NewLanguageItemDialog({
                       variant={skillFilter === skill ? "solid" : "outline"}
                       colorPalette={skillFilter === skill ? "blue" : undefined}
                       onClick={() => {
+                        setOpenField(null);
                         setSkillFilter(skill);
                         if (slot && !(registry?.capabilities ?? []).some(
                           (capability) =>
@@ -217,137 +226,39 @@ export function NewLanguageItemDialog({
                     </Button>
                   ))}
                 </HStack>
-                <Input
-                  mb={3}
-                  aria-label="Search exam tasks"
-                  placeholder="Search task name"
-                  value={slotSearch}
-                  onChange={(event) => setSlotSearch(event.target.value)}
-                />
-                <NativeSelect.Root>
-                  <NativeSelect.Field
-                    aria-label="Exam task"
-                    value={slotId}
-                    onChange={(event) => selectSlot(event.target.value)}
-                  >
-                    <option value="" disabled>Select an exam task</option>
-                    {visibleSlots.map((entry) => (
-                      <option
-                        key={entry.blueprintSlotId}
-                        value={entry.blueprintSlotId}
-                      >
-                        {skillFilter
-                          ? registryDisplayText(entry.title)
-                          : `${SKILL_LABELS[entry.primaryReportedSkill] ?? entry.primaryReportedSkill} · ${registryDisplayText(entry.title)}`}
-                      </option>
-                    ))}
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
-              </Field.Root>
+              </NewItemSelect>
 
-              <Field.Root>
-                <Field.Label>Item format</Field.Label>
-                <NativeSelect.Root disabled={!slotId}>
-                  <NativeSelect.Field
-                    aria-label="Item format"
-                    value={formatId}
-                    onChange={(event) => selectFormat(event.target.value)}
-                  >
-                    <option value="" disabled>Select an item format</option>
-                    {formats.map((entry) => (
-                      <option key={entry.itemFormatId} value={entry.itemFormatId}>
-                        {ITEM_FORMAT_LABELS[entry.itemFormatId] ?? entry.itemFormatId}
-                      </option>
-                    ))}
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
-              </Field.Root>
+              <NewItemSelect label={WORKBENCH_LABELS.itemFormat} placeholder="Select an item format"
+                value={formatId} onChange={selectFormat} disabled={isPending || !slotId || !formats.length}
+                options={formats.map((entry) => ({ value: entry.itemFormatId, label: ITEM_FORMAT_LABELS[entry.itemFormatId] ?? entry.itemFormatId }))}
+                {...dropdownState("itemFormatId")} />
 
-              <Field.Root>
-                <Field.Label>Primary Can-do</Field.Label>
-                <NativeSelect.Root disabled={!formatId}>
-                  <NativeSelect.Field
-                    aria-label="Primary Can-do"
-                    value={primaryCanDoId}
-                    onChange={(event) => selectPrimaryCanDo(event.target.value)}
-                  >
-                    <option value="" disabled>Select one primary Can-do</option>
-                    {capabilityChoices.map((entry) => (
-                      <option key={entry.primaryCanDoId} value={entry.primaryCanDoId}>
-                        {registryDisplayText(registry?.canDoOptions.find((option) => option.id === entry.primaryCanDoId)?.label ?? optionLabel(entry.primaryCanDoId, registry?.canDoOptions))}
-                      </option>
-                    ))}
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
-              </Field.Root>
+              <NewItemSelect label={WORKBENCH_LABELS.primaryCanDo} placeholder="Select one primary Can-do"
+                value={primaryCanDoId} onChange={selectPrimaryCanDo} disabled={isPending || !formatId || !capabilityChoices.length}
+                options={capabilityChoices.map((entry) => ({ value: entry.primaryCanDoId,
+                  label: registryDisplayText(registry?.canDoOptions.find((option) => option.id === entry.primaryCanDoId)?.label ?? optionLabel(entry.primaryCanDoId, registry?.canDoOptions)) }))}
+                {...dropdownState("primaryCanDoId")} />
 
-              <Field.Root>
-                <Field.Label>Domain</Field.Label>
-                <NativeSelect.Root disabled={!selectedCapability}>
-                  <NativeSelect.Field
-                    aria-label="Domain"
-                    value={domainId}
-                    onChange={(event) => {
-                      const nextDomain = event.target.value;
-                      setDomainId(nextDomain);
-                      setContextId(
-                        contexts.find((context) => context.primaryDomains.includes(nextDomain))?.id ?? "",
-                      );
-                    }}
-                  >
-                    <option value="" disabled>Select a domain</option>
-                    {domains.map((domain) => (
-                      <option key={domain} value={domain}>
-                        {DOMAIN_LABELS[domain] ?? domain}
-                      </option>
-                    ))}
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
-              </Field.Root>
+              <NewItemSelect label={WORKBENCH_LABELS.domain} placeholder="Select a domain"
+                value={domainId} disabled={isPending || !selectedCapability || !domains.length}
+                onChange={(nextDomain) => {
+                  setDomainId(nextDomain);
+                  setContextId(contexts.find((context) => context.primaryDomains.includes(nextDomain))?.id ?? "");
+                }}
+                options={domains.map((domain) => ({ value: domain, label: DOMAIN_LABELS[domain] ?? domain }))}
+                {...dropdownState("primaryDomain")} />
 
-              <Field.Root>
-                <Field.Label>Concrete context</Field.Label>
-                <NativeSelect.Root disabled={!domainId}>
-                  <NativeSelect.Field
-                    aria-label="Concrete context"
-                    value={contextId}
-                    onChange={(event) => setContextId(event.target.value)}
-                  >
-                    <option value="" disabled>Select a context</option>
-                    {visibleContexts.map((context) => (
-                      <option key={context.id} value={context.id}>
-                        {registryDisplayText(context.label)}
-                      </option>
-                    ))}
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
-              </Field.Root>
+              <NewItemSelect label={WORKBENCH_LABELS.context} placeholder="Select a context"
+                value={contextId} onChange={setContextId} disabled={isPending || !domainId || !visibleContexts.length}
+                options={visibleContexts.map((context) => ({ value: context.id, label: registryDisplayText(context.label) }))}
+                {...dropdownState("contextId")} />
 
-              <Field.Root>
-                <Field.Label>Difficulty</Field.Label>
-                <NativeSelect.Root disabled={!selectedCapability}>
-                  <NativeSelect.Field
-                    aria-label="Difficulty"
-                    value={difficultyBand}
-                    onChange={(event) => setDifficultyBand(event.target.value)}
-                  >
-                    <option value="" disabled>Select a difficulty band</option>
-                    {difficultyStandards.map((standard) => (
-                      <option key={standard.id} value={standard.id}>
-                        {registryDisplayText(standard.label)}
-                      </option>
-                    ))}
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
-              </Field.Root>
+              <NewItemSelect label={WORKBENCH_LABELS.difficulty} placeholder="Select a difficulty band"
+                value={difficultyBand} onChange={setDifficultyBand} disabled={isPending || !selectedCapability || !difficultyStandards.length}
+                options={difficultyStandards.map((standard) => ({ value: standard.id, label: registryDisplayText(standard.label) }))}
+                {...dropdownState("difficultyBand")} />
               {selectedCapability && contexts.length === 0 ? (
-                <Text color="fg.error">No compatible contexts are available for this task.</Text>
+                <Text color="fg.error">No compatible contexts are available for this task configuration.</Text>
               ) : null}
               {error ? <Text role="alert" color="fg.error">{error.message}</Text> : null}
             </Stack>

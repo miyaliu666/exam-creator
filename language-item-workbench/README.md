@@ -4,19 +4,42 @@ The Language Exam Item Creator follows a “publish rules first, generate with A
 
 ## Product structure
 
-The **Language Exam Item Creator** is available at `/language-items`. `Assessment Settings` sits beside `+ New item` and expands on the same page above the Item Bank. Its forms show business-facing names, while stable IDs are maintained internally.
+Workbench terminology is shared across New item, Item Bank, editing, Assessment Settings, validation, and generated review summaries:
+
+| UI term | Meaning |
+| --- | --- |
+| Blueprint slot | A measurement position in the exam blueprint, identified by `blueprintSlotId`; for example, Signs, labels, and short notices. Slot in technical registries is shorthand for this concept. |
+| Item format | The response structure, such as Single select or Matching. |
+| Primary Can-do | The one primary ability target selected for an item. |
+| Task configuration | One allowed Blueprint slot × Item format × Primary Can-do combination and its rules. |
+| Task family | The registered communicative behavior associated with the slot and format. |
+| Scoring contract | The registered scoring rules associated with the slot and format. |
+| Domain / Context / Difficulty | The language-use domain, concrete situation, and selected A1 difficulty band. |
+
+Use Blueprint slot consistently in UI labels and search placeholders; do not substitute Exam task. The scoring-contract selector is labeled Scoring contract. Slot names use central Blueprint metadata, with capability titles only as a legacy fallback. Shared frontend labels live in `client/features/language-items/labels.ts`.
+
+The **Language Exam Item Creator** is available at `/language-items`. The `Assessment Settings` button beside `+ New item` opens the independent `/language-items/assessment-settings` page without the Item Bank below it. Its forms show business-facing names, while stable IDs are maintained internally.
 
 Assessment Settings maintains and publishes Blueprint, Slot, Can-do, Domain, Context, A1 difficulty, language content, Exercise Template data contracts, scoring contracts, delivery rules, and review rules. New items read only the active published Registry. Every item pins the Registry version used at creation; editing, validation, AI, review, and export reread that pinned version, so later rule publications do not silently change existing items.
 
 ```text
-Central-rule draft → validation → impact analysis → immutable publication
+Central-rule draft → Save draft → Publish (automatic validation and confirmation)
 
-Slot → Item Format → one Primary Can-do → Domain → Context → A1 difficulty → Edit & Preview / AI candidates → human editing → validation → human review → Staging
+Blueprint slot → Item format → one Primary Can-do → Domain → Context → Difficulty → Create
+1. Prepare (brief → generate drafts or write manually) → 2. Edit & preview → 3. Check & submit → human review → Staging
 ```
 
 Central-rule versions have `draft` or `published` status. Version identifiers are generated and maintained internally, without a version selector or label input. Drafts are editable; they must pass cross-Registry validation before publication, and published versions are immutable. Impact analysis distinguishes Slot × Item Format × Primary Can-do configurations and reports named rule and difficulty changes, together with the number of items pinned to the previous version. Unsaved settings are protected against navigation, refresh, sign-out, and background refetches.
 
-New item contains only the six creation criteria. Outside clicks cannot dismiss it, and unfinished choices survive cancellation, navigation, and refresh for the current browser session. Creation opens Edit & Preview; a single summary records the chosen criteria, while context/difficulty changes and language targets/AI are separate operations.
+The toolbar has only status, Save draft, and Publish. There is no separate Validate or Impact button. Save does not activate rules; Publish checks the saved revision and current published baseline, validates the complete configuration, and requests explicit confirmation. Retained stale drafts are not automatically reopened after publication. Unavailable selected Contexts are shown as errors rather than valid selections; Domain reflects only usable Contexts. Legacy published snapshots retain their original behavior, while newly authored settings enforce complete per-configuration difficulty ranges.
+
+See [Assessment Settings field and workflow guide](ASSESSMENT-SETTINGS.md) for every control, required relationship, and a worked example. The [review repository setup guide](review-repository/README.md) covers external review configuration.
+
+New item contains only the six creation criteria, with skill filters and no Blueprint slot search input. Outside clicks cannot dismiss it, and unfinished choices survive cancellation, navigation, and refresh for the current browser session. Creation opens Prepare; existing authored drafts reopen Edit & preview. One Item setup summary records the chosen criteria and provides Edit item setup. Language targets and key information precede generation/manual authoring; changes autosave, current checks gate submission, and optional rules/history stay in disclosures. See the [item creation and field guide](ITEM-CREATION.md) for all fields and the complete flow.
+
+Edit item setup stages changes to Domain, Context, and Difficulty and previews their effect before Apply changes updates the draft. Cancel discards the staged selections. Blueprint slot, Item format, Primary Can-do, and the pinned Registry version remain fixed. Selecting a difficulty band applies its complete scheme from that pinned version of Assessment Settings; authors can read the requirements but cannot edit individual difficulty drivers or a difficulty rationale.
+
+Applying setup changes preserves language targets, supporting content, every information point, candidate content, and answers. Incompatible selections and information-point counts appear as issues the author can repair. If the new scheme requires fewer information points, the author explicitly removes the excess entries; the system does not truncate authored content. Existing material and answers may need editing to fit the new requirements. Applying changed setup invalidates formal checks, so the saved draft must pass fresh checks before submission.
 
 Contexts are centrally extensible, not a fixed list: each has an automatic internal ID, a readable name, one Domain, compatible Can-dos, scope, and exclusions. New contexts start retired until configured and enabled; retired contexts are unavailable for new selections. Each configuration has complete Lower, Typical, and Upper A1 profiles, with validated defaults and ranges.
 
@@ -34,14 +57,14 @@ Contexts are centrally extensible, not a fixed list: each has an automatic inter
 
 Publication validation checks unique IDs, cross-Registry references, at least one concrete allowed Context for every Slot × Domain, a matching scoring contract for every Slot × Item Format, and complete Exercise Template schemas for all seven formats. The current baseline includes the `D16 Complete basic registration and classroom exchanges` context for `S-A1-2 × Educational`, and automated tests verify that every Domain declared by a Slot resolves to a concrete Context.
 
-## Item settings and rationale
+## Item setup and authoring requirements
 
 0. **Item title**: Used for internal search, review, and version history; never shown to candidates.
 1. **Slot, Item Format, and exactly one Primary Can-do**: Selects the measurement target from published configurations. Skill/activity are derived, and Task Family/scoring/delivery rules are locked to the selected configuration.
 2. **Domain**: Selects the language-use domain from values allowed by the Slot.
 3. **Context**: Selects a concrete micro-context from values allowed by both the Slot and Domain.
-4. **A1 difficulty**: Selects Lower, Typical, or Upper A1 while remaining within the A1 range.
-5. **Difficulty drivers**: Records input length, information-point count, support level, distractor similarity, independence, and inference requirements so difficulty can be explained and reviewed.
+4. **A1 difficulty**: Selects Lower, Typical, or Upper A1 within the item's pinned rules. After creation, corrections go through Edit item setup and explicit Apply changes.
+5. **Difficulty requirements**: Displays the selected band's complete central scheme, including input length, information-point count, support, distractor similarity, independence, and inference requirements. These are read-only authoring requirements; individual tuning and rationale inputs are absent.
 6. **Target vocabulary, Chinese characters, grammar, and pragmatics**: Defines the core content measured by the item. Supported content is recorded separately and must not be presented as a target.
 7. **Information Points**: Lists the explicit information candidates must retrieve or express and can link each point to scoring evidence, aligning task requirements, answers, and scoring.
 8. **Scoring Contract**: Displays the centrally locked scoring method. Authors edit only the item-specific answer for objective items; constructed-response rubrics stay locked, and AI cannot rewrite scoring policies.
@@ -69,6 +92,14 @@ After rule fields are complete, AI generation is the primary path and manual aut
 
 AI may generate only candidate-visible content and item-specific answer suggestions. It cannot modify the locked Slot, Can-do, Domain, Context, difficulty rules, scoring contract, or Registry version. A human selects a candidate, edits when needed, reruns validation, and completes review. AI pre-review cites only server-provided rule IDs and never approves, publishes, or exports an item automatically.
 
+Candidate ordering is advisory: valid candidates appear first, followed by distinct candidate-visible content and fewer validation warnings. It is not a pedagogical quality score. Run details preserve observed timing, retries, provider request identifiers, and reported token usage; missing usage is not estimated. The offline seven-format regression baseline is synthetic, not a human-reviewed evaluation dataset or evidence of real-model quality.
+
+## GitHub review operations
+
+New submissions include the exact pinned Registry and TaskPackage/candidate schemas, a batch manifest, and an original-submission tag. The [review repository template](review-repository/README.md) validates reviewer changes against trusted submission assets without executing pull-request code. It must be installed in the review repository and combined with required checks and protected submission tags before relying on it as a merge gate.
+
+Merged content creates a separate immutable approved version. The submitted version is retained, newer local drafts cannot be overwritten, and repeated or partly completed imports can be retried. Signed webhook deliveries are durable; transient failures are retried by a background worker, while validation/conflict failures require explicit recovery. This requires a configured webhook secret and an authenticated production deployment with a reachable HTTPS webhook endpoint. Local mock-auth development must not be exposed publicly.
+
 ## Code and data locations
 
 - `contracts/`: Compile-time data contracts such as TaskPackage.
@@ -76,7 +107,8 @@ AI may generate only candidate-visible content and item-specific answer suggesti
 - `server/language_items/registry_store.rs`: Registry versioning, publication validation, and startup loading.
 - `server/routes/language_assessment_settings.rs`: Central-rule administration API.
 - `server/language_items/ai.rs`: Independent AI candidates, one repair attempt, and rule-constrained pre-review.
-- `client/features/language-items/registry-settings-panel.tsx`: Central-rule versions, validation, impact, and publication UI.
+- `client/features/language-items/registry-settings-panel.tsx`: Minimal settings toolbar and structured rule sections.
+- `client/features/language-items/use-registry-settings.ts`: Draft ownership, revision protection, validation, and publication confirmation.
 - `client/features/language-items/registry-rule-editor.tsx`: Structured editor for Blueprint, Can-do, Context, difficulty, content, and scoring.
 - `client/features/language-items/item-template-registry.tsx`: Fixed mapping between the seven item-format editors and Renderers.
 

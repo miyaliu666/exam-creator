@@ -1,279 +1,62 @@
-import {
-  Badge,
-  Box,
-  Button,
-  HStack,
-  SimpleGrid,
-  Spinner,
-  Stack,
-  Text,
-} from "@chakra-ui/react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useBlocker } from "@tanstack/react-router";
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { Badge, Box, Button, HStack, Spinner, Stack, Text } from "@chakra-ui/react";
+import { useContext, useEffect } from "react";
 
 import { AuthContext } from "../../contexts/auth";
-import {
-  createLanguageAssessmentRegistryDraft,
-  getLanguageAssessmentRegistryAudit,
-  getLanguageAssessmentRegistryImpact,
-  getLanguageAssessmentRegistryVersion,
-  getLanguageAssessmentRegistryVersions,
-  publishLanguageAssessmentRegistryDraft,
-  saveLanguageAssessmentRegistryDraft,
-  validateLanguageAssessmentRegistryDraft,
-} from "./api";
-import { RegistryRuleEditor, type UpdateRegistry } from "./registry-rule-editor";
-import { registryIssueText } from "./registry-reference-labels";
-import type {
-  RegistryImpact,
-  RegistryValidationResult,
-  RegistryVersionRecord,
-} from "./types";
+import { RegistryRuleEditor } from "./registry-rule-editor";
+import { registryStatus } from "./registry-workflow";
+import { RegistryPublishDialog, RegistryValidationFeedback } from "./registry-workflow-feedback";
+import { useRegistrySettings } from "./use-registry-settings";
 
-export function RegistrySettingsPanel({ onDirtyChange }: { onDirtyChange?: (dirty: boolean) => void }) {
-  const queryClient = useQueryClient();
+export function RegistrySettingsPanel({ onDirtyChange, onBusyChange }: {
+  onDirtyChange?: (dirty: boolean) => void;
+  onBusyChange?: (busy: boolean) => void;
+}) {
   const { user } = useContext(AuthContext)!;
-  const [selectedId, setSelectedId] = useState("");
-  const [record, setRecord] = useState<RegistryVersionRecord | null>(null);
-  const [dirty, setDirty] = useState(false);
-  const [notice, setNotice] = useState("");
-  const [validation, setValidation] = useState<RegistryValidationResult | null>(null);
-  const [impact, setImpact] = useState<RegistryImpact | null>(null);
-  const loadedRecordKey = useRef("");
-  const versionsQuery = useQuery({
-    queryKey: ["language-assessment-registry-versions"],
-    queryFn: getLanguageAssessmentRegistryVersions,
-  });
-  const recordQuery = useQuery({
-    queryKey: ["language-assessment-registry-version", selectedId],
-    queryFn: () => getLanguageAssessmentRegistryVersion(selectedId),
-    enabled: !!selectedId,
-  });
-  const auditQuery = useQuery({
-    queryKey: ["language-assessment-registry-audit", selectedId],
-    queryFn: () => getLanguageAssessmentRegistryAudit(selectedId),
-    enabled: !!selectedId,
-  });
-
-  useEffect(() => {
-    onDirtyChange?.(dirty);
-  }, [dirty, onDirtyChange]);
-
-  useBlocker({
-    shouldBlockFn: () => dirty && !window.confirm("Discard unsaved settings?"),
-    enableBeforeUnload: dirty,
-    disabled: !dirty,
-  });
-
-  useEffect(() => {
-    if (selectedId || !versionsQuery.data?.length) return;
-    const draft = versionsQuery.data.find((entry) => entry.status === "draft" && entry.createdBy === user?.email);
-    const active = versionsQuery.data.find((entry) => entry.active);
-    setSelectedId((draft ?? active ?? versionsQuery.data[0]).id);
-  }, [selectedId, versionsQuery.data, user?.email]);
-
-  useEffect(() => {
-    if (!recordQuery.data) return;
-    const key = `${recordQuery.data.id}:${recordQuery.data.revision}`;
-    if (loadedRecordKey.current === key) return;
-    if (dirty && record?.id === recordQuery.data.id) return;
-    loadedRecordKey.current = key;
-    setRecord(structuredClone(recordQuery.data));
-    setDirty(false);
-    setValidation(null);
-    setImpact(null);
-  }, [recordQuery.data, dirty, record?.id]);
-
-  const refresh = async (next?: RegistryVersionRecord) => {
-    if (next) {
-      loadedRecordKey.current = `${next.id}:${next.revision}`;
-      setRecord(structuredClone(next));
-      setSelectedId(next.id);
-      setDirty(false);
-    }
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["language-assessment-registry-versions"] }),
-      queryClient.invalidateQueries({ queryKey: ["language-assessment-registry-version"] }),
-      queryClient.invalidateQueries({ queryKey: ["language-assessment-registry-audit"] }),
-      queryClient.invalidateQueries({ queryKey: ["language-item-registry"] }),
-    ]);
-  };
-  const update: UpdateRegistry = (mutate) => {
-    setRecord((current) => {
-      if (!current || current.status !== "draft") return current;
-      const next = structuredClone(current);
-      mutate(next.snapshot);
-      return next;
-    });
-    setDirty(true);
-    setValidation(null);
-    setImpact(null);
-    setNotice("");
-  };
-  const persist = async () => {
-    if (!record || record.status !== "draft") throw new Error("Open settings for editing first.");
-    if (!dirty) return record;
-    const saved = await saveLanguageAssessmentRegistryDraft({
-      id: record.id,
-      expectedRevision: record.revision,
-      version: record.version,
-      snapshot: record.snapshot,
-    });
-    loadedRecordKey.current = `${saved.id}:${saved.revision}`;
-    setRecord(structuredClone(saved));
-    setDirty(false);
-    return saved;
-  };
-
-  const createMutation = useMutation({
-    mutationFn: () => createLanguageAssessmentRegistryDraft(),
-    onSuccess: async (next) => {
-      setNotice("");
-      setValidation(null);
-      setImpact(null);
-      await refresh(next);
-    },
-  });
-  const saveMutation = useMutation({
-    mutationFn: persist,
-    onSuccess: async (next) => {
-      setNotice("Saved.");
-      await refresh(next);
-    },
-  });
-  const validateMutation = useMutation({
-    mutationFn: async () => {
-      const saved = await persist();
-      return { saved, result: await validateLanguageAssessmentRegistryDraft(saved.id) };
-    },
-    onSuccess: async ({ saved, result }) => {
-      setValidation(result);
-      setNotice("");
-      await refresh(saved);
-      setValidation(result);
-    },
-  });
-  const impactMutation = useMutation({
-    mutationFn: async () => {
-      const saved = await persist();
-      return { saved, result: await getLanguageAssessmentRegistryImpact(saved.id) };
-    },
-    onSuccess: async ({ saved, result }) => {
-      await refresh(saved);
-      setImpact(result);
-    },
-  });
-  const publishMutation = useMutation({
-    mutationFn: async () => {
-      if (!record) throw new Error("Open settings for editing first.");
-      const saved = await persist();
-      const result = await validateLanguageAssessmentRegistryDraft(saved.id);
-      setValidation(result);
-      if (!result.valid) throw new Error("Fix the validation errors before publishing.");
-      const nextImpact = await getLanguageAssessmentRegistryImpact(saved.id);
-      setImpact(nextImpact);
-      if (!window.confirm(
-        `Publish these settings for new items? ${nextImpact.itemsPinnedToActiveVersion} existing items will keep their original settings.`,
-      )) return null;
-      return publishLanguageAssessmentRegistryDraft(saved.id);
-    },
-    onSuccess: async (next) => {
-      if (!next) {
-        setNotice("Publishing cancelled.");
-        return;
-      }
-      setNotice("Published for new items.");
-      await refresh(next);
-    },
-  });
-  const error = useMemo(
-    () => recordQuery.error ?? versionsQuery.error ?? [createMutation, saveMutation, validateMutation, impactMutation, publishMutation].find((mutation) => mutation.error)?.error,
-    [recordQuery.error, versionsQuery.error, createMutation.error, saveMutation.error, validateMutation.error, impactMutation.error, publishMutation.error],
-  );
-  const editable = record?.status === "draft" && record.createdBy === user?.email;
-  const busy = createMutation.isPending || saveMutation.isPending || validateMutation.isPending || impactMutation.isPending || publishMutation.isPending;
+  const settings = useRegistrySettings(user?.email);
+  const { record, editable, dirty, busy, feedback, publication } = settings;
+  useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
+  useEffect(() => { onBusyChange?.(busy); }, [busy, onBusyChange]);
+  const status = record ? registryStatus(record, dirty, user?.email) : null;
+  const needsSave = dirty || settings.remoteChanged;
 
   return (
     <Box borderWidth="1px" borderRadius="xl" bg="bg" overflow="hidden">
-      <Stack p={5} gap={5}>
-        {recordQuery.isPending || versionsQuery.isPending ? <Spinner /> : null}
-        {record ? (
-          <Stack gap={4}>
-            <HStack justify="space-between" align="end" gap={3} flexWrap="wrap">
-              <HStack flexWrap="wrap">
-                <Badge colorPalette={record.active ? "teal" : editable ? "orange" : "gray"}>
-                  {record.active ? "Published" : editable ? "Draft" : "Published"}
-                </Badge>
-                {dirty ? <Badge colorPalette="yellow">Unsaved changes</Badge> : null}
-                {editable ? (
-                  <>
-                    <Button variant="outline" disabled={busy} onClick={() => saveMutation.mutate()}>Save</Button>
-                    <Button variant="outline" disabled={busy} onClick={() => validateMutation.mutate()}>Validate</Button>
-                    <Button variant="outline" disabled={busy} onClick={() => impactMutation.mutate()}>Impact</Button>
-                    <Button colorPalette="teal" disabled={busy} onClick={() => publishMutation.mutate()}>Publish</Button>
-                  </>
-                ) : <Button colorPalette="teal" disabled={busy} loading={createMutation.isPending} onClick={() => createMutation.mutate()}>Edit settings</Button>}
-              </HStack>
+      <Stack p={5} gap={4}>
+        {settings.loading ? <Spinner /> : null}
+        {record ? <>
+          <HStack justify="space-between" gap={3} flexWrap="wrap">
+            <HStack flexWrap="wrap" gap={2}>
+              <Badge colorPalette={status?.colorPalette}>{status?.label}</Badge>
+              {editable ? <>
+                <Button variant="outline" loading={settings.action === "save"} disabled={busy || !dirty || settings.remoteChanged} onClick={() => settings.run("save")}>Save draft</Button>
+                <Button colorPalette="teal" title={needsSave ? "Save the draft first" : settings.staleBase ? "Start from the latest published settings" : "Review and confirm publication"} loading={settings.action === "prepare" || settings.action === "publish"} disabled={busy || needsSave || settings.staleBase || feedback.validation?.valid === false} onClick={() => settings.run("prepare")}>Publish</Button>
+              </> : <Button colorPalette="teal" disabled={busy} loading={settings.action === "restart"} onClick={settings.restart}>Edit settings</Button>}
             </HStack>
-
-            <RegistryRuleEditor key={record.id} snapshot={record.snapshot} update={update} disabled={!editable || busy} />
-
-            <Box as="details" borderWidth="1px" borderRadius="lg" p={4}>
-              <Text as="summary" cursor="pointer" fontWeight="medium">Change history</Text>
-              <Stack gap={2} mt={4}>
-                {(auditQuery.data ?? []).map((event) => (
-                  <HStack key={event.id} justify="space-between" align="start" gap={3} fontSize="sm">
-                    <Text>{event.action.replace(/^registry[._]/, "").replace(/[._]/g, " ")} · {event.actorEmail}</Text>
-                    <Text color="fg.muted" whiteSpace="nowrap">{new Date(event.createdAt).toLocaleString()}</Text>
-                  </HStack>
-                ))}
-                {!auditQuery.isPending && !auditQuery.data?.length ? <Text color="fg.muted" fontSize="sm">No audit events recorded.</Text> : null}
-              </Stack>
-            </Box>
-          </Stack>
-        ) : null}
-
-        {notice ? <Text color="fg.info">{notice}</Text> : null}
-        {error ? <Text color="fg.error">{error.message}</Text> : null}
-        {validation ? (
-          <Box borderWidth="1px" borderColor={validation.valid ? "teal.300" : "red.300"} borderRadius="lg" p={4}>
-            <Text fontWeight="semibold">Validation {validation.valid ? "passed" : "failed"}</Text>
-            {validation.issues.map((issue) => (
-              <Text
-                key={`${issue.code}-${issue.path}`}
-                mt={1}
-                fontSize="sm"
-                color={issue.severity === "error" ? "fg.error" : "fg.warning"}
-              >
-                {issue.severity === "warning" ? "Warning · " : ""}{record ? registryIssueText(record.snapshot, issue) : issue.message}
-              </Text>
-            ))}
-          </Box>
-        ) : null}
-        {impact ? (
-          <Box borderWidth="1px" borderRadius="lg" p={4}>
-            <Text fontWeight="semibold">Changes from published settings</Text>
-            <SimpleGrid minChildWidth="170px" gap={2} mt={2} fontSize="sm">
-              <Text>
-                {impact.itemsPinnedToActiveVersion} existing{" "}
-                {impact.itemsPinnedToActiveVersion === 1 ? "item keeps" : "items keep"} original settings
-              </Text>
-              <Text>{impact.capabilityChanges} task configuration changes</Text>
-              <Text>{impact.canDoChanges} Can-do changes</Text>
-              <Text>{impact.contextChanges} context changes</Text>
-              <Text>{impact.difficultyStandardChanges} difficulty changes</Text>
-              <Text>{impact.scoringContractChanges} scoring changes</Text>
-            </SimpleGrid>
-            {impact.difficultyConfigurationChanges?.length ? (
-              <Stack gap={1} mt={3} fontSize="sm">
-                <Text fontWeight="medium">Updated difficulty settings</Text>
-                {impact.difficultyConfigurationChanges.map((name) => <Text key={name}>{name}</Text>)}
-              </Stack>
-            ) : null}
-          </Box>
-        ) : null}
+          </HStack>
+          {settings.remoteChanged ? <HStack flexWrap="wrap">
+            <Text color="fg.error">This draft changed elsewhere. Local edits have been kept.</Text>
+            <Button variant="outline" disabled={busy} onClick={settings.reload}>Reload saved draft</Button>
+          </HStack> : null}
+          {settings.staleBase ? <HStack flexWrap="wrap">
+            <Text color="fg.warning">This draft is based on older published settings.</Text>
+            <Button variant="outline" disabled={busy} onClick={settings.restart}>Start from published settings</Button>
+          </HStack> : null}
+          {settings.error ? <Text role="alert" color="fg.error">{settings.error}</Text> : null}
+          {feedback.notice ? <Text role="status" color="fg.info">{feedback.notice}</Text> : null}
+          {feedback.warnings?.map((warning) => <Text key={warning} role="alert" color="fg.warning">{warning}</Text>)}
+          {feedback.validation ? <RegistryValidationFeedback snapshot={record.snapshot} result={feedback.validation} /> : null}
+          <RegistryRuleEditor key={record.id} snapshot={record.snapshot} update={settings.update} disabled={!editable || busy || !!publication || settings.remoteChanged} history={
+            <Stack gap={2}>
+              {settings.audit.map((event) => <HStack key={event.id} justify="space-between" align="start" gap={3} fontSize="sm">
+                <Text>{event.action.replace(/^registry[._]/, "").replace(/[._]/g, " ")} · {event.actorEmail}</Text>
+                <Text color="fg.muted" whiteSpace="nowrap">{new Date(event.createdAt).toLocaleString()}</Text>
+              </HStack>)}
+              {settings.auditError ? <Text color="fg.error">{settings.auditError}</Text> : !settings.audit.length ? <Text color="fg.muted">No changes recorded.</Text> : null}
+            </Stack>
+          } />
+        </> : settings.error ? <Text role="alert" color="fg.error">{settings.error}</Text> : null}
       </Stack>
+      <RegistryPublishDialog publication={publication} busy={busy} onClose={settings.closePublication} onPublish={() => settings.run("publish")} />
     </Box>
   );
 }

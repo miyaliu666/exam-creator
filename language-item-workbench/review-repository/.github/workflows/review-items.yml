@@ -1,0 +1,91 @@
+name: Validate language item review
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: language-item-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Require a same-repository submission branch
+        env:
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          REPOSITORY: ${{ github.repository }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$HEAD_REPOSITORY" = "$REPOSITORY"
+          [[ "$HEAD_REF" =~ ^item-review/([A-Za-z0-9][A-Za-z0-9_-]{0,127})$ ]]
+          [[ "$HEAD_SHA" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$BASE_SHA" =~ ^[a-f0-9]{40}$ ]]
+      - name: Check out trusted base code only
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+          # Used only to fetch data objects below. The action removes this read-only credential in cleanup.
+          persist-credentials: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Install only trusted, locked validator dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Test trusted validator
+        run: npm test
+      - name: Fetch submission tag and proposed JSON objects without checking out PR files
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          batch="${HEAD_REF#item-review/}"
+          git fetch --no-tags origin "$HEAD_SHA"
+          git fetch --no-tags origin "refs/tags/item-submission/$batch:refs/tags/item-submission/$batch"
+      - name: Validate exact proposed commit against its protected submission
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/validate-review.mjs --repo . --batch "${HEAD_REF#item-review/}" --base "$BASE_SHA" --head "$HEAD_SHA"
+
+  report:
+    needs: validate
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      statuses: write
+    steps:
+      - name: Report validation on the exact PR head, not the pull_request_target base SHA
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          VALIDATION_RESULT: ${{ needs.validate.result }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        with:
+          script: |
+            const sha = process.env.HEAD_SHA;
+            if (!/^[a-f0-9]{40}$/.test(sha)) throw new Error('Invalid PR head SHA');
+            await github.rest.repos.createCommitStatus({
+              ...context.repo,
+              sha,
+              context: 'language-item-review/validated',
+              state: process.env.VALIDATION_RESULT === 'success' ? 'success' : 'failure',
+              description: process.env.VALIDATION_RESULT === 'success' ? 'Pinned review rules passed' : 'Review validation did not pass',
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            });

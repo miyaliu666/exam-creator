@@ -1,5 +1,6 @@
 import {
   Badge,
+  Box,
   Button,
   Checkbox,
   Field,
@@ -69,14 +70,12 @@ function BaseFields({
     <>
       <Field.Root invalid={validationMessages(validationIssues, "candidatePayload.situation").length > 0}>
         <Field.Label>Situation</Field.Label>
-        <Textarea value={situation} onChange={(event) => onSituation(event.target.value)} />
-        <Field.HelperText>Describe the authentic communicative context without adding answers or scoring rules.</Field.HelperText>
+        <Textarea aria-label="Situation" placeholder="Example: You are meeting a new colleague on your first day at work." value={situation} onChange={(event) => onSituation(event.target.value)} />
         <FieldValidationMessages issues={validationIssues} path="candidatePayload.situation" />
       </Field.Root>
       <Field.Root invalid={validationMessages(validationIssues, "candidatePayload.instructions").length > 0}>
-        <Field.Label>Instructions</Field.Label>
-        <Textarea value={instructions} onChange={(event) => onInstructions(event.target.value)} />
-        <Field.HelperText>State only what the candidate must do and keep it consistent with the task contract.</Field.HelperText>
+        <Field.Label>Candidate instructions</Field.Label>
+        <Textarea aria-label="Candidate instructions" placeholder="Example: Answer the questions, then ask your colleague one related question." value={instructions} onChange={(event) => onInstructions(event.target.value)} />
         <FieldValidationMessages issues={validationIssues} path="candidatePayload.instructions" />
       </Field.Root>
     </>
@@ -95,12 +94,12 @@ function ContentPoints({
   const path = "candidatePayload.requiredContentPoints";
   return (
     <Stack gap={2}>
-      <HStack justify="space-between"><Text fontWeight="bold">Required content points</Text><Button size="sm" variant="outline" onClick={() => onChange([...points, { contentPointId: `P${points.length + 1}`, description: "" }])}><Plus size={15} /> Add</Button></HStack>
+      <HStack justify="space-between"><Text fontWeight="bold">Required response content</Text><Button size="sm" variant="outline" onClick={() => onChange([...points, { contentPointId: `P${points.length + 1}`, description: "" }])}><Plus size={15} /> Add requirement</Button></HStack>
       {points.map((point, index) => (
         <HStack key={`${point.contentPointId}-${index}`}>
-          <Badge>{point.contentPointId}</Badge>
+          <Badge>{index + 1}</Badge>
           <Field.Root invalid={validationMessages(validationIssues, `${path}.${index}`, true).length > 0}>
-            <Input value={point.description} onChange={(event) => onChange(points.map((entry, entryIndex) => entryIndex === index ? { ...entry, description: event.target.value } : entry))} />
+            <Input aria-label={`Response requirement ${index + 1}`} placeholder="Example: Include a name, meeting time, or request." value={point.description} onChange={(event) => onChange(points.map((entry, entryIndex) => entryIndex === index ? { ...entry, description: event.target.value } : entry))} />
             <FieldValidationMessages issues={validationIssues} path={`${path}.${index}`} includeDescendants />
           </Field.Root>
           <Button size="xs" variant="ghost" aria-label={`Move content point ${index + 1} up`} disabled={index === 0} onClick={() => {
@@ -185,10 +184,10 @@ export function TypedMessageEditor({ draft, updateDraft, validationIssues }: Edi
       </SimpleGrid>
       <Field.Root><Field.Label>Source message (optional)</Field.Label><Textarea value={payload.sourceMessage ?? ""} onChange={(event) => updateDraft((next) => { (next.candidatePayload as TypedMessageCandidatePayload).sourceMessage = event.target.value || null; })} /></Field.Root>
       <ContentPoints points={payload.requiredContentPoints} validationIssues={validationIssues} onChange={(points) => updateDraft((next) => { (next.candidatePayload as TypedMessageCandidatePayload).requiredContentPoints = points; })} />
-      <HStack>
+      <Box as="details"><Text as="summary" cursor="pointer" fontSize="sm">Length limits</Text><HStack mt={3}>
         <Field.Root><Field.Label>Minimum characters</Field.Label><Input type="number" value={payload.lengthGuidance.minimum} onChange={(event) => updateDraft((next) => { (next.candidatePayload as TypedMessageCandidatePayload).lengthGuidance.minimum = Number(event.target.value); })} /></Field.Root>
         <Field.Root><Field.Label>Maximum characters</Field.Label><Input type="number" value={payload.lengthGuidance.maximum} onChange={(event) => updateDraft((next) => { (next.candidatePayload as TypedMessageCandidatePayload).lengthGuidance.maximum = Number(event.target.value); })} /></Field.Root>
-      </HStack>
+      </HStack></Box>
     </Stack>
   );
 }
@@ -199,10 +198,10 @@ export function SpokenSingleEditor({ draft, updateDraft, validationIssues }: Edi
     <Stack gap={4}>
       <BaseFields situation={payload.situation} instructions={payload.instructions} validationIssues={validationIssues} onSituation={(value) => updateDraft((next) => { (next.candidatePayload as SpokenSingleCandidatePayload).situation = value; })} onInstructions={(value) => updateDraft((next) => { (next.candidatePayload as SpokenSingleCandidatePayload).instructions = value; })} />
       <Field.Root invalid={validationMessages(validationIssues, "candidatePayload", true).some(() => !payload.visiblePromptText && !payload.promptAudioRef)}><Field.Label>Candidate-visible prompt</Field.Label><Textarea value={payload.visiblePromptText ?? ""} onChange={(event) => updateDraft((next) => { (next.candidatePayload as SpokenSingleCandidatePayload).visiblePromptText = event.target.value || null; })} /><FieldValidationMessages issues={validationIssues} path="candidatePayload" /></Field.Root>
-      <SimpleGrid columns={{ base: 1, md: 2 }} gap={3}>
+      <Box as="details"><Text as="summary" cursor="pointer" fontSize="sm">Timing · {payload.preparationTimeSeconds}s preparation / {payload.responseTimeSeconds}s response</Text><SimpleGrid columns={{ base: 1, md: 2 }} gap={3} mt={3}>
         <Field.Root><Field.Label>Preparation time (seconds)</Field.Label><Input type="number" value={payload.preparationTimeSeconds} onChange={(event) => updateDraft((next) => { (next.candidatePayload as SpokenSingleCandidatePayload).preparationTimeSeconds = Number(event.target.value); })} /></Field.Root>
         <Field.Root><Field.Label>Response time (seconds)</Field.Label><Input type="number" value={payload.responseTimeSeconds} onChange={(event) => updateDraft((next) => { (next.candidatePayload as SpokenSingleCandidatePayload).responseTimeSeconds = Number(event.target.value); })} /></Field.Root>
-      </SimpleGrid>
+      </SimpleGrid></Box>
       <ContentPoints points={payload.requiredContentPoints} validationIssues={validationIssues} onChange={(points) => updateDraft((next) => { (next.candidatePayload as SpokenSingleCandidatePayload).requiredContentPoints = points; })} />
     </Stack>
   );
@@ -214,27 +213,26 @@ export function SpokenMultiturnEditor({ draft, updateDraft, validationIssues }: 
   return (
     <Stack gap={4}>
       <BaseFields situation={payload.situation} instructions={payload.instructions} validationIssues={validationIssues} onSituation={(value) => updateDraft((next) => { (next.candidatePayload as SpokenMultiturnCandidatePayload).situation = value; })} onInstructions={(value) => updateDraft((next) => { (next.candidatePayload as SpokenMultiturnCandidatePayload).instructions = value; })} />
-      <SimpleGrid columns={{ base: 1, md: 2 }} gap={3}>
-        <Field.Root><Field.Label>System role</Field.Label><Input value={payload.roles.systemRole} onChange={(event) => updateDraft((next) => { (next.candidatePayload as SpokenMultiturnCandidatePayload).roles.systemRole = event.target.value; })} /></Field.Root>
+      <Box as="details"><Text as="summary" cursor="pointer" fontSize="sm">Conversation roles · {payload.roles.systemRole} / {payload.roles.candidateRole}</Text><SimpleGrid columns={{ base: 1, md: 2 }} gap={3} mt={3}>
+        <Field.Root><Field.Label>Examiner role</Field.Label><Input value={payload.roles.systemRole} onChange={(event) => updateDraft((next) => { (next.candidatePayload as SpokenMultiturnCandidatePayload).roles.systemRole = event.target.value; })} /></Field.Root>
         <Field.Root><Field.Label>Candidate role</Field.Label><Input value={payload.roles.candidateRole} onChange={(event) => updateDraft((next) => { (next.candidatePayload as SpokenMultiturnCandidatePayload).roles.candidateRole = event.target.value; })} /></Field.Root>
-      </SimpleGrid>
-      <HStack justify="space-between"><Text fontWeight="bold">Conversation turns</Text><Button size="sm" variant="outline" onClick={() => updateDraft((next) => {
+      </SimpleGrid></Box>
+      <HStack justify="space-between"><Text fontWeight="bold">Conversation</Text><Button size="sm" variant="outline" onClick={() => updateDraft((next) => {
         const current = next.candidatePayload as SpokenMultiturnCandidatePayload;
         const currentPath = current.paths.find((entry) => entry.pathId === current.startPathId) ?? current.paths[0];
         const index = currentPath.turns.length + 1;
         currentPath.turns.push({ turnId: `T${index}`, speaker: "system", promptAudioRef: "", responseId: null, responseTimeSeconds: null, requiredFunctionIds: [] });
         currentPath.turns.push({ turnId: `T${index + 1}`, speaker: "candidate", promptAudioRef: null, responseId: `R${Math.ceil((index + 1) / 2)}`, responseTimeSeconds: 45, requiredFunctionIds: [""] });
-      })}><Plus size={15} /> Add prompt and response</Button></HStack>
+      })}><Plus size={15} /> Add exchange</Button></HStack>
       {path?.turns.map((turn, index) => (
         <HStack key={`${turn.turnId}-${index}`} align="end">
-          <Badge mb={2}>{turn.speaker === "system" ? payload.roles.systemRole : payload.roles.candidateRole}</Badge>
-          <Field.Root invalid={validationMessages(validationIssues, `candidatePayload.paths.0.turns.${index}`, true).length > 0}><Field.Label>{turn.speaker === "system" ? "Prompt text or audio reference" : "Required communicative function"}</Field.Label><Input value={turn.speaker === "system" ? turn.promptAudioRef ?? "" : turn.requiredFunctionIds.join(" / ")} onChange={(event) => updateDraft((next) => {
+          <Field.Root invalid={validationMessages(validationIssues, `candidatePayload.paths.0.turns.${index}`, true).length > 0}><Field.Label>{turn.speaker === "system" ? "Examiner prompt" : "Expected candidate action"}</Field.Label><Input aria-label={`${turn.speaker === "system" ? "Examiner prompt" : "Expected candidate action"} ${index + 1}`} placeholder={turn.speaker === "system" ? "Example: 你叫什么名字？ (or an audio reference)" : "Example: Give their name / Ask the other person’s name"} value={turn.speaker === "system" ? turn.promptAudioRef ?? "" : turn.requiredFunctionIds.join(" / ")} onChange={(event) => updateDraft((next) => {
             const current = next.candidatePayload as SpokenMultiturnCandidatePayload;
             const currentPath = current.paths.find((entry) => entry.pathId === current.startPathId) ?? current.paths[0];
             if (turn.speaker === "system") currentPath.turns[index].promptAudioRef = event.target.value;
             else currentPath.turns[index].requiredFunctionIds = event.target.value.split("/").map((value) => value.trim()).filter(Boolean);
           })} /><FieldValidationMessages issues={validationIssues} path={`candidatePayload.paths.0.turns.${index}`} includeDescendants /></Field.Root>
-          <Button size="sm" mb={1} variant="ghost" colorPalette="red" disabled={(path?.turns.length ?? 0) <= 2} onClick={() => updateDraft((next) => {
+          <Button size="sm" mb={1} variant="ghost" colorPalette="red" aria-label={`Delete conversation turn ${index + 1}`} disabled={(path?.turns.length ?? 0) <= 2} onClick={() => updateDraft((next) => {
             const current = next.candidatePayload as SpokenMultiturnCandidatePayload;
             const currentPath = current.paths.find((entry) => entry.pathId === current.startPathId) ?? current.paths[0];
             currentPath.turns.splice(index, 1);

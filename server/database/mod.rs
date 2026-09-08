@@ -89,6 +89,13 @@ impl WorkbenchDatabase {
                     .build(),
             )
             .await?;
+        self.github_sync_deliveries
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "status": 1, "updatedAt": 1 })
+                    .build(),
+            )
+            .await?;
         self.versions
             .create_index(
                 IndexModel::builder()

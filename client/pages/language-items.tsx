@@ -41,7 +41,7 @@ import {
   DIFFICULTY_LABELS,
   ITEM_FORMAT_LABELS,
   SKILL_LABELS,
-  SLOT_LABELS,
+  WORKBENCH_LABELS,
   slotLabel,
 } from "../features/language-items/labels";
 import {
@@ -49,7 +49,6 @@ import {
   type NewLanguageItemSelection,
 } from "../features/language-items/new-language-item-dialog";
 import { clearNewItemDraft } from "../features/language-items/new-item-draft";
-import { RegistrySettingsPanel } from "../features/language-items/registry-settings-panel";
 import type {
   GithubReviewState,
   LanguageItem,
@@ -144,8 +143,8 @@ function ItemTable({
         <Table.Header>
           <Table.Row>
             <Table.ColumnHeader>Item</Table.ColumnHeader>
-            <Table.ColumnHeader>Exam task</Table.ColumnHeader>
-            <Table.ColumnHeader>Format / difficulty</Table.ColumnHeader>
+            <Table.ColumnHeader>{WORKBENCH_LABELS.blueprintSlot}</Table.ColumnHeader>
+            <Table.ColumnHeader>{WORKBENCH_LABELS.itemFormat} / difficulty</Table.ColumnHeader>
             <Table.ColumnHeader>Status</Table.ColumnHeader>
             <Table.ColumnHeader textAlign="center">Archive</Table.ColumnHeader>
             <Table.ColumnHeader textAlign="center">Delete</Table.ColumnHeader>
@@ -255,8 +254,6 @@ function LanguageItems() {
   const [skillFilter, setSkillFilter] = useState<SkillFilter>("all");
   const [difficultyFilter, setDifficultyFilter] = useState<DifficultyFilter>("all");
   const [createOpen, setCreateOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsDirty, setSettingsDirty] = useState(false);
   const itemsQuery = useQuery({
     queryKey: ["language-items"],
     queryFn: getLanguageItems,
@@ -278,7 +275,7 @@ function LanguageItems() {
     mutationFn: (selection: NewLanguageItemSelection) =>
       createLanguageItem({
         ...selection,
-        title: `Untitled: ${SLOT_LABELS[selection.blueprintSlotId] ?? "Registered exam task"} · ${ITEM_FORMAT_LABELS[selection.itemFormatId] ?? "Item"}`,
+        title: `Untitled: ${slotLabel(selection.blueprintSlotId, registryQuery.data)} · ${ITEM_FORMAT_LABELS[selection.itemFormatId] ?? WORKBENCH_LABELS.itemFormat}`,
       }),
     onSuccess: async (item) => {
       clearNewItemDraft(user?.email ?? "local");
@@ -377,12 +374,9 @@ function LanguageItems() {
             <HStack>
               <Button
                 variant="outline"
-                onClick={() => {
-                  if (settingsOpen && settingsDirty && !window.confirm("Discard unsaved settings and close Assessment Settings?")) return;
-                  setSettingsOpen((open) => !open);
-                }}
+                onClick={() => navigate({ to: "/language-items/assessment-settings" })}
               >
-                {settingsOpen ? "Close Settings" : "Assessment Settings"}
+                Assessment Settings
               </Button>
               <Button
                 colorPalette="teal"
@@ -393,8 +387,6 @@ function LanguageItems() {
               </Button>
             </HStack>
           </Header>
-
-          {settingsOpen ? <RegistrySettingsPanel onDirtyChange={setSettingsDirty} /> : null}
 
           <NewLanguageItemDialog
             key={user?.email ?? "local"}

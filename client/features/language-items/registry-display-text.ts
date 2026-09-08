@@ -44,7 +44,8 @@ export function registryDisplayText(value: string): string {
   const translations: Record<string, string> = legacyTranslations;
   const key = value.trim();
   const translated = Object.hasOwn(translations, key) ? translations[key] : value;
-  return translated
+  const display = translated.split(" · ").map((part) => Object.hasOwn(translations, part.trim()) ? translations[part.trim()] : part).join(" · ");
+  return display
     .replace(/\b(blank|invalidId|multipleWhenSingle|technicalFailure|completelyOffTopic|noScorableLanguage|shortButRelevant)(?=\s*:)/g, (field) => SCORING_FIELD_LABELS[field])
     .replace(/\b(NotScoredTechnical|ScoringHold|Inconclusive|scoreActualEvidence)\b/g, (status) => DISPLAY_TEXT[status]);
 }

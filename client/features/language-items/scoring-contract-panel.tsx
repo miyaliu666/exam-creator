@@ -1,4 +1,4 @@
-import { Box, Heading, SimpleGrid, Stack, Text } from "@chakra-ui/react";
+import { Box, SimpleGrid, Stack, Text } from "@chakra-ui/react";
 
 import type { RegistrySnapshot, TaskPackage } from "./types";
 
@@ -135,119 +135,40 @@ export function ScoringContractPanel({ draft, registry }: ScoringContractPanelPr
     0,
   );
 
+  if (!contract) return <Text role="alert" color="fg.error">Scoring rules could not be loaded. Refresh and try again.</Text>;
+
+  const policies = [
+    ["Credit rule", POLICY_LABELS[contract.partialCredit.policyId] ?? contract.partialCredit.summary],
+    ["Response normalization", NORMALIZATION_LABELS[contract.normalization.policyId] ?? contract.normalization.summary],
+    ["Invalid responses", INVALID_RESPONSE_LABELS[contract.invalidResponse.policyId] ?? contract.invalidResponse.summary],
+    ["Technical incidents", TECHNICAL_INCIDENT_LABEL],
+  ];
   return (
-    <Stack aria-label="Answers and scoring" borderWidth="1px" borderRadius="xl" p={5} gap={4}>
-      <Box>
-        <Heading size="md">Answers and scoring</Heading>
-        <Text mt={1} fontSize="sm" color="fg.muted">
-          Enter correct answers and required content points in the item fields. The exam task and item format determine scoring.
-        </Text>
-      </Box>
-
-      {!contract ? (
-        <Text color="fg.error">Scoring rules could not be loaded. Refresh and try again.</Text>
-      ) : (
-        <>
-          <SimpleGrid minChildWidth="190px" gap={3}>
-            <Box borderWidth="1px" borderRadius="lg" p={3} bg="bg.subtle">
-              <Text fontSize="sm" color="fg.muted">Scoring method</Text>
-              <Text mt={1} fontWeight="semibold">
-                {SCORING_TYPE_LABELS[contract.scoringType] ?? contract.scoringType}
-              </Text>
-            </Box>
-            <Box borderWidth="1px" borderRadius="lg" p={3} bg="bg.subtle">
-              <Text fontSize="sm" color="fg.muted">Credit rule</Text>
-              <Text mt={1} fontWeight="semibold">
-                {POLICY_LABELS[contract.partialCredit.policyId] ?? contract.partialCredit.summary}
-              </Text>
-            </Box>
-            <Box borderWidth="1px" borderRadius="lg" p={3} bg="bg.subtle">
-              <Text fontSize="sm" color="fg.muted">Total score</Text>
-              <Text mt={1} fontWeight="semibold">
-                {maxRawScore} {maxRawScore === 1 ? "point" : "points"} · calculated from the item format
-              </Text>
-            </Box>
-          </SimpleGrid>
-
-          {contract.rubricId !== "notApplicable" ? (
-            <Text fontSize="sm">
-              This item uses the fixed {draft.content.primaryReportedSkill === "Writing" ? "A1 writing" : "A1 speaking"} rubric.
-              Confirm the required content points; do not write a separate scoring policy.
-            </Text>
-          ) : null}
-
-          <Box as="details" borderWidth="1px" borderRadius="lg" p={4}>
-            <Text as="summary" cursor="pointer" fontWeight="semibold">
-              View complete fixed scoring contract
-            </Text>
-            <Stack mt={4} gap={4}>
-              <SimpleGrid minChildWidth="220px" gap={3}>
-                <Box>
-                  <Text fontSize="sm" color="fg.muted">Contract version</Text>
-                  <Text>{contract.templateVersion || "Current approved version"}</Text>
-                </Box>
-                <Box>
-                  <Text fontSize="sm" color="fg.muted">Rubric</Text>
-                  <Text>{rubricLabel(contract.rubricId)}</Text>
-                </Box>
-                <Box>
-                  <Text fontSize="sm" color="fg.muted">Benchmark evidence</Text>
-                  <Text>{benchmarkLabel(draft.scoringPackage.benchmarkSetVersion)}</Text>
-                </Box>
-              </SimpleGrid>
-
-              <Box>
-                <Text fontWeight="semibold">Scoring points</Text>
-                <Stack mt={2} gap={1}>
-                  {(draft.scoringPackage.scoringPoints ?? []).map((point, index) => (
-                    <Text key={point.scoringPointId} fontSize="sm">
-                      {index + 1}. {scoringPointLabel(point.scoringPointId, point.description, index)} — {point.points} {point.points === 1 ? "point" : "points"}
-                    </Text>
-                  ))}
-                </Stack>
-              </Box>
-
-              <Box>
-                <Text fontWeight="semibold">Response normalization</Text>
-                <Text mt={1} fontSize="sm">
-                  {NORMALIZATION_LABELS[contract.normalization.policyId] ?? contract.normalization.summary}
-                </Text>
-              </Box>
-
-              <Box>
-                <Text fontWeight="semibold">Invalid responses</Text>
-                <Text mt={1} fontSize="sm">
-                  {INVALID_RESPONSE_LABELS[contract.invalidResponse.policyId] ?? contract.invalidResponse.summary}
-                </Text>
-              </Box>
-
-              <Box>
-                <Text fontWeight="semibold">Technical incidents</Text>
-                <Text mt={1} fontSize="sm">{TECHNICAL_INCIDENT_LABEL}</Text>
-              </Box>
-
-              {contract.taskSpecificRequirements.length > 0 ? (
-                <Box>
-                  <Text fontWeight="semibold">Fixed item requirements</Text>
-                  <Stack mt={2} gap={1}>
-                    {contract.taskSpecificRequirements.map((requirement) => (
-                      <Text key={requirement} fontSize="sm">
-                        · {REQUIREMENT_LABELS[requirement] ?? requirement}
-                      </Text>
-                    ))}
-                    {contract.capOrExclusion ? (
-                      <Text mt={2} fontSize="sm" color="fg.warning">
-                        {CAP_LABELS[contract.capOrExclusion] ?? contract.capOrExclusion}
-                      </Text>
-                    ) : null}
-                  </Stack>
-                </Box>
-              ) : null}
-            </Stack>
-          </Box>
-
-        </>
-      )}
-    </Stack>
+    <Box as="details" borderWidth="1px" borderRadius="lg" p={4}>
+      <Text as="summary" cursor="pointer" fontSize="sm" fontWeight="medium">
+        Scoring rules · {maxRawScore} {maxRawScore === 1 ? "point" : "points"}
+      </Text>
+      <Stack mt={4} gap={4} fontSize="sm">
+        <Text color="fg.muted">Set by Assessment Settings. Enter answers or response requirements in the editor; these rules apply automatically.</Text>
+        <SimpleGrid columns={{ base: 1, md: 2 }} gap={3}>
+          <Box><Text fontWeight="medium">Scoring method</Text><Text>{SCORING_TYPE_LABELS[contract.scoringType] ?? contract.scoringType}</Text></Box>
+          {contract.rubricId !== "notApplicable" ? <Box><Text fontWeight="medium">Rubric</Text><Text>{rubricLabel(contract.rubricId)}</Text></Box> : null}
+        </SimpleGrid>
+        <Box>
+          <Text fontWeight="medium" mb={2}>Scoring points</Text>
+          {(draft.scoringPackage.scoringPoints ?? []).map((point, index) => (
+            <Text key={point.scoringPointId}>{scoringPointLabel(point.scoringPointId, point.description, index)} — {point.points} points</Text>
+          ))}
+        </Box>
+        {contract.taskSpecificRequirements.length ? <Box>
+          <Text fontWeight="medium" mb={2}>Response requirements</Text>
+          {contract.taskSpecificRequirements.map((requirement) => <Text key={requirement}>· {REQUIREMENT_LABELS[requirement] ?? requirement}</Text>)}
+          {contract.capOrExclusion ? <Text mt={2} color="fg.warning">{CAP_LABELS[contract.capOrExclusion] ?? contract.capOrExclusion}</Text> : null}
+        </Box> : null}
+        {policies.map(([label, value]) => <Box key={label}><Text fontWeight="medium">{label}</Text><Text mt={1}>{value}</Text></Box>)}
+        <Text color="fg.muted">Contract version: {contract.templateVersion || "Current approved version"}</Text>
+        <Text color="fg.muted">{benchmarkLabel(draft.scoringPackage.benchmarkSetVersion)}</Text>
+      </Stack>
+    </Box>
   );
 }

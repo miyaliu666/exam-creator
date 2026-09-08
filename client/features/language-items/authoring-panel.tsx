@@ -1,4 +1,5 @@
 import {
+  Box,
   Field,
   Stack,
   Text,
@@ -7,7 +8,6 @@ import {
 
 import { itemTemplateForFormat } from "./item-template-registry";
 import { MetadataFields } from "./metadata-fields";
-import { ScoringContractPanel } from "./scoring-contract-panel";
 import type { AuthoringSetupIssue } from "./setup-validation";
 import type { RegistrySnapshot, TaskPackage, ValidationIssue } from "./types";
 
@@ -62,29 +62,15 @@ export function AuthoringPanel({
                   : `No exercise template is registered for ${draft.itemFormatId}.`}
               </Text>
             )}
-            <ScoringContractPanel
-              draft={draft}
-              registry={registry}
-            />
+            <Box as="details">
+              <Text as="summary" cursor="pointer" fontSize="sm" color="fg.muted">Author notes (optional)</Text>
             <Field.Root>
-              <Field.Label>Author notes</Field.Label>
-              <Textarea value={draft.authoringPackage.notes.join("\n")} onChange={(event) => updateDraft((next) => {
+              <Field.Label srOnly>Author notes</Field.Label>
+              <Textarea placeholder="Notes for authors and reviewers. Candidates do not see these." value={draft.authoringPackage.notes.join("\n")} onChange={(event) => updateDraft((next) => {
                 next.authoringPackage.notes = event.target.value.split("\n");
               })} />
             </Field.Root>
-            <Stack as="details" borderWidth="1px" borderRadius="lg" p={4} gap={3}>
-              <Text as="summary" cursor="pointer" fontWeight="semibold">
-                Technical data
-              </Text>
-              <Textarea
-                aria-label="Full TaskPackage"
-                readOnly
-                value={JSON.stringify(draft, null, 2)}
-                minH="420px"
-                fontFamily="mono"
-                fontSize="xs"
-              />
-            </Stack>
+            </Box>
           </>
         ) : null}
       </Stack>

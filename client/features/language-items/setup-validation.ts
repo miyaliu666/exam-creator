@@ -48,7 +48,7 @@ export function validateAuthoringSetup(
   ) {
     addIssue(
       "content.targetContentIds",
-      "Remove language content that does not match the capability, mastery scope, or context",
+      "Remove language content that does not match the task configuration, mastery scope, or context",
     );
   }
 
@@ -57,37 +57,42 @@ export function validateAuthoringSetup(
     return !entry || entry.kind !== "supported" ||
       !isContentOptionCompatible(entry, capability, draft.content.contextId);
   })) {
-    addIssue("content.supportingContentRefs", "Remove supporting content that is unavailable for this task or context");
+    addIssue("content.supportingContentRefs", "Remove supporting content that is unavailable for this task configuration or context");
   }
 
   const standard = difficultyStandardsForCapability(registry, capability).find(
     (entry) => entry.id === draft.content.difficultyBand,
   );
   if (!standard) {
-    addIssue("content.difficultyBand", "Select a difficulty available for this task");
+    addIssue("content.difficultyBand", "Select a difficulty available for this task configuration");
   }
   const difficulty = draft.content.difficulty;
+  if (!difficulty && (registry.settingsSchemaVersion ?? 0) >= 1) {
+    addIssue("content.difficultyBand", "Select a difficulty profile for this task configuration");
+  }
   if (difficulty && standard) {
     if (difficulty.intendedBand !== standard.id) {
       addIssue("content.difficultyBand", "The difficulty profile must match the selected difficulty");
     }
     const drivers = difficulty.drivers;
-    if (!standard.allowedInputLengths.includes(drivers.inputLength)) {
+    // Legacy pinned rules treated anchor deviations as advisory rather than blocking generation.
+    const enforceRanges = (registry.settingsSchemaVersion ?? 0) >= 1;
+    if (enforceRanges && !standard.allowedInputLengths.includes(drivers.inputLength)) {
       addIssue("content.difficulty.drivers.inputLength", "Choose an input length allowed for this difficulty");
     }
-    if (!standard.allowedSupportLevels.includes(drivers.supportLevel)) {
+    if (enforceRanges && !standard.allowedSupportLevels.includes(drivers.supportLevel)) {
       addIssue("content.difficulty.drivers.supportLevel", "Choose contextual support allowed for this difficulty");
     }
-    if (!Number.isInteger(drivers.informationPoints) ||
+    if (enforceRanges && (!Number.isInteger(drivers.informationPoints) ||
       drivers.informationPoints < standard.informationPointsMin ||
-      drivers.informationPoints > standard.informationPointsMax) {
+      drivers.informationPoints > standard.informationPointsMax)) {
       addIssue("content.difficulty.drivers.informationPoints", "Choose an information-point count allowed for this difficulty");
     }
-    if (["IF-SINGLE-SELECT", "IF-MATCHING"].includes(draft.itemFormatId) &&
+    if (enforceRanges && ["IF-SINGLE-SELECT", "IF-MATCHING"].includes(draft.itemFormatId) &&
       !standard.allowedDistractorSimilarities.includes(drivers.distractorSimilarity)) {
       addIssue("content.difficulty.drivers.distractorSimilarity", "Choose distractor similarity allowed for this difficulty");
     }
-    if (drivers.inferenceRequired !== standard.defaultDrivers.inferenceRequired) {
+    if (enforceRanges && drivers.inferenceRequired !== standard.defaultDrivers.inferenceRequired) {
       addIssue("content.difficulty.drivers.inferenceRequired", "The inference requirement must match the selected difficulty");
     }
   }

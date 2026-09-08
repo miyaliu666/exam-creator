@@ -73,8 +73,10 @@ export function difficultyStandardsForCapability(
 ): DifficultyBandStandard[] {
   if (!registry || !capability) return [];
   const key = capabilityKey(capability);
-  return registry.capabilityDifficultyProfileSets?.find(
+  const profiles = registry.capabilityDifficultyProfileSets ?? [];
+  if (!profiles.length && (registry.settingsSchemaVersion ?? 0) === 0) return registry.difficultyStandards;
+  return profiles.find(
     (profile) =>
       `${profile.blueprintSlotId}::${profile.itemFormatId}::${profile.primaryCanDoId}` === key,
-  )?.standards ?? registry.difficultyStandards;
+  )?.standards ?? [];
 }

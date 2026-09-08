@@ -176,4 +176,25 @@ mod tests {
         assert_eq!(generated.question_sets.len(), 1);
         assert_eq!(generated.question_sets[0].questions.len(), 1);
     }
+
+    #[test]
+    fn author_english_references_never_change_exported_candidate_content() {
+        let original = version();
+        let mut bilingual = original.clone();
+        bilingual
+            .package
+            .authoring_package
+            .english_translations
+            .push(crate::language_items::domain::EnglishTranslation {
+                path: "/prompt".to_string(),
+                source_text: "哪一天不能来？".to_string(),
+                english_text: "PRIVATE AUTHOR REFERENCE: Which day can you not come?".to_string(),
+            });
+        let before = build_legacy_export(&original).unwrap();
+        let after = build_legacy_export(&bilingual).unwrap();
+        let before_json = serde_json::to_value(&before.exam).unwrap();
+        let after_json = serde_json::to_value(&after.exam).unwrap();
+        assert_eq!(before_json, after_json);
+        assert!(!after_json.to_string().contains("PRIVATE AUTHOR REFERENCE"));
+    }
 }
