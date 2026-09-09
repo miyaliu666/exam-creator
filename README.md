@@ -33,6 +33,8 @@ bun run dev --host localhost --port 8001
 
 Open [http://localhost:8001](http://localhost:8001).
 
+[Gist](https://gist.github.com/miyaliu666/0616cc867e90d176880ba68eb7966caa)
+
 Set `MOCK_AUTH=true` in `.env` for local development. With the backend running in debug mode, opening the app automatically creates or reuses the Local User session and enters the home page without a Sign in step. If the backend is unavailable, the app shows a connection error with Retry.
 
 ### Workbench Flow
