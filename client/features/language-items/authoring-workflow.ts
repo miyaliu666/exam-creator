@@ -19,9 +19,9 @@ export function hasAuthoredContent(payload: CandidatePayload): boolean {
   return false;
 }
 
-export function initialEditorSection(status: LanguageItemStatus, payload: CandidatePayload): EditorSection {
+export function initialEditorSection(status: LanguageItemStatus, payload: CandidatePayload, writeManually = false): EditorSection {
   if (status !== "draft") return "review";
-  return hasAuthoredContent(payload) ? "content" : "setup";
+  return writeManually || hasAuthoredContent(payload) ? "content" : "setup";
 }
 
 export function canSubmitDraft(validation: ValidationResult | null, setupIssueCount: number, busy: boolean): boolean {

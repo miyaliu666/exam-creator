@@ -14,7 +14,7 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { GenerateModal } from "./generate-modal";
 import { deserializeToPrisma } from "../utils/serde";
-import { queryClient } from "../contexts";
+import { queryClient } from "../contexts/query-client";
 import { toaster } from "./toaster";
 
 interface EditExamActionsProps {

@@ -88,14 +88,7 @@ fn build_legacy_question_set(
         questions: vec![prisma::ExamEnvironmentMultipleChoiceQuestion {
             id: question_id,
             text: candidate_payload.prompt.clone(),
-            tags: vec![
-                package.blueprint_slot_id.clone(),
-                package.content.primary_domain.clone(),
-                package.content.context_id.clone(),
-                package.content.difficulty_band.clone(),
-                version.item_id.clone(),
-                version.id.clone(),
-            ],
+            tags: assembly_tags(version),
             audio: None,
             answers,
             deprecated: false,
@@ -107,6 +100,40 @@ fn build_legacy_question_set(
         question_id,
         option_answer_ids,
     )
+}
+
+fn assembly_tags(version: &LanguageItemVersion) -> Vec<String> {
+    let package = &version.package;
+    // Preserve existing tag quotas while exposing unambiguous language dimensions.
+    let mut tags = vec![
+        package.blueprint_slot_id.clone(),
+        package.content.primary_domain.clone(),
+        package.content.context_id.clone(),
+        package.content.difficulty_band.clone(),
+        version.item_id.clone(),
+        version.id.clone(),
+        format!("skill:{}", package.content.primary_reported_skill),
+        format!("activity:{}", package.content.communicative_activity),
+        format!("can-do:{}", package.content.primary_can_do_id),
+        format!("format:{}", package.item_format_id),
+    ];
+    tags.extend(
+        package
+            .content
+            .target_content_ids
+            .iter()
+            .map(|id| format!("target:{id}")),
+    );
+    tags.extend(
+        package
+            .content
+            .supporting_content_refs
+            .iter()
+            .map(|id| format!("supporting:{id}")),
+    );
+    let mut seen = std::collections::HashSet::new();
+    tags.retain(|tag| seen.insert(tag.clone()));
+    tags
 }
 
 fn stable_object_id(key: &str) -> ObjectId {
@@ -152,6 +179,9 @@ mod tests {
             author_email: "author@example.com".to_string(),
             submitted_by: "author@example.com".to_string(),
             frozen: true,
+            evidence_content_hash: Some(crate::language_items::evidence::evidence_content_hash(
+                &package,
+            )),
             content_hash,
             lifecycle_status: "submitted".to_string(),
             validation: validate_task_package(&package),
@@ -175,6 +205,38 @@ mod tests {
         .expect("legacy exam should generate");
         assert_eq!(generated.question_sets.len(), 1);
         assert_eq!(generated.question_sets[0].questions.len(), 1);
+    }
+
+    #[test]
+    fn exported_language_dimensions_are_available_to_existing_tag_quotas() {
+        let mut version = version();
+        version.package.content.target_content_ids =
+            vec!["LEX-GOODBYE".into(), "LEX-GOODBYE".into()];
+        version.package.content.supporting_content_refs = vec!["LEX-THANKS".into()];
+        let bundle = build_legacy_export(&version).unwrap();
+        let tags = &bundle.exam.question_sets[0].questions[0].tags;
+        assert!(tags.contains(&version.package.blueprint_slot_id));
+        assert!(tags.contains(&"skill:Reading".to_string()));
+        assert!(tags.contains(&"supporting:LEX-THANKS".to_string()));
+        assert_eq!(
+            tags.iter()
+                .filter(|tag| *tag == "target:LEX-GOODBYE")
+                .count(),
+            1
+        );
+        let mut config = bundle.exam.config;
+        config.tags = vec![crate::database::prisma::ExamEnvironmentTagConfig {
+            group: vec!["target:LEX-GOODBYE".into()],
+            number_of_questions: 1,
+        }];
+        assert!(
+            generate::generate_exam(ExamInput {
+                id: bundle.exam.id,
+                question_sets: bundle.exam.question_sets,
+                config
+            })
+            .is_ok()
+        );
     }
 
     #[test]

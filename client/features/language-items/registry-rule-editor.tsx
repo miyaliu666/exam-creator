@@ -19,6 +19,7 @@ import { capabilityKey, domainsForCapability } from "./registry-capability";
 import { RegistryBlueprintEditor } from "./registry-blueprint-editor";
 import { RegistryDifficultyEditor } from "./registry-difficulty-editor";
 import { RegistryMultiSelect } from "./registry-multi-select";
+import { ReferenceSourcesPanel } from "./reference-sources-panel";
 import { registryDisplayText } from "./registry-display-text";
 import { createRegistryTextFormatter, RegistryTextContext, registryReferenceName, registrySlotName } from "./registry-reference-labels";
 import type {
@@ -319,6 +320,7 @@ function ContractsEditor({ snapshot, update, disabled }: RegistryEditorProps) {
 }
 
 const RULE_LIBRARIES = [
+  { id: "sources", label: "Reference sources" },
   { id: "contexts", label: "Contexts" },
   { id: "canDo", label: "Can-do library" },
   { id: "content", label: "Language content" },
@@ -356,6 +358,7 @@ export function RegistryRuleEditor({ snapshot, update, disabled, history }: Regi
           <Stack gap={5}>
             <SelectField label="Rule library" value={library} options={RULE_LIBRARIES.filter((entry) => entry.id !== "history" || history !== undefined)} onChange={setLibrary} />
             {library === "contexts" ? <ContextEditor {...editorProps} /> : null}
+            {library === "sources" ? <ReferenceSourcesPanel /> : null}
             {library === "canDo" ? <CanDoEditor {...editorProps} /> : null}
             {library === "content" ? <ContentEditor {...editorProps} /> : null}
             {library === "scoring" ? <ScoringEditor {...editorProps} /> : null}

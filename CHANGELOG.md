@@ -2,8 +2,24 @@
 
 ## [Unreleased]
 
+### Planning
+
+- remove internal generation-job/item IDs from routine progress displays and use AI drafts for generated alternatives, reserving Candidate for exam takers
+- clarify assessment targets, background material types, allocation labels, and the limits of automatic text-occurrence checks
+- allow authors to select or enter the AI candidate quantity per item without the former batch/single-item caps
+- support bulk Item bank management through visible owner-only selections and existing recoverable record-state actions, with explicit deletion confirmation and independent failure handling
+- audit creation field meanings, target allocation, generation progress and recovery boundaries; record the detailed flow and verification status in local documentation
+- audit Language coverage field meanings, inventory counts, query transitions, and creation handoff; keep the detailed rationale in local documentation
+- record the accepted formal-exam purpose, four skills/activities/domains, free reference sources, one author role, and the implementation and validation plan for bulk authoring and language coverage
+- consolidate the product proposal for batch item authoring, language coverage and intersections, evidence-backed assessment rules, originality review, and existing exam-assembly responsibilities; record open product decisions without implementation design
+
 ### Added
 
+- add Item bank checkboxes, filtered select-all, selected counts, bulk archive/delete/restore, a recoverable-delete confirmation, and per-item failure feedback with failed selections retained for retry
+- add durable bulk item generation with reusable task groups, fixed and rotating targets, pinned rules, idempotent child/run identities, pause/resume, bounded workers, and restart recovery without replaying uncertain model calls
+- add language-coverage exploration by item dimensions, ALL/ANY/exact/excluded targets, disjoint intersections and item drilldown; explicit inventory goals can prepare compatible bulk plans while keeping approved, pending and unknown counts separate
+- add append-only author observations and source/originality notes bound to reviewed content; confirmed coverage follows the exact approved content while legacy evidence remains unknown
+- add a free reference-source directory in Assessment Settings, with purpose and reuse limits and no automatic corpus import
 - add the Chinese A1 Language Exam Item Creator with seven item formats, 15 Blueprint slots, and 21 allowed slot/format combinations
 - add versioned Assessment Settings for Blueprint, Can-do, Context, difficulty, language content, scoring, review, and delivery rules; each item pins its published Registry version
 - add structured authoring, candidate-safe previews, deterministic validation, immutable item versions, and audit history
@@ -16,6 +32,19 @@
 
 ### Changed
 
+- remove visible batch and item IDs from Generation jobs while retaining names, creation times, item numbers and navigation; rename AI-generation candidates to AI drafts across creation, progress, Prepare and generation history, including saved generation feedback
+- remove the unnecessary planned-assessment-target explanation from Language coverage
+- clarify single-item, shared and distributed target labels and coverage counting modes; add selection-category filters that preserve selections and query meaning, and separate grammar/pragmatics review from vocabulary/character text-occurrence checks
+- share an editable candidate-count dropdown across New items and individual regeneration; accept positive whole-number quantities, preserve custom saved counts, and remove backend truncation while bounding concurrent provider calls
+- lead Language coverage with matching items; fold additional filters, intersections, breakdowns, and inventory goals into disclosures and remove redundant guidance and counts
+- make Item bank the Workbench home, with item browsing and filters; move Generation jobs and Language coverage to independent pages
+- unify New item and Bulk create into New items: shared six-field setup, quantity defaulting to one, language targets, and Generate 1 item / Generate N items; preserve saved plans and pass coverage suggestions to the creation page within the browser session
+- keep creation focused on setup, quantity and targets; move the optional name and candidates per item into Options, derive blank names from Blueprint slots, and label additional groups Add another setup
+- label additional targets Different targets for different items and add Preview each item's targets using the existing per-item allocation algorithm
+- offer Write manually for one-item plans, save selected targets and open Edit & preview directly, and permit an empty manual draft while retaining generation and submission requirements
+- distinguish generation jobs by name and creation time; show shared setup and required targets once per group, with per-item numbers, additional targets and generation state; remove repeated quantity and selection instructions
+- retain the newest completed generation job with expanded results, and prioritize saved candidates while keeping requirement editing and regeneration in disclosures
+- enrich new single-select Staging exports with skill, activity, Can-do, format and language-target tags for the existing Exam Creator tag-quota assembly logic
 - organize authoring as Prepare → Edit & preview → Check & submit, with autosave, unsaved-change protection, and current validation required for submission
 - use one authenticated Workbench role while retaining draft ownership checks
 - apply staged Domain, Context, and Difficulty corrections through Edit item setup, preserving authored content and requiring explicit conflict repair
@@ -29,6 +58,18 @@
 
 ### Fixed
 
+- preserve custom candidate quantities on blur and refresh; stop unsent candidate calls when a batch is paused, retain available results as explicit partial work, and report result-persistence failures as terminal failures instead of leaving runs active
+- keep local startup on automatic Local User sign-in, show retryable connection errors when the backend is unavailable, and isolate the shared query client from route initialization so the home page loads without circular-import errors
+- release Item bank action buttons after record-state requests settle and prevent overlapping row/bulk changes
+- align client information-point validation messages with server wording so the same issue is not displayed twice
+- display Generating when a queued job already has a running child, without presenting generation completion as review approval
+- reset coverage goals when query meaning changes, preserve exclusions during intersection drilldown, validate compatible task setup and target limits before planning new items, and clear a coverage suggestion when its setup is canceled
+- retain an account-scoped browser-session recovery record after manual creation returns an item ID, so a failed target save can reuse the same draft on retry after refresh or returning to New items; expose Open unfinished draft
+- resolve Generation jobs `batchId` direct links by separately fetching requested jobs outside the latest 100, preserving their progress polling and showing explicit loading errors with retry
+- explicitly select non-strict OpenAI JSON Schema output for pinned schemas with optional fields and dynamic answer maps, preventing provider-side `invalid_json_schema` errors while retaining application validation
+- publish batch item links only after the queued AI run is durable, and allow Continue to recover failed creation steps only when no prior AI run exists
+- wait for AI run history before enabling generation, recheck active runs before creating more candidates, and expose a retry when history cannot load
+- document recovery from inherited agent-shell network restrictions by restarting the backend in a network-enabled environment, and distinguish unauthenticated API connectivity checks from successful AI generation
 - prevent stale Registry publication, silent rule normalization, and overwriting newer drafts during GitHub synchronization
 - reject invalid content bindings, candidate-private metadata, stale AI adoption, and incompatible difficulty configurations
 - preserve original submission snapshots, pinned legacy validation behavior, and locked scoring during generation and review

@@ -1,7 +1,10 @@
 pub mod ai;
+pub mod batch;
+pub mod coverage;
 pub mod diff;
 pub mod domain;
 pub mod english_translations;
+pub mod evidence;
 pub mod export;
 pub mod github;
 pub mod registry;

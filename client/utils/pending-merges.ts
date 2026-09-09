@@ -1,5 +1,5 @@
 import { toaster } from "../components/toaster";
-import { queryClient } from "../contexts";
+import { queryClient } from "../contexts/query-client";
 import {
   cancelUserMerge,
   scheduleUserMerge,

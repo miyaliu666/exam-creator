@@ -43,6 +43,9 @@ interface NewLanguageItemDialogProps {
   error?: Error | null;
   onClose: () => void;
   onCreate: (selection: NewLanguageItemSelection) => void;
+  title?: string;
+  actionLabel?: string;
+  initialSelection?: Partial<NewLanguageItemSelection>;
 }
 
 const SKILL_ORDER = ["Reading", "Listening", "Writing", "Speaking"];
@@ -55,6 +58,9 @@ export function NewLanguageItemDialog({
   error,
   onClose,
   onCreate,
+  title = "New item",
+  actionLabel = "Create",
+  initialSelection,
 }: NewLanguageItemDialogProps) {
   const slots = useMemo(() => {
     const byId = new Map<string, RegistrySnapshot["capabilities"][number]>();
@@ -65,7 +71,14 @@ export function NewLanguageItemDialog({
     }
     return [...byId.values()];
   }, [registry]);
-  const { draft, setField } = useNewItemDraft(draftScope);
+  const { draft, setField } = useNewItemDraft(draftScope, initialSelection ? {
+    slotId: initialSelection.blueprintSlotId ?? "",
+    formatId: initialSelection.itemFormatId ?? "",
+    primaryCanDoId: initialSelection.primaryCanDoId ?? "",
+    domainId: initialSelection.primaryDomain ?? "",
+    contextId: initialSelection.contextId ?? "",
+    difficultyBand: initialSelection.difficultyBand ?? "",
+  } : undefined);
   const [openField, setOpenField] = useState<keyof NewLanguageItemSelection | null>(null);
   const dropdownState = (field: keyof NewLanguageItemSelection) => ({
     open: open && !isPending && openField === field,
@@ -182,9 +195,9 @@ export function NewLanguageItemDialog({
       <Dialog.Backdrop />
       <Dialog.Positioner>
         <Dialog.Content bg="bg" color="fg" maxW="lg">
-          <Dialog.Header><Dialog.Title>New item</Dialog.Title></Dialog.Header>
+          <Dialog.Header><Dialog.Title>{title}</Dialog.Title></Dialog.Header>
           <Dialog.CloseTrigger asChild>
-            <CloseButton size="sm" aria-label="Close new item" disabled={isPending} />
+            <CloseButton size="sm" aria-label={`Close ${title.toLowerCase()}`} disabled={isPending} />
           </Dialog.CloseTrigger>
           <Dialog.Body>
             <fieldset disabled={isPending} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
@@ -282,7 +295,7 @@ export function NewLanguageItemDialog({
                 })
               }
             >
-              Create
+              {actionLabel}
             </Button>
           </Dialog.Footer>
         </Dialog.Content>

@@ -9,16 +9,24 @@ import {
   type RegistryMultiSelectOption,
 } from "./registry-multi-select-options";
 
-export function RegistryMultiSelect({ label, options, values, onChange, disabled }: {
+export interface RegistryOptionGroup {
+  id: string;
+  label: string;
+  optionIds: string[];
+}
+
+export function RegistryMultiSelect({ label, options, values, onChange, disabled, optionGroups }: {
   label: string;
   options: RegistryMultiSelectOption[];
   values: string[];
   onChange: (values: string[]) => void;
   disabled?: boolean;
+  optionGroups?: RegistryOptionGroup[];
 }) {
   const displayText = useContext(RegistryTextContext);
   const [expanded, setExpanded] = useState(false);
   const [query, setQuery] = useState("");
+  const [groupId, setGroupId] = useState("");
   const controlId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -28,7 +36,9 @@ export function RegistryMultiSelect({ label, options, values, onChange, disabled
     const option = optionMap.get(id);
     return option ? [option] : [];
   });
-  const filtered = filterRegistryOptions(namedOptions, query);
+  const activeGroup = optionGroups?.find((group) => group.id === groupId);
+  const filtered = filterRegistryOptions(namedOptions, query).filter((option) =>
+    !activeGroup || activeGroup.optionIds.includes(option.id));
   const toggle = (id: string) => {
     if (!disabled) onChange(toggleRegistrySelection(values, id));
   };
@@ -104,7 +114,14 @@ export function RegistryMultiSelect({ label, options, values, onChange, disabled
             }
           }}
         >
-          <Input ref={searchRef} size="sm" placeholder="Search" aria-label={`Search ${label}`} value={query} onChange={(event) => setQuery(event.target.value)} />
+          {optionGroups?.length ? <HStack flexWrap="wrap" gap={2} role="group" aria-label={`${label} categories`}>
+            {[{ id: "", label: "All", optionIds: options.map((option) => option.id) }, ...optionGroups].map((group) => <Button
+              key={group.id} size="xs" variant={(activeGroup?.id ?? "") === group.id ? "solid" : "outline"} colorPalette="teal"
+              aria-pressed={(activeGroup?.id ?? "") === group.id} onClick={() => { setGroupId(group.id); setQuery(""); }}>
+              {group.label}
+            </Button>)}
+          </HStack> : null}
+          <Input ref={searchRef} size="sm" placeholder={activeGroup ? `Search ${activeGroup.label}` : "Search"} aria-label={`Search ${label}`} value={query} onChange={(event) => setQuery(event.target.value)} />
           <Stack gap={1} maxH="64" overflowY="auto" role="group" aria-label={`${label} options`}>
             {filtered.map((option) => (
               <Box as="label" key={option.id} display="flex" alignItems="start" gap={2} px={1} py={2} cursor="pointer" borderRadius="sm" _hover={{ bg: "bg.muted" }}>

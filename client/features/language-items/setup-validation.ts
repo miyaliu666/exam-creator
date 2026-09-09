@@ -107,7 +107,7 @@ export function validateAuthoringSetup(
   ) {
     addIssue(
       "content.requiredInformationPoints",
-      `Enter ${expectedPoints} required information point${expectedPoints === 1 ? "" : "s"}`,
+      `Enter the required number of information points (${expectedPoints})`,
     );
   }
   if (

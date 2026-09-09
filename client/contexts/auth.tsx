@@ -1,4 +1,5 @@
 import { createContext, useEffect, useMemo, useState } from "react";
+import { Button, Center, Heading, Stack, Text } from "@chakra-ui/react";
 import { SessionUser } from "../types";
 import {
   getDevLoginStatus,
@@ -26,8 +27,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDevelopmentAuth, setIsDevelopmentAuth] = useState(false);
+  const [connectionFailed, setConnectionFailed] = useState(false);
 
   async function checkLoginUser() {
+    setIsLoading(true);
     try {
       const devLoginStatus = await getDevLoginStatus();
       setIsDevelopmentAuth(devLoginStatus.enabled);
@@ -37,9 +40,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sessionUser = await getSessionUser();
       }
       setUser(sessionUser);
+      setConnectionFailed(false);
     } catch (e) {
       console.debug(e);
       setUser(null);
+      setConnectionFailed(true);
     } finally {
       setIsLoading(false);
     }
@@ -89,5 +94,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user, isLoading, isDevelopmentAuth]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {connectionFailed ? (
+        <Center minH="100vh" px={4}>
+          <Stack maxW="md" align="center" gap={4} textAlign="center" role="alert">
+            <Heading size="xl">Unable to connect</Heading>
+            <Text>Make sure the server is running, then try again.</Text>
+            <Button colorPalette="teal" loading={isLoading} onClick={() => void checkLoginUser()}>
+              Retry
+            </Button>
+          </Stack>
+        </Center>
+      ) : children}
+    </AuthContext.Provider>
+  );
 }

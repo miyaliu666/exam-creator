@@ -350,6 +350,9 @@ pub async fn post_batch(
                 author_email: item.owner_email.clone(),
                 submitted_by: item.owner_email.clone(),
                 frozen: true,
+                evidence_content_hash: Some(
+                    crate::language_items::evidence::evidence_content_hash(&package),
+                ),
                 content_hash: task_package_hash(&package),
                 lifecycle_status: "reviewSubmission".to_string(),
                 package,
@@ -1117,6 +1120,9 @@ async fn sync_review_batch(
                         remote.merged_by.as_deref().unwrap_or("unknown")
                     ),
                     frozen: true,
+                    evidence_content_hash: Some(
+                        crate::language_items::evidence::evidence_content_hash(&package),
+                    ),
                     content_hash: task_package_hash(&package),
                     lifecycle_status: "approved".to_string(),
                     package,
@@ -1241,6 +1247,9 @@ mod tests {
             author_email: "author@example.test".to_string(),
             submitted_by: "author@example.test".to_string(),
             frozen: true,
+            evidence_content_hash: Some(crate::language_items::evidence::evidence_content_hash(
+                &package,
+            )),
             content_hash: content_hash.clone(),
             lifecycle_status: "reviewSubmission".to_string(),
             validation: validate_task_package(&package),

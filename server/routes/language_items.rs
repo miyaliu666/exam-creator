@@ -326,7 +326,7 @@ fn template_for_format(item_format_id: &str) -> Option<&'static str> {
     }
 }
 
-fn draft_for_capability(
+pub(crate) fn draft_for_capability(
     id: String,
     capability: &WorkbenchCapability,
     registry: &RegistrySnapshot,
@@ -1039,6 +1039,9 @@ pub async fn post_version(
         author_email: user.email.clone(),
         submitted_by: user.email.clone(),
         frozen: true,
+        evidence_content_hash: Some(crate::language_items::evidence::evidence_content_hash(
+            &package,
+        )),
         content_hash,
         lifecycle_status: "submitted".to_string(),
         package,
@@ -1185,8 +1188,17 @@ pub async fn post_revise_version(
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AiGenerationBody {
-    count: Option<u8>,
+    count: Option<u64>,
     idempotency_key: Option<String>,
+}
+
+impl AiGenerationBody {
+    fn candidate_count(&self) -> Result<u64, Error> {
+        let count = self.count.unwrap_or(3);
+        ai::validate_candidate_count(count)
+            .map_err(|message| Error::Server(StatusCode::BAD_REQUEST, message.to_string()))?;
+        Ok(count)
+    }
 }
 
 pub async fn post_ai_generation(
@@ -1196,6 +1208,7 @@ pub async fn post_ai_generation(
     Path(item_id): Path<String>,
     Json(body): Json<AiGenerationBody>,
 ) -> Result<Json<AiGenerationRun>, Error> {
+    let count = body.candidate_count()?;
     let item = state
         .workbench_database
         .language_items
@@ -1231,13 +1244,6 @@ pub async fn post_ai_generation(
         return Ok(Json(existing));
     }
     require_mutable_draft(&item)?;
-    let count = body.count.unwrap_or(3);
-    if !(1..=5).contains(&count) {
-        return Err(Error::Server(
-            StatusCode::BAD_REQUEST,
-            "AI candidate count must be between 1 and 5".to_string(),
-        ));
-    }
     let setup_validation = validate_generation_setup(&item.draft);
     if !setup_validation.valid {
         return Err(Error::Server(
@@ -1318,6 +1324,7 @@ pub async fn post_ai_generation(
             background_package,
             background_actor,
             count,
+            None,
         )
         .await
         {
@@ -1327,13 +1334,14 @@ pub async fn post_ai_generation(
     Ok(Json(run))
 }
 
-async fn execute_ai_generation(
+pub(crate) async fn execute_ai_generation(
     state: ServerState,
     http_client: reqwest::Client,
     run_id: String,
     package: TaskPackage,
     actor_email: String,
-    count: u8,
+    count: u64,
+    batch: Option<(&str, &str)>,
 ) -> Result<(), Error> {
     let Some(mut run) = state
         .workbench_database
@@ -1343,25 +1351,48 @@ async fn execute_ai_generation(
     else {
         return Ok(());
     };
-    run.status = "running".to_string();
-    run.updated_at = now();
-    state
+    let claimed = state
         .workbench_database
         .ai_generation_runs
-        .replace_one(doc! { "id": &run_id }, &run)
+        .update_one(
+            doc! { "id": &run_id, "status": "queued" },
+            doc! { "$set": { "status": "running", "updatedAt": now() } },
+        )
         .await?;
+    if claimed.matched_count != 1 {
+        return Ok(());
+    }
+    run.status = "running".to_string();
+    run.updated_at = now();
 
     let report = ai::generate_candidates_independently(
         &state.env_vars.language_item_ai,
         &http_client,
         &package,
         count,
+        || async {
+            let Some((batch_id, worker_token)) = batch else {
+                return true;
+            };
+            match state.workbench_database.batch_generation_jobs.find_one(doc! {
+                "id": batch_id,
+                "workerToken": worker_token,
+                "status": { "$in": ["queued", "running"] },
+                "leaseExpiresAt": { "$gt": crate::language_items::batch::now() },
+            }).await {
+                Ok(job) => job.is_some(),
+                Err(error) => {
+                    tracing::error!(batch_id = %batch_id, error = %error, "cannot confirm batch may start another candidate request");
+                    false
+                }
+            }
+        },
     )
     .await;
     let completed_at = now();
     run.status = if report.candidates.is_empty() {
         "failed"
-    } else if report.candidates.len() != usize::from(count) || !report.errors.is_empty() {
+    } else if report.candidates.len() as u64 != count || !report.errors.is_empty() {
         "partial"
     } else {
         "completed"
@@ -1376,11 +1407,28 @@ async fn execute_ai_generation(
     run.provider_calls = report.provider_calls;
     run.updated_at = completed_at.clone();
     run.completed_at = Some(completed_at);
-    state
+    let persisted = state
         .workbench_database
         .ai_generation_runs
-        .replace_one(doc! { "id": &run_id }, &run)
-        .await?;
+        .replace_one(doc! { "id": &run_id, "status": "running" }, &run)
+        .await;
+    let persisted = match persisted {
+        Ok(result) => result,
+        Err(error) => {
+            tracing::error!(run_id = %run_id, error = %error, "AI generation results could not be persisted");
+            discard_unsaved_ai_generation_results(&mut run);
+            // A large result must not leave a charged run looking active forever. The condition
+            // also preserves a completed write whose acknowledgement failed transiently.
+            state
+                .workbench_database
+                .ai_generation_runs
+                .replace_one(doc! { "id": &run_id, "status": "running" }, &run)
+                .await?
+        }
+    };
+    if persisted.matched_count != 1 {
+        return Ok(());
+    }
     write_audit(
         &state,
         &run.item_id,
@@ -1401,6 +1449,15 @@ async fn execute_ai_generation(
         }),
     )
     .await
+}
+
+fn discard_unsaved_ai_generation_results(run: &mut AiGenerationRun) {
+    let message = "AI generation finished, but its results could not be saved. No candidates were saved for this run. Request fewer candidates or retry explicitly; this run will not be generated again automatically.";
+    run.status = "failed".to_string();
+    run.error = Some(message.to_string());
+    run.candidate_errors = vec![message.to_string()];
+    run.candidates.clear();
+    run.provider_calls.clear();
 }
 
 pub async fn get_ai_runs(
@@ -2406,6 +2463,23 @@ pub async fn post_production_export(
 mod tests {
     use super::*;
 
+    #[test]
+    fn single_item_generation_accepts_custom_positive_candidate_counts() {
+        for count in [1, 4, 6, 256, 1_000] {
+            let body: AiGenerationBody = serde_json::from_value(json!({ "count": count })).unwrap();
+            assert_eq!(body.candidate_count().unwrap(), count);
+        }
+        let default: AiGenerationBody = serde_json::from_value(json!({})).unwrap();
+        assert_eq!(default.candidate_count().unwrap(), 3);
+        for count in [0, u64::MAX] {
+            let body: AiGenerationBody = serde_json::from_value(json!({ "count": count })).unwrap();
+            assert!(body.candidate_count().is_err());
+        }
+        for count in [json!(-1), json!(1.5), json!("6")] {
+            assert!(serde_json::from_value::<AiGenerationBody>(json!({ "count": count })).is_err());
+        }
+    }
+
     fn event(kind: ReviewDiscussionEventKind) -> LanguageItemReviewDiscussionEvent {
         LanguageItemReviewDiscussionEvent {
             id: Uuid::new_v4().to_string(),
@@ -2905,6 +2979,42 @@ mod tests {
             "generationSetupSnapshot": ai_generation_setup_snapshot(package),
             "requestedCount": 1, "candidates": [], "status": "completed", "createdBy": "author", "createdAt": "test"
         })).unwrap()
+    }
+
+    #[test]
+    fn failed_candidate_result_persistence_retains_a_compact_terminal_run() {
+        let package = TaskPackage::new("LI-large-generation".to_string());
+        let mut run = generation_run_for(&package);
+        run.requested_count = 1_000;
+        run.attempt_count = 1_001;
+        run.retry_count = 1;
+        run.completed_at = Some("completed-time".to_string());
+        run.candidates = ai::generate_mock_candidates(&package, 1);
+        run.candidates[0]
+            .candidate_payload
+            .as_single_select_mut()
+            .unwrap()
+            .prompt = "x".repeat(17 * 1024 * 1024);
+        run.candidate_errors = vec!["provider-detail".repeat(1_000)];
+        assert!(bson::serialize_to_vec(&run).unwrap().len() > 16 * 1024 * 1024);
+
+        discard_unsaved_ai_generation_results(&mut run);
+
+        assert_eq!(run.status, "failed");
+        assert!(
+            run.error
+                .as_deref()
+                .unwrap()
+                .contains("No candidates were saved")
+        );
+        assert!(run.candidates.is_empty());
+        assert!(run.provider_calls.is_empty());
+        assert_eq!(run.requested_count, 1_000);
+        assert_eq!(run.attempt_count, 1_001);
+        assert_eq!(run.retry_count, 1);
+        assert_eq!(run.completed_at.as_deref(), Some("completed-time"));
+        assert_eq!(run.item_id, package.task_id);
+        assert!(bson::serialize_to_vec(&run).unwrap().len() < 50_000);
     }
 
     #[test]

@@ -2,7 +2,7 @@ import { ExamEnvironmentExamModeration } from "@prisma/client";
 import { InfiniteData } from "@tanstack/react-query";
 
 import { toaster } from "../components/toaster";
-import { queryClient } from "../contexts";
+import { queryClient } from "../contexts/query-client";
 import { moderationKeys } from "../hooks/queries";
 import { cancelAttemptDeletion, scheduleAttemptDeletion } from "./fetch";
 

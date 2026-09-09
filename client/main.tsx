@@ -8,7 +8,8 @@ import { AuthProvider } from "./contexts/auth";
 import { UsersWebSocketProvider } from "./contexts/users-websocket";
 
 import "./index.css";
-import { queryClient, router } from "./contexts";
+import { router } from "./contexts";
+import { queryClient } from "./contexts/query-client";
 import { system } from "./theme";
 import { ColorModeProvider } from "./color-mode";
 import { Toaster } from "./components/toaster";

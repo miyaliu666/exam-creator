@@ -1,5 +1,6 @@
 import { createRouter } from "@tanstack/react-router";
-import { QueryClient } from "@tanstack/react-query";
+
+import { queryClient } from "./query-client";
 
 import { authCallbackGithubRoute } from "../pages/auth-callback-github";
 import { attemptsRoute } from "../pages/attempts";
@@ -16,8 +17,9 @@ import { viewMetricsRoute } from "../pages/view-metrics";
 import { languageItemsRoute } from "../pages/language-items";
 import { languageAssessmentSettingsRoute } from "../pages/language-assessment-settings";
 import { editLanguageItemRoute } from "../pages/edit-language-item";
-
-export const queryClient = new QueryClient();
+import { newLanguageItemsRoute } from "../pages/new-language-items";
+import { languageItemBatchesRoute } from "../pages/language-item-batches";
+import { languageItemCoverageRoute } from "../pages/language-item-coverage";
 
 export const routeTree = rootRoute.addChildren([
   authCallbackGithubRoute,
@@ -34,6 +36,9 @@ export const routeTree = rootRoute.addChildren([
   languageItemsRoute,
   languageAssessmentSettingsRoute,
   editLanguageItemRoute,
+  newLanguageItemsRoute,
+  languageItemBatchesRoute,
+  languageItemCoverageRoute,
 ]);
 
 export const router = createRouter({ routeTree, context: { queryClient } });

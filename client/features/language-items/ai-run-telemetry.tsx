@@ -25,7 +25,7 @@ export function AiRunTelemetry({ run }: { run: AiGenerationRun }) {
       {calls.map((call, index) => (
         <Stack key={index} mt={3} pt={3} borderTopWidth="1px" gap={1} fontSize="xs">
           <Text fontWeight="medium">
-            Candidate {call.candidateOrdinal} · {call.phase === "repair" ? "Repair" : "Initial generation"} · {OUTCOME_LABELS[call.outcome] ?? call.outcome}
+            AI draft {call.candidateOrdinal} · {call.phase === "repair" ? "Repair" : "Initial generation"} · {OUTCOME_LABELS[call.outcome] ?? call.outcome}
           </Text>
           <Text>{(call.elapsedMilliseconds / 1000).toFixed(2)} seconds · Input tokens: {call.inputTokens ?? "Not reported"} · Output tokens: {call.outputTokens ?? "Not reported"}</Text>
           {call.totalTokens != null ? <Text>Total tokens: {call.totalTokens}</Text> : null}

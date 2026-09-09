@@ -22,7 +22,7 @@ export function clearNewItemDraft(scope: string) {
   }
 }
 
-export function useNewItemDraft(scope: string) {
+export function useNewItemDraft(scope: string, initialValues?: Partial<typeof EMPTY_DRAFT>) {
   const [draft, setDraft] = useState(() => {
     const initial = { ...EMPTY_DRAFT };
     try {
@@ -36,7 +36,7 @@ export function useNewItemDraft(scope: string) {
     } catch {
       // Ignore an unavailable or obsolete browser draft.
     }
-    return initial;
+    return { ...initial, ...initialValues };
   });
 
   useEffect(() => {

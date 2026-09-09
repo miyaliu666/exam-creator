@@ -13,7 +13,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createRoute, useBlocker, useNavigate, useParams } from "@tanstack/react-router";
+import { createRoute, useBlocker, useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { useContext, useEffect, useRef, useState } from "react";
 
 import { ProtectedRoute } from "../components/protected-route";
@@ -51,10 +51,15 @@ import { AuditPanel } from "../features/language-items/audit-panel";
 import { GithubReviewPanel } from "../features/language-items/github-review-panel";
 import { AuthoringStepNavigation } from "../features/language-items/authoring-step-navigation";
 import { DraftCheckPanel } from "../features/language-items/draft-check-panel";
-import { canSubmitDraft, initialEditorSection, type EditorSection } from "../features/language-items/authoring-workflow";
+import { DraftPreparationLayout } from "../features/language-items/draft-preparation-layout";
+import { ItemEvidencePanel } from "../features/language-items/evidence-panel";
+import { canSubmitDraft, hasAuthoredContent, initialEditorSection, type EditorSection } from "../features/language-items/authoring-workflow";
 import { ScoringContractPanel } from "../features/language-items/scoring-contract-panel";
 import { validateAuthoringSetup } from "../features/language-items/setup-validation";
 import { AiCandidatesPanel } from "../features/language-items/workflow-panels";
+import { CandidateCountField } from "../features/language-items/candidate-count-field";
+import { isValidCandidateCount } from "../features/language-items/candidate-count";
+import { generationErrorMessage } from "../features/language-items/generation-message";
 import type {
   LanguageItem,
   TaskPackage,
@@ -101,6 +106,7 @@ function editableItemTitle(title: string) {
 
 function EditLanguageItem() {
   const { id } = useParams({ from: "/language-items/$id" });
+  const { start } = useSearch({ from: "/language-items/$id" });
   const { user, logout } = useContext(AuthContext)!;
   const navigate = useNavigate();
   const confirmLeave = useRef(() => true);
@@ -130,23 +136,27 @@ function EditLanguageItem() {
         ) : itemQuery.isError ? (
           <Text color="fg.error">{itemQuery.error.message}</Text>
         ) : (
-          <WorkbenchEditor key={itemQuery.data.id} item={itemQuery.data} confirmLeave={confirmLeave} />
+          <WorkbenchEditor key={itemQuery.data.id} item={itemQuery.data} confirmLeave={confirmLeave} writeManually={start === "manual"} />
         )}
       </Center>
     </Box>
   );
 }
 
-function WorkbenchEditor({ item, confirmLeave }: { item: LanguageItem; confirmLeave: { current: () => boolean } }) {
+function WorkbenchEditor({ item, confirmLeave, writeManually }: { item: LanguageItem; confirmLeave: { current: () => boolean }; writeManually: boolean }) {
   const queryClient = useQueryClient();
   const { user } = useContext(AuthContext)!;
   const [title, setTitle] = useState(() => editableItemTitle(item.title));
   const [draft, setDraft] = useState<TaskPackage>(() => structuredClone(item.draft));
+  const [evidenceDirty, setEvidenceDirty] = useState(false);
   const [revision, setRevision] = useState(item.revision);
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [candidateCount, setCandidateCount] = useState(3);
   const [notice, setNotice] = useState<string | null>(null);
-  const [section, setSection] = useState<EditorSection>(() => initialEditorSection(item.status, item.draft.candidatePayload));
+  const [section, setSectionState] = useState<EditorSection>(() => initialEditorSection(item.status, item.draft.candidatePayload, writeManually));
+  const setSection = (next: EditorSection) => {
+    if (next === section || !evidenceDirty || window.confirm("Author observations have not been saved. Discard them and change step?")) setSectionState(next);
+  };
   const [autosaveState, setAutosaveState] = useState<
     "saved" | "waiting" | "saving" | "error"
   >("saved");
@@ -315,15 +325,25 @@ function WorkbenchEditor({ item, confirmLeave }: { item: LanguageItem; confirmLe
   });
   const generateMutation = useMutation({
     mutationFn: async () => {
+      if (!isValidCandidateCount(candidateCount)) throw new Error("Enter a positive whole number of AI drafts per item.");
       const saved = await flushDraft();
+      const currentRuns = await queryClient.fetchQuery({
+        queryKey: ["language-item-ai-runs", item.id],
+        queryFn: () => getAiGenerationRuns(item.id),
+        staleTime: 0,
+        retry: false,
+      });
+      if (currentRuns.some((run) => run.status === "queued" || run.status === "running")) {
+        throw new Error("AI generation is already in progress. Wait for it to finish before generating more drafts.");
+      }
       const run = await generateAiCandidates(item.id, candidateCount);
       return { saved, run };
     },
     onSuccess: async ({ saved, run }) => {
       setNotice(
         run.error
-          ? `AI candidate generation failed: ${run.error}`
-          : "AI generation queued. You can keep working while candidates are created.",
+          ? `AI draft generation failed: ${generationErrorMessage(run.error)}`
+          : null,
       );
       setSection("setup");
       await refreshItem(saved);
@@ -347,7 +367,7 @@ function WorkbenchEditor({ item, confirmLeave }: { item: LanguageItem; confirmLe
       setAutosaveState("saved");
       draftDirtyRef.current = false;
       draftChangeRef.current += 1;
-      setNotice("Draft selected. Edit it, then check the item before submitting.");
+      setNotice(null);
       setSection("content");
       await refreshItem(saved);
     },
@@ -509,7 +529,7 @@ function WorkbenchEditor({ item, confirmLeave }: { item: LanguageItem; confirmLe
     : draft.authoringPackage.englishTranslations;
 
   const submitting = createGithubReviewMutation.isPending;
-  const hasUnsavedChanges = canEditDraft && (draftDirtyRef.current || autosaveState !== "saved");
+  const hasUnsavedChanges = evidenceDirty || (canEditDraft && (draftDirtyRef.current || autosaveState !== "saved"));
   const mayLeave = () => !submitting && (!hasUnsavedChanges || window.confirm("Your latest changes have not been saved yet. Leave and discard those changes?"));
   useBlocker({ shouldBlockFn: () => !mayLeave(), enableBeforeUnload: hasUnsavedChanges || submitting, disabled: !hasUnsavedChanges && !submitting });
   useEffect(() => {
@@ -519,6 +539,8 @@ function WorkbenchEditor({ item, confirmLeave }: { item: LanguageItem; confirmLe
   const hasActiveRun = runsQuery.data?.some((run) => run.status === "queued" || run.status === "running") ?? false;
   const latestRun = runsQuery.data?.[0];
   const generationSetupChanged = !!latestRun && !aiGenerationMatchesSetup(latestRun, draft);
+  const candidatesFirst = !!latestRun &&
+    (latestRun.candidates.length > 0 || hasActiveRun);
   const checkForReview = () => {
     setSection("review");
     validateMutation.mutate();
@@ -554,7 +576,8 @@ function WorkbenchEditor({ item, confirmLeave }: { item: LanguageItem; confirmLe
         </Stack>
         {notice ? <Text role="status" whiteSpace="pre-wrap" mt={3} color="fg.info">{notice}</Text> : null}
         {error ? <Box role="alert" mt={3} borderWidth="1px" borderRadius="lg" p={3} borderColor="border.error">
-          <Text color="fg.error">{errorValidationIssues.length ? "Fix the highlighted item fields and try again." : error.message}</Text>
+          <Text color="fg.error">{errorValidationIssues.length ? "Fix the highlighted item fields and try again."
+            : error === generateMutation.error || error === adoptMutation.error ? generationErrorMessage(error.message) : error.message}</Text>
         </Box> : null}
       </Box>
 
@@ -568,12 +591,18 @@ function WorkbenchEditor({ item, confirmLeave }: { item: LanguageItem; confirmLe
 
       <AuthoringStepNavigation section={section} onChange={setSection} />
 
+      {section === "setup" && canEditDraft && runsQuery.isError ? <HStack flexWrap="wrap">
+        <Text role="alert" color="fg.error" fontSize="sm">AI drafts could not be loaded.</Text>
+        <Button size="sm" variant="outline" loading={runsQuery.isFetching} onClick={() => { void runsQuery.refetch(); }}>Retry loading AI drafts</Button>
+      </HStack> : null}
+
       {section === "setup" ? (
-        <Grid templateColumns={{ base: "1fr", lg: "minmax(0, 1fr) minmax(320px, 0.75fr)" }} gap={6}>
-          <AuthoringPanel mode="setup" draft={draft} registry={registryQuery.data} updateDraft={updateDraft}
-            readOnly={!canEditDraft || submitting} setupIssues={setupIssues} />
-          {canEditDraft ? <Stack gap={4} borderWidth="1px" borderRadius="xl" p={5} alignSelf="start">
-            <Heading size="md">Create a first draft</Heading>
+        <DraftPreparationLayout candidatesFirst={canEditDraft && candidatesFirst}
+          requirementsNeedAttention={generationSetupChanged || setupIssues.length > 0}
+          requirements={<AuthoringPanel mode="setup" draft={draft} registry={registryQuery.data} updateDraft={updateDraft}
+            readOnly={!canEditDraft || submitting} setupIssues={setupIssues} />}
+          generation={canEditDraft ? <>
+            {!candidatesFirst ? <Heading size="md">{latestRun ? "Generate AI drafts" : "Create a first draft"}</Heading> : null}
             {setupIssues.length ? <Box fontSize="sm">
               <Text fontWeight="medium" mb={2}>Complete before continuing</Text>
               <Stack gap={1}>{[...new Set(setupIssues.map((issue) => issue.message))].map((message) => <Text key={message}>· {message}</Text>)}</Stack>
@@ -582,24 +611,18 @@ function WorkbenchEditor({ item, confirmLeave }: { item: LanguageItem; confirmLe
               {aiProviderQuery.isPending ? "Loading AI provider…" : aiProviderQuery.isError ? "AI is unavailable. You can write the item yourself."
                 : aiProviderQuery.data?.usesRealModel ? aiProviderQuery.data.model : "Offline simulator · sample content"}
             </Text>
-            <Field.Root maxW="180px">
-              <Field.Label>Draft options (1–5)</Field.Label>
-              <Input aria-label="Draft options" type="number" min={1} max={5} value={candidateCount}
-                disabled={!canEditDraft || hasActiveRun || generateMutation.isPending}
-                onChange={(event) => setCandidateCount(Math.max(1, Math.min(5, Number(event.target.value) || 1)))} />
-            </Field.Root>
-            <Button colorPalette="teal" disabled={!canEditDraft || submitting || hasActiveRun || setupIssues.length > 0 || !aiProviderQuery.data || autosaveState === "saving" || autosaveState === "error"}
+            <CandidateCountField value={candidateCount} onChange={setCandidateCount}
+              disabled={!canEditDraft || submitting || hasActiveRun || generateMutation.isPending} />
+            <Button colorPalette="teal" disabled={!isValidCandidateCount(candidateCount) || !canEditDraft || submitting || !runsQuery.isSuccess || hasActiveRun || generateMutation.isPending || setupIssues.length > 0 || !aiProviderQuery.data || autosaveState === "saving" || autosaveState === "error"}
               loading={generateMutation.isPending} onClick={() => generateMutation.mutate()}>
-              {hasActiveRun ? "Generating drafts…" : "Generate drafts"}
+              {runsQuery.isPending ? "Loading AI drafts…" : hasActiveRun ? "Generating AI drafts…" : "Generate AI drafts"}
             </Button>
-            <Button variant="outline" disabled={setupIssues.length > 0 || submitting} onClick={() => setSection("content")}>
-              {canEditDraft ? "Write it myself" : "View item"}
+            <Button variant="outline" disabled={submitting} onClick={() => setSection("content")}>
+              {hasAuthoredContent(draft.candidatePayload) ? "Back to editor" : "Write it myself"}
             </Button>
-            {runsQuery.isError ? <Text color="fg.error" fontSize="sm">Generated drafts could not be loaded. Refresh to retry.</Text> : null}
-            {latestRun ? <AiCandidatesPanel run={latestRun} isAdopting={adoptMutation.isPending} setupChanged={generationSetupChanged}
-              canAdopt={canEditDraft && !submitting && !generationSetupChanged && setupIssues.length === 0} onAdopt={(runId, candidateId) => adoptMutation.mutate({ runId, candidateId })} /> : null}
-          </Stack> : <Button variant="outline" onClick={() => setSection("content")}>View item</Button>}
-        </Grid>
+          </> : <Button variant="outline" onClick={() => setSection("content")}>View item</Button>}
+          candidates={canEditDraft && latestRun ? <AiCandidatesPanel run={latestRun} isAdopting={adoptMutation.isPending} setupChanged={generationSetupChanged}
+            canAdopt={!submitting && !generationSetupChanged && setupIssues.length === 0} onAdopt={(runId, candidateId) => adoptMutation.mutate({ runId, candidateId })} /> : null} />
       ) : null}
 
       {section === "content" ? (
@@ -629,6 +652,8 @@ function WorkbenchEditor({ item, confirmLeave }: { item: LanguageItem; confirmLe
       ) : null}
 
       {section === "review" ? <Stack gap={5}>
+        {registryQuery.data ? <ItemEvidencePanel itemId={item.id} revision={revision} draft={draft} registry={registryQuery.data}
+          disabled={!canEditDraft || submitting || autosaveState !== "saved"} onDirtyChange={setEvidenceDirty} /> : null}
         <AuthorPreview rendererId={previewRendererId} payload={previewPayload}
           englishTranslations={previewEnglishTranslations} />
         {canEditDraft ? <>
@@ -647,7 +672,7 @@ function WorkbenchEditor({ item, confirmLeave }: { item: LanguageItem; confirmLe
         <GithubReviewPanel item={item} latestVersion={latestVersion} latestAiReview={aiReviewsQuery.data?.[0]}
           versionDiff={versionDiffQuery.data} versionDiffPending={versionDiffQuery.isPending} versionDiffError={versionDiffQuery.error}
           isCreating={submitting} isSyncing={syncGithubReviewMutation.isPending} isRunningAiReview={aiReviewMutation.isPending}
-          isRevising={reviseMutation.isPending} isExporting={exportMutation.isPending} canSubmit={submitReady || frozenSubmissionReady}
+          isRevising={reviseMutation.isPending} isExporting={exportMutation.isPending} canSubmit={!evidenceDirty && (submitReady || frozenSubmissionReady)}
           canManage={user?.email === item.ownerEmail}
           onCreate={() => createGithubReviewMutation.mutate()} onSync={() => syncGithubReviewMutation.mutate()}
           onAiReview={() => aiReviewMutation.mutate()} onRevise={() => reviseMutation.mutate()} onExport={() => exportMutation.mutate()} />
@@ -667,6 +692,7 @@ function WorkbenchEditor({ item, confirmLeave }: { item: LanguageItem; confirmLe
 export const editLanguageItemRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/language-items/$id",
+  validateSearch: (search: Record<string, unknown>): { start?: "manual" } => ({ start: search.start === "manual" ? "manual" : undefined }),
   component: () => (
     <ProtectedRoute>
       <EditLanguageItem />

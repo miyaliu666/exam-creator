@@ -17,6 +17,8 @@ import type {
 } from "../types";
 import { deserializeToPrisma, serializeFromPrisma } from "./serde";
 
+export { getDevLoginStatus } from "./dev-login-status";
+
 export async function authorizedFetch(
   url: string | URL,
   options?: RequestInit,
@@ -369,14 +371,6 @@ export async function getSessionUser(options?: {
   // const deserialized = deserializeToPrisma<SessionUser>(json);
   // return deserialized;
   return json;
-}
-
-export async function getDevLoginStatus(): Promise<{ enabled: boolean }> {
-  const response = await fetch("/auth/login/dev/status");
-  if (!response.ok) {
-    return { enabled: false };
-  }
-  return response.json();
 }
 
 export async function loginWithDevIdentity(data: {

@@ -28,6 +28,7 @@ for (const template of ITEM_TEMPLATE_REGISTRY) {
     const payload = structuredClone(payloads[template.itemFormatId]);
     assert.ok(payload, "Every registered format needs a workflow fixture");
     assert.equal(initialEditorSection("draft", payload), "setup");
+    assert.equal(initialEditorSection("draft", payload, true), "content");
     if ("prompt" in payload) payload.prompt = "你叫什么名字？";
     else payload.situation = "你是新来的同学。";
     assert.equal(initialEditorSection("draft", payload), "content");
@@ -47,7 +48,10 @@ for (const template of ITEM_TEMPLATE_REGISTRY) {
 
 test("frozen and reviewed items open Check & submit, not a new-item step", () => {
   const statuses: LanguageItemStatus[] = ["readyForReview", "inReview", "needsRevision", "reviewBlocked", "rejected", "approvedForExport", "exportedToStaging"];
-  for (const status of statuses) assert.equal(initialEditorSection(status, payloads["IF-SINGLE-SELECT"]), "review");
+  for (const status of statuses) {
+    assert.equal(initialEditorSection(status, payloads["IF-SINGLE-SELECT"]), "review");
+    assert.equal(initialEditorSection(status, payloads["IF-SINGLE-SELECT"], true), "review");
+  }
 });
 
 test("submission requires successful current checks and complete requirements; busy actions never submit", () => {

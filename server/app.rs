@@ -97,6 +97,9 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
     };
 
     let workbench_database = database::WorkbenchDatabase {
+        batch_generation_jobs: staging_mongodb_database
+            .collection("LanguageItemBatchGenerationJobs"),
+        item_evidence: staging_mongodb_database.collection("LanguageItemEvidence"),
         registry_versions: staging_mongodb_database
             .collection("LanguageAssessmentRegistryVersions"),
         registry_audit_events: staging_mongodb_database
@@ -121,7 +124,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
     workbench_database
         .ai_generation_runs
         .update_many(
-            mongodb::bson::doc! { "status": { "$in": ["queued", "running"] } },
+            mongodb::bson::doc! { "status": { "$in": ["queued", "running"] }, "idempotencyKey": { "$not": { "$regex": "^batch:" } } },
             mongodb::bson::doc! { "$set": {
                 "status": "failed",
                 "error": "The server restarted before this AI run completed. Start a new run.",
@@ -220,6 +223,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         server_state.clone(),
         http_client.clone(),
     );
+    routes::language_item_batches::start_recovery_worker(server_state.clone(), http_client.clone());
 
     let app = if cfg!(debug_assertions) && env_vars.mock_auth {
         warn!("Debug assertions are enabled; adding dev login route.");
@@ -301,6 +305,28 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .route(
             "/api/language-items",
             get(routes::language_items::get_items).post(routes::language_items::post_item),
+        )
+        .route(
+            "/api/language-item-batches",
+            get(routes::language_item_batches::get_batches)
+                .post(routes::language_item_batches::post_batch),
+        )
+        .route(
+            "/api/language-item-batches/{batch_id}",
+            get(routes::language_item_batches::get_batch),
+        )
+        .route(
+            "/api/language-item-batches/{batch_id}/control",
+            post(routes::language_item_batches::control_batch),
+        )
+        .route(
+            "/api/language-item-coverage/query",
+            post(routes::language_item_coverage::post_coverage),
+        )
+        .route(
+            "/api/language-items/{item_id}/evidence",
+            get(routes::language_item_evidence::get_evidence)
+                .post(routes::language_item_evidence::post_evidence),
         )
         .route(
             "/api/language-item-review-queue",

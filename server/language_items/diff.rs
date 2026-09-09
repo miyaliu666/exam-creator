@@ -109,6 +109,9 @@ mod tests {
             author_email: "author@example.test".to_string(),
             submitted_by: "author@example.test".to_string(),
             frozen: true,
+            evidence_content_hash: Some(crate::language_items::evidence::evidence_content_hash(
+                &package,
+            )),
             content_hash: task_package_hash(&package),
             lifecycle_status: "submitted".to_string(),
             validation: validate_task_package(&package),

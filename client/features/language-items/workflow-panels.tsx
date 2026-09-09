@@ -15,6 +15,7 @@ import { useState } from "react";
 import { AuthorPreview } from "./author-preview";
 import { rankAiCandidates } from "./candidate-quality";
 import { AiRunTelemetry } from "./ai-run-telemetry";
+import { generationErrorMessage } from "./generation-message";
 import { VersionDiffPanel } from "./version-diff-panel";
 import {
   REVIEW_DECISION_LABELS,
@@ -49,12 +50,12 @@ export function AiCandidatesPanel({
     <>
       <Separator />
       <Stack gap={4}>
-        <Heading size="lg">Generated drafts</Heading>
+        <Heading size="lg">AI drafts</Heading>
         {setupChanged ? <Text role="status" color="fg.warning">These drafts were generated for earlier authoring requirements. Generate new drafts for the current setup.</Text> : null}
         {run && (run.status === "queued" || run.status === "running") ? (
           <Box borderWidth="1px" borderColor="border.info" borderRadius="lg" p={4}>
             <Text color="fg.info" fontWeight="semibold">
-              {run.status === "queued" ? "Generation queued" : "Generating independent candidates…"}
+              {run.status === "queued" ? "Generation queued" : "Generating independent AI drafts…"}
             </Text>
             <Text color="fg.muted" fontSize="sm" mt={1}>
               This run is saved. You may continue editing while it finishes.
@@ -65,7 +66,7 @@ export function AiCandidatesPanel({
           <Box borderWidth="1px" borderColor="border.warning" borderRadius="lg" p={4}>
             <Text color="fg.warning" fontWeight="semibold">Generation partially completed</Text>
             <Text color="fg.muted" fontSize="sm" mt={1}>
-              {run.candidates.length}/{run.requestedCount} candidates are available after {run.attemptCount}{" "}
+              {run.candidates.length}/{run.requestedCount} AI drafts are available after {run.attemptCount}{" "}
               {run.attemptCount === 1 ? "attempt" : "attempts"}.
             </Text>
           </Box>
@@ -73,14 +74,14 @@ export function AiCandidatesPanel({
         {run?.error ? (
           <Box borderWidth="1px" borderColor="border.error" borderRadius="lg" p={4}>
             <Text color="fg.error" fontWeight="semibold">
-              {run.status === "failed" ? "This AI run failed" : "Some candidate calls failed"}
+              {run.status === "failed" ? "This AI run failed" : "Some AI drafts could not be generated"}
             </Text>
-            <Text color="fg.muted" fontSize="sm" mt={1}>{run.error}</Text>
+            <Text color="fg.muted" fontSize="sm" mt={1}>{generationErrorMessage(run.error)}</Text>
           </Box>
         ) : null}
         {!run ? (
           <Box borderWidth="1px" borderRadius="lg" p={5}>
-            <Text fontWeight="semibold">No candidates yet</Text>
+            <Text fontWeight="semibold">No AI drafts yet</Text>
           </Box>
         ) : null}
         {run ? <AiRunTelemetry run={run} /> : null}
@@ -93,7 +94,7 @@ export function AiCandidatesPanel({
             >
               <Stack>
                 <HStack>
-                  <Badge colorPalette="purple">Option {candidate.ordinal}</Badge>
+                  <Badge colorPalette="purple">AI draft {candidate.ordinal}</Badge>
                   {candidate.status === "adopted" ? <Badge colorPalette="teal">Selected</Badge> : null}
                   {candidate.status === "discarded" ? <Badge>Not selected</Badge> : null}
                   <Badge colorPalette={setupChanged ? "orange" : candidate.validation.valid ? "green" : "red"}>
@@ -102,7 +103,7 @@ export function AiCandidatesPanel({
                   {warningCount > 0 ? <Badge colorPalette="orange">{warningCount} validation {warningCount === 1 ? "warning" : "warnings"}</Badge> : null}
                 </HStack>
                 {duplicateOfOrdinal !== undefined ? (
-                  <Text fontSize="sm" color="fg.warning">Same visible content as Option {duplicateOfOrdinal}</Text>
+                  <Text fontSize="sm" color="fg.warning">Same visible content as AI draft {duplicateOfOrdinal}</Text>
                 ) : null}
                 <AuthorPreview
                   rendererId={run.rendererId}

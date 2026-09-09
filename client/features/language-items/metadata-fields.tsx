@@ -90,8 +90,12 @@ export function MetadataFields({
     return !!term && authoredText.includes(term);
   });
   const detectedIds = new Set(detectedContent.map((entry) => entry.id));
+  const contentKindById = new Map((registry?.contentIdOptions ?? []).map((entry) => [entry.id, entry.kind]));
   const selectedButMissing = draft.content.targetContentIds.filter(
-    (id) => !detectedIds.has(id),
+    (id) => ["lexical", "character"].includes(contentKindById.get(id) ?? "") && !detectedIds.has(id),
+  );
+  const selectedForHumanReview = draft.content.targetContentIds.filter(
+    (id) => ["grammar", "pragmatics"].includes(contentKindById.get(id) ?? ""),
   );
   const allowedCharacters = new Set(
     compatibleContent
@@ -162,7 +166,8 @@ export function MetadataFields({
   return (
     <>
       <Field.Root invalid={!!issueFor("content.targetContentIds")}>
-        <Field.Label>Language targets</Field.Label>
+        <Field.Label>What this item should assess</Field.Label>
+        <Text fontSize="sm" color="fg.muted">Choose the vocabulary, grammar, Chinese characters or pragmatic functions candidates should understand or use to answer this item.</Text>
         <HStack mb={2} flexWrap="wrap">
           {CONTENT_KINDS.map((kind) => (
             <Button
@@ -269,11 +274,12 @@ export function MetadataFields({
         {hasAuthoredContent(draft.candidatePayload) ? (
           <Box as="details" mt={4} borderWidth="1px" borderRadius="lg" p={4}>
             <Text as="summary" cursor="pointer" fontWeight="semibold">
-              View language coverage check
+              Word and character check
             </Text>
+            <Text fontSize="sm" color="fg.muted" mt={3}>This checks whether words and characters appear in the item text. Text matches do not confirm what the item assesses.</Text>
             <SimpleGrid minChildWidth="220px" gap={3} mt={3}>
               <Box>
-                <Text fontSize="sm" color="fg.muted">Detected in the item</Text>
+                <Text fontSize="sm" color="fg.muted">Words and characters found in the text</Text>
                 <Text mt={1} fontSize="sm">
                   {detectedContent.length > 0
                     ? detectedContent.slice(0, 20).map(languageTargetDisplayText).join(", ")
@@ -282,7 +288,7 @@ export function MetadataFields({
                 </Text>
               </Box>
               <Box>
-                <Text fontSize="sm" color="fg.muted">Selected targets not yet used</Text>
+                <Text fontSize="sm" color="fg.muted">Selected words and characters not found</Text>
                 <Text mt={1} fontSize="sm">
                   {selectedButMissing.length > 0
                     ? selectedButMissing.map((id) => contentOptionLabel(id, registry)).join(", ")
@@ -296,6 +302,11 @@ export function MetadataFields({
                 </Text>
               </Box>
             </SimpleGrid>
+            {selectedForHumanReview.length > 0 ? <Box mt={3}>
+              <Text fontSize="sm" color="fg.muted">Grammar and pragmatic functions: human review required</Text>
+              <Text mt={1} fontSize="sm">{selectedForHumanReview.map((id) => contentOptionLabel(id, registry)).join(", ")}</Text>
+              <Text mt={1} fontSize="sm" color="fg.muted">These are not detected automatically. Check whether answering requires them and record evidence in Language evidence and sources under Check &amp; submit.</Text>
+            </Box> : null}
           </Box>
         ) : null}
       </Field.Root>
@@ -402,8 +413,8 @@ export function MetadataFields({
       </Box>
 
       <chakra.details open={selectedSupportingContent.some((id) => incompatibleIds.has(id)) || undefined} borderWidth="1px" borderRadius="lg" p={4}>
-        <Text as="summary" cursor="pointer" fontWeight="semibold">Supporting content (optional)</Text>
-        <Text fontSize="sm" color="fg.muted" mt={3}>Background language allowed in the item, but not assessed as a language target.</Text>
+        <Text as="summary" cursor="pointer" fontWeight="semibold">Supporting material types (optional)</Text>
+        <Text fontSize="sm" color="fg.muted" mt={3}>Choose background material types such as person names or place names. These describe the material used, not vocabulary or grammar to assess.</Text>
         {selectedSupportingContent.length > 0 ? (
           <SimpleGrid minChildWidth="260px" gap={3} mt={3}>
             {selectedSupportingContent.map((id) => (

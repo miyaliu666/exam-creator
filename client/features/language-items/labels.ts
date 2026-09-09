@@ -20,7 +20,7 @@ export const CONTENT_KIND_LABELS: Record<string, string> = {
   character: "汉字 / Characters",
   grammar: "语法 / Grammar",
   pragmatics: "语用 / Pragmatic functions",
-  supported: "Supporting content",
+  supported: "Supporting material types",
 };
 
 export const DOMAIN_LABELS: Record<string, string> = {

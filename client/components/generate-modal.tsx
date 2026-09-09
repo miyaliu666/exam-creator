@@ -12,7 +12,7 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
 import { putGenerateExam } from "../utils/fetch";
-import { queryClient } from "../contexts";
+import { queryClient } from "../contexts/query-client";
 import { toaster } from "./toaster";
 
 interface GenerateModalProps {

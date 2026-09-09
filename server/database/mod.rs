@@ -26,6 +26,8 @@ pub struct Database {
 
 #[derive(Clone, Debug)]
 pub struct WorkbenchDatabase {
+    pub batch_generation_jobs: Collection<crate::language_items::batch::BatchGenerationJob>,
+    pub item_evidence: Collection<crate::language_items::evidence::ItemEvidence>,
     pub registry_versions: Collection<RegistryVersionRecord>,
     pub registry_audit_events: Collection<RegistryAuditEvent>,
     pub language_items: Collection<LanguageItem>,
@@ -54,6 +56,58 @@ impl WorkbenchDatabase {
                 IndexModel::builder()
                     .keys(doc! { "id": 1 })
                     .options(unique("language_assessment_registry_ids_unique"))
+                    .build(),
+            )
+            .await?;
+        self.batch_generation_jobs
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "id": 1 })
+                    .options(unique("language_item_batch_id_unique"))
+                    .build(),
+            )
+            .await?;
+        self.batch_generation_jobs
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "ownerEmail": 1, "idempotencyKey": 1 })
+                    .options(unique("language_item_batch_request_unique"))
+                    .build(),
+            )
+            .await?;
+        self.batch_generation_jobs
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "ownerEmail": 1, "createdAt": -1 })
+                    .build(),
+            )
+            .await?;
+        self.batch_generation_jobs
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "status": 1, "leaseExpiresAt": 1 })
+                    .build(),
+            )
+            .await?;
+        self.item_evidence
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "id": 1 })
+                    .options(unique("language_item_evidence_id_unique"))
+                    .build(),
+            )
+            .await?;
+        self.item_evidence
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "itemId": 1, "createdAt": -1 })
+                    .build(),
+            )
+            .await?;
+        self.item_evidence
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "itemId": 1, "contentHash": 1, "createdAt": -1 })
                     .build(),
             )
             .await?;
@@ -167,6 +221,18 @@ impl WorkbenchDatabase {
                     .options(
                         IndexOptions::builder()
                             .name("language_item_review_discussions_item_time".to_string())
+                            .build(),
+                    )
+                    .build(),
+            )
+            .await?;
+        self.review_discussions
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "versionId": 1, "kind": 1 })
+                    .options(
+                        IndexOptions::builder()
+                            .name("language_item_review_discussions_version_kind".to_string())
                             .build(),
                     )
                     .build(),

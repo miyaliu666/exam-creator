@@ -1239,6 +1239,8 @@ pub struct LanguageItemVersion {
     pub submitted_by: String,
     pub frozen: bool,
     pub content_hash: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub evidence_content_hash: Option<String>,
     pub lifecycle_status: String,
     pub package: TaskPackage,
     pub validation: ValidationResult,
@@ -1285,7 +1287,7 @@ pub struct ValidationResult {
 #[serde(rename_all = "camelCase")]
 pub struct AiCandidate {
     pub id: String,
-    pub ordinal: u8,
+    pub ordinal: u64,
     pub status: String,
     pub candidate_payload: CandidatePayload,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -1300,7 +1302,7 @@ pub struct AiCandidate {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AiProviderCall {
-    pub candidate_ordinal: u8,
+    pub candidate_ordinal: u64,
     pub phase: String,
     pub elapsed_milliseconds: u64,
     pub outcome: String,
@@ -1355,7 +1357,7 @@ pub struct AiGenerationRun {
     pub required_information_points: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub generation_setup_snapshot: Option<Value>,
-    pub requested_count: u8,
+    pub requested_count: u64,
     pub candidates: Vec<AiCandidate>,
     pub adopted_candidate_id: Option<String>,
     pub status: String,
@@ -1363,9 +1365,9 @@ pub struct AiGenerationRun {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub idempotency_key: Option<String>,
     #[serde(default)]
-    pub attempt_count: u32,
+    pub attempt_count: u64,
     #[serde(default)]
-    pub retry_count: u32,
+    pub retry_count: u64,
     #[serde(default)]
     pub candidate_errors: Vec<String>,
     #[serde(default)]

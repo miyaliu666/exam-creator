@@ -1,6 +1,13 @@
-use std::{future::Future, sync::Arc, time::Instant};
+use std::{
+    future::Future,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+    time::Instant,
+};
 
-use futures_util::future::join_all;
+use futures_util::{StreamExt, stream::FuturesOrdered};
 use http::StatusCode;
 use reqwest::Client;
 use serde::Deserialize;
@@ -34,6 +41,7 @@ pub const REVIEW_PROMPT_ID: &str = "a1-item-independent-review";
 pub const REVIEW_PROMPT_VERSION: &str = "0.3";
 pub const REVIEW_SCHEMA_VERSION: &str = "0.1";
 pub const GENERATION_OUTPUT_SCHEMA_VERSION: &str = "0.3";
+const MAX_CONCURRENT_CANDIDATE_REQUESTS: usize = 5;
 pub const GENERATION_PROMPT: &str = include_str!("prompts/generation-v0.6.md");
 pub const GENERATION_OUTPUT_SCHEMA: &str =
     include_str!("prompts/generation-output-v0.3.schema.json");
@@ -127,8 +135,8 @@ struct ReviewOutput {
 pub struct CandidateGenerationReport {
     pub candidates: Vec<AiCandidate>,
     pub errors: Vec<String>,
-    pub attempt_count: u32,
-    pub retry_count: u32,
+    pub attempt_count: u64,
+    pub retry_count: u64,
     pub elapsed_milliseconds: u64,
     pub provider_calls: Vec<AiProviderCall>,
 }
@@ -138,34 +146,68 @@ struct CandidateAttempt {
     provider_calls: Vec<AiProviderCall>,
 }
 
-pub async fn generate_candidates_independently(
+pub fn validate_candidate_count(count: u64) -> Result<(), &'static str> {
+    if count == 0 {
+        return Err("AI candidate count must be a positive whole number");
+    }
+    // MongoDB stores whole numbers as signed 64-bit integers.
+    if i64::try_from(count).is_err() {
+        return Err("AI candidate count is too large to store");
+    }
+    Ok(())
+}
+
+pub async fn generate_candidates_independently<C, CFut>(
     config: &LanguageItemAiProviderConfig,
     http_client: &Client,
     package: &TaskPackage,
-    count: u8,
-) -> CandidateGenerationReport {
+    count: u64,
+    should_continue: C,
+) -> CandidateGenerationReport
+where
+    C: Fn() -> CFut,
+    CFut: Future<Output = bool>,
+{
     let started = Instant::now();
     match config {
-        LanguageItemAiProviderConfig::DeterministicMock => CandidateGenerationReport {
-            candidates: generate_mock_candidates(package, count),
-            errors: Vec::new(),
-            attempt_count: u32::from(count),
-            retry_count: 0,
-            elapsed_milliseconds: elapsed_milliseconds(started),
-            provider_calls: Vec::new(),
-        },
+        LanguageItemAiProviderConfig::DeterministicMock => {
+            let mut candidates = Vec::new();
+            for index in 0..count {
+                if !should_continue().await {
+                    break;
+                }
+                candidates.push(generate_mock_candidate(package, index));
+            }
+            let attempt_count = candidates.len() as u64;
+            CandidateGenerationReport {
+                candidates,
+                errors: if attempt_count < count {
+                    vec![interrupted_generation_message(attempt_count, count)]
+                } else {
+                    Vec::new()
+                },
+                attempt_count,
+                retry_count: 0,
+                elapsed_milliseconds: elapsed_milliseconds(started),
+                provider_calls: Vec::new(),
+            }
+        }
         LanguageItemAiProviderConfig::DeepSeek { .. }
         | LanguageItemAiProviderConfig::OpenAi { .. } => {
-            collect_provider_candidates(count, |ordinal, repair_candidate| async move {
-                generate_provider_candidate(
-                    config,
-                    http_client,
-                    package,
-                    ordinal,
-                    repair_candidate.as_ref(),
-                )
-                .await
-            })
+            collect_provider_candidates_while(
+                count,
+                |ordinal, repair_candidate| async move {
+                    generate_provider_candidate(
+                        config,
+                        http_client,
+                        package,
+                        ordinal,
+                        repair_candidate.as_ref(),
+                    )
+                    .await
+                },
+                should_continue,
+            )
             .await
         }
     }
@@ -175,24 +217,75 @@ fn elapsed_milliseconds(started: Instant) -> u64 {
     u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX)
 }
 
-async fn collect_provider_candidates<F, Fut>(count: u8, generate: F) -> CandidateGenerationReport
+#[cfg(test)]
+async fn collect_provider_candidates<F, Fut>(count: u64, generate: F) -> CandidateGenerationReport
 where
-    F: Fn(u8, Option<AiCandidate>) -> Fut,
+    F: Fn(u64, Option<AiCandidate>) -> Fut,
     Fut: Future<Output = CandidateAttempt>,
 {
+    collect_provider_candidates_while(count, generate, || std::future::ready(true)).await
+}
+
+fn interrupted_generation_message(started: u64, requested: u64) -> String {
+    format!(
+        "Generation stopped after the batch was paused or could no longer continue. {started} of {requested} candidate requests started; finished responses were saved. Generate any remaining candidates manually from this item. Resume continues pending items only."
+    )
+}
+
+async fn collect_provider_candidates_while<F, Fut, C, CFut>(
+    count: u64,
+    generate: F,
+    should_continue: C,
+) -> CandidateGenerationReport
+where
+    F: Fn(u64, Option<AiCandidate>) -> Fut,
+    Fut: Future<Output = CandidateAttempt>,
+    C: Fn() -> CFut,
+    CFut: Future<Output = bool>,
+{
     let started = Instant::now();
-    let initial_results = join_all((1..=count).map(|ordinal| generate(ordinal, None))).await;
-    let mut candidates = Vec::with_capacity(usize::from(count));
+    let stopped = AtomicBool::new(false);
+    // Queue the requested work lazily so a larger count does not launch every API call at once.
+    let mut initial_results = FuturesOrdered::new();
+    let mut next_ordinal = 1;
+    let mut candidates = Vec::new();
     let mut errors = Vec::new();
-    let mut retry_count = 0_u32;
+    let mut retry_count = 0_u64;
+    let mut initial_count = 0_u64;
     let mut provider_calls = Vec::new();
 
-    for (index, attempt) in initial_results.into_iter().enumerate() {
-        let ordinal = index as u8 + 1;
+    loop {
+        while initial_results.len() < MAX_CONCURRENT_CANDIDATE_REQUESTS
+            && next_ordinal <= count
+            && !stopped.load(Ordering::Relaxed)
+        {
+            let ordinal = next_ordinal;
+            next_ordinal += 1;
+            let generate = &generate;
+            let should_continue = &should_continue;
+            let stopped = &stopped;
+            initial_results.push_back(async move {
+                if !generation_may_continue(should_continue, stopped).await {
+                    return None;
+                }
+                Some((ordinal, generate(ordinal, None).await))
+            });
+        }
+        let Some(result) = initial_results.next().await else {
+            break;
+        };
+        let Some((ordinal, attempt)) = result else {
+            continue;
+        };
+        initial_count += 1;
         provider_calls.extend(attempt.provider_calls);
         match attempt.result {
             Ok(candidate) if candidate.validation.valid => candidates.push(candidate),
             Ok(candidate) => {
+                if !generation_may_continue(&should_continue, &stopped).await {
+                    candidates.push(candidate);
+                    continue;
+                }
                 retry_count += 1;
                 let repaired = generate(ordinal, Some(candidate.clone())).await;
                 provider_calls.extend(repaired.provider_calls);
@@ -209,22 +302,40 @@ where
             }
         }
     }
+    if stopped.load(Ordering::Relaxed) {
+        errors.push(interrupted_generation_message(initial_count, count));
+    }
     candidates.sort_by_key(|candidate| candidate.ordinal);
     CandidateGenerationReport {
         candidates,
         errors,
-        attempt_count: u32::from(count) + retry_count,
+        attempt_count: initial_count + retry_count,
         retry_count,
         elapsed_milliseconds: elapsed_milliseconds(started),
         provider_calls,
     }
 }
 
+async fn generation_may_continue<C, CFut>(should_continue: &C, stopped: &AtomicBool) -> bool
+where
+    C: Fn() -> CFut,
+    CFut: Future<Output = bool>,
+{
+    if stopped.load(Ordering::Relaxed) {
+        return false;
+    }
+    let allowed = should_continue().await;
+    if !allowed {
+        stopped.store(true, Ordering::Relaxed);
+    }
+    allowed && !stopped.load(Ordering::Relaxed)
+}
+
 async fn generate_provider_candidate(
     config: &LanguageItemAiProviderConfig,
     http_client: &Client,
     package: &TaskPackage,
-    ordinal: u8,
+    ordinal: u64,
     repair_candidate: Option<&AiCandidate>,
 ) -> CandidateAttempt {
     let mut provider_calls = Vec::new();
@@ -256,7 +367,7 @@ async fn generate_provider_candidate_inner(
     config: &LanguageItemAiProviderConfig,
     http_client: &Client,
     package: &TaskPackage,
-    ordinal: u8,
+    ordinal: u64,
     repair_candidate: Option<&AiCandidate>,
     provider_calls: &mut Vec<AiProviderCall>,
 ) -> Result<AiCandidate, Error> {
@@ -321,7 +432,7 @@ async fn generate_provider_candidate_inner(
         "Use a different communicative micro-situation within the locked context.",
         "Prefer a concise alternative structure and avoid overlap with earlier candidates.",
         "Use fresh surface details while keeping all information points directly observable.",
-    ][usize::from(ordinal.saturating_sub(1)) % 5];
+    ][(ordinal.saturating_sub(1) % 5) as usize];
     let current_payload = repair_candidate
         .map(|candidate| &candidate.candidate_payload)
         .unwrap_or(&package.candidate_payload);
@@ -672,6 +783,8 @@ async fn responses_structured_output(
     request: StructuredOutputRequest<'_>,
     provider_calls: &mut Vec<AiProviderCall>,
 ) -> Result<Value, Error> {
+    // Pinned schemas allow optional fields and answer maps outside OpenAI's strict subset.
+    // Keep their semantics; application parsing and validation still gate each candidate.
     let outgoing = http_client
         .post(format!("{}/responses", request.base_url))
         .bearer_auth(request.api_key)
@@ -683,6 +796,7 @@ async fn responses_structured_output(
             "text": {
                 "format": {
                     "type": "json_schema",
+                    "strict": false,
                     "name": request.format_name,
                     "schema": request.schema,
                 }
@@ -838,7 +952,7 @@ fn response_output_text(response: &Value) -> Option<&str> {
 fn candidate_from_provider(
     package: &TaskPackage,
     generated: GeneratedCandidate,
-    ordinal: u8,
+    ordinal: u64,
 ) -> AiCandidate {
     let GeneratedCandidate {
         candidate_payload,
@@ -890,44 +1004,47 @@ fn merge_provider_answer_proposal(package: &mut TaskPackage, proposal: ScoringPa
     }
 }
 
-pub fn generate_mock_candidates(package: &TaskPackage, count: u8) -> Vec<AiCandidate> {
-    debug_assert!(!GENERATION_PROMPT.is_empty() && !GENERATION_OUTPUT_SCHEMA.is_empty());
+#[cfg(test)]
+pub fn generate_mock_candidates(package: &TaskPackage, count: u64) -> Vec<AiCandidate> {
     (0..count)
-        .map(|index| {
-            let mut proposed = package.clone();
-            populate_mock_candidate(&mut proposed, index);
-            let english_translations = mock_english_translations(&proposed.candidate_payload);
-            proposed.authoring_package.english_translations.clear();
-            let mut validation = validate_task_package(&proposed);
-            validation.issues.extend(validate_english_translations(
-                &proposed.candidate_payload,
-                &english_translations,
-                true,
-            ));
-            validation.valid = !validation
-                .issues
-                .iter()
-                .any(|issue| issue.severity == "error");
-            AiCandidate {
-                id: Uuid::new_v4().to_string(),
-                ordinal: index + 1,
-                status: if validation.valid {
-                    "valid".to_string()
-                } else {
-                    "invalid".to_string()
-                },
-                candidate_payload: proposed.candidate_payload.clone(),
-                english_translations,
-                proposed_correct_option_id: proposed.scoring_package.correct_option_id.clone(),
-                proposed_scoring_package: Some(proposed.scoring_package.clone()),
-                validation,
-            }
-        })
+        .map(|index| generate_mock_candidate(package, index))
         .collect()
 }
 
-fn populate_mock_candidate(package: &mut TaskPackage, index: u8) {
-    let suffix = usize::from(index) + 1;
+fn generate_mock_candidate(package: &TaskPackage, index: u64) -> AiCandidate {
+    debug_assert!(!GENERATION_PROMPT.is_empty() && !GENERATION_OUTPUT_SCHEMA.is_empty());
+    let mut proposed = package.clone();
+    populate_mock_candidate(&mut proposed, index);
+    let english_translations = mock_english_translations(&proposed.candidate_payload);
+    proposed.authoring_package.english_translations.clear();
+    let mut validation = validate_task_package(&proposed);
+    validation.issues.extend(validate_english_translations(
+        &proposed.candidate_payload,
+        &english_translations,
+        true,
+    ));
+    validation.valid = !validation
+        .issues
+        .iter()
+        .any(|issue| issue.severity == "error");
+    AiCandidate {
+        id: Uuid::new_v4().to_string(),
+        ordinal: index + 1,
+        status: if validation.valid {
+            "valid".to_string()
+        } else {
+            "invalid".to_string()
+        },
+        candidate_payload: proposed.candidate_payload.clone(),
+        english_translations,
+        proposed_correct_option_id: proposed.scoring_package.correct_option_id.clone(),
+        proposed_scoring_package: Some(proposed.scoring_package.clone()),
+        validation,
+    }
+}
+
+fn populate_mock_candidate(package: &mut TaskPackage, index: u64) {
+    let suffix = index + 1;
     match &mut package.candidate_payload {
         CandidatePayload::SingleSelect(payload) => {
             *payload = SingleSelectCandidatePayload {
@@ -960,7 +1077,7 @@ fn populate_mock_candidate(package: &mut TaskPackage, index: u8) {
                 ["买水果", "看书", "商店", "图书馆"],
                 ["买书", "吃饭", "书店", "饭店"],
                 ["看医生", "上课", "医院", "学校"],
-            ][usize::from(index) % 3];
+            ][(index % 3) as usize];
             payload.left_items[0].text = Some(first_action.to_string());
             payload.left_items[1].text = Some(second_action.to_string());
             payload.right_items[0].text = Some(first_place.to_string());
@@ -979,7 +1096,7 @@ fn populate_mock_candidate(package: &mut TaskPackage, index: u8) {
             }
         }
         CandidatePayload::FormEntry(payload) => {
-            let activity = ["中文活动", "中文课", "学校活动"][usize::from(index) % 3];
+            let activity = ["中文活动", "中文课", "学校活动"][(index % 3) as usize];
             payload.situation = format!("你要报名参加{activity}。");
             payload.instructions = "请填写报名表。".to_string();
             for (field_index, field) in payload.fields.iter_mut().enumerate() {
@@ -988,10 +1105,10 @@ fn populate_mock_candidate(package: &mut TaskPackage, index: u8) {
             }
         }
         CandidatePayload::TypedMessage(payload) => {
-            let day = ["今天", "明天", "星期一"][usize::from(index) % 3];
+            let day = ["今天", "明天", "星期一"][(index % 3) as usize];
             payload.situation = format!("你{day}不能参加学习活动。");
             payload.instructions = "请给老师写一条短消息。".to_string();
-            payload.recipient = ["王老师", "李老师", "张老师"][usize::from(index) % 3].to_string();
+            payload.recipient = ["王老师", "李老师", "张老师"][(index % 3) as usize].to_string();
             payload.purpose = "请假".to_string();
             payload.required_content_points[0].description = format!("说明{day}不能来");
         }
@@ -1003,7 +1120,7 @@ fn populate_mock_candidate(package: &mut TaskPackage, index: u8) {
                     "请说你的名字、国家和喜欢的活动。",
                     "请介绍你的名字、国家和一个爱好。",
                     "你叫什么名字？你是哪国人？你喜欢什么活动？",
-                ][usize::from(index) % 3]
+                ][(index % 3) as usize]
                     .to_string(),
             );
             payload.required_content_points[0].description = "介绍姓名和一项喜好".to_string();
@@ -1015,7 +1132,7 @@ fn populate_mock_candidate(package: &mut TaskPackage, index: u8) {
                 "老师第一次见到你。",
                 "新同学第一次见到你。",
                 "你第一次参加中文活动。",
-            ][usize::from(index) % 3]
+            ][(index % 3) as usize]
                 .to_string();
             payload.instructions = "请听问题并回答。".to_string();
             if let Some(path) = payload.paths.first_mut() {
@@ -1203,6 +1320,162 @@ pub fn review_mock(package: &TaskPackage) -> Vec<AiFinding> {
 mod tests {
     use super::*;
 
+    #[test]
+    fn candidate_count_requires_a_positive_storable_integer() {
+        assert!(validate_candidate_count(0).is_err());
+        for count in [1, 4, 6, 256, 1_000, i64::MAX as u64] {
+            assert!(validate_candidate_count(count).is_ok());
+        }
+        assert!(validate_candidate_count(i64::MAX as u64 + 1).is_err());
+    }
+
+    #[test]
+    fn mock_candidate_ordinals_continue_past_the_old_byte_limit() {
+        let package = generation_ready_package("reading-single-select");
+        let candidates = generate_mock_candidates(&package, 256);
+        assert_eq!(candidates.len(), 256);
+        assert_eq!(candidates.first().unwrap().ordinal, 1);
+        assert_eq!(candidates.last().unwrap().ordinal, 256);
+        let stored = bson::serialize_to_document(candidates.last().unwrap()).unwrap();
+        let restored: AiCandidate = bson::deserialize_from_document(stored).unwrap();
+        assert_eq!(restored.ordinal, 256);
+    }
+
+    #[tokio::test]
+    async fn larger_candidate_counts_preserve_ordinals_and_bound_provider_concurrency() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        let package = generation_ready_package("reading-single-select");
+        let fixture = generate_mock_candidates(&package, 1).remove(0);
+        let active = AtomicUsize::new(0);
+        let peak = AtomicUsize::new(0);
+        let report = collect_provider_candidates(256, |ordinal, previous| {
+            let mut candidate = fixture.clone();
+            candidate.ordinal = ordinal;
+            candidate.id = format!("candidate-{ordinal}");
+            let active = &active;
+            let peak = &peak;
+            async move {
+                let current = active.fetch_add(1, Ordering::SeqCst) + 1;
+                peak.fetch_max(current, Ordering::SeqCst);
+                tokio::task::yield_now().await;
+                active.fetch_sub(1, Ordering::SeqCst);
+                simulated_attempt(candidate, ordinal != 256 || previous.is_some())
+            }
+        })
+        .await;
+        assert_eq!(report.candidates.len(), 256);
+        assert_eq!(report.attempt_count, 257);
+        assert_eq!(report.retry_count, 1);
+        assert!(report.errors.is_empty());
+        assert!(
+            report
+                .candidates
+                .iter()
+                .all(|candidate| candidate.validation.valid)
+        );
+        assert_eq!(
+            report
+                .candidates
+                .iter()
+                .map(|candidate| candidate.ordinal)
+                .collect::<Vec<_>>(),
+            (1..=256).collect::<Vec<_>>()
+        );
+        assert_eq!(active.load(Ordering::SeqCst), 0);
+        assert_eq!(
+            peak.load(Ordering::SeqCst),
+            MAX_CONCURRENT_CANDIDATE_REQUESTS
+        );
+    }
+
+    #[tokio::test]
+    async fn pausing_candidate_generation_drains_inflight_calls_without_dispatching_more() {
+        use std::sync::atomic::AtomicUsize;
+
+        let package = generation_ready_package("reading-single-select");
+        let fixture = generate_mock_candidate(&package, 0);
+        let started = AtomicUsize::new(0);
+        let finished = AtomicUsize::new(0);
+        let report = collect_provider_candidates_while(
+            100,
+            |ordinal, previous| {
+                assert!(previous.is_none());
+                let mut candidate = fixture.clone();
+                candidate.ordinal = ordinal;
+                let started = &started;
+                let finished = &finished;
+                async move {
+                    started.fetch_add(1, Ordering::SeqCst);
+                    tokio::task::yield_now().await;
+                    finished.fetch_add(1, Ordering::SeqCst);
+                    simulated_attempt(candidate, true)
+                }
+            },
+            || {
+                std::future::ready(
+                    started.load(Ordering::SeqCst) < MAX_CONCURRENT_CANDIDATE_REQUESTS,
+                )
+            },
+        )
+        .await;
+
+        assert_eq!(
+            started.load(Ordering::SeqCst),
+            MAX_CONCURRENT_CANDIDATE_REQUESTS
+        );
+        assert_eq!(
+            finished.load(Ordering::SeqCst),
+            MAX_CONCURRENT_CANDIDATE_REQUESTS
+        );
+        assert_eq!(report.candidates.len(), MAX_CONCURRENT_CANDIDATE_REQUESTS);
+        assert_eq!(
+            report.attempt_count,
+            MAX_CONCURRENT_CANDIDATE_REQUESTS as u64
+        );
+        assert_eq!(report.retry_count, 0);
+        assert!(report.errors[0].contains("5 of 100"));
+        assert!(report.errors[0].contains("Resume continues pending items only"));
+    }
+
+    #[tokio::test]
+    async fn pause_before_candidate_repair_preserves_response_without_another_call() {
+        use std::sync::atomic::AtomicUsize;
+
+        let package = generation_ready_package("reading-single-select");
+        let fixture = generate_mock_candidate(&package, 0);
+        let checks = AtomicUsize::new(0);
+        let report = collect_provider_candidates_while(
+            100,
+            |_, previous| {
+                assert!(previous.is_none());
+                let candidate = fixture.clone();
+                async move {
+                    tokio::task::yield_now().await;
+                    simulated_attempt(candidate, false)
+                }
+            },
+            || std::future::ready(checks.fetch_add(1, Ordering::SeqCst) != 5),
+        )
+        .await;
+
+        assert_eq!(
+            checks.load(Ordering::SeqCst),
+            6,
+            "a pause stays latched for this run"
+        );
+        assert_eq!(report.candidates.len(), 5);
+        assert_eq!(report.attempt_count, 5);
+        assert_eq!(report.retry_count, 0);
+        assert!(
+            report
+                .candidates
+                .iter()
+                .all(|candidate| !candidate.validation.valid)
+        );
+        assert!(!report.errors.is_empty());
+    }
+
     fn generation_ready_package(template: &str) -> TaskPackage {
         let mut package = TaskPackage::from_template(format!("LI-{template}"), template)
             .expect("registered template");
@@ -1386,6 +1659,7 @@ mod tests {
             &Client::new(),
             &package,
             3,
+            || std::future::ready(true),
         )
         .await;
 
@@ -1605,7 +1879,7 @@ mod tests {
         );
         let cases = baseline["cases"].as_array().unwrap();
         assert_eq!(cases.len(), 7);
-        let count = baseline["candidatesPerFormat"].as_u64().unwrap() as u8;
+        let count = baseline["candidatesPerFormat"].as_u64().unwrap();
         for case in cases {
             let template = case["template"].as_str().unwrap();
             let package = generation_ready_package(template);
@@ -1614,6 +1888,7 @@ mod tests {
                 &Client::new(),
                 &package,
                 count,
+                || std::future::ready(true),
             )
             .await;
             let valid = report
@@ -1652,7 +1927,7 @@ mod tests {
                 report.provider_calls.is_empty(),
                 "offline evaluation must not call providers"
             );
-            assert_eq!(report.attempt_count, u32::from(count));
+            assert_eq!(report.attempt_count, count);
             assert_eq!(report.retry_count, 0);
             println!(
                 "{template}: valid={valid}/{count}, distinct={distinct}/{count}, providerCalls=0"
@@ -1699,7 +1974,7 @@ mod tests {
         let package = generation_ready_package("reading-single-select");
         let fixture = generate_mock_candidates(&package, 3);
         let partial = collect_provider_candidates(3, |ordinal, _| {
-            let candidate = fixture[usize::from(ordinal - 1)].clone();
+            let candidate = fixture[usize::try_from(ordinal - 1).unwrap()].clone();
             async move {
                 if ordinal == 2 {
                     CandidateAttempt {
@@ -1802,6 +2077,107 @@ mod tests {
             }]
         });
         assert_eq!(response_output_text(&response), Some("{\"candidates\":[]}"));
+    }
+
+    #[tokio::test]
+    async fn responses_transport_preserves_optional_fields_and_answer_maps() {
+        let generation_schema: Value = serde_json::from_str(GENERATION_OUTPUT_SCHEMA).unwrap();
+        let schema = json!({
+            "type": "object",
+            "required": ["proposedScoringPackage"],
+            "properties": {
+                "proposedScoringPackage": generation_schema["properties"]["candidates"]
+                    ["items"]["properties"]["proposedScoringPackage"].clone()
+            },
+            "additionalProperties": false
+        });
+        let expected_output = json!({
+            "proposedScoringPackage": {
+                "scoringContractTemplateId": "SC-A1-MATCHING",
+                "correctMatches": { "left-1": "right-2" }
+            }
+        });
+        let provider_response = json!({
+            "id": "response-local-fixture",
+            "output": [{
+                "type": "message",
+                "content": [{ "type": "output_text", "text": expected_output.to_string() }]
+            }],
+            "usage": { "input_tokens": 20, "output_tokens": 10, "total_tokens": 30 }
+        });
+        let (sent_request_tx, mut sent_request_rx) = tokio::sync::mpsc::channel(1);
+        let app = axum::Router::new().route(
+            "/responses",
+            axum::routing::post(move |axum::Json(body): axum::Json<Value>| {
+                let sender = sent_request_tx.clone();
+                let response = provider_response.clone();
+                async move {
+                    sender.send(body.clone()).await.unwrap();
+                    let (status, response) = if body["text"]["format"]["strict"] == json!(false) {
+                        (StatusCode::OK, response)
+                    } else {
+                        (
+                            StatusCode::BAD_REQUEST,
+                            json!({ "error": { "code": "invalid_json_schema" } }),
+                        )
+                    };
+                    (
+                        status,
+                        [("x-request-id", "request-local-fixture")],
+                        axum::Json(response),
+                    )
+                }
+            }),
+        );
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let base_url = format!("http://{}", listener.local_addr().unwrap());
+        let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+        let client = Client::builder()
+            .no_proxy()
+            .timeout(std::time::Duration::from_secs(5))
+            .build()
+            .unwrap();
+        let mut calls = Vec::new();
+        let result = responses_structured_output(
+            &client,
+            StructuredOutputRequest {
+                api_key: "local-test-key",
+                base_url: &base_url,
+                model: "local-test-model",
+                instructions: "Return the answer map as JSON; omit unused scoring fields.",
+                input: json!({ "task": "matching" }),
+                format_name: "language_item_generation",
+                schema: schema.clone(),
+                example: expected_output.clone(),
+            },
+            &mut calls,
+        )
+        .await;
+        server.abort();
+
+        assert_eq!(result.unwrap(), expected_output);
+        let sent = sent_request_rx.try_recv().unwrap();
+        assert_eq!(sent["store"], false);
+        assert_eq!(sent["text"]["format"]["schema"], schema);
+        assert_eq!(calls.len(), 1);
+        assert_eq!(calls[0].http_status, Some(200));
+        assert_eq!(calls[0].outcome, "responseReceived");
+        assert_eq!(
+            calls[0].provider_request_id.as_deref(),
+            Some("request-local-fixture")
+        );
+        assert_eq!(
+            calls[0].provider_response_id.as_deref(),
+            Some("response-local-fixture")
+        );
+        assert_eq!(
+            (
+                calls[0].input_tokens,
+                calls[0].output_tokens,
+                calls[0].total_tokens
+            ),
+            (Some(20), Some(10), Some(30))
+        );
     }
 
     #[test]

@@ -348,6 +348,7 @@ export interface LanguageItemVersion {
   submittedBy: string;
   frozen: boolean;
   contentHash: string;
+  evidenceContentHash?: string;
   lifecycleStatus: string;
   package: TaskPackage;
   validation: ValidationResult;
