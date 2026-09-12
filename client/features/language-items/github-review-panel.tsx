@@ -9,10 +9,10 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { ExternalLink, GitPullRequest, RefreshCw } from "lucide-react";
+import { useId } from "react";
 
 import { VersionDiffPanel } from "./version-diff-panel";
 import type {
-  AiReviewRun,
   GithubReviewState,
   LanguageItem,
   LanguageItemVersion,
@@ -34,28 +34,33 @@ const REVIEW_STATE: Record<
 interface GithubReviewPanelProps {
   item: LanguageItem;
   latestVersion: LanguageItemVersion | undefined;
-  latestAiReview: AiReviewRun | undefined;
   versionDiff: LanguageItemVersionDiff | undefined;
   versionDiffPending: boolean;
   versionDiffError: Error | null;
   isCreating: boolean;
   isSyncing: boolean;
-  isRunningAiReview: boolean;
   isRevising: boolean;
   isExporting: boolean;
   canSubmit: boolean;
+  submitBlockedReason?: string;
   canManage: boolean;
+  workflowLocked?: boolean;
   onCreate: () => void;
   onSync: () => void;
-  onAiReview: () => void;
   onRevise: () => void;
   onExport: () => void;
 }
 
 export function GithubReviewPanel(props: GithubReviewPanelProps) {
+  const submitReasonId = useId();
   const review = props.item.githubReview;
   const reviewState = review ? REVIEW_STATE[review.state] : undefined;
-  const canCreate = ["draft", "readyForReview", "rejected"].includes(props.item.status) && !review && props.canSubmit;
+  const canCreate = props.canManage && props.item.recordState === "active" &&
+    ["draft", "readyForReview", "rejected"].includes(props.item.status) && !review && props.canSubmit;
+  const submitBlockedReason = !props.isCreating && (!canCreate || props.workflowLocked)
+    ? props.submitBlockedReason ?? (!props.canManage ? "Only the item owner can submit for review."
+      : props.item.recordState !== "active" ? `This item is ${props.item.recordState}.` : undefined)
+    : undefined;
   const canRevise =
     props.canManage && props.item.status !== "draft" && !!props.latestVersion &&
     (!review || review.state === "merged" || review.state === "closed");
@@ -78,24 +83,26 @@ export function GithubReviewPanel(props: GithubReviewPanelProps) {
             )}
             {props.latestVersion ? (
               <Text color="fg.muted">Version {props.latestVersion.versionNumber}</Text>
-            ) : props.item.status === "draft" ? (
-              <Text fontSize="sm" color="fg.muted">Submitting creates a GitHub pull request and locks this draft for review.</Text>
             ) : null}
           </HStack>
         </Stack>
         <HStack flexWrap="wrap">
           {!review ? (
-            <Button
-              colorPalette="purple"
-              disabled={!canCreate}
-              loading={props.isCreating}
-              onClick={props.onCreate}
-            >
-              <GitPullRequest size={16} /> Submit for review
-            </Button>
+            <Stack gap={2} align="start">
+              <Button
+                colorPalette="purple"
+                disabled={!canCreate || props.workflowLocked || props.isCreating}
+                loading={props.isCreating}
+                aria-describedby={submitBlockedReason ? submitReasonId : undefined}
+                onClick={props.onCreate}
+              >
+                <GitPullRequest size={16} /> Submit for review
+              </Button>
+              {submitBlockedReason ? <Text id={submitReasonId} role="status" fontSize="sm" color="fg.muted">{submitBlockedReason}</Text> : null}
+            </Stack>
           ) : (
             <>
-              <Button variant="outline" loading={props.isSyncing} onClick={props.onSync}>
+              <Button variant="outline" disabled={props.workflowLocked} loading={props.isSyncing} onClick={props.onSync}>
                 <RefreshCw size={16} /> Sync status
               </Button>
               <Link href={review.pullRequestUrl} target="_blank">
@@ -103,17 +110,9 @@ export function GithubReviewPanel(props: GithubReviewPanelProps) {
               </Link>
             </>
           )}
-          {props.latestVersion ? <Button
-            variant="outline"
-            disabled={!props.latestVersion}
-            loading={props.isRunningAiReview}
-            onClick={props.onAiReview}
-          >
-            AI feedback
-          </Button> : null}
           {canRevise ? <Button
             variant="outline"
-            disabled={!canRevise}
+            disabled={!canRevise || props.workflowLocked}
             loading={props.isRevising}
             onClick={props.onRevise}
           >
@@ -121,7 +120,7 @@ export function GithubReviewPanel(props: GithubReviewPanelProps) {
           </Button> : null}
           {canExport ? <Button
             colorPalette="teal"
-            disabled={!canExport}
+            disabled={!canExport || props.workflowLocked}
             loading={props.isExporting}
             onClick={props.onExport}
           >
@@ -154,19 +153,6 @@ export function GithubReviewPanel(props: GithubReviewPanelProps) {
               error={props.versionDiffError}
             />
           </Box>
-        </Box>
-      ) : null}
-      {props.latestAiReview ? (
-        <Box as="details" borderWidth="1px" borderRadius="lg" p={4}>
-          <Box as="summary" cursor="pointer" fontWeight="semibold">
-            AI pre-review ({props.latestAiReview.findings.length}{" "}
-            {props.latestAiReview.findings.length === 1 ? "finding" : "findings"})
-          </Box>
-          <Stack mt={3} gap={2}>
-            {props.latestAiReview.findings.map((finding) => (
-              <Text key={`${finding.code}-${finding.fieldPath}`}>{finding.message}</Text>
-            ))}
-          </Stack>
         </Box>
       ) : null}
     </Stack>

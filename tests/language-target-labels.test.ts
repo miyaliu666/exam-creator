@@ -66,3 +66,17 @@ test("character glosses respect compound and grammatical senses", () => {
   assert.match(languageTargetDisplayText({ id: "CHAR-A1-0111", kind: "character", label: "会" }), /meeting/);
   assert.doesNotMatch(languageTargetDisplayText({ id: "LEX-A1-0104", kind: "lexical", label: "会" }), /meeting/);
 });
+
+test("authored content metadata overrides legacy display hints and is searchable", () => {
+  const grammar = { id: "GR-A1-001", kind: "grammar", label: "State identity or category", englishGloss: "Authored identity rule", pattern: "甲 是 乙" };
+  assert.equal(languageTargetLabel(grammar).english, "Authored identity rule");
+  assert.equal(languageTargetLabel(grammar).pattern, "甲 是 乙");
+  assert.equal(languageTargetLabel({ ...grammar, englishGloss: "", pattern: "" }).english, undefined);
+  assert.equal(languageTargetLabel({ ...grammar, englishGloss: "", pattern: "" }).pattern, undefined);
+  const word = { id: "custom", kind: "lexical", label: "行", meaning: "表示可以或同意", pinyin: "xíng", englishGloss: "okay" };
+  assert.ok(languageTargetMatchesSearch(word, "同意"));
+  assert.ok(languageTargetMatchesSearch(word, "XÍNG"));
+  assert.ok(languageTargetMatchesSearch(word, "okay"));
+  assert.match(languageTargetDisplayText(word), /表示可以或同意/);
+  assert.equal(languageTargetLabel({ id: "CONTENT-CUSTOM-sense", kind: "lexical", label: "会", meaning: "会议" }).english, undefined);
+});

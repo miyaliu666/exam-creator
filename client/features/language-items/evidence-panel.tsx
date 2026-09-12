@@ -8,7 +8,7 @@ import type { RegistrySnapshot, TaskPackage } from "./types";
 
 const RELATIONS: Record<LanguageRelation, string> = {
   unknown: "Not checked", understanding: "Required to understand the answer", requiredProduction: "Explicitly required in the response",
-  opportunity: "Opportunity to use", supporting: "Supporting content", notDemonstrated: "Not demonstrated by this task",
+  opportunity: "Opportunity to use", supporting: "Supporting content", notDemonstrated: "Not demonstrated by this item",
 };
 interface Props { itemId: string; revision: number; draft: TaskPackage; registry: RegistrySnapshot; disabled: boolean; onDirtyChange: (dirty: boolean) => void }
 
@@ -17,7 +17,7 @@ export function ItemEvidencePanel(props: Props) {
   return <Box as="details" borderWidth="1px" borderRadius="lg" p={4}>
     <Text as="summary" cursor="pointer" fontWeight="medium">Language evidence and sources</Text>
     <Stack mt={4} gap={3}>
-      <Text fontSize="sm" color="fg.muted">The author records what the task actually assesses. These observations support review and coverage; they do not approve the item.</Text>
+      <Text fontSize="sm" color="fg.muted">The author records what the item actually assesses. These observations support review and coverage; they do not approve the item.</Text>
       {query.isPending ? <Spinner size="sm" /> : query.isError ? <Text role="alert" color="fg.error">{query.error.message}</Text> :
         <EvidenceForm key={query.data.record?.id ?? "new"} {...props} disabled={props.disabled || query.isPlaceholderData} view={query.data} />}
     </Stack>
@@ -58,8 +58,8 @@ function EvidenceForm({ view, ...props }: Props & { view: EvidenceView }) {
     })}
     {!form.targets.length ? <Text fontSize="sm">Select language targets in Prepare before recording their relationships.</Text> : null}
     <EvidenceSources values={form.sources} disabled={disabled} onChange={(sources) => update({ sources })} />
-    <Box><Text fontSize="sm" fontWeight="medium" mb={1}>Answer and task quality</Text><Textarea aria-label="Answer and task quality notes" value={form.qualityNotes} maxLength={8000} disabled={disabled} placeholder="Answer evidence, plausible distractors, acceptable responses, scoring and unnecessary background knowledge" onChange={(event) => update({ qualityNotes: event.target.value })} /></Box>
-    <Box><Text fontSize="sm" fontWeight="medium" mb={1}>Originality review</Text><Textarea aria-label="Originality review notes" value={form.originalityNotes} maxLength={8000} disabled={disabled} placeholder="How this task was created, sources checked and the scope of comparison" onChange={(event) => update({ originalityNotes: event.target.value })} /></Box>
+    <Box><Text fontSize="sm" fontWeight="medium" mb={1}>Answer and item quality</Text><Textarea aria-label="Answer and item quality notes" value={form.qualityNotes} maxLength={8000} disabled={disabled} placeholder="Answer evidence, plausible distractors, acceptable responses, scoring and unnecessary background knowledge" onChange={(event) => update({ qualityNotes: event.target.value })} /></Box>
+    <Box><Text fontSize="sm" fontWeight="medium" mb={1}>Originality review</Text><Textarea aria-label="Originality review notes" value={form.originalityNotes} maxLength={8000} disabled={disabled} placeholder="How this item was created, sources checked and the scope of comparison" onChange={(event) => update({ originalityNotes: event.target.value })} /></Box>
     {save.isError ? <Text role="alert" color="fg.error">{save.error.message}</Text> : null}
     {!props.disabled ? <Button alignSelf="start" variant="outline" loading={save.isPending} disabled={disabled || (!dirty && view.current)} onClick={() => save.mutate()}>Save author observations</Button> : null}
   </Stack>;

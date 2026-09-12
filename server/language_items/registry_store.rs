@@ -277,7 +277,7 @@ fn check_display_names<'a>(
 }
 
 pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResult {
-    let mut issues = Vec::new();
+    let mut issues = super::registry_content::validate_language_content(snapshot, None).issues;
     if snapshot.bundle_version.trim().is_empty() {
         issue(
             &mut issues,
@@ -352,15 +352,6 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
         snapshot.difficulty_bands.iter().map(String::as_str),
         "difficultyBands",
         "Difficulty band",
-        &mut issues,
-    );
-    check_unique(
-        snapshot
-            .content_id_options
-            .iter()
-            .map(|entry| entry.id.as_str()),
-        "contentIdOptions",
-        "Language content",
         &mut issues,
     );
     check_unique(
@@ -492,11 +483,6 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
 
     let can_do_ids = snapshot
         .can_do_options
-        .iter()
-        .map(|entry| entry.id.as_str())
-        .collect::<HashSet<_>>();
-    let context_ids = snapshot
-        .context_options
         .iter()
         .map(|entry| entry.id.as_str())
         .collect::<HashSet<_>>();
@@ -841,35 +827,6 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
                     format!(
                         "Allowed Domains must include the Domain of selected Context “{}”",
                         context.label
-                    ),
-                );
-            }
-        }
-    }
-
-    for (index, content) in snapshot.content_id_options.iter().enumerate() {
-        for can_do_id in &content.can_do_ids {
-            if !can_do_ids.contains(can_do_id.as_str()) {
-                issue(
-                    &mut issues,
-                    "registry.unknownContentCanDo",
-                    format!("contentIdOptions.{index}.canDoIds"),
-                    format!(
-                        "Language content {} references unknown Can-do: {can_do_id}",
-                        content.id
-                    ),
-                );
-            }
-        }
-        for context_id in &content.context_ids {
-            if !context_ids.contains(context_id.as_str()) {
-                issue(
-                    &mut issues,
-                    "registry.unknownContentContext",
-                    format!("contentIdOptions.{index}.contextIds"),
-                    format!(
-                        "Language content {} references unknown Context: {context_id}",
-                        content.id
                     ),
                 );
             }

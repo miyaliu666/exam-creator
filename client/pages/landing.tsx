@@ -40,7 +40,7 @@ export function Landing() {
           size="sm"
           onClick={() => logout()}
         >
-          Logout
+          Sign out
         </Button>
       ) : null}
       <Center>
@@ -81,7 +81,7 @@ export function Landing() {
                 p={0}
                 bg={"bg.subtle"}
               >
-                <LandingCard>Exams</LandingCard>
+                <LandingCard path={"/exams"}>Exams</LandingCard>
               </Button>
               <Button
                 onClick={() => navigate({ to: attemptsRoute.to })}
@@ -96,7 +96,7 @@ export function Landing() {
                 p={0}
                 bg={"bg.subtle"}
               >
-                <AttemptsLandingCard />
+                <AttemptsLandingCard path={"/attempts"} />
               </Button>
               <Button
                 onClick={() => navigate({ to: metricsRoute.to })}
@@ -111,7 +111,7 @@ export function Landing() {
                 p={0}
                 bg={"bg.subtle"}
               >
-                <LandingCard>Exam Metrics</LandingCard>
+                <LandingCard path={"/metrics"}>Exam Metrics</LandingCard>
               </Button>
               <Button
                 onClick={() => navigate({ to: usersRoute.to })}
@@ -126,7 +126,7 @@ export function Landing() {
                 p={0}
                 bg={"bg.subtle"}
               >
-                <LandingCard>User Management</LandingCard>
+                <LandingCard path={"/users"}>User Management</LandingCard>
               </Button>
             </SimpleGrid>
           </Box>

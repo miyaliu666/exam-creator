@@ -100,6 +100,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         batch_generation_jobs: staging_mongodb_database
             .collection("LanguageItemBatchGenerationJobs"),
         item_evidence: staging_mongodb_database.collection("LanguageItemEvidence"),
+        version_usage_events: staging_mongodb_database.collection("LanguageItemVersionUsageEvents"),
         registry_versions: staging_mongodb_database
             .collection("LanguageAssessmentRegistryVersions"),
         registry_audit_events: staging_mongodb_database
@@ -312,6 +313,10 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
                 .post(routes::language_item_batches::post_batch),
         )
         .route(
+            "/api/language-item-batches/ai-prompt",
+            post(routes::language_item_batches::post_batch_ai_prompt),
+        )
+        .route(
             "/api/language-item-batches/{batch_id}",
             get(routes::language_item_batches::get_batch),
         )
@@ -327,6 +332,19 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
             "/api/language-items/{item_id}/evidence",
             get(routes::language_item_evidence::get_evidence)
                 .post(routes::language_item_evidence::post_evidence),
+        )
+        .route(
+            "/api/language-items/{item_id}/usage",
+            get(routes::language_item_usage::get_item_usage),
+        )
+        .route(
+            "/api/language-items/{item_id}/versions/{version_id}/usage",
+            get(routes::language_item_usage::get_version_usage)
+                .post(routes::language_item_usage::post_version_usage),
+        )
+        .route(
+            "/api/language-items/{item_id}/versions/{version_id}/assembly-manifest",
+            get(routes::language_item_assembly::get_assembly_manifest),
         )
         .route(
             "/api/language-item-review-queue",
@@ -367,6 +385,10 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .route(
             "/api/language-items/{item_id}/review-discussions",
             get(routes::language_items::get_review_discussions),
+        )
+        .route(
+            "/api/language-items/{item_id}/ai-prompt",
+            get(routes::language_items::get_ai_generation_prompt),
         )
         .route(
             "/api/language-items/{item_id}/ai-runs",

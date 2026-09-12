@@ -1,4 +1,5 @@
 import { Badge, Box, Button, Field, HStack, Input, Stack, Text } from "@chakra-ui/react";
+import type { ReactNode } from "react";
 
 import type { BatchGroup } from "./batch-api";
 import { batchCapability, batchTargetOptions, BATCH_ITEM_LIMIT } from "./batch-plan";
@@ -9,13 +10,14 @@ import { RegistryMultiSelect } from "./registry-multi-select";
 import { registryDisplayText } from "./registry-display-text";
 import type { RegistrySnapshot } from "./types";
 
-export function BatchGroupCard({ group, index, itemOffset, grouped = true, registry, disabled, onChange, onEditSetup, onRemove }: {
+export function BatchGroupCard({ group, index, itemOffset, grouped = true, registry, disabled, aiDraftCount, onChange, onEditSetup, onRemove }: {
   group: BatchGroup;
   index: number;
   itemOffset: number;
   grouped?: boolean;
   registry: RegistrySnapshot;
   disabled: boolean;
+  aiDraftCount?: ReactNode;
   onChange: (group: BatchGroup) => void;
   onEditSetup: () => void;
   onRemove: () => void;
@@ -42,23 +44,20 @@ export function BatchGroupCard({ group, index, itemOffset, grouped = true, regis
           <HStack><Button size="xs" variant="outline" disabled={disabled} onClick={onEditSetup}>Edit item setup</Button>
             {grouped ? <Button size="xs" variant="ghost" colorPalette="red" disabled={disabled} onClick={onRemove}>Remove group</Button> : null}</HStack>
         </HStack>
-        <Field.Root>
-          <Field.Label>Number of items</Field.Label>
-          <Input aria-label={grouped ? `Number of items in group ${index + 1}` : "Number of items"} type="number" min={1} max={BATCH_ITEM_LIMIT} maxW="120px"
-            value={group.itemCount || ""} disabled={disabled} onChange={(event) => onChange({ ...group, itemCount: Number(event.target.value) })} />
-        </Field.Root>
-        <Stack gap={2}>
-          <RegistryMultiSelect label={group.itemCount === 1 ? "What this item should assess" : "Targets required in every item"} values={group.requiredTargetContentIds} disabled={disabled}
-            options={options.filter((option) => !group.rotatingTargetContentIds.includes(option.id))}
-            onChange={(requiredTargetContentIds) => onChange({ ...group, requiredTargetContentIds })} />
-          <Text fontSize="sm" color="fg.muted">Choose core targets in vocabulary, grammar, Chinese characters or pragmatics. You don't need to list every word in the item.</Text>
-        </Stack>
-        {group.itemCount > 1 || group.rotatingTargetContentIds.length ? <Stack gap={2}>
-          <RegistryMultiSelect label="Different targets for different items" values={group.rotatingTargetContentIds} disabled={disabled}
-            options={options.filter((option) => !group.requiredTargetContentIds.includes(option.id))}
-            onChange={(rotatingTargetContentIds) => onChange({ ...group, rotatingTargetContentIds })} />
-          <Text fontSize="sm" color="fg.muted">Targets are assigned across items in order, repeating if needed. Each item gets one or more, plus the targets required above. Preview the assignments below.</Text>
-        </Stack> : null}
+        <HStack align="start" flexWrap="wrap" gap={6}>
+          <Field.Root w="210px">
+            <Field.Label>Number of items</Field.Label>
+            <Input aria-label={grouped ? `Number of items in group ${index + 1}` : "Number of items"} type="number" min={1} max={BATCH_ITEM_LIMIT}
+              value={group.itemCount || ""} disabled={disabled} onChange={(event) => onChange({ ...group, itemCount: Number(event.target.value) })} />
+          </Field.Root>
+          {aiDraftCount}
+        </HStack>
+        <RegistryMultiSelect label={group.itemCount === 1 ? "What this item should assess" : "Targets required in every item"} values={group.requiredTargetContentIds} disabled={disabled}
+          options={options.filter((option) => !group.rotatingTargetContentIds.includes(option.id))}
+          onChange={(requiredTargetContentIds) => onChange({ ...group, requiredTargetContentIds })} />
+        {group.itemCount > 1 || group.rotatingTargetContentIds.length ? <RegistryMultiSelect label="Different targets for different items" values={group.rotatingTargetContentIds} disabled={disabled}
+          options={options.filter((option) => !group.requiredTargetContentIds.includes(option.id))}
+          onChange={(rotatingTargetContentIds) => onChange({ ...group, rotatingTargetContentIds })} /> : null}
         <BatchTargetAllocation group={group} registry={registry} itemOffset={itemOffset} />
         {incompatible.map((id) => <HStack key={id} justify="space-between"><Text color="fg.error" fontSize="sm">{contentOptionLabel(id, registry)} is unavailable for this setup.</Text>
           <Button size="xs" disabled={disabled} onClick={() => onChange({ ...group,

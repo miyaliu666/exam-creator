@@ -28,6 +28,7 @@ pub struct Database {
 pub struct WorkbenchDatabase {
     pub batch_generation_jobs: Collection<crate::language_items::batch::BatchGenerationJob>,
     pub item_evidence: Collection<crate::language_items::evidence::ItemEvidence>,
+    pub version_usage_events: Collection<crate::language_items::version_usage::UsageEvent>,
     pub registry_versions: Collection<RegistryVersionRecord>,
     pub registry_audit_events: Collection<RegistryAuditEvent>,
     pub language_items: Collection<LanguageItem>,
@@ -51,6 +52,37 @@ impl WorkbenchDatabase {
                 .unique(true)
                 .build()
         };
+        self.version_usage_events
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "id": 1 })
+                    .options(unique("language_item_usage_id_unique"))
+                    .build(),
+            )
+            .await?;
+        self.version_usage_events
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "versionId": 1, "revision": 1 })
+                    .options(unique("language_item_usage_revision_unique"))
+                    .build(),
+            )
+            .await?;
+        self.version_usage_events
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "versionId": 1, "requestId": 1 })
+                    .options(unique("language_item_usage_request_unique"))
+                    .build(),
+            )
+            .await?;
+        self.version_usage_events
+            .create_index(
+                IndexModel::builder()
+                    .keys(doc! { "itemId": 1, "versionId": 1, "revision": -1 })
+                    .build(),
+            )
+            .await?;
         self.registry_versions
             .create_index(
                 IndexModel::builder()

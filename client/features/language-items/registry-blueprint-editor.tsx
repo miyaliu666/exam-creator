@@ -74,7 +74,7 @@ export function RegistryBlueprintEditor({ snapshot, capability, update, disabled
         </SimpleGrid>
       </Box>
       {!selectedCanDo || selectedCanDo.primarySkill !== capability.primaryReportedSkill || selectedCanDo.activity !== capability.communicativeActivity ?
-        <Text color="fg.error" fontSize="sm">Primary Can-do is missing or does not match this configuration’s skill and activity.</Text> : null}
+        <Text color="fg.error" fontSize="sm">Primary Can-do is missing or does not match the skill and activity of these item rules.</Text> : null}
       {!bindings.taskFamilyMatches ? <Stack gap={2}>
         <Text color="fg.error" fontSize="sm">The task family does not support this blueprint slot and item format.</Text>
         {!disabled && bindings.taskFamilies.length === 1 ? <Button alignSelf="start" size="sm" variant="outline" onClick={() => change((entry) => { entry.taskFamilyId = bindings.taskFamilies[0].id; })}>Use registered task family</Button> : null}

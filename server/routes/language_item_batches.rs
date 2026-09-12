@@ -26,8 +26,8 @@ use crate::{
             terminal_status, uncreated_child_recovery, validate_request,
         },
         domain::{
-            AiGenerationRun, LanguageItem, LanguageItemAuditEvent, LanguageItemRecordState,
-            LanguageItemStatus, ai_generation_setup_snapshot,
+            AiGenerationPromptPreview, AiGenerationRun, LanguageItem, LanguageItemAuditEvent,
+            LanguageItemRecordState, LanguageItemStatus, ai_generation_setup_snapshot,
         },
         registry::active_snapshot,
     },
@@ -83,6 +83,56 @@ pub async fn get_batch(
     Path(id): Path<String>,
 ) -> Result<Json<BatchGenerationView>, Error> {
     Ok(Json(owned_job(&state, &id, &user.email).await?.into()))
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct BatchAiPromptBody {
+    plan: CreateBatchBody,
+    item_index: usize,
+    candidate_ordinal: u64,
+}
+
+fn prompt_preview_child(
+    children: &[BatchChild],
+    candidates_per_item: u64,
+    item_index: usize,
+    candidate_ordinal: u64,
+) -> Result<&BatchChild, Error> {
+    let child = children.get(item_index).ok_or_else(|| {
+        Error::Server(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "The selected item is outside this generation plan".to_string(),
+        )
+    })?;
+    if candidate_ordinal == 0 || candidate_ordinal > candidates_per_item {
+        return Err(Error::Server(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "The selected AI draft is outside this plan's AI drafts per item".to_string(),
+        ));
+    }
+    Ok(child)
+}
+
+pub async fn post_batch_ai_prompt(
+    user: prisma::ExamCreatorUser,
+    State(state): State<ServerState>,
+    Json(body): Json<BatchAiPromptBody>,
+) -> Result<Json<AiGenerationPromptPreview>, Error> {
+    let registry = active_snapshot();
+    // Reuse generation's preparation so target allocation and information points cannot drift.
+    let job = prepare_job(body.plan, &user.email, &registry)?;
+    let child = prompt_preview_child(
+        &job.children,
+        job.candidates_per_item,
+        body.item_index,
+        body.candidate_ordinal,
+    )?;
+    Ok(Json(ai::generation_prompt_preview(
+        &state.env_vars.language_item_ai,
+        &child.setup_snapshot,
+        body.candidate_ordinal,
+    )?))
 }
 
 pub async fn post_batch(
@@ -654,4 +704,42 @@ async fn write_batch_audit(
         .upsert(true)
         .await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::language_items::domain::TaskPackage;
+
+    #[test]
+    fn prompt_preview_selects_prepared_items_and_rejects_out_of_plan_requests() {
+        let children: Vec<_> = (0..2)
+            .map(|index| BatchChild {
+                index,
+                group_index: index,
+                item_id: format!("LI-preview-{index}"),
+                run_id: format!("AIR-preview-{index}"),
+                target_content_ids: vec![format!("target-{index}")],
+                status: "pending".to_string(),
+                item_created: false,
+                error: None,
+                setup_snapshot: TaskPackage::from_template(
+                    format!("LI-preview-{index}"),
+                    "reading-single-select",
+                )
+                .unwrap(),
+            })
+            .collect();
+
+        for candidate_ordinal in [1, 256] {
+            let selected = prompt_preview_child(&children, 256, 1, candidate_ordinal).unwrap();
+            assert!(std::ptr::eq(selected, &children[1]));
+        }
+        for (item_index, candidate_ordinal) in [(2, 1), (usize::MAX, 1), (0, 0), (0, 257)] {
+            assert!(matches!(
+                prompt_preview_child(&children, 256, item_index, candidate_ordinal),
+                Err(Error::Server(StatusCode::UNPROCESSABLE_ENTITY, _))
+            ));
+        }
+    }
 }

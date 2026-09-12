@@ -15,16 +15,19 @@ export interface RegistryOptionGroup {
   optionIds: string[];
 }
 
-export function RegistryMultiSelect({ label, options, values, onChange, disabled, optionGroups }: {
+export function RegistryMultiSelect({ label, options, values, onChange, disabled, optionGroups, emptyLabel = "—", maxVisibleSelections }: {
   label: string;
   options: RegistryMultiSelectOption[];
   values: string[];
   onChange: (values: string[]) => void;
   disabled?: boolean;
   optionGroups?: RegistryOptionGroup[];
+  emptyLabel?: string;
+  maxVisibleSelections?: number;
 }) {
   const displayText = useContext(RegistryTextContext);
   const [expanded, setExpanded] = useState(false);
+  const [showAllSelected, setShowAllSelected] = useState(false);
   const [query, setQuery] = useState("");
   const [groupId, setGroupId] = useState("");
   const controlId = useId();
@@ -36,6 +39,7 @@ export function RegistryMultiSelect({ label, options, values, onChange, disabled
     const option = optionMap.get(id);
     return option ? [option] : [];
   });
+  const visibleSelected = showAllSelected || !maxVisibleSelections ? selected : selected.slice(0, maxVisibleSelections);
   const activeGroup = optionGroups?.find((group) => group.id === groupId);
   const filtered = filterRegistryOptions(namedOptions, query).filter((option) =>
     !activeGroup || activeGroup.optionIds.includes(option.id));
@@ -76,7 +80,7 @@ export function RegistryMultiSelect({ label, options, values, onChange, disabled
         ) : null}
       </HStack>
       <HStack gap={2} flexWrap="wrap">
-        {selected.map((option) => disabled ? (
+        {visibleSelected.map((option) => disabled ? (
           <Box key={option.id} px={2} py={1} borderWidth="1px" borderRadius="md" fontSize="xs" overflowWrap="anywhere">
             {option.label}
           </Box>
@@ -97,7 +101,8 @@ export function RegistryMultiSelect({ label, options, values, onChange, disabled
             {option.label}<span aria-hidden="true">×</span>
           </Button>
         ))}
-        {!selected.length ? <Text color="fg.muted" fontSize="sm">—</Text> : null}
+        {!selected.length ? <Text color="fg.muted" fontSize="sm">{values.length ? "Unavailable selection" : emptyLabel}</Text> : null}
+        {maxVisibleSelections && selected.length > maxVisibleSelections ? <Button size="xs" variant="plain" onClick={() => setShowAllSelected(!showAllSelected)}>{showAllSelected ? "Show fewer" : `Show all ${selected.length}`}</Button> : null}
       </HStack>
       {expanded && !disabled ? (
         <Stack

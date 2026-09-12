@@ -24,6 +24,7 @@ use crate::{
             install_published_snapshot, item_format_name, normalize_registry_snapshot,
             prepare_registry_draft, upgrade_draft_context_schema,
         },
+        registry_content::validate_language_content,
         registry_store::{
             REGISTRY_STATUS_DRAFT, REGISTRY_STATUS_PUBLISHED, RegistryAuditEvent, RegistryImpact,
             RegistrySectionChange, RegistryValidationResult, RegistryVersionRecord,
@@ -308,6 +309,14 @@ pub async fn put_draft(
             "Registry version {} already exists",
             version
         )));
+    }
+    let content_validation = validate_language_content(&body.snapshot, Some(&record.snapshot));
+    if !content_validation.valid {
+        return Err(Error::Server(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            serde_json::to_string(&content_validation)
+                .expect("Language content validation serializes"),
+        ));
     }
     record.version = version.to_string();
     record.snapshot = body.snapshot;

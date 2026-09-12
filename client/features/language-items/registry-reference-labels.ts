@@ -44,7 +44,10 @@ export function registryIssueText(snapshot: RegistrySnapshot, issue: RegistryVal
   // Unknown references have no business name; describe the missing object without exposing a code.
   message = message.replace(/\b(?:IF|TF|SCT|REN|DPS|CTX|A1|NP|IP|PP|RP|SRP|PAP|RG|LP|MP|GP|CH|LX|R|L|W|S)-[A-Za-z0-9_.:-]+\b/g, "missing reference")
     .replace(/\bD\d{2}\b/g, "missing context")
-    .replace(/\b[Cc]apability(?: variant)?\b/g, "task configuration")
+    .replace(/\b[Cc]apabilities\b/g, "item rule sets")
+    .replace(/\b[Cc]apability(?: variant)?\b/g, "item rule set")
+    .replace(/\bA item rule set\b/g, "An item rule set")
+    .replace(/\ba item rule set\b/g, "an item rule set")
     .replace(/::/g, " · ");
   const [section, indexText, subSection, subIndexText] = issue.path.split(".");
   const index = Number(indexText);

@@ -38,6 +38,7 @@ import { examsRoute } from "./exams";
 import { EditExamGenerationVariability } from "../components/edit-exam-generation-variability";
 import { EditExamConfig } from "../components/edit-exam-config";
 import { ConfigView } from "../components/config-view";
+import { UsersOnPageAvatars } from "../components/users-on-page-avatars";
 
 function Edit() {
   const { id } = useParams({ from: "/exams/$id" });
@@ -78,6 +79,8 @@ function Edit() {
           Logout
         </Button>
       </HStack>
+      {/* Floating widget: top right */}
+      <UsersEditing />
       <Center>
         {examQuery.isPending ? (
           <Spinner color={"fg.info"} size="xl" />
@@ -89,6 +92,26 @@ function Edit() {
           <EditExam exam={examQuery.data} />
         )}
       </Center>
+    </Box>
+  );
+}
+
+function UsersEditing() {
+  return (
+    <Box
+      position="fixed"
+      top={4}
+      right="16rem"
+      zIndex={100}
+      borderRadius="xl"
+      boxShadow="lg"
+      px={2}
+      py={2}
+      display="flex"
+      alignItems="center"
+      gap={4}
+    >
+      <UsersOnPageAvatars path={window.location.pathname} />
     </Box>
   );
 }

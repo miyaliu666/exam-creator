@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use super::{
+    content_assessment::content_is_excluded,
     domain::{CandidatePayload, Stimulus, TaskPackage, ValidationIssue, ValidationResult},
     registry::{
         RegistrySnapshot, capability_for, context_supports_capability,
@@ -128,7 +129,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                 &mut issues,
                 "registry.domain",
                 "content.primaryDomain",
-                "The selected domain is not available for this task configuration",
+                "The selected Domain is not allowed by these item rules",
             );
         }
         if !capability
@@ -139,7 +140,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                 &mut issues,
                 "registry.context",
                 "content.contextId",
-                "The selected context is not available for this task configuration",
+                "The selected Context is not allowed by these item rules",
             );
         }
     } else {
@@ -344,7 +345,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
             &mut issues,
             "schema.required",
             "taskId",
-            "taskId is required",
+            "Item identifier is required",
         );
     }
     if package.task_version.trim().is_empty() {
@@ -352,7 +353,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
             &mut issues,
             "schema.required",
             "taskVersion",
-            "taskVersion is required",
+            "Item version is required",
         );
     }
     validate_candidate_payload(package, &mut issues);
@@ -451,7 +452,7 @@ fn validate_item_scoring_spec(package: &TaskPackage, issues: &mut Vec<Validation
             issues,
             "scoring.benchmark",
             "scoringPackage.benchmarkSetVersion",
-            "Rubric-scored tasks must specify an applicable benchmark version",
+            "Rubric-scored items must specify an applicable benchmark version",
         );
     }
 
@@ -1080,7 +1081,7 @@ fn validate_authoring_setup(
             issues,
             "authoring.domain",
             "content.primaryDomain",
-            "The selected domain is not available for this task configuration",
+            "The selected Domain is not allowed by these item rules",
         );
     }
     if capability.is_none_or(|entry| {
@@ -1092,7 +1093,7 @@ fn validate_authoring_setup(
             issues,
             "authoring.context",
             "content.contextId",
-            "The selected context is not available for this task configuration",
+            "The selected Context is not allowed by these item rules",
         );
     } else if context.is_none_or(|entry| {
         !entry
@@ -1179,6 +1180,21 @@ fn validate_authoring_setup(
                         ),
                     );
                 }
+                if !supporting
+                    && capability.is_some_and(|capability| {
+                        content_is_excluded(content, capability, &package.content.context_id)
+                    })
+                {
+                    issue(
+                        issues,
+                        "authoring.contentAssessmentExcluded",
+                        &path,
+                        &format!(
+                            "\"{}\" is excluded for the selected Item rules and Context",
+                            content.label
+                        ),
+                    );
+                }
             } else {
                 issue(
                     issues,
@@ -1244,7 +1260,7 @@ fn validate_difficulty_profile(
             issues,
             "difficulty.bandUnavailable",
             "content.difficultyBand",
-            "The selected difficulty is unavailable for this task in its saved assessment settings",
+            "The selected Difficulty is unavailable for this item in its saved Assessment Settings",
         );
         return;
     };
@@ -1254,7 +1270,7 @@ fn validate_difficulty_profile(
                 issues,
                 "difficulty.profileRequired",
                 "content.difficulty",
-                "Select a difficulty profile for this task",
+                "Select a Difficulty setting for this item",
             );
         }
         return;
@@ -1375,7 +1391,7 @@ fn validate_difficulty_profile(
                 issues,
                 "difficulty.anchorMismatch",
                 "content.difficulty.drivers",
-                "The difficulty drivers must stay within the selected task's configured difficulty ranges",
+                "The difficulty drivers must stay within the ranges configured by the selected item rules",
             );
         } else {
             warning(

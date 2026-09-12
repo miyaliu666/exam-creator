@@ -1,5 +1,5 @@
 import { Badge, Box, Button, HStack, Spinner, Stack, Text } from "@chakra-ui/react";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 
 import { AuthContext } from "../../contexts/auth";
 import { RegistryRuleEditor } from "./registry-rule-editor";
@@ -12,12 +12,13 @@ export function RegistrySettingsPanel({ onDirtyChange, onBusyChange }: {
   onBusyChange?: (busy: boolean) => void;
 }) {
   const { user } = useContext(AuthContext)!;
-  const settings = useRegistrySettings(user?.email);
+  const [stagedDirty, setStagedDirty] = useState(false);
+  const settings = useRegistrySettings(user?.email, stagedDirty);
   const { record, editable, dirty, busy, feedback, publication } = settings;
-  useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
+  useEffect(() => { onDirtyChange?.(dirty || stagedDirty); }, [dirty, stagedDirty, onDirtyChange]);
   useEffect(() => { onBusyChange?.(busy); }, [busy, onBusyChange]);
   const status = record ? registryStatus(record, dirty, user?.email) : null;
-  const needsSave = dirty || settings.remoteChanged;
+  const needsSave = dirty || stagedDirty || settings.remoteChanged;
 
   return (
     <Box borderWidth="1px" borderRadius="xl" bg="bg" overflow="hidden">
@@ -28,7 +29,7 @@ export function RegistrySettingsPanel({ onDirtyChange, onBusyChange }: {
             <HStack flexWrap="wrap" gap={2}>
               <Badge colorPalette={status?.colorPalette}>{status?.label}</Badge>
               {editable ? <>
-                <Button variant="outline" loading={settings.action === "save"} disabled={busy || !dirty || settings.remoteChanged} onClick={() => settings.run("save")}>Save draft</Button>
+                <Button variant="outline" loading={settings.action === "save"} disabled={busy || !dirty || stagedDirty || settings.remoteChanged} onClick={() => settings.run("save")}>Save draft</Button>
                 <Button colorPalette="teal" title={needsSave ? "Save the draft first" : settings.staleBase ? "Start from the latest published settings" : "Review and confirm publication"} loading={settings.action === "prepare" || settings.action === "publish"} disabled={busy || needsSave || settings.staleBase || feedback.validation?.valid === false} onClick={() => settings.run("prepare")}>Publish</Button>
               </> : <Button colorPalette="teal" disabled={busy} loading={settings.action === "restart"} onClick={settings.restart}>Edit settings</Button>}
             </HStack>
@@ -45,7 +46,7 @@ export function RegistrySettingsPanel({ onDirtyChange, onBusyChange }: {
           {feedback.notice ? <Text role="status" color="fg.info">{feedback.notice}</Text> : null}
           {feedback.warnings?.map((warning) => <Text key={warning} role="alert" color="fg.warning">{warning}</Text>)}
           {feedback.validation ? <RegistryValidationFeedback snapshot={record.snapshot} result={feedback.validation} /> : null}
-          <RegistryRuleEditor key={record.id} snapshot={record.snapshot} update={settings.update} disabled={!editable || busy || !!publication || settings.remoteChanged} history={
+          <RegistryRuleEditor snapshot={record.snapshot} update={settings.update} disabled={!editable || busy || !!publication || settings.remoteChanged} onStagedDirtyChange={setStagedDirty} history={
             <Stack gap={2}>
               {settings.audit.map((event) => <HStack key={event.id} justify="space-between" align="start" gap={3} fontSize="sm">
                 <Text>{event.action.replace(/^registry[._]/, "").replace(/[._]/g, " ")} · {event.actorEmail}</Text>

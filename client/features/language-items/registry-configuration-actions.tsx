@@ -34,7 +34,7 @@ export function RegistryConfigurationActions({ snapshot, capability, update, dis
   };
   const remove = () => {
     const replacement = siblings.find((entry) => capabilityKey(entry) !== capabilityKey(capability));
-    if (!replacement || !window.confirm(`Remove this configuration?\n${registryCombinationName(snapshot, capability)}\nThe Can-do library entry will remain.`)) return;
+    if (!replacement || !window.confirm(`Remove these item rules?\n${registryCombinationName(snapshot, capability)}\nThe Can-do library entry will remain.`)) return;
     update((next) => { removeRegistryConfiguration(next, capability); });
     onSelect(replacement);
   };
@@ -42,16 +42,16 @@ export function RegistryConfigurationActions({ snapshot, capability, update, dis
   return (
     <Stack gap={3}>
       {options.length ? <Button alignSelf="start" variant="outline" size="sm" onClick={() => setAdding((value) => !value)}>
-        {adding ? "Cancel new configuration" : "Add configuration"}
+        {adding ? "Cancel new item rules" : "Add item rules"}
       </Button> : null}
       {adding && options.length ? <HStack align="end" gap={3}>
         <Box flex="1"><SelectField label="Primary Can-do" value={primaryId}
           options={[{ id: "", label: "Select" }, ...options]} onChange={setPrimaryId} /></Box>
-        <Button size="sm" disabled={!bindings.scoringContract || !bindings.taskFamilyMatches || !options.some((entry) => entry.id === primaryId)} onClick={add}>Add configuration</Button>
+        <Button size="sm" disabled={!bindings.scoringContract || !bindings.taskFamilyMatches || !options.some((entry) => entry.id === primaryId)} onClick={add}>Add item rules</Button>
       </HStack> : null}
       {siblings.length > 1 ? <Box as="details">
-        <Text as="summary" cursor="pointer" fontSize="sm" fontWeight="medium">Manage configuration</Text>
-        <Button mt={3} size="sm" variant="outline" colorPalette="red" onClick={remove}>Remove this configuration</Button>
+        <Text as="summary" cursor="pointer" fontSize="sm" fontWeight="medium">Manage item rules</Text>
+        <Button mt={3} size="sm" variant="outline" colorPalette="red" onClick={remove}>Remove these item rules</Button>
       </Box> : null}
     </Stack>
   );

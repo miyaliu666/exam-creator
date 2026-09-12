@@ -1,9 +1,10 @@
 import { Box, Grid, Stack, Text } from "@chakra-ui/react";
 import type { ReactNode } from "react";
 
-export function DraftPreparationLayout({ candidatesFirst, requirementsNeedAttention, requirements, generation, candidates }: {
+export function DraftPreparationLayout({ candidatesFirst, requirementsNeedAttention, requirementsNeedRepair, requirements, generation, candidates }: {
   candidatesFirst: boolean;
   requirementsNeedAttention: boolean;
+  requirementsNeedRepair: boolean;
   requirements: ReactNode;
   generation: ReactNode;
   candidates: ReactNode;
@@ -11,7 +12,9 @@ export function DraftPreparationLayout({ candidatesFirst, requirementsNeedAttent
   if (candidatesFirst) return <Stack gap={4}>
     {candidates}
     <Box asChild borderWidth="1px" borderRadius="lg" p={4}><details open={requirementsNeedAttention || undefined}>
-      <Text as="summary" cursor="pointer" fontWeight="medium">Edit generation requirements</Text>
+      <Text as="summary" cursor="pointer" fontWeight="medium">
+        {requirementsNeedRepair ? "Repair generation requirements" : "Generation requirements"}
+      </Text>
       <Box mt={4}>{requirements}</Box>
     </details></Box>
     <Box asChild borderWidth="1px" borderRadius="lg" p={4}><details open={requirementsNeedAttention || undefined}>

@@ -1,5 +1,7 @@
 pub mod ai;
+pub mod assembly_manifest;
 pub mod batch;
+pub mod content_assessment;
 pub mod coverage;
 pub mod diff;
 pub mod domain;
@@ -8,5 +10,7 @@ pub mod evidence;
 pub mod export;
 pub mod github;
 pub mod registry;
+pub mod registry_content;
 pub mod registry_store;
 pub mod validation;
+pub mod version_usage;

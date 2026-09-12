@@ -137,6 +137,8 @@ export async function getGithubReviewStatus(): Promise<GithubIntegrationStatus> 
 
 export async function createGithubReviewBatch(input: {
   itemIds: string[];
+  aiReviewRunIds: Record<string, string>;
+  expectedRevisions: Record<string, number>;
 }): Promise<GithubReviewBatch> {
   return readJson(
     await authorizedFetch("/api/language-items/github-review/batches", {
@@ -268,6 +270,7 @@ export async function freezeLanguageItem(
 export async function reviseLanguageItemVersion(input: {
   versionId: string;
   expectedRevision: number;
+  usageEventId?: string;
 }): Promise<LanguageItem> {
   return readJson(
     await authorizedFetch(
@@ -275,7 +278,7 @@ export async function reviseLanguageItemVersion(input: {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ expectedRevision: input.expectedRevision }),
+        body: JSON.stringify({ expectedRevision: input.expectedRevision, usageEventId: input.usageEventId }),
       },
     ),
   );
@@ -337,10 +340,12 @@ export async function runAiReview(versionId: string): Promise<AiReviewRun> {
   );
 }
 
-export async function runDraftAiReview(itemId: string): Promise<AiReviewRun> {
+export async function runDraftAiReview(itemId: string, expectedRevision: number): Promise<AiReviewRun> {
   return readJson(
     await authorizedFetch(`/api/language-items/${itemId}/ai-review`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ expectedRevision }),
     }),
   );
 }

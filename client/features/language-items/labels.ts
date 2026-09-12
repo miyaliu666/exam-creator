@@ -4,13 +4,15 @@ import { languageTargetDisplayText } from "./language-target-labels";
 
 // Shared field names distinguish the blueprint target, response format, and rule configuration.
 export const WORKBENCH_LABELS = {
+  itemBank: "Item Bank",
+  itemSetup: "Item setup",
   blueprintSlot: "Blueprint slot",
   itemFormat: "Item format",
   primaryCanDo: "Primary Can-do",
   domain: "Domain",
   context: "Context",
   difficulty: "Difficulty",
-  taskConfiguration: "Task configuration",
+  itemRules: "Item rules",
   taskFamily: "Task family",
   scoringContract: "Scoring contract",
 } as const;

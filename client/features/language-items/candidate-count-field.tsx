@@ -20,14 +20,14 @@ export function CandidateCountField({ value, disabled, onChange }: {
   };
   const invalid = !isValidCandidateCount(value);
   return (
-    <Field.Root w="210px" invalid={invalid} disabled={disabled}>
+    <Field.Root w="210px" required invalid={invalid} disabled={disabled}>
       <Field.Label>AI drafts per item</Field.Label>
-      <Combobox.Root collection={suggestions} allowCustomValue selectionBehavior="preserve" disabled={disabled} invalid={invalid}
+      <Combobox.Root collection={suggestions} allowCustomValue selectionBehavior="preserve" required disabled={disabled} invalid={invalid}
         value={isValidCandidateCount(value) ? [String(value)] : []} inputValue={input.text}
         openOnChange={false} onInputValueChange={({ inputValue }) => changeInput(inputValue)}
         onValueChange={({ value: selected }) => { if (selected[0]) changeInput(selected[0]); }}>
         <Combobox.Control>
-          <Combobox.Input aria-label="AI drafts per item" inputMode="numeric" placeholder="Select or enter a count" />
+          <Combobox.Input aria-label="AI drafts per item" inputMode="numeric" />
           <Combobox.IndicatorGroup><Combobox.Trigger aria-label="Choose AI draft count" /></Combobox.IndicatorGroup>
         </Combobox.Control>
         <Portal><Combobox.Positioner><Combobox.Content>
@@ -36,7 +36,6 @@ export function CandidateCountField({ value, disabled, onChange }: {
           </Combobox.Item>)}
         </Combobox.Content></Combobox.Positioner></Portal>
       </Combobox.Root>
-      <Field.HelperText>Generate alternatives for each item, then choose one to edit.</Field.HelperText>
       <Field.ErrorText>Enter a positive whole number.</Field.ErrorText>
     </Field.Root>
   );

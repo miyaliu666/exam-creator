@@ -271,7 +271,7 @@ export function NewLanguageItemDialog({
                 options={difficultyStandards.map((standard) => ({ value: standard.id, label: registryDisplayText(standard.label) }))}
                 {...dropdownState("difficultyBand")} />
               {selectedCapability && contexts.length === 0 ? (
-                <Text color="fg.error">No compatible contexts are available for this task configuration.</Text>
+                <Text color="fg.error">No compatible contexts are available for these item rules.</Text>
               ) : null}
               {error ? <Text role="alert" color="fg.error">{error.message}</Text> : null}
             </Stack>

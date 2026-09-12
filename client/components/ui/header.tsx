@@ -1,5 +1,6 @@
 import { Flex, Heading, Stack, Text } from "@chakra-ui/react";
 import { ReactNode } from "react";
+import { UsersOnPageAvatars } from "../users-on-page-avatars";
 
 interface HeaderProps {
   title: string;
@@ -12,6 +13,9 @@ export function Header({
   description,
   children,
 }: HeaderProps) {
+  const page = window.location.pathname.split("/")[1];
+  const showPresence = ["exams", "attempts", "metrics", "users", "user"].includes(page);
+
   return (
     <Flex
       justify="space-between"
@@ -32,6 +36,7 @@ export function Header({
           </Text>
         )}
       </Stack>
+      {showPresence ? <UsersOnPageAvatars path={"/" + page} /> : null}
       {children}
     </Flex>
   );

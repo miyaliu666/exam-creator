@@ -82,7 +82,7 @@ export default defineConfig(async () => ({
     watch: {
       // Chokidar resolves Windows paths before matching. The recursive form
       // keeps locked Rust binaries out of Vite's watcher on every platform.
-      ignored: ["**/server/**", "**/target/**"],
+      ignored: ["**/server/**", "**/target/**", "**/docs/**"],
     },
     fs: {
       // Prevent Vite from serving files from the target directory

@@ -19,7 +19,7 @@ export function RegistryTaskRules({ snapshot, capability, disabled, change }: {
   });
   return (
     <Box as="details" borderTopWidth="1px" pt={3}>
-      <Text as="summary" cursor="pointer" fontWeight="medium">Task rules
+      <Text as="summary" cursor="pointer" fontWeight="medium">Detailed rules
         {invalidSupporting.length ? <Text as="span" color="fg.error" fontSize="sm"> · {invalidSupporting.length} {invalidSupporting.length === 1 ? "issue" : "issues"}</Text> : null}
       </Text>
       <Stack gap={4} pt={4}>
@@ -28,10 +28,10 @@ export function RegistryTaskRules({ snapshot, capability, disabled, change }: {
         <TextField label="Observable evidence" value={capability.observableEvidence} multiline disabled={disabled} onChange={(value) => change((entry) => { entry.observableEvidence = value; })} />
         <TextField label="A1 boundary" value={capability.a1Boundary ?? ""} multiline disabled={disabled} onChange={(value) => change((entry) => { entry.a1Boundary = value; })} />
         <TextField label="Task family coverage" value={capability.taskFamilyCoreBehavior ?? ""} multiline disabled={disabled} onChange={(value) => change((entry) => { entry.taskFamilyCoreBehavior = value; })} />
-        <TextField label="Task structure" value={capability.taskStructure} multiline disabled={disabled} onChange={(value) => change((entry) => { entry.taskStructure = value; })} />
+        <TextField label="Item structure" value={capability.taskStructure} multiline disabled={disabled} onChange={(value) => change((entry) => { entry.taskStructure = value; })} />
         <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
-          <TextField label="Valid reference task" value={capability.referenceTask} disabled={disabled} onChange={(value) => change((entry) => { entry.referenceTask = value; })} />
-          <TextField label="Invalid reference task" value={capability.invalidReferenceTask ?? ""} disabled={disabled} onChange={(value) => change((entry) => { entry.invalidReferenceTask = value; })} />
+          <TextField label="Valid item example" value={capability.referenceTask} disabled={disabled} onChange={(value) => change((entry) => { entry.referenceTask = value; })} />
+          <TextField label="Invalid item example" value={capability.invalidReferenceTask ?? ""} disabled={disabled} onChange={(value) => change((entry) => { entry.invalidReferenceTask = value; })} />
         </SimpleGrid>
         <TextListField label="Prohibited uses" values={capability.prohibitedUses} disabled={disabled} onChange={(values) => change((entry) => { entry.prohibitedUses = values; })} />
         <Box as="details">

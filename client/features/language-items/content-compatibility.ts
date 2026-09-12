@@ -1,4 +1,5 @@
 import type { RegistrySnapshot } from "./types";
+import { getContentAssessmentRule } from "./content-assessment-rules";
 
 type Capability = RegistrySnapshot["capabilities"][number];
 type ContentOption = RegistrySnapshot["contentIdOptions"][number];
@@ -31,5 +32,6 @@ export function isContentOptionCompatible(
     (isReceptiveSkill && option.masteryScope === "receptive") ||
     (isProductiveSkill && option.masteryScope === "productive");
 
-  return contextMatches && canDoMatches && masteryMatches;
+  return contextMatches && canDoMatches && masteryMatches &&
+    (option.kind === "supported" || getContentAssessmentRule(option, capability, contextId)?.applicability !== "excluded");
 }

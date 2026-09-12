@@ -67,6 +67,7 @@ import {
   usePlotArea,
 } from "recharts";
 import { BracketLayer } from "../components/diff-brackets";
+import { UsersOnPageAvatars } from "../components/users-on-page-avatars";
 
 function Edit() {
   const { id } = useParams({ from: "/attempts/$id" });
@@ -124,6 +125,8 @@ function Edit() {
           Logout
         </Button>
       </HStack>
+      {/* Floating widget: top right */}
+      <UsersEditing />
       <Center>
         {attemptQuery.isPending || eventsQuery.isPending ? (
           <Spinner size="xl" />
@@ -136,6 +139,35 @@ function Edit() {
           <EditAttempt attempt={attemptQuery.data} events={eventsQuery.data} />
         )}
       </Center>
+    </Box>
+  );
+}
+
+function UsersEditing() {
+  const { updateActivity } = useContext(UsersWebSocketActivityContext)!;
+
+  useEffect(() => {
+    updateActivity({
+      page: new URL(window.location.href),
+      lastActive: Date.now(),
+    });
+  }, []);
+
+  return (
+    <Box
+      position="fixed"
+      top={4}
+      right="18rem"
+      zIndex={100}
+      borderRadius="xl"
+      boxShadow="lg"
+      px={2}
+      py={2}
+      display="flex"
+      alignItems="center"
+      gap={4}
+    >
+      <UsersOnPageAvatars path={window.location.pathname} />
     </Box>
   );
 }

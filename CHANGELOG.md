@@ -4,6 +4,13 @@
 
 ### Planning
 
+- prepare the Workbench for version-aware assembly and pilot feedback before connecting legacy exam delivery; separate review approval, version use and record management
+- restore the previously deferred Language coverage overview with full-directory denominators, saved assessment-target coverage, separate approved/unapproved inventory and item drilldown
+- consolidate the two Language content discussions into a field and workflow audit, with browser import/update/export/publication verification, isolated backend diagnostics, and explicit gaps for duplicate enforcement, AI reference data and historical occurrence counting
+- audit Language content field dependencies, duplicate identity, scope defaults, import parity and actual AI use; simplify the authoring surface and align its wording with the Item workbench
+- simplify New items to one shared setup per new plan; create different configurations separately and retain saved multi-setup plans without losing their quantities, targets or retry identities
+- audit project terminology across authoring, assessment rules, coverage, exam assembly, API feedback, and review summaries; record concept boundaries, inconsistent status and quantity labels, and proposed naming in local documentation
+- turn Language content into a browsable vocabulary/grammar catalog with staged single-entry editing and one shared Excel, Markdown and pasted-table import workflow; keep new data inside versioned Assessment Settings drafts
 - remove internal generation-job/item IDs from routine progress displays and use AI drafts for generated alternatives, reserving Candidate for exam takers
 - clarify assessment targets, background material types, allocation labels, and the limits of automatic text-occurrence checks
 - allow authors to select or enter the AI candidate quantity per item without the former batch/single-item caps
@@ -15,6 +22,11 @@
 
 ### Added
 
+- add immutable-version use states, append-only manual pilot summaries with explicit conclusions and timing definitions, and revision/idempotency protected history
+- add a metadata-only assembly manifest for a selected frozen version, including current Workbench availability without answer keys or exam deployment
+- add a default Coverage overview based on the complete language-content directory, with category/search-scoped totals, Chinese/English search, count sorting and direct approved/unapproved counts for every matching entry, retaining zero-item content
+- add a searchable Language content table with mastery, Can-do and Context filters, entry details, single-entry creation, reusable import templates and filtered exports
+- add Excel and Markdown file import plus editable pasted-table input with field mapping, per-row validation, explicit applicability, duplicate review and ID-based update previews
 - add Item bank checkboxes, filtered select-all, selected counts, bulk archive/delete/restore, a recoverable-delete confirmation, and per-item failure feedback with failed selections retained for retry
 - add durable bulk item generation with reusable task groups, fixed and rotating targets, pinned rules, idempotent child/run identities, pause/resume, bounded workers, and restart recovery without replaying uncertain model calls
 - add language-coverage exploration by item dimensions, ALL/ANY/exact/excluded targets, disjoint intersections and item drilldown; explicit inventory goals can prepare compatible bulk plans while keeping approved, pending and unknown counts separate
@@ -32,14 +44,40 @@
 
 ### Changed
 
+- remove the internal-name input and Options disclosure from New items; derive names automatically and show the required AI drafts per item control alongside the item quantity, retaining existing saved plan names and custom counts
+- combine saved-content checks, independent AI preliminary review and PR creation into one Submit for review action; block serious AI findings and failed/stale/simulated reports, bind submissions to exact reports and revisions, and attach findings to PR bodies without approving human gates
+- remove author evidence/source forms and optional AI feedback controls from the submission page; show actual check failures and disabled reasons, and preserve successful checks without resetting them during a no-change refresh
+- make generated-item requirements read-only with an explicit repair path for missing or incompatible targets and information; remove prompt and history panels from the item workspace, and show version use only in Check & submit for approved versions or existing use records
+- remove routine guidance from New items target fields, AI draft count, coverage suggestions and prompt preview; label the optional name as Internal name while preserving validation and generation controls
+- restore pre-Workbench terminology, navigation and online-user displays in Exams, Attempts, Exam Metrics and User Management; restore the legacy generation source lookup and original user-route test layout, keeping Workbench features and required shared infrastructure
+- protect existing mutable drafts from revision replacement, link pilot revise/retest conclusions to revision audit records, reset empirical observations for new drafts, and refresh editor content/revision after review synchronization
+- start every Coverage visit and browser reload with Current Registry and the complete Overview; keep analysis only during the current visit, including view switches and drilldown returns, while Refresh preserves the current query and the separate New items suggestion handoff remains unchanged
+- keep Overview and Find items Registry versions and More filters independent; direct view switches restore each view's own defaults or analysis, edits and resets affect only the current view, and only explicit Overview count drilldown copies its scope into a new Find items query
+- group Coverage results jointly by all six Item setup fields with approved/unapproved counts aggregated across the full query; setup-count drilldown preserves language matching and opens the item list, while Back to item setups restores the query and both goal inputs
+- restrict Coverage planning to a setup row's Set goal, separating Desired approved item count, Approved item shortfall and an explicit New items to plan quantity of 1–50 bounded by the shortfall; let authors inspect unapproved items without automatically subtracting them or treating the full shortfall as a generation quantity
+- label the Coverage suggestion handoff quantity New items planned instead of presenting it as the full approved-item gap
+- retain both Coverage setup-goal inputs through view and item-status switches, pagination and failed-query retries; Refresh refetches all active Coverage queries for the account, including the open row goal
+- show one zero-count Coverage setup row only when all six selected fields are compatible and the API explicitly returns empty setup counts; missing statistics, incomplete and incompatible setups never imply zero coverage
+- simplify Coverage to saved assessment targets and Approved items / Unapproved items, including all unapproved lifecycle states; remove Count by, confirmation displays, supporting-material options, repeated category summaries and the generic creation shortcut, retaining explicit Item count goal planning through the existing New items handoff
+- unify Coverage terminology as Language content and show Total with three disjoint counts and percentages in one overview box: Has approved items, Unapproved items only and No items; scope all metrics to Category and Search together, retain both row-level item counts, remove in Assessment Settings from labels and keep numeric pagination
+- organize Coverage as view navigation, overview metrics, one Filters section with Category, Search, More filters and Reset, then Coverage by language content with sorting; remove the full-inventory summary line and keep all content metrics scoped to the filters without removing zero-item content
+- retain Coverage filters and recovery actions during loading and failed queries, keep active target combinations and their clear action in Filters, retain row-goal inputs for recovery, and qualify zero/only-unapproved classifications when target records are actually unknown
+- show Coverage availability directly in two count columns without an Item availability filter or status column; use Clear search and remove fixed teaching text, duplicate counts, active-filter badges and summaries while exposing selected filters in the controls
+- simplify Language content to direct scope selection, category/name search and optional More filters; move reference fields under Details, use Meaning / Structure / English meaning consistently, and remove redundant import controls and tutorial text
+- default new language-content scopes to Not restricted, including blank import scopes; retain existing settings on read and preserve blank update semantics
+- unify Workbench author-facing terminology around Item, Item Bank, Item rules and Item setup; align AI feedback, manual authoring, setup-group errors and current operation guides while preserving data and API names and the legacy modules' labels
+- share item lifecycle labels across the bank, editor and coverage results, distinguish review blockers and rejection from GitHub-specific causes, and label coverage selections and results as language targets and assessment targets
+- resolve GitHub review titles and Blueprint slot/Can-do names from the submitted version's pinned Registry, with legacy name fallbacks
+- remove Add another setup from New items; coverage suggestions apply to the current setup after explicit confirmation instead of appending a group, while saved multi-setup plans and historical generation jobs remain supported
+- preserve language-content meanings, grammar patterns, pinyin, English glosses, examples, restrictions, sources, notes and additional metadata in settings snapshots; enrich new settings drafts from matching bundled source entries without changing published snapshots
 - remove visible batch and item IDs from Generation jobs while retaining names, creation times, item numbers and navigation; rename AI-generation candidates to AI drafts across creation, progress, Prepare and generation history, including saved generation feedback
 - remove the unnecessary planned-assessment-target explanation from Language coverage
-- clarify single-item, shared and distributed target labels and coverage counting modes; add selection-category filters that preserve selections and query meaning, and separate grammar/pragmatics review from vocabulary/character text-occurrence checks
+- clarify single-item, shared and distributed target labels and saved-target coverage; add selection-category filters that preserve selections and query meaning, and separate grammar/pragmatics review from vocabulary/character text-occurrence checks
 - share an editable candidate-count dropdown across New items and individual regeneration; accept positive whole-number quantities, preserve custom saved counts, and remove backend truncation while bounding concurrent provider calls
-- lead Language coverage with matching items; fold additional filters, intersections, breakdowns, and inventory goals into disclosures and remove redundant guidance and counts
+- lead Find items with Coverage by item setup and replace separate attribute breakdowns; place Item status and Target combinations inside item details, preserve goals and combinations when changing status, and remove the global inventory-goal entry
 - make Item bank the Workbench home, with item browsing and filters; move Generation jobs and Language coverage to independent pages
 - unify New item and Bulk create into New items: shared six-field setup, quantity defaulting to one, language targets, and Generate 1 item / Generate N items; preserve saved plans and pass coverage suggestions to the creation page within the browser session
-- keep creation focused on setup, quantity and targets; move the optional name and candidates per item into Options, derive blank names from Blueprint slots, and label additional groups Add another setup
+- keep creation focused on setup, quantity and targets; move the optional name and candidates per item into Options and derive blank names from Blueprint slots
 - label additional targets Different targets for different items and add Preview each item's targets using the existing per-item allocation algorithm
 - offer Write manually for one-item plans, save selected targets and open Edit & preview directly, and permit an empty manual draft while retaining generation and submission requirements
 - distinguish generation jobs by name and creation time; show shared setup and required targets once per group, with per-item numbers, additional targets and generation state; remove repeated quantity and selection instructions
@@ -58,12 +96,14 @@
 
 ### Fixed
 
+- detect same-category names before adding language content, including bundled display aliases; block exact new duplicates, require confirmation for distinct meanings, retain editing of legacy duplicates and invalidate confirmations when the compared content changes
+- exclude local-only docs from Vite file watching so locked temporary backend executables do not crash the frontend preview
 - preserve custom candidate quantities on blur and refresh; stop unsent candidate calls when a batch is paused, retain available results as explicit partial work, and report result-persistence failures as terminal failures instead of leaving runs active
 - keep local startup on automatic Local User sign-in, show retryable connection errors when the backend is unavailable, and isolate the shared query client from route initialization so the home page loads without circular-import errors
 - release Item bank action buttons after record-state requests settle and prevent overlapping row/bulk changes
 - align client information-point validation messages with server wording so the same issue is not displayed twice
 - display Generating when a queued job already has a running child, without presenting generation completion as review approval
-- reset coverage goals when query meaning changes, preserve exclusions during intersection drilldown, validate compatible task setup and target limits before planning new items, and clear a coverage suggestion when its setup is canceled
+- reset coverage goals when query meaning changes, apply exclusions before intersection counts and drilldown, validate compatible task setup and target limits before planning new items, and clear a coverage suggestion when its setup is canceled
 - retain an account-scoped browser-session recovery record after manual creation returns an item ID, so a failed target save can reuse the same draft on retry after refresh or returning to New items; expose Open unfinished draft
 - resolve Generation jobs `batchId` direct links by separately fetching requested jobs outside the latest 100, preserving their progress polling and showing explicit loading errors with retry
 - explicitly select non-strict OpenAI JSON Schema output for pinned schemas with optional fields and dynamic answer maps, preventing provider-side `invalid_json_schema` errors while retaining application validation

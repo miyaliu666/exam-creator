@@ -8,7 +8,7 @@ import {
   getLanguageAssessmentRegistryVersions, publishLanguageAssessmentRegistryDraft,
   saveLanguageAssessmentRegistryDraft, validateLanguageAssessmentRegistryDraft,
 } from "./api";
-import { registryDraftIsStale, registryRecordKey, selectRegistryForEditing, shouldAdoptRegistryRecord } from "./registry-workflow";
+import { registryDraftIsStale, registryRecordKey, registryWriteValidation, selectRegistryForEditing, shouldAdoptRegistryRecord } from "./registry-workflow";
 import type { UpdateRegistry } from "./registry-rule-editor";
 import type { RegistryImpact, RegistryValidationResult, RegistryVersionRecord } from "./types";
 
@@ -27,7 +27,7 @@ interface Result {
   warnings?: string[];
 }
 
-export function useRegistrySettings(email: string | undefined) {
+export function useRegistrySettings(email: string | undefined, stagedDirty = false) {
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState("");
   const [record, setRecord] = useState<RegistryVersionRecord | null>(null);
@@ -52,6 +52,7 @@ export function useRegistrySettings(email: string | undefined) {
     mutationFn: async (action: Action): Promise<Result> => {
       setError("");
       if (action === "restart") return { record: await createLanguageAssessmentRegistryDraft(), notice: "New draft created from published settings." };
+      if (stagedDirty) throw new Error("Apply or cancel the language content changes first.");
       if (!record || !editable) throw new Error("Open your own draft before changing settings.");
       if (action === "save") {
         if (!dirty) return { notice: "Draft is already saved." };
@@ -83,13 +84,15 @@ export function useRegistrySettings(email: string | undefined) {
     },
     onError: (failure) => {
       setPublication(null);
-      setError(failure.message);
+      const validation = registryWriteValidation(failure.message);
+      if (validation) setFeedback({ validation });
+      setError(validation ? "Language content needs fixes. Your changes have been kept." : failure.message);
       void queryClient.invalidateQueries({ queryKey: ["language-assessment-registry-versions"] });
       void queryClient.invalidateQueries({ queryKey: ["language-assessment-registry-version", selectedId] });
     },
   });
   const busy = operation.isPending;
-  useBlocker({ shouldBlockFn: () => busy || (dirty && !window.confirm("Discard unsaved settings?")), enableBeforeUnload: dirty || busy, disabled: !dirty && !busy });
+  useBlocker({ shouldBlockFn: () => busy || ((dirty || stagedDirty) && !window.confirm("Discard unsaved settings?")), enableBeforeUnload: dirty || stagedDirty || busy, disabled: !dirty && !stagedDirty && !busy });
 
   useEffect(() => {
     if (selectedId || !versionsQuery.data?.length) return;
@@ -98,11 +101,11 @@ export function useRegistrySettings(email: string | undefined) {
   }, [selectedId, versionsQuery.data, email]);
   useEffect(() => {
     const incoming = recordQuery.data;
-    if (!incoming || !shouldAdoptRegistryRecord(record, incoming, dirty, busy)) return;
+    if (!incoming || !shouldAdoptRegistryRecord(record, incoming, dirty || stagedDirty, busy)) return;
     setRecord(structuredClone(incoming));
     setFeedback({});
     setPublication(null);
-  }, [recordQuery.data, record, dirty, busy]);
+  }, [recordQuery.data, record, dirty, stagedDirty, busy]);
 
   const update: UpdateRegistry = (mutate) => {
     if (!editable || busy || publication || !record) return;
@@ -116,7 +119,7 @@ export function useRegistrySettings(email: string | undefined) {
   };
   const remoteChanged = !!record && !!recordQuery.data && recordQuery.data.id === record.id && recordQuery.data.revision > record.revision;
   const reload = () => {
-    if (busy || !recordQuery.data || (dirty && !window.confirm("Discard local changes and load the saved draft?"))) return;
+    if (busy || !recordQuery.data || ((dirty || stagedDirty) && !window.confirm("Discard local changes and load the saved draft?"))) return;
     adopt(recordQuery.data);
     setFeedback({});
     setError("");

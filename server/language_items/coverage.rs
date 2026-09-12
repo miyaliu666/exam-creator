@@ -29,7 +29,7 @@ pub enum CoverageMatch {
     Exact,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CoverageFilters {
     pub skill: Option<String>,
@@ -63,6 +63,8 @@ pub struct CoverageRequest {
     #[serde(default)]
     pub offset: usize,
     pub limit: Option<usize>,
+    #[serde(default)]
+    pub include_overview: bool,
 }
 
 /// Only metadata is projected from MongoDB; candidate, answer, and reviewer content never enters analytics.
@@ -199,6 +201,14 @@ pub struct CoverageCount {
     pub count: usize,
 }
 
+#[derive(Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CoverageSetupCount {
+    pub filters: CoverageFilters,
+    pub approved_count: usize,
+    pub pending_count: usize,
+}
+
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CoveragePattern {
@@ -217,6 +227,26 @@ pub struct CoverageGoal {
     pub unfilled_count: usize,
 }
 
+#[derive(Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CoverageOverviewEntry {
+    pub id: String,
+    pub planned_count: usize,
+    pub confirmed_count: usize,
+    pub pending_count: usize,
+}
+
+#[derive(Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CoverageOverview {
+    pub approved_item_count: usize,
+    pub pending_item_count: usize,
+    pub planned_unknown_count: usize,
+    pub confirmed_unknown_count: usize,
+    pub pending_unknown_count: usize,
+    pub entries: Vec<CoverageOverviewEntry>,
+}
+
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CoverageResponse {
@@ -228,14 +258,18 @@ pub struct CoverageResponse {
     pub unknown_count: usize,
     pub matched_count: usize,
     pub pending_count: usize,
+    pub approved_unknown_count: usize,
     pub pending_unknown_count: usize,
     pub term_counts: Vec<CoverageCount>,
     pub patterns: Vec<CoveragePattern>,
     pub breakdowns: BTreeMap<String, Vec<CoverageCount>>,
+    pub setup_counts: Vec<CoverageSetupCount>,
     pub goal: Option<CoverageGoal>,
     pub items: Vec<CoverageItemSummary>,
     pub offset: usize,
     pub limit: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub overview: Option<CoverageOverview>,
 }
 
 pub fn approved_version(item: &CoverageItem) -> Option<&CoverageVersion> {
@@ -308,8 +342,12 @@ fn references(metadata: &CoverageMetadata, role: &CoverageRole) -> Option<BTreeS
     }
 }
 
+fn passes_exclusions(ids: &BTreeSet<String>, excluded_ids: &[String]) -> bool {
+    !excluded_ids.iter().any(|id| ids.contains(id))
+}
+
 fn content_matches(ids: &BTreeSet<String>, request: &CoverageRequest) -> bool {
-    if request.excluded_ids.iter().any(|id| ids.contains(id)) {
+    if !passes_exclusions(ids, &request.excluded_ids) {
         return false;
     }
     let selected: BTreeSet<_> = request.selected_ids.iter().cloned().collect();
@@ -360,6 +398,95 @@ fn inventory(items: &[CoverageItem], scope: &CoverageScope) -> Vec<CoverageItemS
         .collect()
 }
 
+fn coverage_overview<'a>(
+    approved: impl Iterator<Item = &'a CoverageItemSummary>,
+    pending: impl Iterator<Item = &'a CoverageItemSummary>,
+) -> CoverageOverview {
+    let mut overview = CoverageOverview::default();
+    let mut entries: BTreeMap<String, [usize; 3]> = BTreeMap::new();
+    let mut count_targets = |ids: &Option<Vec<String>>, column: usize| {
+        let Some(ids) = ids else {
+            return 1;
+        };
+        for id in ids.iter().collect::<BTreeSet<_>>() {
+            entries.entry(id.clone()).or_default()[column] += 1;
+        }
+        0
+    };
+    for item in approved {
+        overview.approved_item_count += 1;
+        overview.planned_unknown_count += count_targets(&item.metadata.core_ids, 0);
+        overview.confirmed_unknown_count += count_targets(&item.metadata.confirmed_ids, 1);
+    }
+    for item in pending {
+        overview.pending_item_count += 1;
+        overview.pending_unknown_count += count_targets(&item.metadata.core_ids, 2);
+    }
+    overview.entries = entries
+        .into_iter()
+        .map(
+            |(id, [planned_count, confirmed_count, pending_count])| CoverageOverviewEntry {
+                id,
+                planned_count,
+                confirmed_count,
+                pending_count,
+            },
+        )
+        .collect();
+    overview
+}
+
+fn coverage_setup_counts<'a>(
+    approved: impl Iterator<Item = &'a CoverageItemSummary>,
+    pending: impl Iterator<Item = &'a CoverageItemSummary>,
+    filters: &CoverageFilters,
+) -> Vec<CoverageSetupCount> {
+    let mut counts: BTreeMap<[String; 6], [usize; 2]> = BTreeMap::new();
+    for (item, column) in approved
+        .map(|item| (item, 0))
+        .chain(pending.map(|item| (item, 1)))
+    {
+        let metadata = &item.metadata;
+        let setup = [
+            metadata.blueprint_slot_id.clone(),
+            metadata.item_format_id.clone(),
+            metadata.primary_can_do_id.clone(),
+            metadata.domain.clone(),
+            metadata.context_id.clone(),
+            metadata.difficulty_band.clone(),
+        ];
+        counts.entry(setup).or_default()[column] += 1;
+    }
+    counts
+        .into_iter()
+        .map(|(setup, [approved_count, pending_count])| {
+            let [
+                blueprint_slot_id,
+                item_format_id,
+                primary_can_do_id,
+                domain,
+                context_id,
+                difficulty_band,
+            ] = setup;
+            CoverageSetupCount {
+                filters: CoverageFilters {
+                    // Keep the query's activity membership: substituting the primary activity could broaden a drilldown.
+                    skill: filters.skill.clone(),
+                    activity: filters.activity.clone(),
+                    blueprint_slot_id: Some(blueprint_slot_id),
+                    item_format_id: Some(item_format_id),
+                    primary_can_do_id: Some(primary_can_do_id),
+                    domain: Some(domain),
+                    context_id: Some(context_id),
+                    difficulty_band: Some(difficulty_band),
+                },
+                approved_count,
+                pending_count,
+            }
+        })
+        .collect()
+}
+
 pub fn analyze_coverage(
     items: &[CoverageItem],
     request: &CoverageRequest,
@@ -378,13 +505,25 @@ pub fn analyze_coverage(
         item.metadata.registry_version == registry_version
             && dimensions_match(&item.metadata, &request.filters)
     };
+    // Overview describes the inventory behind a query, so language selections and pagination cannot narrow it.
+    let overview = request.include_overview.then(|| {
+        coverage_overview(
+            approved.iter().filter(in_scope),
+            pending.iter().filter(in_scope),
+        )
+    });
     let matching = |item: &&CoverageItemSummary| {
         in_scope(item)
             && references(&item.metadata, &request.role)
                 .is_some_and(|ids| content_matches(&ids, request))
     };
-    let pending_count = pending.iter().filter(matching).count();
-    let approved_count = approved.iter().filter(matching).count();
+    let setup_counts = coverage_setup_counts(
+        approved.iter().filter(matching),
+        pending.iter().filter(matching),
+        &request.filters,
+    );
+    let pending_count = setup_counts.iter().map(|setup| setup.pending_count).sum();
+    let approved_count = setup_counts.iter().map(|setup| setup.approved_count).sum();
     let unknown_in_scope = |item: &&CoverageItemSummary| {
         in_scope(item) && references(&item.metadata, &request.role).is_none()
     };
@@ -400,17 +539,22 @@ pub fn analyze_coverage(
         .iter()
         .filter_map(|item| references(&item.metadata, &request.role).map(|ids| (*item, ids)))
         .collect();
+    // Counts retain exclusions so selecting a pattern preserves its displayed item count.
+    let counted: Vec<_> = known
+        .iter()
+        .filter(|(_, ids)| passes_exclusions(ids, &request.excluded_ids))
+        .collect();
     let selected: BTreeSet<_> = request.selected_ids.iter().cloned().collect();
     let term_counts = selected
         .iter()
         .map(|id| CoverageCount {
             id: id.clone(),
-            count: known.iter().filter(|(_, ids)| ids.contains(id)).count(),
+            count: counted.iter().filter(|(_, ids)| ids.contains(id)).count(),
         })
         .collect();
     let mut pattern_counts: BTreeMap<Vec<String>, usize> = BTreeMap::new();
-    for (_, ids) in &known {
-        // Patterns partition the dimension-filtered known inventory, including the all-absent row.
+    for (_, ids) in &counted {
+        // Selected-point matching must not remove alternative patterns or the all-absent row.
         *pattern_counts
             .entry(ids.intersection(&selected).cloned().collect())
             .or_default() += 1;
@@ -496,10 +640,12 @@ pub fn analyze_coverage(
         unknown_count: scoped.len() - known.len(),
         matched_count,
         pending_count,
+        approved_unknown_count,
         pending_unknown_count,
         term_counts,
         patterns,
         breakdowns,
+        setup_counts,
         goal,
         items: matched
             .into_iter()
@@ -508,6 +654,7 @@ pub fn analyze_coverage(
             .collect(),
         offset: request.offset,
         limit,
+        overview,
     }
 }
 
@@ -545,6 +692,318 @@ mod tests {
                 approved,
             }],
         }
+    }
+
+    fn setup_item(id: usize, targets: Option<Vec<&str>>, approved: bool) -> CoverageItem {
+        let mut value = item(id, targets, approved);
+        let metadata = CoverageMetadata {
+            blueprint_slot_id: "R1".into(),
+            item_format_id: "single".into(),
+            primary_can_do_id: "read-notice".into(),
+            activity: "Reception".into(),
+            domain: "Public".into(),
+            difficulty_band: "TypicalA1".into(),
+            ..value.draft.clone()
+        };
+        value.draft = metadata.clone();
+        value.versions[0].metadata = metadata;
+        value
+    }
+
+    #[test]
+    fn setup_counts_keep_every_dimension_joint_and_count_both_inventories_before_pagination() {
+        let mut items = Vec::new();
+        for dimension in 0..7 {
+            for index in 0..5 {
+                let mut value = setup_item(dimension * 5 + index, Some(vec!["A"]), index < 3);
+                let metadata = &mut value.draft;
+                match dimension {
+                    1 => metadata.blueprint_slot_id = "R2".into(),
+                    2 => metadata.item_format_id = "matching".into(),
+                    3 => metadata.primary_can_do_id = "read-instruction".into(),
+                    4 => metadata.domain = "Personal".into(),
+                    5 => metadata.context_id = "school".into(),
+                    6 => metadata.difficulty_band = "UpperA1".into(),
+                    _ => (),
+                }
+                value.versions[0].metadata = value.draft.clone();
+                items.push(value);
+            }
+        }
+        let request = CoverageRequest {
+            selected_ids: vec!["A".into()],
+            offset: 10,
+            limit: Some(1),
+            ..Default::default()
+        };
+        let result = analyze_coverage(&items, &request, "v1");
+        assert_eq!(result.items.len(), 1);
+        assert_eq!(result.matched_count, 21);
+        assert_eq!(result.pending_count, 14);
+        assert_eq!(result.setup_counts.len(), 7);
+        for setup in &result.setup_counts {
+            assert_eq!((setup.approved_count, setup.pending_count), (3, 2));
+            for (scope, count) in [(CoverageScope::Approved, 3), (CoverageScope::Drafts, 2)] {
+                let drilled = analyze_coverage(
+                    &items,
+                    &CoverageRequest {
+                        scope,
+                        filters: setup.filters.clone(),
+                        offset: 0,
+                        ..request.clone()
+                    },
+                    "v1",
+                );
+                assert_eq!(drilled.matched_count, count);
+                assert_eq!(drilled.setup_counts.len(), 1);
+            }
+        }
+        items.reverse();
+        let drafts = analyze_coverage(
+            &items,
+            &CoverageRequest {
+                scope: CoverageScope::Drafts,
+                ..request
+            },
+            "v1",
+        );
+        assert_eq!(drafts.setup_counts, result.setup_counts);
+    }
+
+    #[test]
+    fn setup_counts_apply_language_matching_exclusions_and_active_patterns_to_both_inventories() {
+        let mut items = Vec::new();
+        for (index, targets) in [
+            Some(vec!["A"]),
+            Some(vec!["A", "B"]),
+            Some(vec!["A", "B", "C"]),
+            Some(vec!["A", "X"]),
+            Some(vec!["B"]),
+            Some(vec![]),
+            None,
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            items.push(setup_item(index, targets.clone(), true));
+            items.push(setup_item(index + 10, targets, false));
+        }
+        for (match_mode, pattern, expected) in [
+            (CoverageMatch::All, None, 2),
+            (CoverageMatch::Any, None, 4),
+            (CoverageMatch::Exact, None, 1),
+            (CoverageMatch::All, Some(vec!["A".into()]), 1),
+            (CoverageMatch::All, Some(vec!["A".into(), "B".into()]), 2),
+            (CoverageMatch::Any, Some(vec![]), 1),
+        ] {
+            let request = CoverageRequest {
+                selected_ids: vec!["A".into(), "B".into()],
+                excluded_ids: vec!["X".into()],
+                match_mode,
+                pattern,
+                ..Default::default()
+            };
+            let result = analyze_coverage(&items, &request, "v1");
+            assert_eq!(result.setup_counts.len(), 1);
+            let setup = &result.setup_counts[0];
+            assert_eq!(result.matched_count, expected);
+            assert_eq!(
+                (setup.approved_count, setup.pending_count),
+                (expected, expected)
+            );
+            assert_eq!(
+                (result.approved_unknown_count, result.pending_unknown_count),
+                (1, 1)
+            );
+        }
+        let absent = analyze_coverage(
+            &items,
+            &CoverageRequest {
+                selected_ids: vec!["absent".into()],
+                ..Default::default()
+            },
+            "v1",
+        );
+        assert!(absent.setup_counts.is_empty());
+    }
+
+    #[test]
+    fn setup_counts_keep_latest_approved_setup_separate_from_current_revision() {
+        let mut value = setup_item(1, Some(vec!["A"]), true);
+        let mut latest = value.versions[0].clone();
+        latest.version_number = 2;
+        latest.metadata.context_id = "school".into();
+        latest.metadata.difficulty_band = "LowerA1".into();
+        value.versions.push(latest.clone());
+        let mut unapproved = latest;
+        unapproved.version_number = 3;
+        unapproved.approved = false;
+        unapproved.metadata.context_id = "unapproved-version".into();
+        value.versions.push(unapproved);
+        value.status = "readyForReview".into();
+        value.draft.difficulty_band = "UpperA1".into();
+        let request = CoverageRequest {
+            selected_ids: vec!["A".into()],
+            ..Default::default()
+        };
+        let result = analyze_coverage(&[value.clone()], &request, "v1");
+        assert_eq!(result.setup_counts.len(), 2);
+        let approved = result
+            .setup_counts
+            .iter()
+            .find(|setup| setup.approved_count == 1)
+            .unwrap();
+        assert_eq!(approved.filters.context_id.as_deref(), Some("school"));
+        assert_eq!(approved.filters.difficulty_band.as_deref(), Some("LowerA1"));
+        assert_eq!(approved.pending_count, 0);
+        let pending = result
+            .setup_counts
+            .iter()
+            .find(|setup| setup.pending_count == 1)
+            .unwrap();
+        assert_eq!(pending.filters.context_id.as_deref(), Some("shop"));
+        assert_eq!(pending.filters.difficulty_band.as_deref(), Some("UpperA1"));
+        assert_eq!(pending.approved_count, 0);
+        value.draft.registry_version = "v2".into();
+        assert_eq!(
+            analyze_coverage(&[value.clone()], &request, "v1").setup_counts,
+            vec![CoverageSetupCount {
+                filters: approved.filters.clone(),
+                approved_count: 1,
+                pending_count: 0,
+            }]
+        );
+        let v2 = analyze_coverage(&[value], &request, "v2");
+        assert_eq!(v2.setup_counts.len(), 1);
+        assert_eq!(
+            (
+                v2.setup_counts[0].approved_count,
+                v2.setup_counts[0].pending_count
+            ),
+            (0, 1)
+        );
+    }
+
+    #[test]
+    fn setup_drilldown_preserves_secondary_activity_and_exact_empty_setup_fields() {
+        let mut first = setup_item(1, Some(vec!["A"]), true);
+        first.versions[0].metadata.activities = vec!["Mediation".into(), "Mediation".into()];
+        first.versions[0].metadata.domain.clear();
+        let mut second = first.clone();
+        second.id = "2".into();
+        second.versions[0].metadata.activity = "Production".into();
+        let mut wrong_activity = first.clone();
+        wrong_activity.id = "3".into();
+        wrong_activity.versions[0].metadata.activities.clear();
+        let mut other_domain = first.clone();
+        other_domain.id = "4".into();
+        other_domain.versions[0].metadata.domain = "Public".into();
+        let items = [first, second, wrong_activity, other_domain];
+        let request = CoverageRequest {
+            filters: CoverageFilters {
+                skill: Some("Reading".into()),
+                activity: Some("Mediation".into()),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let result = analyze_coverage(&items, &request, "v1");
+        assert_eq!(result.matched_count, 3);
+        assert_eq!(result.setup_counts.len(), 2);
+        let setup = result
+            .setup_counts
+            .iter()
+            .find(|setup| setup.filters.domain.as_deref() == Some(""))
+            .unwrap();
+        assert_eq!(setup.approved_count, 2);
+        assert_eq!(setup.filters.skill, request.filters.skill);
+        assert_eq!(setup.filters.activity, request.filters.activity);
+        assert_eq!(
+            analyze_coverage(
+                &items,
+                &CoverageRequest {
+                    filters: setup.filters.clone(),
+                    ..request
+                },
+                "v1"
+            )
+            .matched_count,
+            setup.approved_count
+        );
+    }
+
+    #[test]
+    fn setup_counts_apply_every_inventory_filter_and_report_both_unknown_inventories() {
+        let mut approved = setup_item(1, None, true);
+        approved.versions[0].metadata.activities = vec!["Mediation".into()];
+        let mut pending = setup_item(2, None, false);
+        pending.draft.activities = vec!["Mediation".into()];
+        let mut known_approved = approved.clone();
+        known_approved.id = "3".into();
+        known_approved.versions[0].metadata.core_ids = Some(vec!["A".into()]);
+        let mut known_pending = pending.clone();
+        known_pending.id = "4".into();
+        known_pending.draft.core_ids = Some(vec!["A".into()]);
+        let items = [approved, pending, known_approved, known_pending];
+        let filters = CoverageFilters {
+            skill: Some("Reading".into()),
+            activity: Some("Mediation".into()),
+            blueprint_slot_id: Some("R1".into()),
+            item_format_id: Some("single".into()),
+            primary_can_do_id: Some("read-notice".into()),
+            domain: Some("Public".into()),
+            context_id: Some("shop".into()),
+            difficulty_band: Some("TypicalA1".into()),
+        };
+        let request = CoverageRequest {
+            scope: CoverageScope::Drafts,
+            filters: filters.clone(),
+            ..Default::default()
+        };
+        let result = analyze_coverage(&items, &request, "v1");
+        assert_eq!(result.setup_counts.len(), 1);
+        assert_eq!(
+            (
+                result.setup_counts[0].approved_count,
+                result.setup_counts[0].pending_count
+            ),
+            (1, 1)
+        );
+        assert_eq!(
+            (result.approved_unknown_count, result.pending_unknown_count),
+            (1, 1)
+        );
+        for key in [
+            "skill",
+            "activity",
+            "blueprintSlotId",
+            "itemFormatId",
+            "primaryCanDoId",
+            "domain",
+            "contextId",
+            "difficultyBand",
+        ] {
+            let mut changed = serde_json::to_value(&filters).unwrap();
+            changed[key] = serde_json::json!("different");
+            let narrowed = CoverageRequest {
+                filters: serde_json::from_value(changed).unwrap(),
+                ..request.clone()
+            };
+            let result = analyze_coverage(&items, &narrowed, "v1");
+            assert!(result.setup_counts.is_empty());
+            assert_eq!(
+                (result.approved_unknown_count, result.pending_unknown_count),
+                (0, 0)
+            );
+        }
+        let serialized = serde_json::to_value(result).unwrap();
+        assert_eq!(serialized["approvedUnknownCount"], 1);
+        assert_eq!(
+            serialized["setupCounts"],
+            serde_json::json!([{
+                "filters": filters, "approvedCount": 1, "pendingCount": 1,
+            }])
+        );
     }
 
     #[test]
@@ -839,7 +1298,7 @@ mod tests {
                 .iter()
                 .map(|pattern| pattern.count)
                 .sum::<usize>(),
-            4
+            3
         );
         let any = analyze_coverage(
             &items,
@@ -863,6 +1322,86 @@ mod tests {
     }
 
     #[test]
+    fn excluded_targets_apply_to_counts_and_every_pattern_matches_its_drilldown() {
+        let mut items = vec![
+            item(1, Some(vec!["A", "B", "C"]), true),
+            item(2, Some(vec!["A", "B", "X"]), true),
+            item(3, Some(vec!["A"]), true),
+            item(4, Some(vec!["B"]), true),
+            item(5, Some(vec![]), true),
+            item(6, None, true),
+        ];
+        for item in &mut items {
+            item.versions[0].metadata.supporting_ids = item.draft.core_ids.clone();
+            item.versions[0].metadata.confirmed_ids = item.draft.core_ids.clone();
+        }
+        for role in [
+            CoverageRole::Core,
+            CoverageRole::Supporting,
+            CoverageRole::Either,
+            CoverageRole::Confirmed,
+        ] {
+            for match_mode in [CoverageMatch::All, CoverageMatch::Any, CoverageMatch::Exact] {
+                let request = CoverageRequest {
+                    role: role.clone(),
+                    match_mode,
+                    selected_ids: vec!["A".into(), "B".into()],
+                    excluded_ids: vec!["X".into()],
+                    ..Default::default()
+                };
+                let result = analyze_coverage(&items, &request, "v1");
+                assert_eq!(
+                    (
+                        result.scoped_count,
+                        result.known_count,
+                        result.unknown_count
+                    ),
+                    (6, 5, 1)
+                );
+                assert_eq!(
+                    result
+                        .term_counts
+                        .iter()
+                        .map(|entry| (entry.id.as_str(), entry.count))
+                        .collect::<Vec<_>>(),
+                    vec![("A", 2), ("B", 2)]
+                );
+                assert_eq!(result.patterns.len(), 4);
+                assert_eq!(
+                    result
+                        .patterns
+                        .iter()
+                        .map(|pattern| pattern.count)
+                        .sum::<usize>(),
+                    4
+                );
+                for pattern in &result.patterns {
+                    let drilled = analyze_coverage(
+                        &items,
+                        &CoverageRequest {
+                            pattern: Some(pattern.present_ids.clone()),
+                            ..request.clone()
+                        },
+                        "v1",
+                    );
+                    assert_eq!(drilled.matched_count, pattern.count);
+                    assert_eq!(drilled.items.len(), pattern.count);
+                    assert!(drilled.items.iter().all(|item| item.id != "2"));
+                    assert_eq!(drilled.patterns.len(), result.patterns.len());
+                    assert_eq!(
+                        drilled
+                            .patterns
+                            .iter()
+                            .map(|pattern| pattern.count)
+                            .sum::<usize>(),
+                        4
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
     fn merged_approval_cannot_bypass_an_unresolved_change_request() {
         let mut version = item(1, Some(vec!["A"]), true).versions.remove(0);
         assert!(version_is_approved(&version, None));
@@ -882,5 +1421,313 @@ mod tests {
             Some(&["human".into(), "missing".into()])
         ));
         assert!(!version_is_approved(&version, Some(&[])));
+    }
+
+    #[test]
+    fn overview_is_opt_in_and_does_not_change_existing_response_contracts() {
+        let request: CoverageRequest = serde_json::from_value(serde_json::json!({})).unwrap();
+        assert!(!request.include_overview);
+        let response = analyze_coverage(&[], &request, "v1");
+        assert!(response.overview.is_none());
+        assert!(
+            serde_json::to_value(response)
+                .unwrap()
+                .get("overview")
+                .is_none()
+        );
+
+        let request: CoverageRequest =
+            serde_json::from_value(serde_json::json!({ "includeOverview": true })).unwrap();
+        let response = serde_json::to_value(analyze_coverage(&[], &request, "v1")).unwrap();
+        assert_eq!(
+            response["overview"],
+            serde_json::json!({
+                "approvedItemCount": 0, "pendingItemCount": 0,
+                "plannedUnknownCount": 0, "confirmedUnknownCount": 0, "pendingUnknownCount": 0,
+                "entries": [],
+            })
+        );
+    }
+
+    #[test]
+    fn overview_counts_all_target_references_without_selection_and_deduplicates_per_item() {
+        let mut approved = item(1, Some(vec!["A", "A", "B"]), true);
+        approved.versions[0].metadata.confirmed_ids = Some(vec!["A".into(), "A".into()]);
+        approved.versions[0].metadata.supporting_ids = Some(vec!["material".into()]);
+        let pending = item(2, Some(vec!["B", "B", "C"]), false);
+        let request = CoverageRequest {
+            include_overview: true,
+            ..Default::default()
+        };
+        let result = analyze_coverage(&[approved, pending], &request, "v1");
+        assert!(result.term_counts.is_empty());
+        assert_eq!(
+            result.overview.unwrap(),
+            CoverageOverview {
+                approved_item_count: 1,
+                pending_item_count: 1,
+                entries: vec![
+                    CoverageOverviewEntry {
+                        id: "A".into(),
+                        planned_count: 1,
+                        confirmed_count: 1,
+                        pending_count: 0
+                    },
+                    CoverageOverviewEntry {
+                        id: "B".into(),
+                        planned_count: 1,
+                        confirmed_count: 0,
+                        pending_count: 1
+                    },
+                    CoverageOverviewEntry {
+                        id: "C".into(),
+                        planned_count: 0,
+                        confirmed_count: 0,
+                        pending_count: 1
+                    },
+                ],
+                ..Default::default()
+            }
+        );
+    }
+
+    #[test]
+    fn overview_counts_latest_approved_content_and_current_revision_independently() {
+        let mut value = item(1, Some(vec!["old"]), true);
+        let mut latest = value.versions[0].clone();
+        latest.id = "latest-approved".into();
+        latest.version_number = 2;
+        latest.metadata.core_ids = Some(vec!["approved".into()]);
+        latest.metadata.confirmed_ids = Some(vec!["approved".into()]);
+        let mut unapproved = latest.clone();
+        unapproved.id = "newest-unapproved".into();
+        unapproved.version_number = 3;
+        unapproved.approved = false;
+        unapproved.metadata.core_ids = Some(vec!["pending".into()]);
+        value.versions.extend([latest, unapproved]);
+        value.status = "readyForReview".into();
+        value.draft.core_ids = Some(vec!["pending".into()]);
+
+        let request = CoverageRequest {
+            include_overview: true,
+            ..Default::default()
+        };
+        let result = analyze_coverage(&[value], &request, "v1");
+        assert_eq!(
+            result.items[0].version_id.as_deref(),
+            Some("latest-approved")
+        );
+        assert_eq!(
+            result.overview.unwrap(),
+            CoverageOverview {
+                approved_item_count: 1,
+                pending_item_count: 1,
+                entries: vec![
+                    CoverageOverviewEntry {
+                        id: "approved".into(),
+                        planned_count: 1,
+                        confirmed_count: 1,
+                        pending_count: 0
+                    },
+                    CoverageOverviewEntry {
+                        id: "pending".into(),
+                        planned_count: 0,
+                        confirmed_count: 0,
+                        pending_count: 1
+                    },
+                ],
+                ..Default::default()
+            }
+        );
+    }
+
+    #[test]
+    fn overview_uses_the_same_registry_and_all_eight_dimension_filters_as_inventory() {
+        let metadata = CoverageMetadata {
+            registry_version: "v1".into(),
+            skill: "Reading".into(),
+            activity: "Reception".into(),
+            activities: vec!["Mediation".into()],
+            domain: "Public".into(),
+            context_id: "shop".into(),
+            blueprint_slot_id: "R1".into(),
+            primary_can_do_id: "read-notice".into(),
+            difficulty_band: "TypicalA1".into(),
+            item_format_id: "single".into(),
+            core_ids: Some(vec!["A".into()]),
+            confirmed_ids: Some(vec!["A".into()]),
+            ..Default::default()
+        };
+        let mut value = item(1, Some(vec!["A"]), true);
+        value.versions[0].metadata = metadata.clone();
+        value.draft = metadata;
+        value.status = "draft".into();
+        let request = CoverageRequest {
+            include_overview: true,
+            filters: CoverageFilters {
+                skill: Some("Reading".into()),
+                activity: Some("Mediation".into()),
+                domain: Some("Public".into()),
+                context_id: Some("shop".into()),
+                blueprint_slot_id: Some("R1".into()),
+                primary_can_do_id: Some("read-notice".into()),
+                difficulty_band: Some("TypicalA1".into()),
+                item_format_id: Some("single".into()),
+            },
+            ..Default::default()
+        };
+        let result = analyze_coverage(&[value.clone()], &request, "v1");
+        assert_eq!(result.overview.as_ref().unwrap().approved_item_count, 1);
+        assert_eq!(result.overview.unwrap().pending_item_count, 1);
+
+        for filters in [
+            CoverageFilters {
+                skill: Some("Writing".into()),
+                ..request.filters.clone()
+            },
+            CoverageFilters {
+                activity: Some("Production".into()),
+                ..request.filters.clone()
+            },
+            CoverageFilters {
+                domain: Some("Educational".into()),
+                ..request.filters.clone()
+            },
+            CoverageFilters {
+                context_id: Some("school".into()),
+                ..request.filters.clone()
+            },
+            CoverageFilters {
+                blueprint_slot_id: Some("R2".into()),
+                ..request.filters.clone()
+            },
+            CoverageFilters {
+                primary_can_do_id: Some("introduce".into()),
+                ..request.filters.clone()
+            },
+            CoverageFilters {
+                difficulty_band: Some("UpperA1".into()),
+                ..request.filters.clone()
+            },
+            CoverageFilters {
+                item_format_id: Some("matching".into()),
+                ..request.filters.clone()
+            },
+        ] {
+            let result = analyze_coverage(
+                &[value.clone()],
+                &CoverageRequest {
+                    filters,
+                    ..request.clone()
+                },
+                "v1",
+            );
+            assert_eq!(result.overview.unwrap(), CoverageOverview::default());
+        }
+        assert_eq!(
+            analyze_coverage(&[value.clone()], &request, "v2")
+                .overview
+                .unwrap(),
+            CoverageOverview::default()
+        );
+
+        let mut latest = value.versions[0].clone();
+        latest.version_number = 2;
+        latest.metadata.registry_version = "v2".into();
+        value.versions.push(latest);
+        let result = analyze_coverage(&[value], &request, "v1").overview.unwrap();
+        assert_eq!(result.approved_item_count, 0);
+        assert_eq!(result.pending_item_count, 1);
+        assert_eq!(result.entries[0].planned_count, 0);
+    }
+
+    #[test]
+    fn overview_is_independent_of_scope_role_language_filters_goal_and_pagination() {
+        let mut approved = item(1, Some(vec!["A", "B"]), true);
+        approved.versions[0].metadata.confirmed_ids = Some(vec!["A".into()]);
+        let items = vec![approved, item(2, Some(vec!["B"]), false)];
+        let request = CoverageRequest {
+            include_overview: true,
+            ..Default::default()
+        };
+        let expected = analyze_coverage(&items, &request, "v1").overview.unwrap();
+        for match_mode in [CoverageMatch::All, CoverageMatch::Any, CoverageMatch::Exact] {
+            let narrowed = CoverageRequest {
+                scope: CoverageScope::Drafts,
+                role: CoverageRole::Supporting,
+                selected_ids: vec!["A".into()],
+                excluded_ids: vec!["B".into()],
+                match_mode,
+                pattern: Some(vec!["A".into()]),
+                desired_count: Some(30),
+                offset: 100,
+                limit: Some(1),
+                ..request.clone()
+            };
+            let result = analyze_coverage(&items, &narrowed, "v1");
+            assert_eq!(result.matched_count, 0);
+            assert!(result.items.is_empty());
+            assert_eq!(result.overview.unwrap(), expected);
+        }
+        let confirmed = CoverageRequest {
+            role: CoverageRole::Confirmed,
+            ..request
+        };
+        assert_eq!(
+            analyze_coverage(&items, &confirmed, "v1").overview.unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn overview_preserves_unknown_and_incomplete_evidence_instead_of_treating_them_as_empty() {
+        let unknown = item(1, None, true);
+        let mut empty = item(2, Some(vec![]), true);
+        empty.versions[0].metadata.confirmed_ids = Some(vec![]);
+        let mut partial = item(3, Some(vec!["A", "B"]), true);
+        partial.versions[0].metadata.confirmed_ids = confirmed_references(
+            &partial.draft,
+            Some(&CoverageEvidence {
+                targets: vec![CoverageEvidenceTarget {
+                    target_content_id: "A".into(),
+                    relation: "understanding".into(),
+                }],
+            }),
+        );
+        let items = vec![
+            unknown,
+            empty,
+            partial,
+            item(4, None, false),
+            item(5, Some(vec![]), false),
+        ];
+        let request = CoverageRequest {
+            include_overview: true,
+            ..Default::default()
+        };
+        assert_eq!(
+            analyze_coverage(&items, &request, "v1").overview.unwrap(),
+            CoverageOverview {
+                approved_item_count: 3,
+                pending_item_count: 2,
+                planned_unknown_count: 1,
+                confirmed_unknown_count: 2,
+                pending_unknown_count: 1,
+                entries: vec![
+                    CoverageOverviewEntry {
+                        id: "A".into(),
+                        planned_count: 1,
+                        confirmed_count: 0,
+                        pending_count: 0
+                    },
+                    CoverageOverviewEntry {
+                        id: "B".into(),
+                        planned_count: 1,
+                        confirmed_count: 0,
+                        pending_count: 0
+                    },
+                ],
+            }
+        );
     }
 }

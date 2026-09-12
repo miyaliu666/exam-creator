@@ -74,3 +74,16 @@ test("checks combine setup and server errors once and give a route to fix each",
   assert.match(markup, /Go to editor/);
   assert.doesNotMatch(markup, /Checks passed/);
 });
+
+test("item checks respect a busy workflow and cannot be duplicated while running", () => {
+  for (const [disabled, checking] of [[false, false], [true, false], [false, true]]) {
+    const markup = renderToStaticMarkup(<ChakraProvider value={defaultSystem}><DraftCheckPanel
+      setupIssues={[]} disabled={disabled} checking={checking} onCheck={() => undefined} onEdit={() => undefined}
+      validation={{ valid: true, issues: [] }}
+    /></ChakraProvider>);
+    const checkButton = markup.match(/<button\b[^>]*>/)?.[0];
+    assert.ok(checkButton);
+    assert.equal(/\bdisabled/.test(checkButton), disabled || checking);
+    if (checking) assert.doesNotMatch(markup, /Checks passed/);
+  }
+});

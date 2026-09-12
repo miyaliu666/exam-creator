@@ -46,7 +46,7 @@ export function applyItemSetup(draft: TaskPackage, selection: ItemSetupSelection
   if (selection.difficultyBand !== draft.content.difficultyBand) {
     const standard = difficultyStandardsForCapability(registry, capabilityForDraft(registry, draft))
       .find((entry) => entry.id === selection.difficultyBand);
-    if (!standard) throw new Error("Select a difficulty available for this task configuration.");
+    if (!standard) throw new Error("Select a difficulty available for these item rules.");
     draft.content.difficulty = difficultyScheme(draft, standard);
   }
   draft.content.primaryDomain = selection.domain;

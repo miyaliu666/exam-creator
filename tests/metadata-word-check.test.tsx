@@ -60,7 +60,5 @@ test("literal checks distinguish missing words and characters from grammar and p
   assert.ok(humanReview, "Nonliteral targets must remain visible for human review");
   assert.match(humanReview, /疑问句式/);
   assert.match(humanReview, /问候功能/);
-  assert.match(humanReview, /not detected automatically/);
-  assert.match(humanReview, /record evidence/);
   assert.doesNotMatch(humanReview, /苹果|猫/);
 });

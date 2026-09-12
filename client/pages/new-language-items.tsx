@@ -79,7 +79,7 @@ function NewLanguageItems() {
   useBlocker({ shouldBlockFn: () => busy && !allowCreatedNavigation.current, enableBeforeUnload: busy, disabled: !busy });
   return <Box minH="100vh" bg="bg" py={12} px={4}>
     <HStack position="fixed" top={3} left={8} zIndex={101} gap={3}>
-      <Button variant="outline" colorPalette="teal" size="sm" disabled={busy} onClick={() => navigate({ to: "/language-items" })}>Item bank</Button>
+      <Button variant="outline" colorPalette="teal" size="sm" disabled={busy} onClick={() => navigate({ to: "/language-items" })}>Item Bank</Button>
       <Button variant="outline" colorPalette="red" size="sm" disabled={busy} onClick={() => logout()}>Sign out / switch account</Button>
     </HStack>
     <Center><Stack gap={6} w="full" maxW="7xl">

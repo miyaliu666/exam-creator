@@ -2,20 +2,8 @@ import { Badge, Box, Button, Checkbox, HStack, Link, Stack, Table, Text } from "
 import { Archive, ExternalLink, RotateCcw, Trash2 } from "lucide-react";
 
 import { DIFFICULTY_LABELS, ITEM_FORMAT_LABELS, SKILL_LABELS, WORKBENCH_LABELS, slotLabel } from "./labels";
-import type { GithubReviewState, LanguageItem, LanguageItemRecordState, LanguageItemStatus, RegistrySnapshot } from "./types";
-const STATUS_COPY: Record<
-  LanguageItemStatus,
-  { label: string; colorPalette: string }
-> = {
-  draft: { label: "Draft", colorPalette: "blue" },
-  readyForReview: { label: "Ready for PR", colorPalette: "purple" },
-  inReview: { label: "In review", colorPalette: "orange" },
-  needsRevision: { label: "Changes requested", colorPalette: "red" },
-  reviewBlocked: { label: "Sync issue", colorPalette: "yellow" },
-  rejected: { label: "PR closed", colorPalette: "red" },
-  approvedForExport: { label: "Approved", colorPalette: "green" },
-  exportedToStaging: { label: "Approved", colorPalette: "green" },
-};
+import { ITEM_STATUS_COPY } from "./item-status";
+import type { GithubReviewState, LanguageItem, LanguageItemRecordState, RegistrySnapshot } from "./types";
 
 const GITHUB_STATE_COPY: Record<
   GithubReviewState,
@@ -92,7 +80,7 @@ export function ItemTable({
         </Table.Header>
         <Table.Body>
           {items.map((item) => {
-            const status = STATUS_COPY[item.status];
+            const status = ITEM_STATUS_COPY[item.status];
             const githubStatus = item.githubReview
               ? GITHUB_STATE_COPY[item.githubReview.state]
               : undefined;

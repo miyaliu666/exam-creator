@@ -5,7 +5,7 @@ export type EditorSection = "setup" | "content" | "review";
 export const AUTHORING_STEPS = [
   { id: "setup", label: "1. Prepare" },
   { id: "content", label: "2. Edit & preview" },
-  { id: "review", label: "3. Check & submit" },
+  { id: "review", label: "3. Submit" },
 ] as const;
 
 export function hasAuthoredContent(payload: CandidatePayload): boolean {

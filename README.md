@@ -39,15 +39,17 @@ Set `MOCK_AUTH=true` in `.env` for local development. With the backend running i
 
 ### Workbench Flow
 
-Open **Item bank** at `/language-items` to browse and filter items. **New items** uses one shared setup, quantity and language-target form for one or multiple items. Choose targets required in every item and, optionally, **Targets to distribute**; **Preview target allocation** shows each item's planned targets before generation. **Options** holds an optional name and candidates per item, which defaults to one. Use **Add another setup** only when the batch needs another configuration.
+Open **Item Bank** at `/language-items` to browse and filter items. **Item rules** in Assessment Settings define the reusable Blueprint slot × Item format × Primary Can-do combination and its rules. **Item setup** selects that combination plus Domain, Context, and Difficulty for a specific item.
 
-**Generate 1 item / Generate N items** opens **Generation jobs**, which holds progress, pause/resume and history. Each group shows its shared setup and required targets once; item rows show their identity, additional targets and generation state. Open an item, adopt a candidate, edit, check and submit for review. Generation status and assigned targets do not establish approval or actual language use.
+**New items** uses one shared setup, quantity and language-target form for one or multiple items. Select **What this item should assess** for one item or **Targets required in every item** for several, and optionally **Different targets for different items**. **Preview each item's targets** shows the allocation before generation. **Options** holds an optional name and **AI drafts per item**, which defaults to one and accepts a positive whole number. Use **Add another setup** when the plan needs another setup group.
+
+**Generate 1 item / Generate N items** opens **Generation jobs**, which holds progress, pause/resume and history. Each group shows its shared setup and required targets once; item rows show their identity, additional targets and generation state. Open an item, select **Use this draft** on an AI draft, edit, check and submit for review. Generation status and assigned targets do not establish approval or actual language use.
 
 A one-item plan can also use **Write manually**, which saves the selected targets and opens **Edit & preview** without calling AI. Empty manual drafts still need complete requirements before generation or submission. **Language coverage** can prepare a compatible creation plan from an explicit inventory goal. See [the item creation guide](language-item-workbench/ITEM-CREATION.md) for field meanings and review steps.
 
 ### AI Connection Troubleshooting
 
-If every candidate fails with `The network connection could not be established`, check the backend's launch environment and its access to the configured API host. A server started from a restricted agent shell can inherit its network restrictions even when the browser and a normal terminal can reach the API. Start the backend from a normal network-enabled terminal or an approved network-enabled agent environment.
+If every AI draft fails with `The network connection could not be established`, check the backend's launch environment and its access to the configured API host. A server started from a restricted agent shell can inherit its network restrictions even when the browser and a normal terminal can reach the API. Start the backend from a normal network-enabled terminal or an approved network-enabled agent environment.
 
 For the default OpenAI host, this Windows terminal check sends no API key and makes no generation request:
 

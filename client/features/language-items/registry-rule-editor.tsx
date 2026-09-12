@@ -7,14 +7,19 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import {
-  CONTENT_KIND_LABELS,
   DOMAIN_LABELS,
   ITEM_FORMAT_LABELS,
   WORKBENCH_LABELS,
 } from "./labels";
+import { ContentCatalog } from "./content-catalog";
+import { ContentEntryDialog } from "./content-entry-dialog";
+import { ContentAssessmentRuleDialog } from "./content-assessment-rule-dialog";
+import { replaceContentAssessmentRule } from "./content-assessment-rules";
+import { RegistryRulesOverview } from "./registry-rules-overview";
+import { RegistryLanguageMatrix, type LanguageMatrixFocus } from "./registry-language-matrix";
 import { capabilityKey, domainsForCapability } from "./registry-capability";
 import { RegistryBlueprintEditor } from "./registry-blueprint-editor";
 import { RegistryDifficultyEditor } from "./registry-difficulty-editor";
@@ -23,6 +28,8 @@ import { ReferenceSourcesPanel } from "./reference-sources-panel";
 import { registryDisplayText } from "./registry-display-text";
 import { createRegistryTextFormatter, RegistryTextContext, registryReferenceName, registrySlotName } from "./registry-reference-labels";
 import type {
+  ContentIdOption,
+  RegistryCapability,
   RegistrySnapshot,
   ScoringContractSummary,
   ScoringPolicySummary,
@@ -108,8 +115,9 @@ function CanDoEditor({ snapshot, update, disabled }: RegistryEditorProps) {
   );
 }
 
-function ContextEditor({ snapshot, update, disabled }: RegistryEditorProps) {
-  const [selectedId, setSelectedId] = useState(snapshot.contextOptions[0]?.id ?? "");
+function ContextEditor({ snapshot, update, disabled, initialContextId }: RegistryEditorProps & { initialContextId?: string }) {
+  const [selectedId, setSelectedId] = useState(initialContextId || snapshot.contextOptions[0]?.id || "");
+  useEffect(() => { if (initialContextId) setSelectedId(initialContextId); }, [initialContextId]);
   const [newContextLabel, setNewContextLabel] = useState("");
   const index = snapshot.contextOptions.findIndex((entry) => entry.id === selectedId);
   const entry = snapshot.contextOptions[index];
@@ -180,7 +188,7 @@ function ContextEditor({ snapshot, update, disabled }: RegistryEditorProps) {
               </Button>
             ) : null}
           </HStack>
-          {references.length ? <ReadOnlyField label="Used by" value={`${references.length} task configurations`} /> : null}
+          {references.length ? <ReadOnlyField label="Used by" value={`${references.length} item rule sets`} /> : null}
           <TextField label="Context name" value={entry.label} disabled={disabled} onChange={(value) => changeContext((context) => { context.label = value; })} />
           {nameExists(snapshot.contextOptions, entry.label, entry.id) ? <Text color="fg.error" fontSize="sm">A context with this name already exists.</Text> : null}
           <SelectField
@@ -205,36 +213,6 @@ interface RegistryEditorProps {
   snapshot: RegistrySnapshot;
   update: UpdateRegistry;
   disabled: boolean;
-}
-
-function ContentEditor({ snapshot, update, disabled }: RegistryEditorProps) {
-  const kinds = [...new Set(snapshot.contentIdOptions.map((entry) => entry.kind))];
-  const [kind, setKind] = useState(kinds[0] ?? "");
-  const entries = snapshot.contentIdOptions.filter((entry) => entry.kind === kind);
-  const [selectedId, setSelectedId] = useState(entries[0]?.id ?? "");
-  const entry = entries.find((option) => option.id === selectedId) ?? entries[0];
-  useEffect(() => { setSelectedId(entries[0]?.id ?? ""); }, [kind]);
-  if (!entry) return <Text color="fg.muted">No language content entries configured.</Text>;
-  const index = snapshot.contentIdOptions.findIndex((option) => option.id === entry.id);
-  const invalidContexts = entry.contextIds.flatMap((id) => {
-    const context = snapshot.contextOptions.find((option) => option.id === id);
-    const reason = !context ? "This context no longer exists." : context.retired ? "This context is retired." : null;
-    return reason ? [{ id, label: context?.label ?? "Missing context", reason }] : [];
-  });
-  return (
-    <Stack gap={4}>
-      <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
-        <SelectField label="Content category" value={kind} options={kinds.map((id) => ({ id, label: CONTENT_KIND_LABELS[id] ?? id }))} onChange={setKind} />
-        <SelectField label="Language content entry" value={entry.id} translate={kind !== "lexical" && kind !== "character"} options={entries.map((option) => ({ id: option.id, label: option.label }))} onChange={setSelectedId} />
-      </SimpleGrid>
-      <TextField label="Display label" value={entry.label} translate={entry.kind !== "lexical" && entry.kind !== "character"} disabled={disabled} onChange={(value) => update((next) => { next.contentIdOptions[index].label = value; })} />
-      <SelectField label="Mastery scope" value={entry.masteryScope ?? ""} options={[{ id: "", label: "Not restricted" }, { id: "receptive", label: "Receptive" }, { id: "productive", label: "Productive" }, { id: "receptiveProductive", label: "Receptive and productive" }]} disabled={disabled} onChange={(value) => update((next) => { next.contentIdOptions[index].masteryScope = value || null; })} />
-      <RegistryMultiSelect label="Compatible Can-do" options={snapshot.canDoOptions} values={entry.canDoIds} disabled={disabled} onChange={(values) => update((next) => { next.contentIdOptions[index].canDoIds = values; })} />
-      <InvalidSelections label="Invalid compatible Can-do" entries={entry.canDoIds.filter((id) => !snapshot.canDoOptions.some((canDo) => canDo.id === id)).map((id) => ({ id, label: "Missing Can-do", reason: "This Can-do no longer exists." }))} disabled={disabled} onRemove={(id) => update((next) => { next.contentIdOptions[index].canDoIds = entry.canDoIds.filter((value) => value !== id); })} />
-      <RegistryMultiSelect label="Compatible contexts" options={snapshot.contextOptions.filter((context) => !context.retired).map((context) => ({ id: context.id, label: context.label }))} values={entry.contextIds} disabled={disabled} onChange={(values) => update((next) => { next.contentIdOptions[index].contextIds = values; })} />
-      <InvalidSelections label="Unavailable content contexts" entries={invalidContexts} disabled={disabled} onRemove={(id) => update((next) => { next.contentIdOptions[index].contextIds = entry.contextIds.filter((value) => value !== id); })} />
-    </Stack>
-  );
 }
 
 function PolicyEditor({
@@ -296,7 +274,7 @@ function ScoringEditor({ snapshot, update, disabled }: RegistryEditorProps) {
         <ReadOnlyField label="Scoring type" value={entry.scoringType} />
         <ReadOnlyField label="Contract status" value={entry.status} />
       </SimpleGrid>
-      <TextListField label="Task-specific scoring requirements" values={entry.taskSpecificRequirements} disabled={disabled} onChange={(values) => change((contract) => { contract.taskSpecificRequirements = values; })} />
+      <TextListField label="Item-specific scoring requirements" values={entry.taskSpecificRequirements} disabled={disabled} onChange={(values) => change((contract) => { contract.taskSpecificRequirements = values; })} />
       <TextField label="Score cap or exclusion" value={entry.capOrExclusion ?? ""} disabled={disabled} onChange={(value) => change((contract) => { contract.capOrExclusion = value || undefined; })} />
       <SimpleGrid columns={{ base: 1, xl: 2 }} gap={3}>
         <PolicyEditor label="Normalization" policy={entry.normalization} usageCount={contracts.filter((contract) => contract.normalization.policyId === entry.normalization.policyId).length} disabled={disabled} onChange={policy("normalization")} />
@@ -329,43 +307,93 @@ const RULE_LIBRARIES = [
   { id: "history", label: "Change history" },
 ];
 
-export function RegistryRuleEditor({ snapshot, update, disabled, history }: RegistryEditorProps & { history?: ReactNode }) {
+export function RegistryRuleEditor({ snapshot, update, disabled, history, onStagedDirtyChange }: RegistryEditorProps & { history?: ReactNode; onStagedDirtyChange?: (dirty: boolean) => void }) {
   const displayText = useMemo(() => createRegistryTextFormatter(snapshot), [snapshot]);
-  const [area, setArea] = useState<"configuration" | "libraries">("configuration");
+  type Area = "overview" | "matrix" | "configuration" | "libraries";
+  const [area, setArea] = useState<Area>("overview");
+  const scrollPositions = useRef<Partial<Record<Area, number>>>({});
+  const previousArea = useRef<Area>("overview");
+  useEffect(() => {
+    if (previousArea.current === area) return;
+    previousArea.current = area;
+    window.scrollTo({ top: scrollPositions.current[area] ?? 0, behavior: "instant" });
+  }, [area]);
+  const [returnArea, setReturnArea] = useState<"overview" | "matrix" | null>(null);
   const [library, setLibrary] = useState("contexts");
   const [difficultyLevel, setDifficultyLevel] = useState("LowerA1");
   const [selectedKey, setSelectedKey] = useState(() => snapshot.capabilities[0] ? capabilityKey(snapshot.capabilities[0]) : "");
+  const [contextId, setContextId] = useState("");
+  const [selectedRowKey, setSelectedRowKey] = useState("");
+  const [matrixFocus, setMatrixFocus] = useState<LanguageMatrixFocus>();
+  const [editingEntry, setEditingEntry] = useState<ContentIdOption | null>(null);
+  const [editingRule, setEditingRule] = useState<{ entry: ContentIdOption; capability: RegistryCapability; contextId: string } | null>(null);
+  const [stagedDirty, setStagedDirty] = useState(false);
+  const handleStagedDirty = useCallback((dirty: boolean) => { setStagedDirty(dirty); onStagedDirtyChange?.(dirty); }, [onStagedDirtyChange]);
   const capability = snapshot.capabilities.find((entry) => capabilityKey(entry) === selectedKey) ?? snapshot.capabilities[0];
   const editorProps = { snapshot, update, disabled };
+  const canNavigate = () => !stagedDirty || window.confirm("Discard the unapplied language content changes?");
+  const navigate = (next: Area) => {
+    if (area === next || !canNavigate()) return;
+    scrollPositions.current[area] = window.scrollY;
+    setEditingEntry(null); setEditingRule(null); handleStagedDirty(false); setArea(next);
+  };
+  const openRules = (entry: RegistryCapability, selectedContext = "", level = "LowerA1") => {
+    if (!canNavigate()) return;
+    scrollPositions.current[area] = window.scrollY;
+    if (area === "overview" || area === "matrix") setReturnArea(area);
+    setSelectedKey(capabilityKey(entry)); setContextId(selectedContext); setDifficultyLevel(level); setArea("configuration");
+  };
+  const openContext = (id: string) => {
+    if (!canNavigate()) return;
+    scrollPositions.current[area] = window.scrollY;
+    if (area === "overview" || area === "matrix") setReturnArea(area);
+    setContextId(id); setLibrary("contexts"); setArea("libraries");
+  };
+  const closeDialog = () => { setEditingEntry(null); setEditingRule(null); handleStagedDirty(false); };
   return (
     <RegistryTextContext.Provider value={displayText}>
       <Stack gap={5}>
-        <HStack borderBottomWidth="1px" pb={3} gap={2}>
-          <Button variant={area === "configuration" ? "subtle" : "ghost"} colorPalette="blue" aria-pressed={area === "configuration"} onClick={() => setArea("configuration")}>
-            {WORKBENCH_LABELS.taskConfiguration}
-          </Button>
-          <Button variant={area === "libraries" ? "subtle" : "ghost"} colorPalette="blue" aria-pressed={area === "libraries"} onClick={() => setArea("libraries")}>
-            Rule libraries
-          </Button>
+        <HStack borderBottomWidth="1px" pb={3} gap={2} flexWrap="wrap">
+          {([{ id: "overview", label: "Rules overview" }, { id: "matrix", label: "Language content matrix" }, { id: "configuration", label: WORKBENCH_LABELS.itemRules }, { id: "libraries", label: "Rule libraries" }] as const).map(({ id, label }) =>
+            <Button key={id} variant={area === id ? "subtle" : "ghost"} colorPalette="blue" aria-pressed={area === id} onClick={() => navigate(id)}>{label}</Button>)}
         </HStack>
+        {returnArea && (area === "configuration" || area === "libraries") ? <Button alignSelf="start" variant="outline" size="sm" onClick={() => navigate(returnArea)}>Back to {returnArea === "overview" ? "Rules overview" : "Language content matrix"}</Button> : null}
+        <div hidden={area !== "overview"}>
+          <RegistryRulesOverview {...editorProps} selectedRowKey={selectedRowKey} onSelectedRowChange={setSelectedRowKey} onEditRules={openRules} onEditContext={openContext} onViewContent={(entry, id) => {
+            scrollPositions.current[area] = window.scrollY;
+            setMatrixFocus((current) => ({ capabilityKey: capabilityKey(entry), contextId: id, sequence: (current?.sequence ?? 0) + 1 })); setArea("matrix");
+          }} />
+        </div>
+        <div hidden={area !== "matrix"}>
+          <RegistryLanguageMatrix {...editorProps} focus={matrixFocus} onOpenEntry={(entry) => setEditingEntry(structuredClone(entry))} onOpenRule={(entry, column) => setEditingRule({ entry: structuredClone(entry), capability: structuredClone(column.capability), contextId: column.context.id })} onOpenItemRules={openRules} />
+        </div>
         {area === "configuration" ? capability ? <>
-          <RegistryBlueprintEditor {...editorProps} capability={capability} onSelect={(entry) => setSelectedKey(capabilityKey(entry))} onManageContexts={() => { setLibrary("contexts"); setArea("libraries"); }} />
+          {contextId ? <HStack><Text fontSize="sm">{WORKBENCH_LABELS.context}: {displayText(snapshot.contextOptions.find((entry) => entry.id === contextId)?.label ?? "Missing Context")}</Text><Button size="xs" variant="plain" onClick={() => openContext(contextId)}>{disabled ? "View Context" : "Edit Context"}</Button></HStack> : null}
+          <RegistryBlueprintEditor {...editorProps} capability={capability} onSelect={(entry) => { setSelectedKey(capabilityKey(entry)); setContextId(""); }} onManageContexts={() => openContext(contextId)} />
           <Box borderTopWidth="1px" pt={5}>
             <Text fontWeight="semibold" mb={4}>{WORKBENCH_LABELS.difficulty}</Text>
             <RegistryDifficultyEditor {...editorProps} capability={capability} selectedLevel={difficultyLevel} onSelectLevel={setDifficultyLevel} />
           </Box>
-        </> : <Text color="fg.muted">No task configurations available.</Text> : (
+        </> : <Text color="fg.muted">No item rule sets available.</Text> : area === "libraries" ? (
           <Stack gap={5}>
-            <SelectField label="Rule library" value={library} options={RULE_LIBRARIES.filter((entry) => entry.id !== "history" || history !== undefined)} onChange={setLibrary} />
-            {library === "contexts" ? <ContextEditor {...editorProps} /> : null}
+            <SelectField label="Rule library" value={library} options={RULE_LIBRARIES.filter((entry) => entry.id !== "history" || history !== undefined)} onChange={(value) => { if (canNavigate()) { handleStagedDirty(false); setLibrary(value); } }} />
+            {library === "contexts" ? <ContextEditor {...editorProps} initialContextId={contextId} /> : null}
             {library === "sources" ? <ReferenceSourcesPanel /> : null}
             {library === "canDo" ? <CanDoEditor {...editorProps} /> : null}
-            {library === "content" ? <ContentEditor {...editorProps} /> : null}
+            {library === "content" ? <ContentCatalog {...editorProps} onStagedDirtyChange={handleStagedDirty} /> : null}
             {library === "scoring" ? <ScoringEditor {...editorProps} /> : null}
             {library === "review" ? <ContractsEditor {...editorProps} /> : null}
             {library === "history" ? history : null}
           </Stack>
-        )}
+        ) : null}
+        {editingEntry ? <ContentEntryDialog key={editingEntry.id} initialEntry={editingEntry} isNew={false} snapshot={snapshot} disabled={disabled} onDirtyChange={handleStagedDirty} onClose={closeDialog} onOpenExisting={(entry) => setEditingEntry(structuredClone(entry))} onApply={(entry) => {
+          if (disabled) return;
+          update((next) => { const index = next.contentIdOptions.findIndex((value) => value.id === entry.id); if (index >= 0) next.contentIdOptions[index] = entry; }); closeDialog();
+        }} /> : null}
+        {editingRule ? <ContentAssessmentRuleDialog {...editingRule} snapshot={snapshot} disabled={disabled} onDirtyChange={handleStagedDirty} onClose={closeDialog} onApply={(rule) => {
+          if (disabled) return;
+          update((next) => { const index = next.contentIdOptions.findIndex((entry) => entry.id === editingRule.entry.id); if (index >= 0) next.contentIdOptions[index] = replaceContentAssessmentRule(next.contentIdOptions[index], editingRule.capability, editingRule.contextId, rule); }); closeDialog();
+        }} /> : null}
       </Stack>
     </RegistryTextContext.Provider>
   );

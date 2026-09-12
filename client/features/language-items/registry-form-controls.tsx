@@ -35,10 +35,10 @@ export function SelectField({
 }) {
   const displayText = useContext(RegistryTextContext);
   return (
-    <Field.Root>
+    <Field.Root disabled={disabled}>
       <Field.Label>{label}</Field.Label>
       <NativeSelect.Root disabled={disabled}>
-        <NativeSelect.Field value={value} onChange={(event) => onChange(event.target.value)}>
+        <NativeSelect.Field value={value} onChange={(event) => { if (!disabled) onChange(event.target.value); }}>
           {options.map((option) => (
             <option key={option.id} value={option.id}>{translate ? displayText(option.label) : option.label}</option>
           ))}

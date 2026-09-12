@@ -1312,6 +1312,20 @@ pub struct AiProviderCall {
     pub input_tokens: Option<u64>,
     pub output_tokens: Option<u64>,
     pub total_tokens: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub request_body: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub request_body_unavailable_reason: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AiGenerationPromptPreview {
+    pub provider: String,
+    pub model: String,
+    pub prompt_version: String,
+    pub sends_to_provider: bool,
+    pub request_body: Value,
 }
 
 pub fn ai_generation_setup_snapshot(package: &TaskPackage) -> Value {
@@ -1400,6 +1414,8 @@ pub struct AiReviewRun {
     pub version_id: Option<String>,
     pub item_id: String,
     pub draft_revision: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub content_hash: Option<String>,
     pub provider: String,
     pub model: String,
     pub model_version: String,
@@ -1412,6 +1428,33 @@ pub struct AiReviewRun {
     pub error: Option<String>,
     pub created_by: String,
     pub created_at: String,
+}
+
+impl AiReviewRun {
+    pub fn matches_current_draft(&self, item: &LanguageItem) -> bool {
+        self.version_id.is_none()
+            && self.item_id == item.id
+            && self.created_by == item.owner_email
+            && self.draft_revision == Some(item.revision)
+            && self.content_hash.as_deref() == Some(task_package_hash(&item.draft).as_str())
+            && self.status == "completed"
+            && self.error.is_none()
+            && matches!(self.provider.as_str(), "deepseek" | "openai")
+            && self.findings.iter().all(|finding| {
+                matches!(finding.severity.as_str(), "info" | "warning" | "error")
+                    && !finding.category.trim().is_empty()
+                    && !finding.code.trim().is_empty()
+                    && !finding.field_path.trim().is_empty()
+                    && !finding.rule_ref.trim().is_empty()
+                    && !finding.message.trim().is_empty()
+            })
+            && self.spec_versions.planning_spec_version
+                == item.draft.spec_versions.planning_spec_version
+            && self.spec_versions.registry_bundle_version
+                == item.draft.spec_versions.registry_bundle_version
+            && self.spec_versions.task_package_version
+                == item.draft.spec_versions.task_package_version
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

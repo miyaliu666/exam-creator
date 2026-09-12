@@ -27,7 +27,7 @@ export function UsersOnPageAvatars({ path }: UsersOnPageAvatarsProps) {
             ml={idx === 0 ? 0 : -3}
             boxShadow="md"
           >
-            <Avatar.Image src={user.picture || undefined} />
+            <Avatar.Image src={user.picture ?? undefined} />
             <Tooltip content={user.name}>
               <Avatar.Fallback name={user.name} />
             </Tooltip>

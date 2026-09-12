@@ -48,7 +48,7 @@ export function validateAuthoringSetup(
   ) {
     addIssue(
       "content.targetContentIds",
-      "Remove language content that does not match the task configuration, mastery scope, or context",
+      "Remove language content that does not match the item rules, mastery scope, or context",
     );
   }
 
@@ -57,18 +57,18 @@ export function validateAuthoringSetup(
     return !entry || entry.kind !== "supported" ||
       !isContentOptionCompatible(entry, capability, draft.content.contextId);
   })) {
-    addIssue("content.supportingContentRefs", "Remove supporting content that is unavailable for this task configuration or context");
+    addIssue("content.supportingContentRefs", "Remove supporting content that is unavailable for these item rules or context");
   }
 
   const standard = difficultyStandardsForCapability(registry, capability).find(
     (entry) => entry.id === draft.content.difficultyBand,
   );
   if (!standard) {
-    addIssue("content.difficultyBand", "Select a difficulty available for this task configuration");
+    addIssue("content.difficultyBand", "Select a difficulty available for these item rules");
   }
   const difficulty = draft.content.difficulty;
   if (!difficulty && (registry.settingsSchemaVersion ?? 0) >= 1) {
-    addIssue("content.difficultyBand", "Select a difficulty profile for this task configuration");
+    addIssue("content.difficultyBand", "Select a difficulty profile for these item rules");
   }
   if (difficulty && standard) {
     if (difficulty.intendedBand !== standard.id) {

@@ -29,7 +29,7 @@ function LanguageItemBatches() {
   return (
     <Box minH="100vh" bg="bg" py={12} px={4}>
       <HStack position="fixed" top={3} left={8} zIndex={101} gap={3}>
-        <Button variant="outline" colorPalette="teal" size="sm" onClick={() => navigate({ to: "/language-items" })}>Item bank</Button>
+        <Button variant="outline" colorPalette="teal" size="sm" onClick={() => navigate({ to: "/language-items" })}>Item Bank</Button>
         <Button variant="outline" colorPalette="red" size="sm" onClick={() => logout()}>Sign out / switch account</Button>
       </HStack>
       <Center>

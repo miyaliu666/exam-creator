@@ -21,14 +21,15 @@ use crate::{
     database::prisma,
     errors::Error,
     language_items::{
+        ai,
         domain::{
-            GithubReviewBatch, GithubReviewLink, GithubReviewState, GithubSyncDelivery,
-            LanguageItem, LanguageItemAuditEvent, LanguageItemRecordState, LanguageItemReview,
-            LanguageItemStatus, LanguageItemVersion, ReviewDecision, TaskPackage,
-            task_package_hash,
+            AiReviewRun, GithubReviewBatch, GithubReviewLink, GithubReviewState,
+            GithubSyncDelivery, LanguageItem, LanguageItemAuditEvent, LanguageItemRecordState,
+            LanguageItemReview, LanguageItemStatus, LanguageItemVersion, ReviewDecision,
+            TaskPackage, task_package_hash,
         },
         github::{GithubClient, RepositoryFile},
-        registry::snapshot_for,
+        registry::{RegistrySnapshot, snapshot_for},
         validation::validate_task_package,
     },
     state::ServerState,
@@ -120,6 +121,137 @@ pub async fn get_status(
 #[serde(rename_all = "camelCase")]
 pub struct CreateGithubReviewBatchBody {
     item_ids: Vec<String>,
+    #[serde(default)]
+    ai_review_run_ids: HashMap<String, String>,
+    #[serde(default)]
+    expected_revisions: HashMap<String, u64>,
+}
+
+fn require_submission_ai_review(
+    item: &LanguageItem,
+    version: &LanguageItemVersion,
+    expected_revision: Option<u64>,
+    report: &AiReviewRun,
+) -> Result<(), Error> {
+    if expected_revision != Some(item.revision) {
+        return Err(conflict(
+            "The item revision changed or was not supplied. Reload the item and run AI pre-review again.",
+        ));
+    }
+    let matches = if item.status == LanguageItemStatus::Draft {
+        report.matches_current_draft(item)
+    } else {
+        matches!(
+            item.status,
+            LanguageItemStatus::ReadyForReview | LanguageItemStatus::Rejected
+        ) && item.latest_version_id.as_deref() == Some(version.id.as_str())
+            && report.version_id.as_deref() == Some(version.id.as_str())
+            && report.item_id == item.id
+            && report.created_by == item.owner_email
+            && report.content_hash.as_deref() == Some(version.content_hash.as_str())
+            && version.content_hash == task_package_hash(&version.package)
+            && report.status == "completed"
+            && report.error.is_none()
+            && matches!(report.provider.as_str(), "deepseek" | "openai")
+            && report.spec_versions.planning_spec_version
+                == version.package.spec_versions.planning_spec_version
+            && report.spec_versions.registry_bundle_version
+                == version.package.spec_versions.registry_bundle_version
+            && report.spec_versions.task_package_version
+                == version.package.spec_versions.task_package_version
+    };
+    let current_report_policy = report.prompt_id == ai::REVIEW_PROMPT_ID
+        && report.prompt_version == ai::REVIEW_PROMPT_VERSION
+        && report.schema_version == ai::REVIEW_SCHEMA_VERSION
+        && report.findings.iter().all(|finding| {
+            matches!(finding.severity.as_str(), "info" | "warning" | "error")
+                && !finding.category.trim().is_empty()
+                && !finding.code.trim().is_empty()
+                && !finding.field_path.trim().is_empty()
+                && !finding.rule_ref.trim().is_empty()
+                && !finding.message.trim().is_empty()
+        });
+    if !matches || !current_report_policy {
+        return Err(conflict(
+            "A completed AI pre-review of this exact item content is required. Run AI pre-review again.",
+        ));
+    }
+    if report
+        .findings
+        .iter()
+        .any(|finding| finding.severity == "error")
+    {
+        return Err(Error::Server(StatusCode::UNPROCESSABLE_ENTITY,
+            "AI pre-review found errors. Correct the item and run AI pre-review again before submitting.".to_string()));
+    }
+    Ok(())
+}
+
+fn report_text(value: &str) -> String {
+    let mut escaped = String::with_capacity(value.len());
+    for character in value.chars() {
+        match character {
+            '\r' | '\n' => escaped.push(' '),
+            '&' => escaped.push_str("&amp;"),
+            '<' => escaped.push_str("&lt;"),
+            '>' => escaped.push_str("&gt;"),
+            '@' => escaped.push_str("&#64;"),
+            '\\' | '`' | '*' | '_' | '[' | ']' | '#' | '!' | '|' | '~' => {
+                escaped.push('\\');
+                escaped.push(character);
+            }
+            _ => escaped.push(character),
+        }
+    }
+    escaped
+}
+
+fn ai_review_report_for_item(
+    title: &str,
+    version: &LanguageItemVersion,
+    report: &AiReviewRun,
+) -> String {
+    let findings = if report.findings.is_empty() {
+        "No findings reported.".to_string()
+    } else {
+        report
+            .findings
+            .iter()
+            .map(|finding| {
+                format!(
+                    "- **{} · {}** — {}\n  - Field: {} · Rule: {} · Code: {}",
+                    report_text(&finding.severity),
+                    report_text(&finding.category),
+                    report_text(&finding.message),
+                    report_text(&finding.field_path),
+                    report_text(&finding.rule_ref),
+                    report_text(&finding.code),
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+    };
+    format!(
+        "### AI pre-review: {}\n\nReport: {} · Provider: {} · Model: {}\n\nReviewed at: {}\n\nReviewed content hash: {}\n\nSubmission version: {} · Version {} · Frozen content hash: {}\n\n{}\n\nAI pre-review does not approve the item; human review is pending.",
+        report_text(title),
+        report_text(&report.id),
+        report_text(&report.provider),
+        report_text(&report.model),
+        report_text(&report.created_at),
+        report.content_hash.as_deref().unwrap_or("Unavailable"),
+        version.id,
+        version.version_number,
+        version.content_hash,
+        findings,
+    )
+}
+
+fn review_pull_body(review_focus: &[String], ai_review_reports: &[String]) -> String {
+    let review_focus = review_focus.join("\n\n");
+    let ai_review_reports = ai_review_reports.join("\n\n");
+    format!(
+        "{review_focus}\n\n## AI pre-review reports\n\n{ai_review_reports}\n\n## Review checklist\n\n- [ ] The item measures the stated Can-do and stays within A1 difficulty\n- [ ] The context, communicative purpose, stimulus, and instructions are complete and natural\n- [ ] Language content contains no unnecessary out-of-scope language\n- [ ] The correct answer or required content points agree with the item instructions\n- [ ] The item structure and candidate-facing preview are correct and reveal no answers\n- [ ] After changing a prompt, option, or answer, every related field remains consistent\n\nUse pull-request reviews and inline comments. Merging confirms that the item has passed the checks above.\n"
+    )
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -164,7 +296,7 @@ struct GithubBatchManifestItem {
     candidate_schema_path: String,
 }
 
-fn slot_name(id: &str) -> &str {
+fn legacy_slot_name(id: &str) -> &'static str {
     match id {
         "R-A1-1" => "Signs, labels, and short notices",
         "R-A1-2" => "Short messages and online information",
@@ -181,11 +313,11 @@ fn slot_name(id: &str) -> &str {
         "S-A1-2" => "Express direct needs and familiar content",
         "S-A1-3" => "Simple everyday interaction and arrangement confirmation",
         "S-A1-4" => "Relay simple information orally",
-        _ => "Registered blueprint task",
+        _ => "Registered Blueprint slot",
     }
 }
 
-fn can_do_name(id: &str) -> &str {
+fn legacy_can_do_name(id: &str) -> &'static str {
     match id {
         "A1-L1" => "Understand basic personal and familiar information",
         "A1-L2" => "Extract explicit practical information",
@@ -220,21 +352,56 @@ fn item_format_name(id: &str) -> &str {
     }
 }
 
-fn review_display_title(item: &LanguageItem) -> String {
-    let title = item.title.trim();
+fn slot_name<'a>(package: &TaskPackage, registry: &'a RegistrySnapshot) -> &'a str {
+    registry
+        .blueprint_slots
+        .iter()
+        .find(|slot| slot.id == package.blueprint_slot_id && !slot.display_name.trim().is_empty())
+        .map(|slot| slot.display_name.as_str())
+        .or_else(|| {
+            registry
+                .capabilities
+                .iter()
+                .find(|capability| {
+                    capability.blueprint_slot_id == package.blueprint_slot_id
+                        && capability.item_format_id == package.item_format_id
+                        && !capability.title.trim().is_empty()
+                })
+                .map(|capability| capability.title.as_str())
+        })
+        .unwrap_or_else(|| legacy_slot_name(&package.blueprint_slot_id))
+}
+
+fn can_do_name<'a>(package: &TaskPackage, registry: &'a RegistrySnapshot) -> &'a str {
+    registry
+        .can_do_options
+        .iter()
+        .find(|can_do| {
+            can_do.id == package.content.primary_can_do_id && !can_do.label.trim().is_empty()
+        })
+        .map(|can_do| can_do.label.as_str())
+        .unwrap_or_else(|| legacy_can_do_name(&package.content.primary_can_do_id))
+}
+
+fn review_display_title(title: &str, package: &TaskPackage, registry: &RegistrySnapshot) -> String {
+    let title = title.trim();
     if !title.is_empty() && title.is_ascii() {
         title.to_string()
     } else {
         format!(
             "{} — {}",
-            slot_name(&item.draft.blueprint_slot_id),
-            item_format_name(&item.draft.item_format_id)
+            slot_name(package, registry),
+            item_format_name(&package.item_format_id)
         )
     }
 }
 
-fn review_focus_for_item(item: &LanguageItem) -> String {
-    let format_checks = match item.draft.item_format_id.as_str() {
+fn review_focus_for_item(
+    title: &str,
+    package: &TaskPackage,
+    registry: &RegistrySnapshot,
+) -> String {
+    let format_checks = match package.item_format_id.as_str() {
         "IF-SINGLE-SELECT" => {
             "- [ ] There is exactly one unambiguous correct answer; distractors are plausible and contain no answer cues"
         }
@@ -251,12 +418,12 @@ fn review_focus_for_item(item: &LanguageItem) -> String {
     };
     format!(
         "## {}\n\n- Blueprint slot: {}\n- Primary Can-do: {}\n- Skill: {}\n- Communicative activity: {}\n- Item format: {}\n\n### Item-specific check\n\n{}",
-        review_display_title(item),
-        slot_name(&item.draft.blueprint_slot_id),
-        can_do_name(&item.draft.content.primary_can_do_id),
-        item.draft.content.primary_reported_skill,
-        item.draft.content.communicative_activity,
-        item_format_name(&item.draft.item_format_id),
+        title,
+        slot_name(package, registry),
+        can_do_name(package, registry),
+        package.content.primary_reported_skill,
+        package.content.communicative_activity,
+        item_format_name(&package.item_format_id),
         format_checks,
     )
 }
@@ -299,6 +466,7 @@ pub async fn post_batch(
         .map(|id| items_by_id.get(id).expect("selected item exists").clone())
         .collect();
     let mut versions_by_item = HashMap::new();
+    let mut ai_reviews_by_item = HashMap::new();
     let mut versions_to_insert = Vec::new();
     for item in &ordered_items {
         if item.owner_email != user.email {
@@ -313,6 +481,21 @@ pub async fn post_batch(
                 item.id
             )));
         }
+        if body.expected_revisions.get(&item.id).copied() != Some(item.revision) {
+            return Err(conflict(
+                "The item revision changed or was not supplied. Reload the item and run AI pre-review again.",
+            ));
+        }
+        let report_id = body.ai_review_run_ids.get(&item.id).filter(|id| !id.trim().is_empty())
+            .ok_or_else(|| conflict("An AI pre-review report is required for every submitted item. Run AI pre-review first."))?;
+        let ai_review = state
+            .workbench_database
+            .ai_review_runs
+            .find_one(doc! { "id": report_id })
+            .await?
+            .ok_or_else(|| {
+                conflict("The AI pre-review report is unavailable. Run AI pre-review again.")
+            })?;
         if item
             .github_review
             .as_ref()
@@ -381,6 +564,13 @@ pub async fn post_batch(
                 item.id
             )));
         };
+        require_submission_ai_review(
+            item,
+            &version,
+            body.expected_revisions.get(&item.id).copied(),
+            &ai_review,
+        )?;
+        ai_reviews_by_item.insert(item.id.clone(), ai_review);
         versions_by_item.insert(item.id.clone(), version);
     }
 
@@ -388,6 +578,9 @@ pub async fn post_batch(
     let mut files = Vec::new();
     let mut manifest_items = Vec::new();
     let mut rule_paths = HashSet::new();
+    let mut review_titles = Vec::new();
+    let mut review_focus = Vec::new();
+    let mut ai_review_reports = Vec::new();
     for item in &ordered_items {
         let version = versions_by_item
             .get(&item.id)
@@ -401,11 +594,30 @@ pub async fn post_batch(
                 version.id
             )));
         }
+        let registry_version = &version.package.spec_versions.registry_bundle_version;
+        let registry = snapshot_for(registry_version).ok_or_else(|| {
+            conflict("The item's pinned Assessment Settings version is unavailable")
+        })?;
+        // Review labels must describe the submitted version, including historical frozen items.
+        let display_title = review_display_title(&item.title, &version.package, &registry);
+        review_titles.push(display_title.clone());
+        ai_review_reports.push(ai_review_report_for_item(
+            &display_title,
+            version,
+            ai_reviews_by_item
+                .get(&item.id)
+                .expect("AI pre-review exists"),
+        ));
+        review_focus.push(review_focus_for_item(
+            &display_title,
+            &version.package,
+            &registry,
+        ));
         let repository_path = format!("items/{}.json", item.id);
         let file = GithubItemFile {
             schema_version: "1.1".to_string(),
             item_id: item.id.clone(),
-            title: review_display_title(item),
+            title: display_title,
             source: GithubItemSource {
                 batch_id: Some(batch_id.clone()),
                 version_id: version.id.clone(),
@@ -425,10 +637,6 @@ pub async fn post_batch(
             path: repository_path.clone(),
             content,
         });
-        let registry_version = &version.package.spec_versions.registry_bundle_version;
-        let registry = snapshot_for(registry_version).ok_or_else(|| {
-            conflict("The item's pinned Assessment Settings version is unavailable")
-        })?;
         let rules_directory = format!(
             "review-batches/{batch_id}/rules/{}",
             hex::encode(Sha256::digest(registry_version.as_bytes()))
@@ -506,21 +714,46 @@ pub async fn post_batch(
     });
 
     let title = if ordered_items.len() == 1 {
-        format!("[Item Review] {}", review_display_title(&ordered_items[0]))
+        format!("[Item Review] {}", review_titles[0])
     } else {
         format!(
             "[Item Review Batch] Chinese A1 · {} items",
             ordered_items.len()
         )
     };
-    let review_focus = ordered_items
-        .iter()
-        .map(review_focus_for_item)
-        .collect::<Vec<_>>()
-        .join("\n\n");
-    let pull_body = format!(
-        "{review_focus}\n\n## Review checklist\n\n- [ ] The item measures the stated Can-do and stays within A1 difficulty\n- [ ] The context, communicative purpose, stimulus, and instructions are complete and natural\n- [ ] Language content contains no unnecessary out-of-scope language\n- [ ] The correct answer or required content points agree with the task\n- [ ] The item structure and candidate rendering are correct and reveal no answers\n- [ ] After changing a prompt, option, or answer, every related field remains consistent\n\nUse pull-request reviews and inline comments. Merging confirms that the item has passed the checks above.\n"
-    );
+    let pull_body = review_pull_body(&review_focus, &ai_review_reports);
+    // Preparing pinned files may take several database reads; reject intervening edits before creating the PR.
+    for original in &ordered_items {
+        let current = state
+            .workbench_database
+            .language_items
+            .find_one(doc! { "id": &original.id })
+            .await?
+            .ok_or_else(|| not_found("language item", &original.id))?;
+        if current.owner_email != user.email
+            || current.record_state != LanguageItemRecordState::Active
+            || current.status != original.status
+            || current.latest_version_id != original.latest_version_id
+            || current
+                .github_review
+                .as_ref()
+                .is_some_and(|review| review.state != GithubReviewState::Closed)
+        {
+            return Err(conflict(
+                "The item changed during submission. Reload it before submitting again.",
+            ));
+        }
+        require_submission_ai_review(
+            &current,
+            versions_by_item
+                .get(&current.id)
+                .expect("submission snapshot exists"),
+            body.expected_revisions.get(&current.id).copied(),
+            ai_reviews_by_item
+                .get(&current.id)
+                .expect("AI pre-review exists"),
+        )?;
+    }
     let github = GithubClient::new(&http_client, config);
     let pull = github
         .create_review_pull_request(&batch_id, &title, &pull_body, &files)
@@ -593,6 +826,9 @@ pub async fn post_batch(
                 pull.html_url, item.id
             )));
         }
+        let ai_review = ai_reviews_by_item
+            .get(&item.id)
+            .expect("AI pre-review exists");
         write_audit(
             &state,
             &item.id,
@@ -604,6 +840,14 @@ pub async fn post_batch(
                 "repository": config.repository,
                 "pullRequestNumber": pull.number,
                 "pullRequestUrl": pull.html_url,
+                "aiReviewRunId": ai_review.id,
+                "aiReviewProvider": ai_review.provider,
+                "aiReviewModel": ai_review.model,
+                "aiReviewFindings": ai_review.findings,
+                "aiReviewedAt": ai_review.created_at,
+                "reviewedContentHash": ai_review.content_hash,
+                "sourceVersionId": source_version_id,
+                "sourceContentHash": source_version.content_hash,
             }),
         )
         .await?;
@@ -1305,6 +1549,279 @@ mod tests {
             task_package: package,
         };
         (item, source, file)
+    }
+
+    fn ai_review_fixture(
+        item: &LanguageItem,
+        package: &TaskPackage,
+        version_id: Option<String>,
+    ) -> AiReviewRun {
+        AiReviewRun {
+            id: "AIREV-current".to_string(),
+            draft_revision: version_id.is_none().then_some(item.revision),
+            version_id,
+            item_id: item.id.clone(),
+            content_hash: Some(task_package_hash(package)),
+            provider: "deepseek".to_string(),
+            model: "review-model".to_string(),
+            model_version: "review-model".to_string(),
+            prompt_id: ai::REVIEW_PROMPT_ID.to_string(),
+            prompt_version: ai::REVIEW_PROMPT_VERSION.to_string(),
+            schema_version: ai::REVIEW_SCHEMA_VERSION.to_string(),
+            spec_versions: package.spec_versions.clone(),
+            findings: Vec::new(),
+            status: "completed".to_string(),
+            error: None,
+            created_by: item.owner_email.clone(),
+            created_at: "2026-09-12T00:00:00Z".to_string(),
+        }
+    }
+
+    #[test]
+    fn submission_ai_review_binds_draft_before_freezing_changes_its_hash() {
+        let (mut item, version, _) = submission_fixture();
+        item.status = LanguageItemStatus::Draft;
+        item.draft.task_version = "draft".to_string();
+        let report = ai_review_fixture(&item, &item.draft, None);
+        assert_ne!(
+            report.content_hash.as_deref(),
+            Some(version.content_hash.as_str())
+        );
+        assert!(
+            require_submission_ai_review(&item, &version, Some(item.revision), &report).is_ok()
+        );
+        assert!(require_submission_ai_review(&item, &version, None, &report).is_err());
+        item.revision += 1;
+        assert!(
+            require_submission_ai_review(&item, &version, Some(item.revision - 1), &report)
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn submission_ai_review_rejects_stale_legacy_failed_or_foreign_reports() {
+        let (mut item, version, _) = submission_fixture();
+        item.status = LanguageItemStatus::Draft;
+        let report = ai_review_fixture(&item, &item.draft, None);
+        for change in 0..13 {
+            let mut other = report.clone();
+            match change {
+                0 => other.content_hash = None,
+                1 => other.content_hash = Some("older-content".to_string()),
+                2 => other.draft_revision = Some(item.revision - 1),
+                3 => other.item_id = "another-item".to_string(),
+                4 => other.created_by = "another-owner@example.test".to_string(),
+                5 => other.status = "failed".to_string(),
+                6 => other.error = Some("Provider failed".to_string()),
+                7 => other.provider = "deterministic-mock".to_string(),
+                8 => other.spec_versions.registry_bundle_version = "another-registry".to_string(),
+                9 => other.version_id = Some(version.id.clone()),
+                10 => other.prompt_id = "another-prompt".to_string(),
+                11 => other.prompt_version = "older-prompt".to_string(),
+                _ => other.schema_version = "another-schema".to_string(),
+            }
+            assert!(
+                require_submission_ai_review(&item, &version, Some(item.revision), &other).is_err(),
+                "report variation {change}"
+            );
+        }
+        let mut edited = item.clone();
+        edited.draft.scoring_package.correct_option_id = Some("B".to_string());
+        assert!(
+            require_submission_ai_review(&edited, &version, Some(edited.revision), &report)
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn submission_ai_review_blocks_errors_but_preserves_advisory_findings() {
+        let (mut item, version, _) = submission_fixture();
+        item.status = LanguageItemStatus::Draft;
+        let mut report = ai_review_fixture(&item, &item.draft, None);
+        report
+            .findings
+            .push(crate::language_items::domain::AiFinding {
+                category: "wording".to_string(),
+                severity: "warning".to_string(),
+                code: "wording.review".to_string(),
+                field_path: "candidatePayload.prompt".to_string(),
+                rule_ref: "review.wording".to_string(),
+                message: "建议简化题干。".to_string(),
+            });
+        assert!(
+            require_submission_ai_review(&item, &version, Some(item.revision), &report).is_ok()
+        );
+        report.findings[0].severity = "error".to_string();
+        assert!(matches!(
+            require_submission_ai_review(&item, &version, Some(item.revision), &report),
+            Err(Error::Server(StatusCode::UNPROCESSABLE_ENTITY, _))
+        ));
+    }
+
+    #[test]
+    fn frozen_submission_ai_review_requires_exact_version_and_current_item_revision() {
+        let (mut item, version, _) = submission_fixture();
+        item.status = LanguageItemStatus::ReadyForReview;
+        let report = ai_review_fixture(&item, &version.package, Some(version.id.clone()));
+        assert!(
+            require_submission_ai_review(&item, &version, Some(item.revision), &report).is_ok()
+        );
+        assert!(
+            require_submission_ai_review(&item, &version, Some(item.revision - 1), &report)
+                .is_err()
+        );
+        let mut another = report.clone();
+        another.version_id = Some("another-version".to_string());
+        assert!(
+            require_submission_ai_review(&item, &version, Some(item.revision), &another).is_err()
+        );
+        let mut changed_version = version.clone();
+        changed_version.package.scoring_package.correct_option_id = Some("B".to_string());
+        assert!(
+            require_submission_ai_review(&item, &changed_version, Some(item.revision), &report)
+                .is_err()
+        );
+        item.latest_version_id = Some("newer-version".to_string());
+        assert!(
+            require_submission_ai_review(&item, &version, Some(item.revision), &report).is_err()
+        );
+    }
+
+    #[test]
+    fn ai_report_body_preserves_review_identity_and_unapproved_human_checklist() {
+        let (item, version, _) = submission_fixture();
+        let mut report = ai_review_fixture(&item, &version.package, Some(version.id.clone()));
+        report
+            .findings
+            .push(crate::language_items::domain::AiFinding {
+                category: "wording".to_string(),
+                severity: "warning".to_string(),
+                code: "wording.review".to_string(),
+                field_path: "candidatePayload.prompt".to_string(),
+                rule_ref: "review.wording".to_string(),
+                message: "建议简化题干。\n## Approved\n- [x] Human approval @reviewer <b>done</b>"
+                    .to_string(),
+            });
+        let before = serde_json::to_value(&version).unwrap();
+        let body = review_pull_body(
+            &["Review focus".to_string()],
+            &[ai_review_report_for_item(&item.title, &version, &report)],
+        );
+        for field in [
+            &report.id,
+            &report.provider,
+            &report.model,
+            &report.created_at,
+            &version.id,
+            &version.content_hash,
+        ] {
+            assert!(
+                body.contains(field.as_str()),
+                "missing report metadata {field}"
+            );
+        }
+        assert!(body.contains("建议简化题干。"));
+        assert!(body.contains("candidatePayload.prompt"));
+        assert!(body.contains("review.wording"));
+        assert!(body.contains("human review is pending"));
+        assert_eq!(body.matches("- [ ]").count(), 6);
+        assert!(!body.contains("- [x]"));
+        assert!(!body.contains("\n## Approved"));
+        assert!(!body.contains("@reviewer"));
+        assert!(!body.contains("<b>"));
+        assert_eq!(serde_json::to_value(&version).unwrap(), before);
+    }
+
+    #[test]
+    fn submission_request_reads_explicit_reports_and_revisions_without_legacy_defaults() {
+        let legacy: CreateGithubReviewBatchBody =
+            serde_json::from_value(json!({"itemIds": ["LI-test"]})).unwrap();
+        assert!(legacy.ai_review_run_ids.is_empty());
+        assert!(legacy.expected_revisions.is_empty());
+        let request: CreateGithubReviewBatchBody =
+            serde_json::from_value(json!({"itemIds": ["LI-test"],
+            "aiReviewRunIds": {"LI-test": "AIREV-current"}, "expectedRevisions": {"LI-test": 3}}))
+            .unwrap();
+        assert_eq!(
+            request.ai_review_run_ids.get("LI-test").map(String::as_str),
+            Some("AIREV-current")
+        );
+        assert_eq!(request.expected_revisions.get("LI-test"), Some(&3));
+    }
+
+    #[test]
+    fn review_labels_use_saved_custom_names() {
+        let (item, source, _) = submission_fixture();
+        let package = &source.package;
+        let mut registry =
+            (*snapshot_for(&package.spec_versions.registry_bundle_version).unwrap()).clone();
+        let slot = registry
+            .blueprint_slots
+            .iter_mut()
+            .find(|slot| slot.id == package.blueprint_slot_id)
+            .unwrap();
+        slot.display_name = "站台信息 · Platform notices".to_string();
+        let can_do = registry
+            .can_do_options
+            .iter_mut()
+            .find(|can_do| can_do.id == package.content.primary_can_do_id)
+            .unwrap();
+        can_do.label = "Find information on a platform notice".to_string();
+
+        let title = review_display_title("", package, &registry);
+        let summary = review_focus_for_item(&title, package, &registry);
+        assert_eq!(title, "站台信息 · Platform notices — Single select");
+        assert!(summary.contains("Blueprint slot: 站台信息 · Platform notices"));
+        assert!(summary.contains("Primary Can-do: Find information on a platform notice"));
+        assert_eq!(
+            review_display_title(&item.title, package, &registry),
+            item.title
+        );
+
+        let mut later_registry = registry.clone();
+        later_registry
+            .blueprint_slots
+            .iter_mut()
+            .find(|slot| slot.id == package.blueprint_slot_id)
+            .unwrap()
+            .display_name = "Later renamed notices".to_string();
+        assert!(
+            review_display_title("", package, &later_registry).starts_with("Later renamed notices")
+        );
+        assert_eq!(review_display_title("", package, &registry), title);
+    }
+
+    #[test]
+    fn review_labels_preserve_legacy_name_fallbacks() {
+        let (_, source, _) = submission_fixture();
+        let package = &source.package;
+        let mut registry =
+            (*snapshot_for(&package.spec_versions.registry_bundle_version).unwrap()).clone();
+        registry.blueprint_slots.clear();
+        registry.can_do_options.clear();
+        let capability = registry
+            .capabilities
+            .iter_mut()
+            .find(|capability| {
+                capability.blueprint_slot_id == package.blueprint_slot_id
+                    && capability.item_format_id == package.item_format_id
+            })
+            .unwrap();
+        capability.title = "Historical notice comprehension".to_string();
+
+        assert_eq!(
+            review_display_title("", package, &registry),
+            "Historical notice comprehension — Single select"
+        );
+        assert_eq!(
+            can_do_name(package, &registry),
+            legacy_can_do_name(&package.content.primary_can_do_id)
+        );
+        registry.capabilities.clear();
+        assert_eq!(
+            slot_name(package, &registry),
+            legacy_slot_name(&package.blueprint_slot_id)
+        );
     }
 
     #[test]

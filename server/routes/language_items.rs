@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use axum::{
     Extension, Json,
-    extract::{Path, State},
+    extract::{Path, Query, State},
 };
 use futures_util::TryStreamExt;
 use http::StatusCode;
@@ -17,8 +17,9 @@ use crate::{
     language_items::{
         ai,
         domain::{
-            AiGenerationRun, AiReviewRun, CandidatePreview, DifficultyProfile, GithubReviewState,
-            LanguageItem, LanguageItemAuditEvent, LanguageItemExport, LanguageItemRecordState,
+            AiGenerationPromptPreview, AiGenerationRun, AiReviewRun, CandidatePreview,
+            DifficultyProfile, EmpiricalDifficulty, GithubReviewState, LanguageItem,
+            LanguageItemAuditEvent, LanguageItemExport, LanguageItemRecordState,
             LanguageItemReview, LanguageItemReviewDiscussion, LanguageItemReviewDiscussionEvent,
             LanguageItemReviewDiscussionView, LanguageItemStatus, LanguageItemVersion,
             ReviewDecision, ReviewDiscussionEventKind, ReviewDiscussionKind,
@@ -33,6 +34,7 @@ use crate::{
         validation::{
             validate_candidate_privacy, validate_generation_setup, validate_task_package,
         },
+        version_usage::{PilotDecision, UsageChange, UsageEvent},
     },
     state::ServerState,
 };
@@ -384,7 +386,7 @@ pub(crate) fn draft_for_capability(
     if !capability.allowed_domains.contains(&domain) {
         return Err(Error::Server(
             StatusCode::UNPROCESSABLE_ENTITY,
-            format!("Domain {domain} is not allowed for the selected capability"),
+            format!("Domain {domain} is not allowed by the selected item rules"),
         ));
     }
 
@@ -411,13 +413,13 @@ pub(crate) fn draft_for_capability(
         .ok_or_else(|| {
             Error::Server(
                 StatusCode::UNPROCESSABLE_ENTITY,
-                "the selected capability has no difficulty profiles".to_string(),
+                "the selected item rules have no difficulty settings".to_string(),
             )
         })?;
     if requested_difficulty_band.is_some_and(|band| band != difficulty_standard.id) {
         return Err(Error::Server(
             StatusCode::UNPROCESSABLE_ENTITY,
-            "the requested difficulty band is not allowed for the selected capability".to_string(),
+            "the requested difficulty band is not allowed by the selected item rules".to_string(),
         ));
     }
     package.content.difficulty_band = difficulty_standard.id.clone();
@@ -493,8 +495,7 @@ fn apply_locked_draft_setup(
     {
         return Err(Error::Server(
             StatusCode::UNPROCESSABLE_ENTITY,
-            "task configuration and saved Assessment Settings are locked after item creation"
-                .to_string(),
+            "item rules and saved Assessment Settings are locked after item creation".to_string(),
         ));
     }
     if proposed.content.difficulty_band == previous.content.difficulty_band {
@@ -515,7 +516,7 @@ fn apply_locked_draft_setup(
         .ok_or_else(|| {
             Error::Server(
                 StatusCode::UNPROCESSABLE_ENTITY,
-                "the item's task configuration is unavailable in its saved Assessment Settings"
+                "the item rules are unavailable in the item's saved Assessment Settings"
                     .to_string(),
             )
         })?;
@@ -1112,6 +1113,69 @@ pub async fn post_version(
 #[serde(rename_all = "camelCase")]
 pub struct ReviseVersionBody {
     expected_revision: u64,
+    usage_event_id: Option<String>,
+}
+
+fn require_revision_source(
+    status: &LanguageItemStatus,
+    review_state: Option<&GithubReviewState>,
+    version: &LanguageItemVersion,
+) -> Result<(), Error> {
+    if *status == LanguageItemStatus::Draft {
+        return Err(conflict(
+            "A revision draft already exists. Continue editing it before creating another revision",
+        ));
+    }
+    if !version.frozen || task_package_hash(&version.package) != version.content_hash {
+        return Err(conflict(
+            "A revision must start from an intact frozen version",
+        ));
+    }
+    if review_state.is_some_and(|state| {
+        !matches!(state, GithubReviewState::Merged | GithubReviewState::Closed)
+    }) {
+        return Err(conflict(
+            "Finish or close the active GitHub review before starting a new revision",
+        ));
+    }
+    Ok(())
+}
+
+fn require_revision_pilot(event: &UsageEvent, version: &LanguageItemVersion) -> Result<(), Error> {
+    if event.item_id != version.item_id
+        || event.version_id != version.id
+        || event.content_hash != version.content_hash
+        || !matches!(
+            &event.change,
+            UsageChange::Pilot { summary }
+                if matches!(summary.decision, PilotDecision::Revise | PilotDecision::Retest)
+        )
+    {
+        return Err(conflict(
+            "Select a Revise or Retest pilot result belonging to this frozen version",
+        ));
+    }
+    Ok(())
+}
+
+fn new_revision_package(version: &LanguageItemVersion) -> TaskPackage {
+    let mut package = version.package.clone();
+    package.task_version = "draft".to_string();
+    if let Some(difficulty) = &mut package.content.difficulty {
+        // Measurements belong to the frozen source, not to content that can now change.
+        difficulty.status = "AuthorEstimated".to_string();
+        difficulty.empirical_difficulty = EmpiricalDifficulty {
+            status: "NotPiloted".to_string(),
+            sample_id: None,
+            observed_band: None,
+            percent_correct: None,
+            discrimination: None,
+            omission_rate: None,
+            median_response_time_seconds: None,
+            decision: None,
+        };
+    }
+    package
 }
 
 pub async fn post_revise_version(
@@ -1140,20 +1204,25 @@ pub async fn post_revise_version(
             body.expected_revision, item.revision
         )));
     }
-    if item.github_review.as_ref().is_some_and(|review| {
-        !matches!(
-            review.state,
-            GithubReviewState::Merged | GithubReviewState::Closed
-        )
-    }) {
-        return Err(conflict(
-            "Finish or close the active GitHub review before starting a new revision",
-        ));
+    require_revision_source(
+        &item.status,
+        item.github_review.as_ref().map(|review| &review.state),
+        &version,
+    )?;
+    if let Some(event_id) = &body.usage_event_id {
+        let event = state
+            .workbench_database
+            .version_usage_events
+            .find_one(doc! { "id": event_id })
+            .await?
+            .ok_or_else(|| not_found("pilot result", event_id))?;
+        require_revision_pilot(&event, &version)?;
     }
 
+    let expected_version_id = item.latest_version_id.clone();
+    let expected_review = mongodb::bson::serialize_to_bson(&item.github_review)?;
     let prior_github_review = item.github_review.take();
-    item.draft = version.package.clone();
-    item.draft.task_version = "draft".to_string();
+    item.draft = new_revision_package(&version);
     item.revision += 1;
     item.status = LanguageItemStatus::Draft;
     item.latest_version_id = None;
@@ -1163,7 +1232,12 @@ pub async fn post_revise_version(
         .workbench_database
         .language_items
         .replace_one(
-            doc! { "id": &version.item_id, "revision": body.expected_revision as i64 },
+            doc! {
+                "id": &version.item_id, "revision": body.expected_revision as i64,
+                "status": { "$ne": "draft" }, "latestVersionId": &expected_version_id,
+                "githubReview": expected_review,
+                "$or": [{ "recordState": "active" }, { "recordState": { "$exists": false } }],
+            },
             &item,
         )
         .await?;
@@ -1179,10 +1253,56 @@ pub async fn post_revise_version(
         json!({
             "revision": item.revision,
             "priorGithubReview": prior_github_review,
+            "usageEventId": body.usage_event_id,
         }),
     )
     .await?;
     Ok(Json(item))
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AiGenerationPromptQuery {
+    candidate_ordinal: u64,
+    expected_revision: u64,
+}
+
+pub async fn get_ai_generation_prompt(
+    user: prisma::ExamCreatorUser,
+    State(state): State<ServerState>,
+    Path(item_id): Path<String>,
+    Query(query): Query<AiGenerationPromptQuery>,
+) -> Result<Json<AiGenerationPromptPreview>, Error> {
+    ai::validate_candidate_count(query.candidate_ordinal)
+        .map_err(|message| Error::Server(StatusCode::BAD_REQUEST, message.to_string()))?;
+    let item = state
+        .workbench_database
+        .language_items
+        .find_one(doc! { "id": &item_id })
+        .await?
+        .ok_or_else(|| not_found("language item", &item_id))?;
+    require_owner(&item, &user)?;
+    require_active_item(&item)?;
+    require_mutable_draft(&item)?;
+    if item.revision != query.expected_revision {
+        return Err(conflict(format!(
+            "draft revision changed: expected {}, current {}",
+            query.expected_revision, item.revision
+        )));
+    }
+    let setup_validation = validate_generation_setup(&item.draft);
+    if !setup_validation.valid {
+        return Err(Error::Server(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            serde_json::to_string(&setup_validation)
+                .unwrap_or_else(|_| "The authoring setup is incomplete".to_string()),
+        ));
+    }
+    Ok(Json(ai::generation_prompt_preview(
+        &state.env_vars.language_item_ai,
+        &item.draft,
+        query.candidate_ordinal,
+    )?))
 }
 
 #[derive(Deserialize)]
@@ -1407,6 +1527,12 @@ pub(crate) async fn execute_ai_generation(
     run.provider_calls = report.provider_calls;
     run.updated_at = completed_at.clone();
     run.completed_at = Some(completed_at);
+    let mut run = tokio::task::spawn_blocking(move || {
+        retain_ai_prompt_history_within_size(&mut run, 15 * 1024 * 1024);
+        run
+    })
+    .await
+    .map_err(|error| Error::Server(StatusCode::INTERNAL_SERVER_ERROR, error.to_string()))?;
     let persisted = state
         .workbench_database
         .ai_generation_runs
@@ -1451,6 +1577,27 @@ pub(crate) async fn execute_ai_generation(
     .await
 }
 
+fn retain_ai_prompt_history_within_size(run: &mut AiGenerationRun, max_bytes: usize) {
+    if !run
+        .provider_calls
+        .iter()
+        .any(|call| call.request_body.is_some())
+    {
+        return;
+    }
+    // Prompt snapshots must not make otherwise savable, charged AI drafts exceed MongoDB's limit.
+    let reason = match mongodb::bson::serialize_to_vec(&*run) {
+        Ok(bytes) if bytes.len() <= max_bytes => return,
+        Ok(_) => "The request was too large to retain with this run.",
+        Err(_) => "The request could not be serialized with this run.",
+    };
+    for call in &mut run.provider_calls {
+        if call.request_body.take().is_some() {
+            call.request_body_unavailable_reason = Some(reason.to_string());
+        }
+    }
+}
+
 fn discard_unsaved_ai_generation_results(run: &mut AiGenerationRun) {
     let message = "AI generation finished, but its results could not be saved. No candidates were saved for this run. Request fewer candidates or retry explicitly; this run will not be generated again automatically.";
     run.status = "failed".to_string();
@@ -1461,11 +1608,17 @@ fn discard_unsaved_ai_generation_results(run: &mut AiGenerationRun) {
 }
 
 pub async fn get_ai_runs(
-    _: prisma::ExamCreatorUser,
+    user: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
     Path(item_id): Path<String>,
 ) -> Result<Json<Vec<AiGenerationRun>>, Error> {
-    let runs = state
+    let item = state
+        .workbench_database
+        .language_items
+        .find_one(doc! { "id": &item_id })
+        .await?
+        .ok_or_else(|| not_found("language item", &item_id))?;
+    let mut runs: Vec<AiGenerationRun> = state
         .workbench_database
         .ai_generation_runs
         .find(doc! { "itemId": &item_id })
@@ -1473,7 +1626,19 @@ pub async fn get_ai_runs(
         .await?
         .try_collect()
         .await?;
+    redact_ai_prompt_history(&mut runs, item.owner_email == user.email);
     Ok(Json(runs))
+}
+
+fn redact_ai_prompt_history(runs: &mut [AiGenerationRun], may_view_prompt: bool) {
+    if !may_view_prompt {
+        for run in runs {
+            for call in &mut run.provider_calls {
+                call.request_body = None;
+                call.request_body_unavailable_reason = None;
+            }
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -1676,6 +1841,7 @@ async fn build_ai_review_run(
         version_id,
         item_id: item_id.to_string(),
         draft_revision,
+        content_hash: Some(task_package_hash(package)),
         provider: metadata.provider.to_string(),
         model: metadata.model.to_string(),
         model_version: metadata.model_version.to_string(),
@@ -1691,11 +1857,35 @@ async fn build_ai_review_run(
     }
 }
 
+#[derive(Default, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DraftAiReviewBody {
+    expected_revision: Option<u64>,
+}
+
+fn require_current_review_draft(
+    original: &LanguageItem,
+    current: &LanguageItem,
+) -> Result<(), Error> {
+    require_active_item(current)?;
+    require_mutable_draft(current)?;
+    if original.revision != current.revision
+        || original.owner_email != current.owner_email
+        || task_package_hash(&original.draft) != task_package_hash(&current.draft)
+    {
+        return Err(conflict(
+            "The draft changed during AI pre-review. Its report was saved for the earlier content; review the current draft again.",
+        ));
+    }
+    Ok(())
+}
+
 pub async fn post_draft_ai_review(
     user: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
     Extension(http_client): Extension<reqwest::Client>,
     Path(item_id): Path<String>,
+    body: Option<Json<DraftAiReviewBody>>,
 ) -> Result<Json<AiReviewRun>, Error> {
     let item = state
         .workbench_database
@@ -1706,6 +1896,45 @@ pub async fn post_draft_ai_review(
     require_owner(&item, &user)?;
     require_active_item(&item)?;
     require_mutable_draft(&item)?;
+    if body
+        .and_then(|Json(body)| body.expected_revision)
+        .is_some_and(|expected| expected != item.revision)
+    {
+        return Err(conflict(
+            "The draft revision changed before AI pre-review. Reload the current draft and try again.",
+        ));
+    }
+    let existing: Vec<AiReviewRun> = state
+        .workbench_database
+        .ai_review_runs
+        .find(doc! {
+            "itemId": &item_id,
+            "draftRevision": item.revision as i64,
+            "contentHash": task_package_hash(&item.draft),
+            "status": "completed",
+            "provider": { "$in": ["deepseek", "openai"] },
+            "error": null,
+            "promptId": ai::REVIEW_PROMPT_ID,
+            "promptVersion": ai::REVIEW_PROMPT_VERSION,
+            "schemaVersion": ai::REVIEW_SCHEMA_VERSION,
+        })
+        .sort(doc! { "createdAt": -1 })
+        .await?
+        .try_collect()
+        .await?;
+    if let Some(run) = existing
+        .into_iter()
+        .find(|run| run.matches_current_draft(&item))
+    {
+        let current = state
+            .workbench_database
+            .language_items
+            .find_one(doc! { "id": &item_id })
+            .await?
+            .ok_or_else(|| not_found("language item", &item_id))?;
+        require_current_review_draft(&item, &current)?;
+        return Ok(Json(run));
+    }
     let run = build_ai_review_run(
         &state,
         &http_client,
@@ -1734,6 +1963,13 @@ pub async fn post_draft_ai_review(
         json!({ "runId": run.id, "draftRevision": item.revision }),
     )
     .await?;
+    let current = state
+        .workbench_database
+        .language_items
+        .find_one(doc! { "id": &item_id })
+        .await?
+        .ok_or_else(|| not_found("language item", &item_id))?;
+    require_current_review_draft(&item, &current)?;
     Ok(Json(run))
 }
 
@@ -2463,6 +2699,303 @@ pub async fn post_production_export(
 mod tests {
     use super::*;
 
+    fn pre_review_fixture() -> (LanguageItem, AiReviewRun) {
+        let item: LanguageItem = serde_json::from_value(json!({
+            "id": "LI-prereview", "title": "A notice", "ownerEmail": "author@example.test",
+            "status": "draft", "revision": 7, "draft": TaskPackage::new("LI-prereview".into()),
+            "latestVersionId": null, "createdAt": "2026-09-12T00:00:00Z", "updatedAt": "2026-09-12T00:00:00Z",
+        })).unwrap();
+        let run = AiReviewRun {
+            id: "AIREV-current".into(),
+            version_id: None,
+            item_id: item.id.clone(),
+            draft_revision: Some(item.revision),
+            content_hash: Some(task_package_hash(&item.draft)),
+            provider: "deepseek".into(),
+            model: "test-reviewer".into(),
+            model_version: "test-reviewer".into(),
+            prompt_id: ai::REVIEW_PROMPT_ID.into(),
+            prompt_version: ai::REVIEW_PROMPT_VERSION.into(),
+            schema_version: ai::REVIEW_SCHEMA_VERSION.into(),
+            spec_versions: item.draft.spec_versions.clone(),
+            findings: vec![],
+            status: "completed".into(),
+            error: None,
+            created_by: item.owner_email.clone(),
+            created_at: now(),
+        };
+        (item, run)
+    }
+
+    #[test]
+    fn pre_review_reuses_current_reports_without_discarding_blocking_findings() {
+        let (item, mut run) = pre_review_fixture();
+        assert!(run.matches_current_draft(&item));
+        run.findings.push(crate::language_items::domain::AiFinding {
+            category: "content".into(),
+            severity: "error".into(),
+            code: "answer.ambiguous".into(),
+            field_path: "candidatePayload.options".into(),
+            rule_ref: "review.automatedPrecheck".into(),
+            message: "两个答案均正确。".into(),
+        });
+        assert!(run.matches_current_draft(&item));
+        assert_eq!(run.findings[0].severity, "error");
+        run.findings[0].severity = "critical".into();
+        assert!(!run.matches_current_draft(&item));
+        run.findings[0].severity = "error".into();
+        run.findings[0].message = " ".into();
+        assert!(!run.matches_current_draft(&item));
+    }
+
+    #[test]
+    fn pre_review_never_reuses_failed_mock_or_legacy_reports() {
+        let (item, run) = pre_review_fixture();
+        let mut failed = run.clone();
+        failed.status = "failed".into();
+        assert!(!failed.matches_current_draft(&item));
+        let mut failed = run.clone();
+        failed.error = Some("provider unavailable".into());
+        assert!(!failed.matches_current_draft(&item));
+        let mut mock = run.clone();
+        mock.provider = "deterministic-mock".into();
+        assert!(!mock.matches_current_draft(&item));
+        let mut legacy = serde_json::to_value(&run).unwrap();
+        legacy.as_object_mut().unwrap().remove("contentHash");
+        let legacy: AiReviewRun = serde_json::from_value(legacy).unwrap();
+        assert!(legacy.content_hash.is_none());
+        assert!(!legacy.matches_current_draft(&item));
+    }
+
+    #[test]
+    fn pre_review_reuse_checks_item_owner_revision_hash_and_all_spec_versions() {
+        let (item, run) = pre_review_fixture();
+        for key in ["itemId", "createdBy", "contentHash"] {
+            let mut mismatched = serde_json::to_value(&run).unwrap();
+            mismatched[key] = json!("different");
+            let mismatched: AiReviewRun = serde_json::from_value(mismatched).unwrap();
+            assert!(!mismatched.matches_current_draft(&item), "{key}");
+        }
+        for key in [
+            "planningSpecVersion",
+            "registryBundleVersion",
+            "taskPackageVersion",
+        ] {
+            let mut mismatched = serde_json::to_value(&run).unwrap();
+            mismatched["specVersions"][key] = json!("different");
+            let mismatched: AiReviewRun = serde_json::from_value(mismatched).unwrap();
+            assert!(!mismatched.matches_current_draft(&item), "{key}");
+        }
+        let mut version_run = run.clone();
+        version_run.version_id = Some("LIV-1".into());
+        assert!(!version_run.matches_current_draft(&item));
+        let mut changed = item.clone();
+        changed.revision += 1;
+        assert!(!run.matches_current_draft(&changed));
+        let mut changed = item.clone();
+        changed
+            .draft
+            .candidate_payload
+            .as_single_select_mut()
+            .unwrap()
+            .prompt = "新问题".into();
+        assert!(!run.matches_current_draft(&changed));
+    }
+
+    #[test]
+    fn pre_review_completion_rejects_concurrent_changes_and_lifecycle_transitions() {
+        let (item, _) = pre_review_fixture();
+        assert!(require_current_review_draft(&item, &item).is_ok());
+        let mut changed = item.clone();
+        changed.revision += 1;
+        assert!(require_current_review_draft(&item, &changed).is_err());
+        let mut changed = item.clone();
+        changed
+            .draft
+            .authoring_package
+            .notes
+            .push("Changed while reviewing".into());
+        assert!(require_current_review_draft(&item, &changed).is_err());
+        let mut changed = item.clone();
+        changed.status = LanguageItemStatus::InReview;
+        assert!(require_current_review_draft(&item, &changed).is_err());
+        let mut changed = item.clone();
+        changed.record_state = LanguageItemRecordState::Archived;
+        assert!(require_current_review_draft(&item, &changed).is_err());
+    }
+
+    fn revision_source_version() -> LanguageItemVersion {
+        let mut package = TaskPackage::new("LI-revision".to_string());
+        package.task_version = "1".to_string();
+        LanguageItemVersion {
+            id: "LIV-revision-1".to_string(),
+            item_id: "LI-revision".to_string(),
+            version_number: 1,
+            created_from_draft_revision: 1,
+            author_email: "author@example.test".to_string(),
+            submitted_by: "author@example.test".to_string(),
+            frozen: true,
+            content_hash: task_package_hash(&package),
+            evidence_content_hash: None,
+            lifecycle_status: "approved".to_string(),
+            validation: validate_task_package(&package),
+            package,
+            created_at: now(),
+        }
+    }
+
+    #[test]
+    fn revision_rejects_an_existing_mutable_draft() {
+        let error =
+            require_revision_source(&LanguageItemStatus::Draft, None, &revision_source_version())
+                .unwrap_err();
+        assert!(matches!(error, Error::Server(StatusCode::CONFLICT, _)));
+        assert!(error.to_string().contains("already exists"));
+    }
+
+    #[test]
+    fn revision_cannot_bypass_an_active_github_review() {
+        let source = revision_source_version();
+        for review in [
+            GithubReviewState::Open,
+            GithubReviewState::Approved,
+            GithubReviewState::ChangesRequested,
+            GithubReviewState::SyncFailed,
+        ] {
+            assert!(require_revision_source(
+                &LanguageItemStatus::NeedsRevision,
+                Some(&review),
+                &source,
+            )
+            .is_err());
+        }
+        for review in [
+            None,
+            Some(GithubReviewState::Merged),
+            Some(GithubReviewState::Closed),
+        ] {
+            assert!(
+                require_revision_source(
+                    &LanguageItemStatus::ApprovedForExport,
+                    review.as_ref(),
+                    &source,
+                )
+                .is_ok()
+            );
+        }
+    }
+
+    #[test]
+    fn revision_rejects_unfrozen_or_corrupted_source_content() {
+        let mut source = revision_source_version();
+        source.frozen = false;
+        assert!(require_revision_source(&LanguageItemStatus::Rejected, None, &source).is_err());
+        source.frozen = true;
+        source.package.content.context_id = "changed".to_string();
+        assert!(require_revision_source(&LanguageItemStatus::Rejected, None, &source).is_err());
+    }
+
+    #[test]
+    fn revision_resets_measurements_without_changing_source_or_intended_rules() {
+        let mut source = revision_source_version();
+        let difficulty = source.package.content.difficulty.as_mut().unwrap();
+        difficulty.status = "Piloted".to_string();
+        difficulty.empirical_difficulty = EmpiricalDifficulty {
+            status: "Piloted".to_string(),
+            sample_id: Some("sample-1".to_string()),
+            observed_band: Some("UpperA1".to_string()),
+            percent_correct: Some(0.4),
+            discrimination: Some(0.2),
+            omission_rate: Some(0.1),
+            median_response_time_seconds: Some(55.0),
+            decision: Some("revise".to_string()),
+        };
+        let original = serde_json::to_value(&source).unwrap();
+        let mut expected = source.package.clone();
+        expected.task_version = "draft".to_string();
+        let expected_difficulty = expected.content.difficulty.as_mut().unwrap();
+        expected_difficulty.status = "AuthorEstimated".to_string();
+        expected_difficulty.empirical_difficulty =
+            DifficultyProfile::r_a1_1_typical().empirical_difficulty;
+
+        let revision = new_revision_package(&source);
+
+        assert_eq!(serde_json::to_value(&source).unwrap(), original);
+        assert_eq!(
+            serde_json::to_value(revision).unwrap(),
+            serde_json::to_value(expected).unwrap()
+        );
+    }
+
+    #[test]
+    fn revision_pilot_reference_must_match_source_version_and_revision_decision() {
+        use crate::language_items::version_usage::{PilotSummary, TimingBasis, UsageState};
+
+        let source = revision_source_version();
+        let summary = PilotSummary {
+            source: "Manual report".to_string(),
+            sample_ref: "pilot-1".to_string(),
+            cohort: "A1 learners".to_string(),
+            sample_size: 30,
+            correct_count: None,
+            omitted_count: None,
+            discrimination: None,
+            median_response_time_seconds: None,
+            timing_basis: TimingBasis::Unknown,
+            decision: PilotDecision::Revise,
+            notes: "Clarify the prompt before retesting.".to_string(),
+        };
+        let event = UsageEvent {
+            id: "LVU-pilot".to_string(),
+            item_id: source.item_id.clone(),
+            version_id: source.id.clone(),
+            content_hash: source.content_hash.clone(),
+            registry_version: source.package.spec_versions.registry_bundle_version.clone(),
+            revision: 1,
+            request_id: "request-pilot".to_string(),
+            actor_email: "author@example.test".to_string(),
+            created_at: now(),
+            state: UsageState::Pilot,
+            change: UsageChange::Pilot {
+                summary: summary.clone(),
+            },
+        };
+        assert!(require_revision_pilot(&event, &source).is_ok());
+        for decision in [
+            PilotDecision::Retest,
+            PilotDecision::Retain,
+            PilotDecision::Release,
+            PilotDecision::Retire,
+        ] {
+            let mut other = event.clone();
+            other.change = UsageChange::Pilot {
+                summary: PilotSummary {
+                    decision,
+                    ..summary.clone()
+                },
+            };
+            assert_eq!(
+                require_revision_pilot(&other, &source).is_ok(),
+                decision == PilotDecision::Retest
+            );
+        }
+        for changed in ["item", "version", "hash"] {
+            let mut other = event.clone();
+            match changed {
+                "item" => other.item_id = "LI-other".to_string(),
+                "version" => other.version_id = "LIV-other".to_string(),
+                _ => other.content_hash = "different".to_string(),
+            }
+            assert!(require_revision_pilot(&other, &source).is_err());
+        }
+        let mut state_event = event;
+        state_event.change = UsageChange::State {
+            state: UsageState::Pilot,
+            reason: "Begin pilot".to_string(),
+        };
+        assert!(require_revision_pilot(&state_event, &source).is_err());
+    }
+
     #[test]
     fn single_item_generation_accepts_custom_positive_candidate_counts() {
         for count in [1, 4, 6, 256, 1_000] {
@@ -2979,6 +3512,77 @@ mod tests {
             "generationSetupSnapshot": ai_generation_setup_snapshot(package),
             "requestedCount": 1, "candidates": [], "status": "completed", "createdBy": "author", "createdAt": "test"
         })).unwrap()
+    }
+
+    #[test]
+    fn prompt_history_is_owner_only_without_hiding_existing_generation_history() {
+        let package = TaskPackage::new("LI-prompt-history".to_string());
+        let mut run = generation_run_for(&package);
+        run.candidates = ai::generate_mock_candidates(&package, 1);
+        run.provider_calls = vec![
+            serde_json::from_value(json!({
+                "candidateOrdinal": 1, "phase": "initial", "elapsedMilliseconds": 4,
+                "outcome": "responseReceived", "httpStatus": 200,
+                "requestBody": { "instructions": "owner prompt" },
+            }))
+            .unwrap(),
+        ];
+        let mut owner_runs = vec![run.clone()];
+        redact_ai_prompt_history(&mut owner_runs, true);
+        assert!(owner_runs[0].provider_calls[0].request_body.is_some());
+
+        let mut reader_runs = vec![run];
+        redact_ai_prompt_history(&mut reader_runs, false);
+        let reader = serde_json::to_value(&reader_runs[0]).unwrap();
+        assert!(reader["providerCalls"][0].get("requestBody").is_none());
+        assert_eq!(reader["providerCalls"][0]["outcome"], "responseReceived");
+        assert_eq!(reader["candidates"].as_array().unwrap().len(), 1);
+        assert_eq!(reader["id"], "AIR-test");
+    }
+
+    #[test]
+    fn prompt_snapshot_size_limit_preserves_candidates_counts_and_provider_telemetry() {
+        let package = TaskPackage::new("LI-prompt-size".to_string());
+        let mut run = generation_run_for(&package);
+        run.candidates = ai::generate_mock_candidates(&package, 2);
+        run.requested_count = 2;
+        run.attempt_count = 3;
+        run.retry_count = 1;
+        run.provider_calls = vec![
+            serde_json::from_value(json!({
+                "candidateOrdinal": 1, "phase": "initial", "elapsedMilliseconds": 4,
+                "outcome": "responseReceived", "httpStatus": 200,
+                "providerRequestId": "fixture-request", "inputTokens": 23, "totalTokens": 29,
+                "requestBody": { "instructions": "x".repeat(4096) },
+            }))
+            .unwrap(),
+            serde_json::from_value(json!({
+                "candidateOrdinal": 2, "phase": "initial", "elapsedMilliseconds": 4,
+                "outcome": "responseReceived", "httpStatus": 200,
+            }))
+            .unwrap(),
+        ];
+        let original = serde_json::to_value(&run).unwrap();
+        let full_size = mongodb::bson::serialize_to_vec(&run).unwrap().len();
+        retain_ai_prompt_history_within_size(&mut run, full_size);
+        assert_eq!(serde_json::to_value(&run).unwrap(), original);
+
+        let safe_size = full_size - 2048;
+        retain_ai_prompt_history_within_size(&mut run, safe_size);
+        assert!(mongodb::bson::serialize_to_vec(&run).unwrap().len() <= safe_size);
+        let mut expected = original;
+        expected["providerCalls"][0]
+            .as_object_mut()
+            .unwrap()
+            .remove("requestBody");
+        expected["providerCalls"][0]["requestBodyUnavailableReason"] =
+            json!("The request was too large to retain with this run.");
+        assert_eq!(serde_json::to_value(&run).unwrap(), expected);
+        assert!(
+            run.provider_calls[1]
+                .request_body_unavailable_reason
+                .is_none()
+        );
     }
 
     #[test]

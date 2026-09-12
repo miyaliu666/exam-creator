@@ -18,6 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getAttemptById } from "../utils/fetch";
 import { prettyDate } from "../utils/question";
 import { Tooltip } from "./tooltip";
+import { UsersOnPageAvatars } from "./users-on-page-avatars";
 
 interface ModerationCardProps {
   moderation: ExamEnvironmentExamModeration;
@@ -110,16 +111,21 @@ export function ModerationCard({ moderation, filter }: ModerationCardProps) {
           </Tooltip>
         </Card.Header>
         <Card.Body pt={2}>
-          <Box color="gray.400" fontSize="sm" textAlign="right">
-            Passing Percent:{" "}
-            {attemptQuery.isPending ? (
-              <Spinner color={"teal.focusRing"} />
-            ) : attemptQuery.isError ? (
-              "--"
-            ) : (
-              attemptQuery.data.config.passingPercent
-            )}
-          </Box>
+          <Flex align="center" justify={"space-between"}>
+            <UsersOnPageAvatars
+              path={`/attempts/${moderation.examAttemptId}`}
+            />
+            <Box color="gray.400" fontSize="sm" ml={2}>
+              Passing Percent:{" "}
+              {attemptQuery.isPending ? (
+                <Spinner color={"teal.focusRing"} />
+              ) : attemptQuery.isError ? (
+                "--"
+              ) : (
+                attemptQuery.data.config.passingPercent
+              )}
+            </Box>
+          </Flex>
           <VStack align="start" gap={1} mt={4} fontSize="sm" color="gray.300">
             {moderation.feedback && (
               <Text>

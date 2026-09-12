@@ -19,7 +19,7 @@ function LanguageAssessmentSettings() {
   return (
     <Box minH="100vh" bg="bg" py={12} px={4}>
       <HStack position="fixed" top={3} left={8} zIndex={101} gap={3}>
-        <Button variant="outline" colorPalette="teal" size="sm" disabled={busy} onClick={() => navigate({ to: "/language-items" })}>Item bank</Button>
+        <Button variant="outline" colorPalette="teal" size="sm" disabled={busy} onClick={() => navigate({ to: "/language-items" })}>Item Bank</Button>
         <Button variant="outline" colorPalette="red" size="sm" disabled={busy} onClick={() => {
           if (!dirty || window.confirm("Discard unsaved settings and sign out?")) logout();
         }}>Sign out / switch account</Button>

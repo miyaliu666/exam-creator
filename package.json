@@ -26,7 +26,8 @@
     "react-icons": "5.7.0",
     "recharts": "3.9.1",
     "use-immer": "0.11.0",
-    "vite-plugin-prismjs": "0.0.11"
+    "vite-plugin-prismjs": "0.0.11",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@prisma/client": "7.8.0",

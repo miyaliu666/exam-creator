@@ -58,7 +58,7 @@ test("query changes clear stale goals and intersections and restart pagination",
   const { request } = fixture();
   const previous = { ...request, pattern: ["time"] };
   const patches: Partial<CoverageRequest>[] = [
-    { scope: "drafts" }, { registryVersion: "rules-0" }, { role: "confirmed" }, { matchMode: "exact" },
+    { registryVersion: "rules-0" }, { role: "confirmed" }, { matchMode: "exact" },
     { selectedIds: ["time"] }, { excludedIds: ["productive"] }, { filters: { skill: "Writing" } },
   ];
   for (const patch of patches) {
@@ -74,6 +74,15 @@ test("query changes clear stale goals and intersections and restart pagination",
     assert.equal(next.offset, 0);
   }
   assert.deepEqual(updateCoverageRequest(previous, { selectedIds: ["hello"], pattern: ["hello"] }).pattern, ["hello"]);
+});
+
+test("detail status changes preserve the language combination and approved item goal", () => {
+  const { request } = fixture();
+  const source = { ...request, pattern: ["time"], excludedIds: ["productive"] };
+  const next = updateCoverageRequest(source, { scope: "drafts" });
+  assert.deepEqual(next, { ...source, scope: "drafts", offset: 0 });
+  assert.deepEqual(updateCoverageRequest(next, { scope: "approved" }), { ...source, offset: 0 });
+  assert.equal(source.offset, 25);
 });
 
 test("equivalent point sets and cleared filter fields preserve a goal", () => {

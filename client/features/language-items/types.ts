@@ -381,6 +381,8 @@ export interface AiCandidate {
 }
 
 export interface AiProviderCall {
+  requestBody?: unknown;
+  requestBodyUnavailableReason?: string;
   candidateOrdinal: number;
   phase: "initial" | "repair";
   elapsedMilliseconds: number;
@@ -461,6 +463,7 @@ export interface AiReviewRun {
   versionId: string | null;
   itemId: string;
   draftRevision: number | null;
+  contentHash?: string | null;
   provider: string;
   model: string;
   modelVersion: string;
@@ -639,6 +642,43 @@ export interface CapabilityDifficultyProfileSet {
   standards: DifficultyBandStandard[];
 }
 
+export interface ContentAssessmentRule {
+  blueprintSlotId: string;
+  itemFormatId: string;
+  primaryCanDoId: string;
+  contextId: string;
+  applicability: "allowed" | "excluded";
+  assessmentMode: "understanding" | "controlledProduction" | "freeProduction" | null;
+  communicativePurpose: string;
+  requiredEvidence: string[];
+  acceptableResponses: string[];
+  failurePatterns: string[];
+  prerequisites: string[];
+  validExamples: string[];
+  invalidExamples: string[];
+  [key: string]: unknown;
+}
+
+export interface ContentIdOption {
+  id: string;
+  kind: string;
+  label: string;
+  canDoIds: string[];
+  contextIds: string[];
+  masteryScope: string | null;
+  meaning?: string;
+  pattern?: string;
+  pinyin?: string;
+  englishGloss?: string;
+  examples?: string[];
+  restrictions?: string;
+  sources?: string[];
+  notes?: string;
+  assessmentRules?: ContentAssessmentRule[];
+  /** Retain authored and source metadata when editing a newer or richer snapshot. */
+  [key: string]: unknown;
+}
+
 export interface RegistrySnapshot {
   settingsSchemaVersion?: number;
   bundleVersion: string;
@@ -660,14 +700,7 @@ export interface RegistrySnapshot {
   difficultyBands: string[];
   difficultyStandards: DifficultyBandStandard[];
   capabilityDifficultyProfileSets?: CapabilityDifficultyProfileSet[];
-  contentIdOptions: Array<{
-    id: string;
-    kind: string;
-    label: string;
-    canDoIds: string[];
-    contextIds: string[];
-    masteryScope: string | null;
-  }>;
+  contentIdOptions: ContentIdOption[];
   contextOptions: RegistryContext[];
   canDoOptions: Array<{
     id: string;

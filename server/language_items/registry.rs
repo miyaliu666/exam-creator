@@ -7,6 +7,7 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use super::content_assessment::ContentAssessmentRule;
 use super::domain::DeliveryPolicyRefs;
 
 const MANIFEST: &str = include_str!(concat!(
@@ -49,11 +50,11 @@ const CHARACTER_REGISTRY: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/language-item-workbench/registries/Chinese_A1_Workbench_Registries_v0.2_provisional/content/a1-character-registry-v0.2-provisional.yaml"
 ));
-const LEXICON_REGISTRY: &str = include_str!(concat!(
+pub(super) const LEXICON_REGISTRY: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/language-item-workbench/registries/Chinese_A1_Workbench_Registries_v0.2_provisional/content/a1-lexicon-registry-v0.1-provisional.yaml"
 ));
-const GRAMMAR_REGISTRY: &str = include_str!(concat!(
+pub(super) const GRAMMAR_REGISTRY: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/language-item-workbench/registries/Chinese_A1_Workbench_Registries_v0.2_provisional/content/a1-grammar-registry-v0.2-provisional.yaml"
 ));
@@ -141,6 +142,26 @@ pub struct ContentIdOption {
     pub can_do_ids: Vec<String>,
     pub context_ids: Vec<String>,
     pub mastery_scope: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub meaning: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pattern: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pinyin: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub english_gloss: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub examples: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub restrictions: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sources: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub notes: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub assessment_rules: Vec<ContentAssessmentRule>,
+    #[serde(flatten)]
+    pub metadata: serde_json::Map<String, Value>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -629,6 +650,7 @@ pub fn prepare_registry_draft(snapshot: &mut RegistrySnapshot) {
     migrate_legacy_context_domains(snapshot);
     normalize_registry_snapshot(snapshot);
     upgrade_draft_context_schema(snapshot);
+    super::registry_content::hydrate_draft_content_metadata(snapshot);
     // Historical slot lists described broad candidates. A newly authored draft
     // starts with exactly the contexts item creation can actually select.
     for capability in &mut snapshot.capabilities {
@@ -1352,6 +1374,16 @@ fn content_ids(source: &str, key: &str, kind: &str, label_keys: &[&str]) -> Vec<
             can_do_ids: block_list(&block, "canDoIds", &anchors),
             context_ids: block_list(&block, "contextIds", &anchors),
             mastery_scope: block_scalar(&block, &["masteryScope"]),
+            meaning: None,
+            pattern: None,
+            pinyin: None,
+            english_gloss: None,
+            examples: None,
+            restrictions: None,
+            sources: None,
+            notes: None,
+            assessment_rules: Vec::new(),
+            metadata: serde_json::Map::new(),
             id,
             kind: kind.to_string(),
         })

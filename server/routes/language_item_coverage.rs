@@ -176,7 +176,19 @@ pub async fn post_coverage(
             );
         }
     }
-    Ok(Json(analyze_coverage(&items, &request, &registry_version)))
+    let mut response = analyze_coverage(&items, &request, &registry_version);
+    if let Some(overview) = &mut response.overview {
+        let target_ids = registry
+            .content_id_options
+            .iter()
+            .filter(|option| option.kind != "supported")
+            .map(|option| option.id.as_str())
+            .collect::<std::collections::BTreeSet<_>>();
+        overview
+            .entries
+            .retain(|entry| target_ids.contains(entry.id.as_str()));
+    }
+    Ok(Json(response))
 }
 
 fn hydrate_activities(metadata: &mut CoverageMetadata) {

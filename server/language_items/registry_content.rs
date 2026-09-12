@@ -1,0 +1,401 @@
+use std::collections::{HashMap, HashSet};
+
+use once_cell::sync::Lazy;
+use serde_json::{Map, Value};
+
+use super::{
+    content_assessment::validate_assessment_rules,
+    registry::{ContentIdOption, GRAMMAR_REGISTRY, LEXICON_REGISTRY, RegistrySnapshot},
+    registry_store::{RegistryValidationIssue, RegistryValidationResult},
+};
+
+struct SeedContent {
+    kind: &'static str,
+    label: String,
+    metadata: Map<String, Value>,
+}
+
+static SEED_METADATA: Lazy<HashMap<String, SeedContent>> = Lazy::new(|| {
+    let mut result = HashMap::new();
+    for (source, kind, id_key, label_key) in [
+        (LEXICON_REGISTRY, "lexical", "lexicalId", "form"),
+        (GRAMMAR_REGISTRY, "grammar", "grammarId", "function"),
+    ] {
+        // A YAML parser retains aliases, Unicode, quoted scalars and nested source
+        // metadata; the historical published bundle parser is intentionally unchanged.
+        let document: Value =
+            serde_yaml_ng::from_str(source).expect("embedded content YAML is valid");
+        for entry in document["entries"]
+            .as_array()
+            .expect("content entries are a list")
+        {
+            let mut metadata = entry
+                .as_object()
+                .expect("content entry is an object")
+                .clone();
+            let id = metadata
+                .remove(id_key)
+                .and_then(|v| v.as_str().map(str::to_owned))
+                .expect("content entry ID");
+            let label = metadata
+                .remove(label_key)
+                .and_then(|v| v.as_str().map(str::to_owned))
+                .expect("content entry label");
+            for key in ["canDoIds", "contextIds", "masteryScope"] {
+                metadata.remove(key);
+            }
+            for (original, canonical) in [
+                ("meaningInScope", "meaning"),
+                ("pinyinInScope", "pinyin"),
+                ("sourceIds", "sources"),
+            ] {
+                if let Some(value) = metadata.remove(original) {
+                    metadata.insert(canonical.to_string(), value);
+                }
+            }
+            result.insert(
+                id,
+                SeedContent {
+                    kind,
+                    label,
+                    metadata,
+                },
+            );
+        }
+    }
+    result
+});
+
+pub fn hydrate_draft_content_metadata(snapshot: &mut RegistrySnapshot) {
+    for content in &mut snapshot.content_id_options {
+        let Some(source) = SEED_METADATA.get(&content.id) else {
+            continue;
+        };
+        if content.kind != source.kind || content.label != source.label {
+            continue;
+        }
+        let mut value = serde_json::to_value(&*content).expect("language content serializes");
+        let fields = value
+            .as_object_mut()
+            .expect("language content is an object");
+        for (key, value) in &source.metadata {
+            // Explicit empty values represent author decisions and must not be refilled.
+            fields.entry(key.clone()).or_insert_with(|| value.clone());
+        }
+        *content =
+            serde_json::from_value(value).expect("seed content metadata matches the contract");
+    }
+}
+
+fn issue(
+    issues: &mut Vec<RegistryValidationIssue>,
+    code: &str,
+    path: String,
+    message: impl Into<String>,
+) {
+    issues.push(RegistryValidationIssue {
+        severity: "error".to_string(),
+        code: code.to_string(),
+        path,
+        message: message.into(),
+    });
+}
+
+fn required_metadata(
+    content: &ContentIdOption,
+    previous: Option<&ContentIdOption>,
+    saving: bool,
+    index: usize,
+    issues: &mut Vec<RegistryValidationIssue>,
+) {
+    let (field, value, old_value, code) = match content.kind.as_str() {
+        "lexical" => (
+            "meaning",
+            &content.meaning,
+            previous.and_then(|old| old.meaning.as_ref()),
+            "registry.contentMeaningRequired",
+        ),
+        "grammar" => (
+            "pattern",
+            &content.pattern,
+            previous.and_then(|old| old.pattern.as_ref()),
+            "registry.contentPatternRequired",
+        ),
+        _ => return,
+    };
+    // Old custom entries may be incomplete, including already saved drafts. A new
+    // entry, or a previously completed field, cannot become incomplete on save.
+    let required = saving && (previous.is_none() || old_value.is_some());
+    if (required || value.is_some()) && value.as_ref().is_none_or(|text| text.trim().is_empty()) {
+        issue(
+            issues,
+            code,
+            format!("contentIdOptions.{index}.{field}"),
+            format!("Language content “{}” requires {field}", content.label),
+        );
+    }
+}
+
+pub fn validate_language_content(
+    snapshot: &RegistrySnapshot,
+    previous: Option<&RegistrySnapshot>,
+) -> RegistryValidationResult {
+    let mut issues = Vec::new();
+    let mut seen_ids = HashSet::new();
+    let can_do_ids: HashSet<_> = snapshot
+        .can_do_options
+        .iter()
+        .map(|entry| entry.id.as_str())
+        .collect();
+    let contexts: HashMap<_, _> = snapshot
+        .context_options
+        .iter()
+        .map(|entry| (entry.id.as_str(), entry))
+        .collect();
+    let old: HashMap<_, _> = previous
+        .into_iter()
+        .flat_map(|value| &value.content_id_options)
+        .map(|entry| (entry.id.as_str(), entry))
+        .collect();
+    for (index, content) in snapshot.content_id_options.iter().enumerate() {
+        let path = format!("contentIdOptions.{index}");
+        let before = old.get(content.id.as_str()).copied();
+        if content.id.trim().is_empty() || content.id.trim() != content.id {
+            issue(
+                &mut issues,
+                "registry.requiredId",
+                format!("{path}.id"),
+                "Language content requires a nonblank ID without surrounding spaces",
+            );
+        } else if !seen_ids.insert(content.id.as_str()) {
+            issue(
+                &mut issues,
+                "registry.duplicateId",
+                format!("{path}.id"),
+                format!("Duplicate language content ID: {}", content.id),
+            );
+        }
+        if content.label.trim().is_empty() {
+            issue(
+                &mut issues,
+                "registry.contentLabelRequired",
+                format!("{path}.label"),
+                "Language content requires a name",
+            );
+        }
+        if !["lexical", "grammar", "character", "pragmatics", "supported"]
+            .contains(&content.kind.as_str())
+        {
+            issue(
+                &mut issues,
+                "registry.invalidContentKind",
+                format!("{path}.kind"),
+                "Unknown language content category",
+            );
+        }
+        if before.is_some_and(|entry| entry.kind != content.kind) {
+            issue(
+                &mut issues,
+                "registry.contentKindImmutable",
+                format!("{path}.kind"),
+                "An existing language content ID cannot change category",
+            );
+        }
+        if content.mastery_scope.as_deref().is_some_and(|scope| {
+            !["receptive", "productive", "receptiveProductive"].contains(&scope)
+        }) {
+            issue(
+                &mut issues,
+                "registry.invalidContentMastery",
+                format!("{path}.masteryScope"),
+                "Mastery scope must be receptive, productive, receptiveProductive, or null for unrestricted",
+            );
+        }
+        required_metadata(content, before, previous.is_some(), index, &mut issues);
+        validate_assessment_rules(snapshot, content, index, previous.is_none(), &mut issues);
+        for (field, ids) in [
+            ("canDoIds", &content.can_do_ids),
+            ("contextIds", &content.context_ids),
+        ] {
+            let mut seen = HashSet::new();
+            for id in ids {
+                if !seen.insert(id) {
+                    issue(
+                        &mut issues,
+                        "registry.duplicateContentReference",
+                        format!("{path}.{field}"),
+                        format!("Repeated language content reference: {id}"),
+                    );
+                }
+                if field == "canDoIds" && !can_do_ids.contains(id.as_str()) {
+                    issue(
+                        &mut issues,
+                        "registry.unknownContentCanDo",
+                        format!("{path}.{field}"),
+                        format!("Unknown Can-do: {id}"),
+                    );
+                }
+                if field == "contextIds" {
+                    match contexts.get(id.as_str()) {
+                        None => issue(
+                            &mut issues,
+                            "registry.unknownContentContext",
+                            format!("{path}.{field}"),
+                            format!("Unknown Context: {id}"),
+                        ),
+                        Some(context) if context.retired => issue(
+                            &mut issues,
+                            "registry.retiredContentContext",
+                            format!("{path}.{field}"),
+                            format!("Context “{}” is retired", context.label),
+                        ),
+                        _ => {}
+                    }
+                }
+            }
+        }
+    }
+    RegistryValidationResult {
+        valid: issues.is_empty(),
+        issues,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::registry::{
+        hydrate_published_registry_snapshot, prepare_registry_draft, snapshot,
+    };
+    use super::*;
+
+    #[test]
+    fn legacy_content_roundtrip_and_published_reads_do_not_add_metadata() {
+        let mut published = snapshot().clone();
+        let original = serde_json::to_value(&published.content_id_options).unwrap();
+        assert!(original[0].get("meaning").is_none());
+        hydrate_published_registry_snapshot(&mut published);
+        assert_eq!(
+            original,
+            serde_json::to_value(&published.content_id_options).unwrap()
+        );
+        let restored: Vec<ContentIdOption> = serde_json::from_value(original.clone()).unwrap();
+        assert_eq!(original, serde_json::to_value(restored).unwrap());
+    }
+
+    #[test]
+    fn new_drafts_hydrate_rich_seed_details_and_preserve_authored_metadata() {
+        let mut draft = snapshot().clone();
+        prepare_registry_draft(&mut draft);
+        let lexical = draft
+            .content_id_options
+            .iter()
+            .find(|entry| entry.id == "LEX-A1-0001")
+            .unwrap();
+        assert!(
+            lexical
+                .meaning
+                .as_deref()
+                .is_some_and(|value| !value.is_empty())
+        );
+        assert_eq!(lexical.pinyin.as_deref(), Some("nǐ hǎo"));
+        assert_eq!(lexical.metadata["type"], "word");
+        assert!(lexical.metadata["acceptedVariants"].is_array());
+        let grammar = draft
+            .content_id_options
+            .iter_mut()
+            .find(|entry| entry.id == "GR-A1-001")
+            .unwrap();
+        assert_eq!(grammar.pattern.as_deref(), Some("A 是 B"));
+        assert_eq!(grammar.examples.as_ref().unwrap()[0], "我是学生。");
+        assert!(grammar.metadata["triggerLexicalIds"].is_array());
+        grammar.pattern = Some("自定义结构".to_string());
+        grammar.examples = Some(Vec::new());
+        grammar.restrictions = Some(String::new());
+        grammar.metadata.insert(
+            "extraSource".to_string(),
+            serde_json::json!({"nested": ["source"]}),
+        );
+        let before = serde_json::to_value(&*grammar).unwrap();
+        hydrate_draft_content_metadata(&mut draft);
+        assert_eq!(
+            before,
+            serde_json::to_value(
+                draft
+                    .content_id_options
+                    .iter()
+                    .find(|entry| entry.id == "GR-A1-001")
+                    .unwrap()
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn customized_labels_are_not_given_original_seed_meanings() {
+        let mut draft = snapshot().clone();
+        draft.content_id_options[0].label = "另一义项".to_string();
+        let before = serde_json::to_value(&draft.content_id_options[0]).unwrap();
+        prepare_registry_draft(&mut draft);
+        assert_eq!(
+            before,
+            serde_json::to_value(&draft.content_id_options[0]).unwrap()
+        );
+    }
+
+    #[test]
+    fn new_content_requires_details_but_legacy_custom_entries_can_remain_incomplete() {
+        let mut before = snapshot().clone();
+        before.content_id_options[0].id = "CUSTOM-LEGACY".to_string();
+        let mut draft = before.clone();
+        draft.content_id_options[0].label = "Updated legacy entry".to_string();
+        assert!(validate_language_content(&draft, Some(&before)).valid);
+        let mut added = draft.content_id_options[0].clone();
+        added.id = "CUSTOM-NEW".to_string();
+        draft.content_id_options.push(added);
+        assert!(
+            validate_language_content(&draft, Some(&before))
+                .issues
+                .iter()
+                .any(|issue| issue.code == "registry.contentMeaningRequired")
+        );
+        draft.content_id_options.last_mut().unwrap().meaning =
+            Some("A limited meaning".to_string());
+        assert!(validate_language_content(&draft, Some(&before)).valid);
+        let saved = draft.clone();
+        draft.content_id_options.last_mut().unwrap().meaning = None;
+        assert!(!validate_language_content(&draft, Some(&saved)).valid);
+    }
+
+    #[test]
+    fn content_validation_rejects_invalid_references_and_identity_without_other_draft_checks() {
+        let before = snapshot().clone();
+        let mut draft = before.clone();
+        draft.capabilities.clear();
+        assert!(validate_language_content(&draft, Some(&before)).valid);
+        draft.content_id_options[0].kind = "grammar".to_string();
+        draft.content_id_options[0].label.clear();
+        draft.content_id_options[0].mastery_scope = Some("guess".to_string());
+        draft.content_id_options[0].can_do_ids = vec!["missing".to_string()];
+        draft.content_id_options[0].context_ids =
+            vec!["missing".to_string(), draft.context_options[0].id.clone()];
+        draft.context_options[0].retired = true;
+        draft
+            .content_id_options
+            .push(draft.content_id_options[0].clone());
+        let result = validate_language_content(&draft, Some(&before));
+        for code in [
+            "registry.contentKindImmutable",
+            "registry.contentLabelRequired",
+            "registry.invalidContentMastery",
+            "registry.unknownContentCanDo",
+            "registry.unknownContentContext",
+            "registry.retiredContentContext",
+            "registry.duplicateId",
+        ] {
+            assert!(
+                result.issues.iter().any(|issue| issue.code == code),
+                "missing {code}"
+            );
+        }
+    }
+}

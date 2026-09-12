@@ -2,7 +2,7 @@
 
 本文按当前 `/language-items/assessment-settings` 页面与对应校验代码整理，说明每个区域、字段和按钮的实际用途。页面上的英文名称保留，便于直接对照。版本编号、对象编号和引用关系由系统维护，普通操作不需要输入编号。
 
-工作台统一使用 `Blueprint slot` 表示考试蓝图中的任务位置，数据字段是 `blueprintSlotId`。下文的 Slot 是此概念的简称，界面标签不再使用 Exam task 或单独的 Slot。`Task configuration` 指 Blueprint slot × Item format × Primary Can-do 的组合；`Task family` 是任务族，`Scoring contract` 是评分合同，二者均是独立概念。新建、列表、编辑摘要和设置页统一使用 Blueprint slot、Item format、Primary Can-do、Domain、Context、Difficulty 这组字段名。
+工作台统一使用 `Item` 表示完整题目，`Item Bank` 表示题库。`Blueprint slot` 是考试蓝图中的测量位置，数据字段是 `blueprintSlotId`；下文的 Slot 仅是该概念的简称，界面标签使用全称。`Item rules` 是 Blueprint slot × Item format × Primary Can-do 三元组合及其可复用中央规则；`Item setup` 则是具体一道题的六项设置，在三元组合上增加 Domain、Context、Difficulty。`Task family` 是交际任务族，`Scoring contract` 是评分合同，二者均是独立概念。新建、列表、编辑摘要和设置页统一使用这组字段名。
 
 ## 1. 这个页面究竟设置什么
 
@@ -13,7 +13,7 @@ Assessment Settings 管理可重复使用的建题规则：哪些考试任务允
 | 页面 | 用户在这里决定什么 | 设置范围 |
 | --- | --- | --- |
 | Assessment Settings | 定义可供建题使用的配置、词库、情境及规则 | 一批未来题目共同使用 |
-| New item | 从已发布配置中选一个考试任务、题型、Primary Can-do、Domain、Context 和难度 | 本次创建的一道题 |
+| New items | 从已发布规则选择 Blueprint slot、Item format、Primary Can-do、Domain、Context、Difficulty，并设置题数和语言目标 | 本次创建的一道或多道独立题目 |
 | 题目编辑页 | 编辑题干、材料、答案、语言目标、信息点；在已绑定规则范围内调整题目 | 当前题目 |
 
 中央配置的识别关系是：
@@ -31,12 +31,25 @@ Slot + Item format + 一个 Primary Can-do
 - 设置页里选 `Slot → Item format → Primary Can-do`，是在定位一份已存在的中央配置。切换下拉框本身不会给当前配置改名，也不会改变它的主目标。
 - 当前实现中，Task family 与 Scoring contract 的合法关系由 Slot 和 Item format 约束。选择 Context 不会重新生成评分合同。Context 决定的是使用情境以及 Domain。
 
-## 2. 页面只分两条操作路径
+## 2. 从两张关联表查看规则，进入对应表单编辑
 
-- **Task configuration**：定位 Blueprint slot → Item format → 唯一 Primary，选择允许的 Context，紧接着设置本组合的三个难度等级。
-- **Rule libraries**：维护 Context、Can-do、语言内容、评分合同、审核规则，或查看 Change history。一次只显示选中的库。
-- `Manage contexts` 直接进入 Context 库；回到 Task configuration 时保留原组合。
-- Skill／Activities、Task family、Scoring contract 合并成只读摘要。Supporting Can-do、证据、边界、参考案例和交付规则收在 `Task rules` 内。
+页面默认打开 **Rules overview**，另有 **Language content matrix**、**Item rules** 和 **Rule libraries** 四个入口。表格与表单读取、修改同一份设置快照，不维护另一份对应关系。
+
+| 入口 | 纵向与横向／用途 | 编辑入口 |
+| --- | --- | --- |
+| Rules overview | 每行是实际保存的 Blueprint slot × Item format × Primary Can-do × Context；列展示 Skill／Activity、Domain／Context、三档 Difficulty 和兼容的核心语言条目数 | Edit item rules 定位精确组合；点击难度定位该组合的对应档位；点击 Context 打开相应目录记录 |
+| Language content matrix | 每行是稳定身份的语言条目及其词义／结构；每列是一个精确的 Item rules × 有效 Context 组合，表头同时标明 Skill、Blueprint slot、Item format 和 Primary Can-do | 点击条目编辑目录资料；点击单元格编辑该条目在该组合中的考查规则；点击列表头的 Blueprint slot 打开对应 Item rules |
+| Item rules | 定位 Blueprint slot → Item format → 唯一 Primary，选择允许的 Context，紧接着设置本组合的三个难度等级 | 沿用完整规则表单 |
+| Rule libraries | 维护 Context、Can-do、语言内容、评分合同、审核规则，或查看 Change history；一次只显示选中的库 | 沿用各目录的编辑表单 |
+
+Rules overview 提供 Search item rules、Skill、Context 筛选和分页。缺少 Context、引用不存在／停用／不兼容 Context 的草稿仍显示，并给出 Needs attention；缺失或错误的难度配置也保留修复入口。没有实际保存的配置时显示空状态，不将所有字段任意组合成新规则。Language content 栏的数量表示按当前规则可选的核心条目数，不是题目覆盖量或已确认考查量。
+
+点击 Rules overview 的 View language content，会打开矩阵并定位该 Item rules 与 Context。矩阵支持 Category、Search language content、Skill、Context 和 Item rules 筛选，每页显示四个组合列及二十个条目行，两方向分别翻页。只按条目类别和搜索筛选纵向目录；Skill、Context 和 Item rules 用于筛选组合列，条目不适用时仍显示 Not allowed。失效组合的已存规则保留在 Assessment rules needing attention 中供定位处理。
+
+两张表切换视图、进入表单再返回时保留各自的筛选、分页和所选行／单元格。Back to Rules overview／Back to Language content matrix 返回来源表；表单修改后，返回时显示同一草稿中的更新值。只读快照仍可通过表格打开详情，按钮显示 View，不直接修改已发布设置。
+
+- `Manage contexts` 直接进入 Context 库；回到 Item rules 时保留原组合。
+- Skill／Activities、Task family、Scoring contract 合并成只读摘要。Supporting Can-do、证据、边界、参考案例和交付规则收在 `Detailed rules` 内。
 
 ### 页面上不同“格子”的含义
 
@@ -52,7 +65,7 @@ Slot + Item format + 一个 Primary Can-do
 | 多行列表输入框 | 每行是一条规则、限制或说明 | 是；离开输入框时会清理空行 |
 | 数字框 | 编辑一个数量，例如该难度等级的信息点数 | 是 |
 | 只有标签和文字、没有输入边框 | 只读值，例如派生 Domain、Skill、合同名称 | 否 |
-| Task rules / Delivery rules | 展开或收起详细规则 | 否 |
+| Detailed rules / Delivery rules | 展开或收起详细规则 | 否 |
 | 并列的两列、三列网格 | 把相关字段放在一起；窄屏会改为上下排列 | 不是额外的规则层级，也不是题目数量 |
 
 已发布设置、其他人的草稿、请求处理中、发布确认窗口打开时，以及发现远程修改冲突时，规则编辑控件会锁定。只读状态下仍可通过定位下拉框查看不同对象。
@@ -65,7 +78,7 @@ Slot + Item format + 一个 Primary Can-do
 
 | 控件 | 含义与行为 |
 | --- | --- |
-| Item bank | 返回题库。未保存的修改会触发离开确认；请求处理中不可点击。 |
+| Item Bank | 返回题库。未保存的修改会触发离开确认；请求处理中不可点击。 |
 | Sign out / switch account | 退出当前账户。未保存时先确认是否丢弃本地修改；请求处理中不可点击。 |
 | Assessment Settings | 页面名称，不是可编辑字段。 |
 
@@ -112,7 +125,7 @@ Slot + Item format + 一个 Primary Can-do
 
 后台重新获取数据不会覆盖正在编辑的本地修改。浏览器返回、页面跳转、刷新或关闭页面时，未保存内容会触发相应保护。这是离开确认，不是自动保存；重要修改仍需点击 Save draft。
 
-## 4. Task configuration：定义一个建题组合
+## 4. Item rules：定义一个建题组合
 
 ### 先定位组合
 
@@ -121,11 +134,11 @@ Slot + Item format + 一个 Primary Can-do
 | Blueprint slot | 考试蓝图中的任务位置，例如 Signs, labels, and short notices | 单选定位；显示已配置 Slot，不在这里新建 Slot 或手填标题 |
 | Item format | 该 Slot 中的一种作答结构，例如 Single select 或 Matching | 单选定位；选项随 Slot 改变 |
 | Primary Can-do | 当前配置的唯一主能力目标 | 单选定位；选项随 Slot 和 Item format 改变 |
-| Add configuration | 展开新增配置区，再选一个尚未配置的 Primary 并确认添加 | 候选必须匹配当前 Skill、主 Activity；Task family 和评分合同有效 |
-| Cancel new configuration | 关闭尚未添加的配置选择 | 不改已有配置 |
-| Manage configuration → Remove this configuration | 删除当前组合及其专属难度配置 | 仅存在另一份同 Slot／题型配置时出现；需确认，不删除 Can-do 库记录 |
+| Add item rules | 展开新增配置区，再选一个尚未配置的 Primary 并确认添加 | 候选必须匹配当前 Skill、主 Activity；Task family 和评分合同有效 |
+| Cancel new item rules | 关闭尚未添加的配置选择 | 不改已有配置 |
+| Manage item rules → Remove these item rules | 删除当前组合及其专属难度配置 | 仅存在另一份同 Slot／题型配置时出现；需确认，不删除 Can-do 库记录 |
 
-`Add configuration` 的意思不是“给一道题增加第二个 Primary”。例如同一 Slot 和题型支持两个 Can-do，系统保存两份可供选择的配置；新建一道题时仍只能从中选一个 Primary。
+`Add item rules` 的意思不是“给一道题增加第二个 Primary”。例如同一 Slot 和题型支持两个 Can-do，系统保存两份可供选择的配置；新建一道题时仍只能从中选一个 Primary。
 
 增加组合不会把旧 Primary 的证据、A1 边界、参考案例、Supporting Can-do 和 Context 选择直接套过来。这些字段会清空，难度以中央默认值初始化；Slot、题型及其对应的任务结构、评分和交付规则继续作为基础。
 
@@ -140,15 +153,15 @@ Slot + Item format + 一个 Primary Can-do
 | Skill / Activities | 主技能及交际活动；有附加活动时标清主活动 | 只读，与 Primary Can-do 一致，不再重复列出 Activities |
 | Task family | 此 Slot 和题型执行的交际任务类型 | 只读引用；必须是该 Slot 和题型允许的 Task family |
 | Scoring contract | 合同名称及自动评分、逐字段评分或量表评分方式 | 只读引用；必须匹配当前 Slot 和题型 |
-| Supporting Can-do（Task rules 内） | 本配置可支持的辅助能力 | 可搜索多选，可为空，不能与 Primary 相同 |
+| Supporting Can-do（Detailed rules 内） | 本配置可支持的辅助能力 | 可搜索多选，可为空，不能与 Primary 相同 |
 | Domains | 当前有效的已选 Context 所归属的领域 | 只读派生；不是第二组需要重复勾选的范围 |
 | Allowed contexts | 建题时允许选择的具体情境 | 多选；每份配置必须至少有一个真正可用的 Context |
 | Observable evidence | 考生应表现出什么可观察行为，才能证明目标能力 | 可编辑；建议完整填写，当前未逐项强制非空 |
 | A1 boundary | 什么仍属于 A1，什么要求已经越界 | 可编辑；建议完整填写，当前未逐项强制非空 |
 | Task family coverage | 该类任务应完成的核心行为说明 | 可编辑说明文字；修改文字不会自动更换 Task family 引用 |
-| Task structure | 材料、问题和作答之间的组织结构说明 | 可编辑；建议完整填写，不是单题题干 |
-| Valid reference task | 一个符合此配置的示例任务 | 可编辑；建议填写，不会自动创建一道题 |
-| Invalid reference task | 一个看似相关但不符合配置的反例 | 可编辑，可按需填写 |
+| Item structure | 材料、问题和作答之间的组织结构说明 | 可编辑；建议完整填写，不是单题题干 |
+| Valid item example | 一个符合此配置的题目示例 | 可编辑；建议填写，不会自动创建一道题 |
+| Invalid item example | 一个看似相关但不符合配置的反例 | 可编辑，可按需填写 |
 | Prohibited uses | 明确不能拿本配置来测量的内容或行为 | 多行列表，可按需填写 |
 
 一个 Context 只有同时满足以下条件，才进入正常的 Allowed contexts 选择区：存在、未停用、明确支持当前 Primary Can-do、恰好有一个合法 Domain，且名称与 Scope 完整。只属于 Public 并不能证明它适合所有 Public 领域的能力。
@@ -219,7 +232,7 @@ Context 不是永远不能增加的固定清单。它是在中央设置中维护
 
 修改 Domain、Scope、名称、启停状态或兼容 Can-do，会重新计算受影响配置的可用 Domains。已有 Context 引用不会因为它暂时不兼容而被自动删除。
 
-停用被引用的 Context 后，相关 Task configuration 会显示红色错误。需要决定恢复 Context，还是到每份相关配置里移除引用、选择其他 Context；不处理这些引用就不能发布合法的新配置。若只是恢复而尚未移除引用，原来的关联仍在。
+停用被引用的 Context 后，相关 Item rules 会显示红色错误。需要决定恢复 Context，还是到每份相关配置里移除引用、选择其他 Context；不处理这些引用就不能发布合法的新配置。若只是恢复而尚未移除引用，原来的关联仍在。
 
 当前发布校验对 retired 记录也要求名称、Scope 和一个 Domain 完整。新建但尚未填写完的 Context 可以先保存在草稿中，但不能把这份不完整规则直接发布。页面没有新建 Domain 或硬删除 Context 的按钮。
 
@@ -258,26 +271,70 @@ Context 不是永远不能增加的固定清单。它是在中央设置中维护
 
 单题采用创建时绑定的组合和等级配置；信息点数不再一律限制为两个，仍需依据该 Can-do 的证据边界，例如明确涉及一至三个信息点的目标。通过本表编辑后采用固定数量，尚未修改的旧范围继续保留，旧版规则也保留原有校验语义。复杂推断是 A1 的固定禁止条件，发布校验会阻止要求复杂推断的配置，不能通过修改 Upper A1 来绕过。
 
-## 8. Rule libraries → Language content：限制可选语言内容的适用范围
+## 8. Rule libraries → Language content：浏览和维护语言内容目录
 
-这里维护词汇、汉字、语法、语用功能和辅助内容的中央目录及适用条件。单题实际要测哪些条目，在题目编辑页选择。
+完整字段关系、流程实测及与此前讨论的差距见 [Language content 功能梳理](LANGUAGE-CONTENT-REVIEW.md)。当前目录筛选、Item 适用条件、正文出现与确认考查是不同概念；发布目录尚不会自动回查旧 Item，语法 Structure 也尚未成为正文匹配规则。
+
+这里维护词汇、汉字、语法、语用功能和辅助内容的中央目录及适用条件。进入后显示条目表格，可按类别、名称／释义／拼音、掌握范围、Can-do 和 Context 筛选。主表显示名称、限定义项／语法结构、掌握范围及适用条件；关联较多时可展开全部。一个 Item 实际要测哪些条目，在 New items 或 Prepare 中选择。
 
 | 字段或按钮 | 含义 | 当前要求与行为 |
 | --- | --- | --- |
-| Content category | 选择 Vocabulary、Characters、Grammar、Pragmatic functions 或 Supporting content | 定位筛选，不改变现有条目的类别 |
-| Language content entry | 选择该类别中的一个条目 | 定位单选 |
-| Display label | 条目显示的词、字或说明 | 可编辑；词汇和汉字保留原文，不把待测汉语自动改为英文 |
-| Mastery scope | 该条目按理解、表达或两者兼有的用途提供 | 可选 Not restricted、Receptive、Productive、Receptive and productive |
-| Compatible Can-do | 可以用到此条目的主／辅助 Can-do 范围 | 多选；空集合表示不限制 Can-do，不表示禁用全部 |
-| Compatible contexts | 可以用到此条目的 Context 范围 | 多选；空集合表示不限制 Context |
-| Invalid compatible Can-do → Remove | 移除不存在的 Can-do 引用 | 只清理条目关联 |
-| Unavailable content contexts → Remove | 移除已不存在或已停用的 Context 引用 | 只清理条目关联，不删除情境 |
+| Category | 选择 Vocabulary、Characters、Grammar、Pragmatic functions 或 Supporting material types | 决定条目类型及必填字段；列表分类只筛选，不改变条目 |
+| Word or phrase / Grammar name / Name | 条目显示的词、字或语法功能名称 | 编辑标签按类别显示；必填，保留作者原文 |
+| Meaning | 词汇纳入本目录的具体义项 | 新词汇必填；旧条目缺失时允许逐步补充，已有义项不能清空 |
+| Structure | 语法结构，如 A 是 B | 新语法必填；旧条目缺失时允许逐步补充，已有结构不能清空 |
+| Details → Pinyin / English meaning | 拼音与简短英文释义 | 可选；用于显示、搜索；English meaning 对应原 englishGloss 数据字段，与 Meaning 独立保存，不自动互译或校验一致性 |
+| Details → Examples / Usage restrictions | 例句和用法边界 | 可选；随设置版本保存；选为核心目标时传入真实 AI 生成和 AI feedback，文字限制不是程序硬检查 |
+| Details → Sources / Notes | 来源与备注 | 可选；保存供追溯和审核；选为核心目标时随资料传给真实 AI，来源链接不自动抓取 |
+| Mastery scope | 该条目按理解、表达或两者兼有的用途提供 | 可选 Not restricted、Receptive (understanding)、Productive (expression)、Receptive and productive |
+| Applicable Can-do | 可以用到此条目的主／辅助 Can-do 范围 | 直接搜索多选；未选时显示 Not restricted，空集合表示不限制 |
+| Applicable Context | 可以用到此条目的 Context 范围 | 直接搜索多选；未选时显示 Not restricted，空集合表示不限制 |
+| Unavailable Can-do → Remove | 移除不存在的 Can-do 引用 | 只清理条目关联 |
+| Unavailable Context → Remove | 移除已不存在或已停用的 Context 引用 | 只清理条目关联，不删除情境 |
 
-Receptive 对应理解类使用，Productive 对应表达类使用，Receptive and productive 同时允许两类，Not restricted 不加这一层限制。单题是否可选某条目，要同时满足 Context、主／辅助 Can-do 和掌握范围三个条件。
+Receptive 对应理解类使用，Productive 对应表达类使用，Receptive and productive 同时允许两类，Not restricted 不加这一层限制。一个 Item 是否可选某条目，要同时满足 Context、主／辅助 Can-do 和掌握范围三个条件。新增默认不限制，编辑已有条目不会自动清空范围。目录默认显示 Category 和 Search；Mastery scope、Can-do、Context 收在 More filters，收起时显示已启用的附加筛选数量。
 
-这里的空集合语义与 Task configuration 的 Allowed contexts 不同：语言条目的兼容集合为空可以表示“不限制”，但一个任务配置不能没有任何可用 Context。
+这里的空集合语义与 Item rules 的 Allowed contexts 不同：语言条目的兼容集合为空可以表示“不限制”，但一组 Item rules 不能没有任何可用 Context。
 
-当前页面只编辑已有语言条目的名称和适用条件，没有新增／删除词汇、汉字、语法条目的按钮。Supporting content 是辅助背景内容，不应因此自动变成单题的核心测量目标。
+### Language content matrix → Language assessment rule
+
+矩阵单元格同时表达“当前范围是否允许选用”与“是否已定义考查规则”。Allowed + Assessment rule not defined 表示条目目前可选但未填写该组合的考查规范；它不同于 Not allowed。已有规范显示 Understanding、Controlled production、Free production 或 Assessment rule incomplete，不能把这些设计状态解释为实际题目已经考到该语言内容。
+
+点击单元格打开 Language assessment rule，固定显示该条目以及 Blueprint slot、Item format、Primary Can-do、Context；这些身份不能在弹窗中改成另一组合。
+
+| 字段／操作 | 含义 |
+| --- | --- |
+| Applicability → Allowed within entry scope | 在条目现有范围内允许，不放宽 Applicable Can-do、Applicable Context 或 Mastery scope |
+| Applicability → Excluded for this combination | 只排除当前精确的 Item rules × Context，不改变其他组合或条目总体范围 |
+| Assessment mode | Reading／Listening 使用 Understanding；Writing／Speaking 使用 Controlled production 或 Free production；Not specified 表示尚未选择 |
+| Communicative purpose | 本组合使用该词义／结构要完成的交际目的 |
+| Required evidence | 题目应要求理解或产出的具体表现，每行一条 |
+| Acceptable responses | 可接受表达或答案变体，仍须符合固定评分规则 |
+| Failure patterns | 看似出现目标、实际未取得考查证据等无效设计或表现 |
+| Prerequisites | 完成任务所依赖的前置语言知识 |
+| Valid item example / Invalid item example | 该组合的合格例题与反例；填写文字不会自动创建题目 |
+| Apply to draft | 将暂存规则应用到当前设置草稿，尚未保存到服务器或发布 |
+| Remove rule; use entry scope | 确认后移除本组合的规则，恢复按条目总体范围判断；不删除语言条目 |
+
+未填写某组合的 assessment rule 时，旧有空范围仍表示 Not restricted，不会自动转成“不允许”。如条目总体范围排除了当前组合，选择 Allowed 也不能解除限制；需关闭弹窗、打开条目编辑器明确修改其总体范围。Excluded 则在总体允许范围内进一步收紧，生成、目标选择和服务端兼容性检查均使用这一精确排除条件。
+
+弹窗修改先暂存，取消时可丢弃修改；Apply to draft 后仍需 Save draft 和 Publish。尚未应用的表单参与离开、刷新和退出保护，不能绕过暂存步骤直接保存或发布。弹窗打开后，相关条目、Item rules 或 Context 发生变化时，会保留输入并阻止应用，提示重新打开。发布仍需检查与确认，旧快照和已创建题目保持原样。
+
+这些字段存储在语言条目的 assessmentRules 中。生成 prompt v0.7 和独立 AI 初审请求会获得与当前 Blueprint slot、Item format、Primary Can-do、Context 精确匹配的规则，用作正文、答案和考查证据的规范。此处提供的是规则输入及其使用边界；不代表已实现自动起草全部中央规则、独立难度校准或真实试测分析的新管线。语义判断也不会因规则已填写而自动成为通过 Checks、Review 或实测难度的证明。
+
+### 目录编辑与导入
+
+New entry 打开单条新增；点击列表条目查看或编辑详情。编辑在弹窗中暂存，Cancel 丢弃暂存，Apply changes／Add to draft 才写入页面上的设置草稿。暂存内容同样参与离开页面、刷新和退出账号保护；弹窗打开后条目若在别处被修改或移除，应用会被阻止，暂存值保留供查看和复制，关闭后重新打开可读取最新条目。Supporting material types 是辅助背景内容类型，不应因此自动变成 Item 的核心测量目标。
+
+Import 使用同一套预览处理 Excel（`.xlsx`）、Markdown 表格（`.md`）和页面粘贴。可粘贴 Excel 复制的制表符表格，也可以只输入一列名称，再在预览中补充字段。Markdown 按带表头的表格读取，不推断自由段落。Download template 可选 Excel 或 Markdown，给出字段格式与现有 Can-do／Context 对照；Export 导出所有符合当前筛选的条目，包含稳定条目 ID，供以后更新使用。
+
+已识别且没有歧义的表头直接进入导入预览；未知或重复表头保留全部输入，进入 Column mapping。预览显示可编辑的行、来源位置、错误和同名条目。Include all／Exclude all 切换参与导入的行，Set scopes for included rows 批量设置范围，More fields 展开附加列。新增词汇需要 Meaning，新增语法需要 Structure；新增的空范围表示 Not restricted，更新时空白继续保留旧值。Can-do／Context 使用现有 ID 或能唯一对应的名称，多值使用分号；无效或停用引用必须修正。新建单条统一使用 New entry，导入不再提供另一套空行新增入口。
+
+单条新增和导入均先按类别和名称比较，忽略大小写、全半角及多余空白，并匹配已知内置中英文显示名称。例如已有“我们／第一人称复数”时，新填“我们／we”仍显示同名条目，作者可以直接打开已有条目编辑。相同名称且相同义项／结构阻止新增；不同义项需确认后保留。查重不进行 AI 语义判断，不跨词汇和汉字类别合并；词汇包含某汉字也不自动增加一个汉字目标。已有重复条目仍能修改备注、范围等资料，更改名称或义项才重新要求查重；比较内容变化后需重新确认。
+
+Import mode 默认选择 Add new entries。更新已有条目必须显式选择 Update existing entries by ID，并提供当前目录中存在的稳定 ID；预览显示字段变化。更新中的空白保留旧值，`__CLEAR__` 清空可选字段，Not restricted 或 `__CLEAR__` 将适用范围设为不限制。文件没有列出的已有条目保持原样。参与导入的行全部通过校验后一次加入草稿；有错误时可以明确排除这些行再继续。输入上限为每文件 5 MiB、每次预览合计 5,000 行；仍有未预览文字或未完成字段对应时，不能应用已有行。
+
+所有新增、编辑和导入都仍需 Save draft，再 Publish。新建设置草稿可按稳定 ID 为名称未改变的内置条目补充源文件中的义项、结构、拼音等资料；不会覆盖已写入的值，也不会把新增资料直接写入已发布快照。旧题继续绑定原规则。未知的附加资料在编辑和导出更新过程中保留。
 
 ## 9. Rule libraries → Scoring contracts：维护评分规则文字
 
@@ -330,15 +387,15 @@ Receptive 对应理解类使用，Productive 对应表达类使用，Receptive a
 
 ### 选择任务与情境
 
-1. 在 Task configuration 选择 Slot：`Signs, labels, and short notices`。
+1. 在 Item rules 选择 Blueprint slot：`Signs, labels, and short notices`。
 2. Item format 选择 `Single select`。
 3. Primary Can-do 选择 `Understand signs, labels, and short notices`，始终只有一个。
 4. 查看派生 Skill 为 Reading、主 Activity 为 Reception；查看对应 Task family 和评分合同。
 5. Supporting Can-do 可以留空。
 6. Allowed contexts 选择 `Understand public signs and opening information`。它明确支持该主 Can-do，且属于 Public；Domains 因而显示 Public。
-7. 展开 Task rules，Observable evidence 填写“能够从极短通知中识别开放时间、入口或直接的禁止信息”。
+7. 展开 Detailed rules，Observable evidence 填写“能够从极短通知中识别开放时间、入口或直接的禁止信息”。
 8. A1 boundary 填写“信息明确、文本短，不依赖文化知识或隐含态度”。
-9. Valid reference task 可填写“通知写‘星期一不开门’，要求判断星期一能否进入”；反例可以是“根据长篇公告推断作者态度”。
+9. Valid item example 可填写“通知写‘星期一不开门’，要求判断星期一能否进入”；反例可以是“根据长篇公告推断作者态度”。
 
 不应因为 `Complete a simple purchase` 也属于 Public，就把它当成自动兼容。要先检查它的 Compatible Primary Can-do 是否真的包含当前主能力，并确认其范围与任务目的吻合。
 
@@ -363,14 +420,14 @@ Receptive 对应理解类使用，Productive 对应表达类使用，Receptive a
 2. 将 Primary Domain 设为 Educational，选择支持“理解标志、标签和简短通知”的 Can-do。
 3. Scope 写清“校园图书馆入口、开放日期、开放时间及简单借阅提示”；需要时填写排除项。
 4. 点击 Restore Context 启用。
-5. 回 Task configuration，在原组合的 Allowed contexts 中明确勾选它。新增进词库本身不会自动加入所有任务配置。
+5. 回 Item rules，在原组合的 Allowed contexts 中明确勾选它。新增进词库本身不会自动加入所有任务配置。
 6. 原 Public 情境与新 Educational 情境都被选中且有效时，Domains 显示两个领域。
 
 ### 保存、发布、建题
 
 完成设置后点击 Save draft，再点击 Publish。处理校验错误，通过后点击 Confirm publication。
 
-然后回 Item bank 点击 New item：选择同一考试任务、题型和唯一 Primary Can-do，再选择 Public 与公共开放信息 Context，或者 Educational 与校园图书馆 Context；最后选择一个难度等级。点击 Create 后进入 Prepare，先确定语言目标和关键信息，再生成或手写题目；Edit & preview 编辑实际通知、题目、选项和正确答案。具体流程见 `ITEM-CREATION.md`。
+然后回 Item Bank 点击 New items：选择同一 Blueprint slot、Item format 和唯一 Primary Can-do，再选择 Public 与公共开放信息 Context，或者 Educational 与校园图书馆 Context；最后选择一个难度等级。Number of items 保持 1，在 What this item should assess 选择语言目标。Options 中的 AI drafts per item 默认 1，也可输入有效正整数。点击 Generate 1 item 进入 Generation jobs，打开生成的题目后在 Prepare 比较 AI 题稿，点击 Use this draft 进入 Edit & preview，编辑实际通知、题干、选项和正确答案。也可在 New items 直接选择 Write manually，保存已选目标并进入 Edit & preview；之后生成或提交审核前仍须补齐要求。具体流程见 `ITEM-CREATION.md`。
 
 ## 12. 常见疑问与当前边界
 
@@ -378,7 +435,7 @@ Receptive 对应理解类使用，Productive 对应表达类使用，Receptive a
 | --- | --- |
 | 为什么切换 Slot 不显示 Unsaved？ | 这是切换正在查看的配置，没有改配置内容。 |
 | 为什么没有 Slot title 输入？ | Slot 名称由中央 Slot 资料提供，不在组合配置中重复手填。 |
-| 为什么 Add configuration 以后还是只有一个 Primary？ | 此操作新建了另一份可选组合；每份组合和每道题都只有一个 Primary。 |
+| 为什么 Add item rules 以后还是只有一个 Primary？ | 此操作新建了另一份可选组合；每份组合和每道题都只有一个 Primary。 |
 | 为什么一个 Context 名称存在，但选不到？ | 它可能已停用、不支持所选 Primary，或者 Domain／名称／Scope 不完整。 |
 | 为什么 Primary Domain 显示空选项并提示多个领域？ | 该记录实际存着多个 Primary Domain；页面不再假装只有第一个。选择一个领域修正。已知原始历史 D19／D20 在创建新草稿时按原始资料迁移，已发布记录与自定义配置不改写。 |
 | 为什么 Domain 没有独立多选框？ | 设置页从真正有效的已选 Context 派生 Domain，避免两边选出矛盾范围。 |

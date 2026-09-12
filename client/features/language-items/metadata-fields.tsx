@@ -305,7 +305,6 @@ export function MetadataFields({
             {selectedForHumanReview.length > 0 ? <Box mt={3}>
               <Text fontSize="sm" color="fg.muted">Grammar and pragmatic functions: human review required</Text>
               <Text mt={1} fontSize="sm">{selectedForHumanReview.map((id) => contentOptionLabel(id, registry)).join(", ")}</Text>
-              <Text mt={1} fontSize="sm" color="fg.muted">These are not detected automatically. Check whether answering requires them and record evidence in Language evidence and sources under Check &amp; submit.</Text>
             </Box> : null}
           </Box>
         ) : null}

@@ -27,6 +27,8 @@ import {
   getLanguageItems,
   syncGithubReviewBatch,
 } from "../features/language-items/api";
+import { ITEM_STATUS_COPY } from "../features/language-items/item-status";
+import { WORKBENCH_LABELS } from "../features/language-items/labels";
 import { ItemBankList } from "../features/language-items/item-bank-list";
 import type {
   LanguageItem,
@@ -136,7 +138,7 @@ function LanguageItems() {
       </HStack>
       <Center>
         <Stack gap={6} w="full" maxW="7xl">
-          <Header title="Item bank">
+          <Header title={WORKBENCH_LABELS.itemBank}>
             <HStack flexWrap="wrap">
               <Button variant="outline" onClick={() => navigate({ to: "/language-items/coverage" })}>
                 Language coverage
@@ -184,7 +186,7 @@ function LanguageItems() {
                     setRecordStateFilter(event.target.value as RecordStateFilter);
                   }}
                 >
-                  <option value="active">Current item bank</option>
+                  <option value="active">Current Item Bank</option>
                   <option value="archived">Archived</option>
                   <option value="deleted">Trash</option>
                 </NativeSelect.Field>
@@ -193,12 +195,12 @@ function LanguageItems() {
               <NativeSelect.Root size="sm" maxW="180px">
                 <NativeSelect.Field value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}>
                   <option value="all">All statuses</option>
-                  <option value="draft">Draft</option>
-                  <option value="readyForReview">Ready for PR</option>
-                  <option value="inReview">In review</option>
-                  <option value="needsRevision">Changes requested</option>
-                  <option value="reviewBlocked">Sync issue</option>
-                  <option value="rejected">PR closed</option>
+                  <option value="draft">{ITEM_STATUS_COPY.draft.label}</option>
+                  <option value="readyForReview">{ITEM_STATUS_COPY.readyForReview.label}</option>
+                  <option value="inReview">{ITEM_STATUS_COPY.inReview.label}</option>
+                  <option value="needsRevision">{ITEM_STATUS_COPY.needsRevision.label}</option>
+                  <option value="reviewBlocked">{ITEM_STATUS_COPY.reviewBlocked.label}</option>
+                  <option value="rejected">{ITEM_STATUS_COPY.rejected.label}</option>
                   <option value="approved">Approved</option>
                 </NativeSelect.Field>
                 <NativeSelect.Indicator />

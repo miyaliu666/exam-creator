@@ -175,7 +175,7 @@ pub fn validate_request(body: &CreateBatchBody) -> Result<(), Error> {
     }
     super::ai::validate_candidate_count(body.candidates_per_item).map_err(invalid)?;
     if body.groups.is_empty() || body.groups.len() > MAX_BATCH_GROUPS {
-        return Err(invalid("A batch must contain 1–20 task groups"));
+        return Err(invalid("A batch must contain 1–20 setup groups"));
     }
     let total: usize = body
         .groups
@@ -287,7 +287,7 @@ pub fn prepare_job(
     {
         return Err(Error::Server(
             StatusCode::CONFLICT,
-            "Assessment Settings changed; review the task groups before creating this batch"
+            "Assessment Settings changed; review the setup groups before creating this batch"
                 .to_string(),
         ));
     }
@@ -303,7 +303,7 @@ pub fn prepare_job(
         )
         .ok_or_else(|| {
             invalid(format!(
-                "Group {} has an unavailable task configuration",
+                "Setup group {} has unavailable item rules",
                 group_index + 1
             ))
         })?;
@@ -343,7 +343,7 @@ pub fn prepare_job(
             };
             if evidence.trim().is_empty() {
                 return Err(invalid(
-                    "This task configuration needs observable Can-do evidence before its brief can be prepared",
+                    "These item rules need observable Can-do evidence before item requirements can be prepared",
                 ));
             }
             draft.content.required_information_points = (0..expected)

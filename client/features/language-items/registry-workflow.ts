@@ -1,4 +1,15 @@
-import type { RegistryVersionRecord, RegistryVersionSummary } from "./types";
+import type { RegistryValidationResult, RegistryVersionRecord, RegistryVersionSummary } from "./types";
+
+export function registryWriteValidation(message: string): RegistryValidationResult | undefined {
+  const start = message.indexOf("{");
+  if (start < 0) return;
+  try {
+    const value: unknown = JSON.parse(message.slice(start));
+    if (!value || typeof value !== "object" || !("valid" in value) || value.valid !== false || !("issues" in value) || !Array.isArray(value.issues)) return;
+    if (!value.issues.every((entry: unknown) => entry && typeof entry === "object" && "severity" in entry && ["error", "warning"].includes(String(entry.severity)) && "code" in entry && typeof entry.code === "string" && "path" in entry && typeof entry.path === "string" && "message" in entry && typeof entry.message === "string")) return;
+    return { valid: false, issues: value.issues };
+  } catch { return; }
+}
 
 export function selectRegistryForEditing(versions: RegistryVersionSummary[], email?: string) {
   const active = versions.find((entry) => entry.active);

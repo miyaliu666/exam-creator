@@ -22,8 +22,8 @@ const job: BatchGenerationJob = {
 const registry: RegistrySnapshot = {
   bundleVersion: "rules-1", status: "published", limitations: [], sourceFingerprint: "", capabilities: [], candidateSchemas: [], taskPackageSchema: {},
   allowedDomains: ["Personal"], difficultyBands: ["LowerA1"], difficultyStandards: [],
-  contentIdOptions: [{ id: "common", kind: "lexical", label: "我", canDoIds: [], contextIds: [], masteryScope: null },
-    { id: "varied", kind: "lexical", label: "你", canDoIds: [], contextIds: [], masteryScope: null }],
+  contentIdOptions: [{ id: "common", kind: "lexical", label: "我", englishGloss: "I; me", canDoIds: [], contextIds: [], masteryScope: null },
+    { id: "varied", kind: "lexical", label: "你", englishGloss: "you", canDoIds: [], contextIds: [], masteryScope: null }],
   contextOptions: [{ id: "D02", label: "Personal information", primaryDomains: ["Personal"], canDoIds: [], scope: "", exclusions: "", retired: false }],
   canDoOptions: [{ id: "A1-L1", label: "Understand personal information" }], requiredReviewGateIds: [],
 };

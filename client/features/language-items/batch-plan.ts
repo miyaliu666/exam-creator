@@ -40,8 +40,8 @@ export function batchTargetOptions(group: BatchGroup, registry: RegistrySnapshot
 
 export function batchPlanIssues(groups: BatchGroup[], registry: RegistrySnapshot, candidatesPerItem: number, requireTargets = true) {
   const issues: string[] = [];
-  if (!groups.length) issues.push("Add at least one task group.");
-  if (groups.length > BATCH_GROUP_LIMIT) issues.push(`Use up to ${BATCH_GROUP_LIMIT} task groups at a time.`);
+  if (!groups.length) issues.push("Add at least one setup group.");
+  if (groups.length > BATCH_GROUP_LIMIT) issues.push(`Use up to ${BATCH_GROUP_LIMIT} setup groups at a time.`);
   const count = groups.reduce((total, group) => total + group.itemCount, 0);
   if (count > BATCH_ITEM_LIMIT) issues.push(`Use up to ${BATCH_ITEM_LIMIT} items at a time.`);
   if (!isValidCandidateCount(candidatesPerItem)) {

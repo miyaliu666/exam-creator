@@ -28,6 +28,30 @@ export interface CoverageRequest {
   pattern?: string[];
   offset: number;
   limit: number;
+  includeOverview?: boolean;
+}
+
+export interface CoverageOverview {
+  approvedItemCount: number;
+  pendingItemCount: number;
+  plannedUnknownCount: number;
+  confirmedUnknownCount: number;
+  pendingUnknownCount: number;
+  entries: Array<{ id: string; plannedCount: number; confirmedCount: number; pendingCount: number }>;
+}
+
+export interface CoverageOverviewState {
+  category: string;
+  search: string;
+  sort: "name" | "planned" | "pending";
+  offset: number;
+}
+
+export interface CoveragePageState {
+  view: "overview" | "items";
+  request: CoverageRequest;
+  overviewInventory: Pick<CoverageRequest, "registryVersion" | "filters">;
+  overview: CoverageOverviewState;
 }
 
 export interface CoverageMetadata {
@@ -51,7 +75,16 @@ export interface CoverageCount {
   count: number;
 }
 
+export interface CoverageSetupCount {
+  filters: CoverageFilters;
+  approvedCount: number;
+  pendingCount: number;
+}
+
 export interface CoverageResponse {
+  setupCounts?: CoverageSetupCount[];
+  approvedUnknownCount?: number;
+  overview?: CoverageOverview;
   registryVersion: string;
   availableRegistryVersions: string[];
   scope: "approved" | "drafts";

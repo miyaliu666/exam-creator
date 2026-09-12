@@ -1,12 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { registryDraftIsStale, registryRecordKey, registryStatus, selectRegistryForEditing, shouldAdoptRegistryRecord } from "../client/features/language-items/registry-workflow.ts";
+import { registryDraftIsStale, registryRecordKey, registryStatus, registryWriteValidation, selectRegistryForEditing, shouldAdoptRegistryRecord } from "../client/features/language-items/registry-workflow.ts";
 import type { RegistryVersionRecord } from "../client/features/language-items/types.ts";
 
 const record = {
   id: "draft", revision: 2, status: "draft", active: false,
   createdBy: "owner", baseVersion: "published-1",
 } as RegistryVersionRecord;
+
+test("content save failures expose structured field issues while unrelated errors stay intact", () => {
+  const validation = { valid: false, issues: [{ severity: "error", code: "registry.contentMeaningRequired", path: "contentIdOptions.1.meaning", message: "Meaning is required" }] };
+  assert.deepEqual(registryWriteValidation(`422 - ${JSON.stringify(validation)}`), validation);
+  assert.equal(registryWriteValidation("409 - The draft changed elsewhere"), undefined);
+  assert.equal(registryWriteValidation('422 - {"valid":false,"issues":["bad"]}'), undefined);
+});
 
 test("draft ownership and saved state are not mislabeled as published", () => {
   assert.equal(registryStatus(record, false, "owner").label, "Draft · Saved");

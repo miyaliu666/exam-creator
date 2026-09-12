@@ -17,9 +17,11 @@ use uuid::Uuid;
 use crate::{config::LanguageItemAiProviderConfig, errors::Error};
 
 use super::{
+    content_assessment::content_for_assessment,
     domain::{
-        AiCandidate, AiFinding, AiProviderCall, CandidatePayload, EnglishTranslation,
-        ScoringPackage, SingleSelectCandidatePayload, SingleSelectOption, Stimulus, TaskPackage,
+        AiCandidate, AiFinding, AiGenerationPromptPreview, AiProviderCall, CandidatePayload,
+        EnglishTranslation, ScoringPackage, SingleSelectCandidatePayload, SingleSelectOption,
+        Stimulus, TaskPackage,
     },
     english_translations::{translation_source_fields, validate_english_translations},
     registry::{
@@ -36,16 +38,16 @@ pub const PROVIDER: &str = "deterministic-mock";
 pub const MODEL: &str = "workbench-fixture-v1";
 pub const MODEL_VERSION: &str = "1";
 pub const GENERATION_PROMPT_ID: &str = "a1-item-generation";
-pub const GENERATION_PROMPT_VERSION: &str = "0.6";
+pub const GENERATION_PROMPT_VERSION: &str = "0.7";
 pub const REVIEW_PROMPT_ID: &str = "a1-item-independent-review";
-pub const REVIEW_PROMPT_VERSION: &str = "0.3";
+pub const REVIEW_PROMPT_VERSION: &str = "0.4";
 pub const REVIEW_SCHEMA_VERSION: &str = "0.1";
 pub const GENERATION_OUTPUT_SCHEMA_VERSION: &str = "0.3";
 const MAX_CONCURRENT_CANDIDATE_REQUESTS: usize = 5;
-pub const GENERATION_PROMPT: &str = include_str!("prompts/generation-v0.6.md");
+pub const GENERATION_PROMPT: &str = include_str!("prompts/generation-v0.7.md");
 pub const GENERATION_OUTPUT_SCHEMA: &str =
     include_str!("prompts/generation-output-v0.3.schema.json");
-pub const REVIEW_PROMPT: &str = include_str!("prompts/review-v0.3.md");
+pub const REVIEW_PROMPT: &str = include_str!("prompts/review-v0.4.md");
 pub const REVIEW_OUTPUT_SCHEMA: &str = include_str!("prompts/review-output-v0.1.schema.json");
 
 fn pinned_registry(package: &TaskPackage) -> Result<Arc<RegistrySnapshot>, Error> {
@@ -371,6 +373,71 @@ async fn generate_provider_candidate_inner(
     repair_candidate: Option<&AiCandidate>,
     provider_calls: &mut Vec<AiProviderCall>,
 ) -> Result<AiCandidate, Error> {
+    let request = generation_structured_request(config, package, ordinal, repair_candidate)?;
+    let value = match config {
+        LanguageItemAiProviderConfig::DeepSeek { .. } => {
+            deepseek_chat_structured_output(http_client, request, provider_calls).await?
+        }
+        LanguageItemAiProviderConfig::OpenAi { .. } => {
+            responses_structured_output(http_client, request, provider_calls).await?
+        }
+        LanguageItemAiProviderConfig::DeterministicMock => unreachable!(),
+    };
+    let mut output: GenerationOutput = serde_json::from_value(value).map_err(|error| {
+        Error::Server(
+            StatusCode::BAD_GATEWAY,
+            format!("AI generation output did not match the application contract: {error}"),
+        )
+    })?;
+    if output.candidates.len() != 1 {
+        return Err(Error::Server(
+            StatusCode::BAD_GATEWAY,
+            format!(
+                "AI returned {} candidates; exactly one was requested for candidate {ordinal}",
+                output.candidates.len()
+            ),
+        ));
+    }
+    Ok(candidate_from_provider(
+        package,
+        output.candidates.remove(0),
+        ordinal,
+    ))
+}
+
+pub fn generation_prompt_preview(
+    config: &LanguageItemAiProviderConfig,
+    package: &TaskPackage,
+    ordinal: u64,
+) -> Result<AiGenerationPromptPreview, Error> {
+    validate_candidate_count(ordinal)
+        .map_err(|message| Error::Server(StatusCode::BAD_REQUEST, message.to_string()))?;
+    let metadata = provider_metadata(config);
+    let request_body = match config {
+        LanguageItemAiProviderConfig::DeterministicMock => Value::Null,
+        LanguageItemAiProviderConfig::DeepSeek { .. } => deepseek_request_body(
+            &generation_structured_request(config, package, ordinal, None)?,
+            0,
+        ),
+        LanguageItemAiProviderConfig::OpenAi { .. } => responses_request_body(
+            &generation_structured_request(config, package, ordinal, None)?,
+        ),
+    };
+    Ok(AiGenerationPromptPreview {
+        provider: metadata.provider.to_string(),
+        model: metadata.model.to_string(),
+        prompt_version: GENERATION_PROMPT_VERSION.to_string(),
+        sends_to_provider: !matches!(config, LanguageItemAiProviderConfig::DeterministicMock),
+        request_body,
+    })
+}
+
+fn generation_structured_request<'a>(
+    config: &'a LanguageItemAiProviderConfig,
+    package: &TaskPackage,
+    ordinal: u64,
+    repair_candidate: Option<&AiCandidate>,
+) -> Result<StructuredOutputRequest<'a>, Error> {
     let (api_key, base_url, model) = match config {
         LanguageItemAiProviderConfig::DeepSeek {
             api_key,
@@ -411,6 +478,15 @@ async fn generate_provider_candidate_inner(
                 .content_id_options
                 .iter()
                 .find(|entry| &entry.id == id)
+        })
+        .map(|content| {
+            content_for_assessment(
+                content,
+                &package.blueprint_slot_id,
+                &package.item_format_id,
+                &package.content.primary_can_do_id,
+                &package.content.context_id,
+            )
         })
         .collect::<Vec<_>>();
     let context = registry
@@ -476,7 +552,7 @@ async fn generate_provider_candidate_inner(
             "Generate exactly one independent candidate."
         },
     });
-    let request = StructuredOutputRequest {
+    Ok(StructuredOutputRequest {
         api_key,
         base_url,
         model,
@@ -491,36 +567,7 @@ async fn generate_provider_candidate_inner(
                 "englishTranslations": repair_candidate.map(|candidate| candidate.english_translations.as_slice()).unwrap_or(&[]),
             }],
         }),
-    };
-    let value = match config {
-        LanguageItemAiProviderConfig::DeepSeek { .. } => {
-            deepseek_chat_structured_output(http_client, request, provider_calls).await?
-        }
-        LanguageItemAiProviderConfig::OpenAi { .. } => {
-            responses_structured_output(http_client, request, provider_calls).await?
-        }
-        LanguageItemAiProviderConfig::DeterministicMock => unreachable!(),
-    };
-    let mut output: GenerationOutput = serde_json::from_value(value).map_err(|error| {
-        Error::Server(
-            StatusCode::BAD_GATEWAY,
-            format!("AI generation output did not match the application contract: {error}"),
-        )
-    })?;
-    if output.candidates.len() != 1 {
-        return Err(Error::Server(
-            StatusCode::BAD_GATEWAY,
-            format!(
-                "AI returned {} candidates; exactly one was requested for candidate {ordinal}",
-                output.candidates.len()
-            ),
-        ));
-    }
-    Ok(candidate_from_provider(
-        package,
-        output.candidates.remove(0),
-        ordinal,
-    ))
+    })
 }
 
 pub async fn review(
@@ -567,6 +614,15 @@ pub async fn review(
                         .iter()
                         .find(|entry| &entry.id == id)
                 })
+                .map(|content| {
+                    content_for_assessment(
+                        content,
+                        &package.blueprint_slot_id,
+                        &package.item_format_id,
+                        &package.content.primary_can_do_id,
+                        &package.content.context_id,
+                    )
+                })
                 .collect::<Vec<_>>();
             let mut allowed_rule_refs = vec![
                 format!("slot.{}", package.blueprint_slot_id),
@@ -586,6 +642,12 @@ pub async fn review(
                     .map(|gate| format!("review.{gate}")),
             );
             allowed_rule_refs.extend(validation.issues.iter().map(|issue| issue.rule_ref.clone()));
+            allowed_rule_refs.extend(
+                selected_content
+                    .iter()
+                    .filter(|content| !content.assessment_rules.is_empty())
+                    .map(|content| format!("content.{}.assessmentRules", content.id)),
+            );
             allowed_rule_refs.sort();
             allowed_rule_refs.dedup();
 
@@ -643,22 +705,41 @@ pub async fn review(
                     format!("AI review output did not match the application contract: {error}"),
                 )
             })?;
-            if let Some(finding) = output
-                .findings
-                .iter()
-                .find(|finding| !allowed_rule_refs.contains(&finding.rule_ref))
-            {
-                return Err(Error::Server(
-                    StatusCode::BAD_GATEWAY,
-                    format!(
-                        "AI review referenced a rule that was not supplied: {}",
-                        finding.rule_ref
-                    ),
-                ));
-            }
+            validate_review_findings(&output.findings, &allowed_rule_refs)?;
             Ok(output.findings)
         }
     }
+}
+
+fn validate_review_findings(
+    findings: &[AiFinding],
+    allowed_rule_refs: &[String],
+) -> Result<(), Error> {
+    for finding in findings {
+        if !allowed_rule_refs.contains(&finding.rule_ref) {
+            return Err(Error::Server(
+                StatusCode::BAD_GATEWAY,
+                format!(
+                    "AI review referenced a rule that was not supplied: {}",
+                    finding.rule_ref
+                ),
+            ));
+        }
+        // Unrecognized severity must not silently turn a blocking finding into a passing report.
+        if !matches!(finding.severity.as_str(), "info" | "warning" | "error")
+            || finding.category.trim().is_empty()
+            || finding.code.trim().is_empty()
+            || finding.field_path.trim().is_empty()
+            || finding.message.trim().is_empty()
+        {
+            return Err(Error::Server(
+                StatusCode::BAD_GATEWAY,
+                "AI review findings must contain a valid severity, category, code, field path, and explanation"
+                    .to_string(),
+            ));
+        }
+    }
+    Ok(())
 }
 
 struct StructuredOutputRequest<'a> {
@@ -674,11 +755,7 @@ struct StructuredOutputRequest<'a> {
 
 const DEEPSEEK_JSON_ATTEMPTS: usize = 2;
 
-async fn deepseek_chat_structured_output(
-    http_client: &Client,
-    request: StructuredOutputRequest<'_>,
-    provider_calls: &mut Vec<AiProviderCall>,
-) -> Result<Value, Error> {
+fn deepseek_request_body(request: &StructuredOutputRequest<'_>, attempt: usize) -> Value {
     let user_content = json!({
         "input": &request.input,
         "outputSchema": &request.schema,
@@ -690,19 +767,12 @@ async fn deepseek_chat_structured_output(
     });
     let user_content =
         serde_json::to_string(&user_content).expect("DeepSeek input is serializable");
-    let mut last_empty_detail =
-        "The response did not contain usable completion content".to_string();
-
-    for attempt in 0..DEEPSEEK_JSON_ATTEMPTS {
-        let retry_instruction = if attempt == 0 {
-            ""
-        } else {
-            "\nThe previous JSON-mode response was empty. Respond immediately with one complete JSON object; the first non-whitespace character must be { and the last must be }."
-        };
-        let outgoing = http_client
-            .post(format!("{}/chat/completions", request.base_url))
-            .bearer_auth(request.api_key)
-            .json(&json!({
+    let retry_instruction = if attempt == 0 {
+        ""
+    } else {
+        "\nThe previous JSON-mode response was empty. Respond immediately with one complete JSON object; the first non-whitespace character must be { and the last must be }."
+    };
+    json!({
                 "model": request.model,
                 "messages": [
                     {
@@ -722,8 +792,25 @@ async fn deepseek_chat_structured_output(
                 "thinking": { "type": "disabled" },
                 "max_tokens": 8000,
                 "stream": false
-            }));
-        let (result, call) = recorded_provider_request(outgoing, "DeepSeek").await;
+    })
+}
+
+async fn deepseek_chat_structured_output(
+    http_client: &Client,
+    request: StructuredOutputRequest<'_>,
+    provider_calls: &mut Vec<AiProviderCall>,
+) -> Result<Value, Error> {
+    let mut last_empty_detail =
+        "The response did not contain usable completion content".to_string();
+
+    for attempt in 0..DEEPSEEK_JSON_ATTEMPTS {
+        let body = deepseek_request_body(&request, attempt);
+        let outgoing = http_client
+            .post(format!("{}/chat/completions", request.base_url))
+            .bearer_auth(request.api_key)
+            .json(&body);
+        let request_body = (request.format_name == "language_item_generation").then_some(body);
+        let (result, call) = recorded_provider_request(outgoing, "DeepSeek", request_body).await;
         provider_calls.push(call);
         let response_value = result?;
         if let Some(output_text) = deepseek_chat_output_text(&response_value) {
@@ -778,17 +865,10 @@ fn deepseek_empty_response_detail(response: &Value) -> String {
     }
 }
 
-async fn responses_structured_output(
-    http_client: &Client,
-    request: StructuredOutputRequest<'_>,
-    provider_calls: &mut Vec<AiProviderCall>,
-) -> Result<Value, Error> {
+fn responses_request_body(request: &StructuredOutputRequest<'_>) -> Value {
     // Pinned schemas allow optional fields and answer maps outside OpenAI's strict subset.
     // Keep their semantics; application parsing and validation still gate each candidate.
-    let outgoing = http_client
-        .post(format!("{}/responses", request.base_url))
-        .bearer_auth(request.api_key)
-        .json(&json!({
+    json!({
             "model": request.model,
             "store": false,
             "instructions": request.instructions,
@@ -801,8 +881,21 @@ async fn responses_structured_output(
                     "schema": request.schema,
                 }
             }
-        }));
-    let (result, call) = recorded_provider_request(outgoing, "OpenAI").await;
+    })
+}
+
+async fn responses_structured_output(
+    http_client: &Client,
+    request: StructuredOutputRequest<'_>,
+    provider_calls: &mut Vec<AiProviderCall>,
+) -> Result<Value, Error> {
+    let body = responses_request_body(&request);
+    let outgoing = http_client
+        .post(format!("{}/responses", request.base_url))
+        .bearer_auth(request.api_key)
+        .json(&body);
+    let request_body = (request.format_name == "language_item_generation").then_some(body);
+    let (result, call) = recorded_provider_request(outgoing, "OpenAI", request_body).await;
     provider_calls.push(call);
     let response_value = result?;
     let output_text = response_output_text(&response_value).ok_or_else(|| {
@@ -836,6 +929,7 @@ fn apply_observed_usage(call: &mut AiProviderCall, response: &Value) {
 async fn recorded_provider_request(
     outgoing: reqwest::RequestBuilder,
     provider: &str,
+    request_body: Option<Value>,
 ) -> (Result<Value, Error>, AiProviderCall) {
     let started = Instant::now();
     let mut call = AiProviderCall {
@@ -849,6 +943,8 @@ async fn recorded_provider_request(
         input_tokens: None,
         output_tokens: None,
         total_tokens: None,
+        request_body,
+        request_body_unavailable_reason: None,
     };
     let result = match outgoing.send().await {
         Ok(response) => {
@@ -1559,11 +1655,34 @@ mod tests {
     }
 
     #[test]
+    fn review_findings_reject_unknown_severity_and_unsupported_rules() {
+        let rules = vec!["review.automatedPrecheck".to_string()];
+        let mut finding = AiFinding {
+            category: "content".into(),
+            severity: "error".into(),
+            code: "answer.ambiguous".into(),
+            field_path: "candidatePayload.options".into(),
+            rule_ref: rules[0].clone(),
+            message: "两个选项都正确，请修改其中一个。".into(),
+        };
+        assert!(validate_review_findings(std::slice::from_ref(&finding), &rules).is_ok());
+        finding.severity = "critical".into();
+        assert!(validate_review_findings(std::slice::from_ref(&finding), &rules).is_err());
+        finding.severity = "warning".into();
+        finding.rule_ref = "invented.rule".into();
+        assert!(validate_review_findings(std::slice::from_ref(&finding), &rules).is_err());
+        finding.rule_ref = rules[0].clone();
+        finding.message = " ".into();
+        assert!(validate_review_findings(std::slice::from_ref(&finding), &rules).is_err());
+        assert!(validate_review_findings(&[], &rules).is_ok());
+    }
+
+    #[test]
     fn prompts_and_output_schemas_are_versioned_and_parseable() {
-        assert_eq!(GENERATION_PROMPT_VERSION, "0.6");
-        assert_eq!(REVIEW_PROMPT_VERSION, "0.3");
-        assert!(GENERATION_PROMPT.starts_with("# Chinese A1 Item Generation Prompt v0.6"));
-        assert!(REVIEW_PROMPT.starts_with("# A1 Independent Review Prompt v0.3"));
+        assert_eq!(GENERATION_PROMPT_VERSION, "0.7");
+        assert_eq!(REVIEW_PROMPT_VERSION, "0.4");
+        assert!(GENERATION_PROMPT.starts_with("# Chinese A1 Item Generation Prompt v0.7"));
+        assert!(REVIEW_PROMPT.starts_with("# A1 Independent Review Prompt v0.4"));
         let generation: serde_json::Value =
             serde_json::from_str(GENERATION_OUTPUT_SCHEMA).expect("generation schema is JSON");
         let review: serde_json::Value =
@@ -2038,6 +2157,8 @@ mod tests {
             input_tokens: None,
             output_tokens: None,
             total_tokens: None,
+            request_body: None,
+            request_body_unavailable_reason: None,
         };
         apply_observed_usage(&mut call, &json!({"id":"response-fixture"}));
         assert_eq!(call.input_tokens, None);
@@ -2077,6 +2198,258 @@ mod tests {
             }]
         });
         assert_eq!(response_output_text(&response), Some("{\"candidates\":[]}"));
+    }
+
+    #[tokio::test]
+    async fn language_content_metadata_reaches_the_pinned_generation_request() {
+        let mut registry = snapshot().clone();
+        super::super::registry::prepare_registry_draft(&mut registry);
+        registry.bundle_version = format!("content-generation-test-{}", Uuid::new_v4());
+        let mut package = generation_ready_package("reading-single-select");
+        package.spec_versions.registry_bundle_version = registry.bundle_version.clone();
+        package.content.target_content_ids =
+            vec!["LEX-A1-0001".to_string(), "GR-A1-001".to_string()];
+        let expected = package
+            .content
+            .target_content_ids
+            .iter()
+            .map(|id| {
+                serde_json::to_value(
+                    registry
+                        .content_id_options
+                        .iter()
+                        .find(|entry| &entry.id == id)
+                        .unwrap(),
+                )
+                .unwrap()
+            })
+            .collect::<Vec<_>>();
+        super::super::registry::install_published_snapshot(registry, false);
+        let provider_output = json!({"candidates": [{
+            "candidatePayload": package.candidate_payload,
+            "proposedScoringPackage": package.scoring_package,
+            "englishTranslations": []
+        }]});
+        let (sender, mut receiver) = tokio::sync::mpsc::channel(1);
+        let app = axum::Router::new().route(
+            "/chat/completions",
+            axum::routing::post(move |axum::Json(body): axum::Json<Value>| {
+                let sender = sender.clone();
+                let output = provider_output.to_string();
+                async move {
+                    sender.send(body).await.unwrap();
+                    axum::Json(json!({"choices": [{"message": {"content": output}}]}))
+                }
+            }),
+        );
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let config = LanguageItemAiProviderConfig::DeepSeek {
+            api_key: "local-fixture-key".to_string(),
+            base_url: format!("http://{}", listener.local_addr().unwrap()),
+            model: "fixture-model".to_string(),
+        };
+        let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+        let client = Client::builder()
+            .no_proxy()
+            .timeout(std::time::Duration::from_secs(5))
+            .build()
+            .unwrap();
+        let preview = generation_prompt_preview(&config, &package, 1).unwrap();
+        let mut calls = Vec::new();
+        let result =
+            generate_provider_candidate_inner(&config, &client, &package, 1, None, &mut calls)
+                .await;
+        server.abort();
+        assert!(result.is_ok(), "{result:?}");
+        let request = receiver.try_recv().unwrap();
+        assert_eq!(preview.request_body, request);
+        assert_eq!(calls[0].request_body.as_ref(), Some(&request));
+        let input: Value =
+            serde_json::from_str(request["messages"][1]["content"].as_str().unwrap()).unwrap();
+        assert_eq!(
+            input["input"]["lockedConstraints"]["targetContent"],
+            json!(expected)
+        );
+        assert!(input["input"]["lockedConstraints"]["targetContent"][0]["meaning"].is_string());
+        assert_eq!(
+            input["input"]["lockedConstraints"]["targetContent"][1]["pattern"],
+            "A 是 B"
+        );
+        assert!(
+            input["input"]["lockedConstraints"]["targetContent"][1]["restrictions"].is_string()
+        );
+    }
+
+    #[tokio::test]
+    async fn prompt_preview_and_snapshots_match_sent_initial_retry_and_failed_repair_requests() {
+        for use_deepseek in [false, true] {
+            let package = generation_ready_package("reading-single-select");
+            let mut repair_candidate = generate_mock_candidate(&package, 4);
+            repair_candidate
+                .validation
+                .issues
+                .push(super::super::domain::ValidationIssue {
+                    severity: "error".to_string(),
+                    code: "fixture.repair".to_string(),
+                    path: "candidatePayload".to_string(),
+                    rule_ref: "fixture.repair".to_string(),
+                    message: "Repair the fixture issue".to_string(),
+                });
+            let output = json!({ "candidates": [{
+                "candidatePayload": repair_candidate.candidate_payload,
+                "proposedScoringPackage": repair_candidate.proposed_scoring_package,
+                "englishTranslations": repair_candidate.english_translations,
+            }] })
+            .to_string();
+            let sequence = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+            let (sender, mut receiver) = tokio::sync::mpsc::channel(4);
+            let path = if use_deepseek {
+                "/chat/completions"
+            } else {
+                "/responses"
+            };
+            let app = axum::Router::new().route(path, axum::routing::post(
+                move |axum::Json(body): axum::Json<Value>| {
+                    let sequence = sequence.clone();
+                    let sender = sender.clone();
+                    let output = output.clone();
+                    async move {
+                        sender.send(body).await.unwrap();
+                        let index = sequence.fetch_add(1, Ordering::SeqCst);
+                        let success_index = usize::from(use_deepseek);
+                        if index > success_index {
+                            return (StatusCode::BAD_REQUEST, axum::Json(json!({ "error": "fixture repair rejected" })));
+                        }
+                        let response = if use_deepseek {
+                            json!({ "choices": [{ "message": { "content": if index == 0 { "" } else { &output } } }] })
+                        } else {
+                            json!({ "output": [{ "type": "message", "content": [{ "type": "output_text", "text": output }] }] })
+                        };
+                        (StatusCode::OK, axum::Json(response))
+                    }
+                },
+            ));
+            let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let base_url = format!("http://{}", listener.local_addr().unwrap());
+            let config = if use_deepseek {
+                LanguageItemAiProviderConfig::DeepSeek {
+                    api_key: "private-fixture-key".to_string(),
+                    base_url,
+                    model: "fixture-deepseek".to_string(),
+                }
+            } else {
+                LanguageItemAiProviderConfig::OpenAi {
+                    api_key: "private-fixture-key".to_string(),
+                    base_url,
+                    model: "fixture-openai".to_string(),
+                }
+            };
+            let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+            let client = Client::builder()
+                .no_proxy()
+                .timeout(std::time::Duration::from_secs(5))
+                .build()
+                .unwrap();
+            let preview = generation_prompt_preview(&config, &package, 2).unwrap();
+            let initial = generate_provider_candidate(&config, &client, &package, 2, None).await;
+            let repair =
+                generate_provider_candidate(&config, &client, &package, 2, Some(&repair_candidate))
+                    .await;
+            server.abort();
+            assert!(initial.result.is_ok());
+            assert!(repair.result.is_err());
+            assert!(preview.sends_to_provider);
+            assert!(
+                !serde_json::to_string(&preview)
+                    .unwrap()
+                    .contains("private-fixture-key")
+            );
+            assert_eq!(
+                preview.request_body,
+                initial.provider_calls[0].request_body.clone().unwrap()
+            );
+            assert_eq!(
+                initial.provider_calls.len(),
+                if use_deepseek { 2 } else { 1 }
+            );
+            for call in initial.provider_calls.iter().chain(&repair.provider_calls) {
+                assert_eq!(
+                    call.request_body.as_ref(),
+                    Some(&receiver.try_recv().unwrap())
+                );
+                assert_eq!(call.candidate_ordinal, 2);
+            }
+            if use_deepseek {
+                let retry = initial.provider_calls[1].request_body.as_ref().unwrap();
+                assert!(
+                    retry["messages"][0]["content"]
+                        .as_str()
+                        .unwrap()
+                        .contains("previous JSON-mode response was empty")
+                );
+            }
+            let failed = &repair.provider_calls[0];
+            assert_eq!(failed.phase, "repair");
+            assert_eq!(failed.outcome, "httpError");
+            let body = failed.request_body.as_ref().unwrap();
+            let input: Value = if use_deepseek {
+                serde_json::from_str::<Value>(body["messages"][1]["content"].as_str().unwrap())
+                    .unwrap()["input"]
+                    .clone()
+            } else {
+                serde_json::from_str(body["input"].as_str().unwrap()).unwrap()
+            };
+            assert_eq!(input["candidateOrdinal"], 2);
+            assert_eq!(
+                input["repairValidationIssues"],
+                json!(repair_candidate.validation.issues)
+            );
+            assert_eq!(
+                input["currentCandidatePayload"],
+                json!(repair_candidate.candidate_payload)
+            );
+            assert_eq!(
+                input["lockedConstraints"]["difficultyBand"],
+                package.content.difficulty_band
+            );
+            assert_eq!(
+                input["lockedConstraints"]["contextId"],
+                package.content.context_id
+            );
+        }
+    }
+
+    #[test]
+    fn mock_and_legacy_runs_do_not_claim_a_sent_prompt() {
+        let package = generation_ready_package("reading-single-select");
+        let preview = generation_prompt_preview(
+            &LanguageItemAiProviderConfig::DeterministicMock,
+            &package,
+            1,
+        )
+        .unwrap();
+        assert!(!preview.sends_to_provider);
+        assert!(preview.request_body.is_null());
+        assert!(
+            generation_prompt_preview(
+                &LanguageItemAiProviderConfig::DeterministicMock,
+                &package,
+                0
+            )
+            .is_err()
+        );
+        let legacy: AiProviderCall = serde_json::from_value(json!({
+            "candidateOrdinal": 1, "phase": "initial", "elapsedMilliseconds": 4,
+            "outcome": "responseReceived", "httpStatus": 200,
+        }))
+        .unwrap();
+        assert!(legacy.request_body.is_none());
+        assert!(
+            serde_json::to_value(legacy)
+                .unwrap()
+                .get("requestBody")
+                .is_none()
+        );
     }
 
     #[tokio::test]
@@ -2157,6 +2530,7 @@ mod tests {
 
         assert_eq!(result.unwrap(), expected_output);
         let sent = sent_request_rx.try_recv().unwrap();
+        assert_eq!(calls[0].request_body.as_ref(), Some(&sent));
         assert_eq!(sent["store"], false);
         assert_eq!(sent["text"]["format"]["schema"], schema);
         assert_eq!(calls.len(), 1);

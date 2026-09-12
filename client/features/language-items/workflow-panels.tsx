@@ -210,7 +210,7 @@ export function ReviewPanel(props: ReviewPanelProps) {
               onClick={props.onAiReview}
               loading={props.isRunningAiReview}
             >
-              AI pre-review
+              AI feedback
             </Button>
             <Button
               colorPalette="teal"
@@ -252,7 +252,7 @@ export function ReviewPanel(props: ReviewPanelProps) {
         {props.latestAiReview ? (
           <Box as="details" borderWidth="1px" borderRadius="lg" p={4}>
             <Box as="summary" cursor="pointer" fontWeight="semibold">
-              View latest AI pre-review ({props.latestAiReview.findings.length}{" "}
+              View latest AI feedback ({props.latestAiReview.findings.length}{" "}
               {props.latestAiReview.findings.length === 1 ? "finding" : "findings"})
             </Box>
             <Stack mt={3} gap={2}>
