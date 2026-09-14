@@ -1,10 +1,13 @@
 import { Box, Button, HStack, NativeSelect, SimpleGrid, Stack, Text } from "@chakra-ui/react";
 
-import { DIFFICULTY_LABELS, ITEM_FORMAT_LABELS, WORKBENCH_LABELS, optionLabel, slotLabel } from "./labels";
+import { DIFFICULTY_LABELS, ITEM_FORMAT_LABELS, WORKBENCH_LABELS, optionLabel } from "./labels";
 import { coverageContentOptions, coverageOptionGroups } from "./coverage-labels";
+import { CONTENT_LANGUAGE_OPTIONS, contentLanguage } from "./content-language";
+import { FilterSelect } from "./filter-select";
 import { RegistryMultiSelect } from "./registry-multi-select";
 import type { CoverageFilters, CoverageRequest } from "./coverage-types";
 import type { RegistrySnapshot } from "./types";
+import { NO_CONTEXT_FILTER } from "./coverage-context";
 
 function SelectField({ label, value, options, onChange }: {
   label: string; value: string; options: Array<{ id: string; label: string }>; onChange: (value: string) => void;
@@ -23,15 +26,19 @@ export function CoverageControls({ registry, versions, request, onChange, overvi
     { key: "skill", label: "Skill", options: unique(capabilities.map((value) => value.primaryReportedSkill)) },
     { key: "activity", label: "Communicative activity", options: unique(capabilities.flatMap((value) => value.communicativeActivities?.length ? value.communicativeActivities : [value.communicativeActivity])) },
     { key: "domain", label: WORKBENCH_LABELS.domain, options: unique(registry.allowedDomains) },
-    { key: "contextId", label: WORKBENCH_LABELS.context, options: registry.contextOptions.map(({ id }) => ({ id, label: optionLabel(id, registry.contextOptions) })) },
-    { key: "blueprintSlotId", label: WORKBENCH_LABELS.blueprintSlot, options: unique(capabilities.map((value) => value.blueprintSlotId)).map(({ id }) => ({ id, label: slotLabel(id, registry) })) },
+    { key: "contextId", label: WORKBENCH_LABELS.context, options: [
+      ...(registry.exerciseTemplateRules?.some((rule) => rule.enabled && !rule.allowedContextIds.length) ? [{ id: NO_CONTEXT_FILTER, label: "No predefined Context" }] : []),
+      ...registry.contextOptions.map(({ id }) => ({ id, label: optionLabel(id, registry.contextOptions) })),
+    ] },
     { key: "primaryCanDoId", label: WORKBENCH_LABELS.primaryCanDo, options: registry.canDoOptions.map(({ id }) => ({ id, label: optionLabel(id, registry.canDoOptions) })) },
     { key: "difficultyBand", label: WORKBENCH_LABELS.difficulty, options: registry.difficultyBands.map((id) => ({ id, label: DIFFICULTY_LABELS[id] ?? id })) },
     { key: "itemFormatId", label: WORKBENCH_LABELS.itemFormat, options: unique(capabilities.map((value) => value.itemFormatId)).map(({ id }) => ({ id, label: ITEM_FORMAT_LABELS[id] ?? id })) },
   ];
-  const targetIds = new Set(registry.contentIdOptions.filter((option) => option.kind !== "supported").map((option) => option.id));
+  const language = request.filters.language ?? "zh";
+  const targetIds = new Set(registry.contentIdOptions.filter((option) => option.kind !== "supported" && contentLanguage(option) === language).map((option) => option.id));
   const contentOptions = coverageContentOptions(registry).filter((option) => targetIds.has(option.id));
-  const optionGroups = coverageOptionGroups(registry).filter((group) => group.id !== "supported");
+  const optionGroups = coverageOptionGroups(registry).filter((group) => group.id !== "supported")
+    .map((group) => ({ ...group, optionIds: group.optionIds.filter((id) => targetIds.has(id)) })).filter((group) => group.optionIds.length > 0);
   const versionOptions = [versions[0], ...[...new Set(versions)].filter((id) => id !== versions[0]).sort()]
     .map((id, index) => ({ id, label: index === 0 ? "Current" : `Previous version ${index}` }));
   const hasMoreFilters = dimensions.some(({ key }) => !!request.filters[key]) ||
@@ -39,6 +46,8 @@ export function CoverageControls({ registry, versions, request, onChange, overvi
   const contentLabel = (id: string) => contentOptions.find((option) => option.id === id)?.label ?? `${id} (unresolved reference)`;
   const contentList = (ids: string[]) => ids.map(contentLabel).join("; ") || "None";
   return <Stack gap={4}>
+    <SelectField label="Language" value={language} options={[...CONTENT_LANGUAGE_OPTIONS]}
+      onChange={(language) => onChange({ filters: { ...request.filters, language } })} />
     {!overview && <>
     <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
       <RegistryMultiSelect label="Language targets" values={request.selectedIds} optionGroups={optionGroups}
@@ -62,10 +71,10 @@ export function CoverageControls({ registry, versions, request, onChange, overvi
       <Box as="summary" cursor="pointer" fontWeight="medium">More filters</Box>
       <Stack gap={4} mt={3}>
         <SimpleGrid columns={{ base: 1, md: 4 }} gap={3}>
-          {dimensions.map(({ key, label, options }) => <SelectField key={key} label={label} value={request.filters[key] ?? ""} options={[{ id: "", label: "All" }, ...options]} onChange={(value) => onChange({ filters: { ...request.filters, [key]: value || undefined } })} />)}
+          {dimensions.map(({ key, label, options }) => <FilterSelect key={key} label={label} value={request.filters[key] ?? ""} options={options} onChange={(value) => onChange({ filters: { ...request.filters, [key]: value || undefined } })} />)}
         </SimpleGrid>
         {!overview && <RegistryMultiSelect label="Exclude targets" values={request.excludedIds} optionGroups={optionGroups} options={contentOptions.filter((option) => !request.selectedIds.includes(option.id))} onChange={(excludedIds) => onChange({ excludedIds })} />}
-        {versionOptions.length > 1 && <SelectField label="Assessment Settings version" value={request.registryVersion} options={versionOptions} onChange={(registryVersion) => onChange({ registryVersion, selectedIds: [], excludedIds: [], filters: {} })} />}
+        {versionOptions.length > 1 && <SelectField label="Assessment Settings version" value={request.registryVersion} options={versionOptions} onChange={(registryVersion) => onChange({ registryVersion, selectedIds: [], excludedIds: [], filters: { language } })} />}
       </Stack>
     </details>
   </Stack>;

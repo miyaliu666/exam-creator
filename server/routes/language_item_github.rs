@@ -176,6 +176,15 @@ fn require_submission_ai_review(
             "A completed AI pre-review of this exact item content is required. Run AI pre-review again.",
         ));
     }
+    let blind_answer = report.blind_answer.as_ref().ok_or_else(|| {
+        conflict("The AI pre-review is missing its independent answer. Run AI pre-review again.")
+    })?;
+    if blind_answer.simulated {
+        return Err(conflict(
+            "A simulated independent answer cannot authorize submission.",
+        ));
+    }
+    crate::language_items::blind_review::validate_attempt(&version.package, blind_answer)?;
     if report
         .findings
         .iter()
@@ -184,6 +193,7 @@ fn require_submission_ai_review(
         return Err(Error::Server(StatusCode::UNPROCESSABLE_ENTITY,
             "AI pre-review found errors. Correct the item and run AI pre-review again before submitting.".to_string()));
     }
+    crate::language_items::review_rules::require_current_plan_report(&version.package, report)?;
     Ok(())
 }
 
@@ -231,6 +241,28 @@ fn ai_review_report_for_item(
             .collect::<Vec<_>>()
             .join("\n")
     };
+    let checklist = report.review_plan.as_ref().map(|plan| {
+        let rows = plan.checks.iter().map(|check| {
+            let result = report.check_results.as_ref().and_then(|results| results.iter().find(|result| result.check_id == check.id));
+            let status = result.map(|result| match result.status {
+                crate::language_items::review_rules::ReviewCheckStatus::Pass => "Pass",
+                crate::language_items::review_rules::ReviewCheckStatus::Fail => "Fail",
+                crate::language_items::review_rules::ReviewCheckStatus::InsufficientEvidence => "Insufficient evidence",
+            }).unwrap_or("Not checked");
+            let evidence = result.map(|result| result.evidence.iter().map(|entry| format!("\n  - Evidence: {} — {}", report_text(&entry.field_path), report_text(&entry.quote))).collect::<Vec<_>>().join("")).unwrap_or_default();
+            format!("- **{} · {}**\n  - Pass criteria: {}\n  - Required evidence: {}\n  - Sources: {}\n  - Result: {}{}", report_text(&check.title), status, report_text(&check.criterion), report_text(&check.required_evidence.join("; ")), report_text(&check.source_refs.join("; ")), result.map(|result| report_text(&result.message)).unwrap_or_else(|| "Unavailable".into()), evidence)
+        }).collect::<Vec<_>>().join("\n");
+        format!("\n\n#### Item review checklist\n\nPlan: {}\n\n{}", report_text(&plan.plan_hash), rows)
+    }).unwrap_or_default();
+    let independent_answer = report.blind_answer.as_ref().map(|answer| {
+        let status = match answer.status {
+            crate::language_items::blind_review::BlindAnswerStatus::Answered => "Answered",
+            crate::language_items::blind_review::BlindAnswerStatus::Ambiguous => "Multiple plausible answers",
+            crate::language_items::blind_review::BlindAnswerStatus::InsufficientInformation => "Insufficient information",
+        };
+        let evidence = answer.evidence.iter().map(|entry| format!("\n- Evidence: {} — {}", report_text(&entry.field_path), report_text(&entry.quote))).collect::<Vec<_>>().join("");
+        format!("\n\n#### Independent answer\n\nStatus: {status}\n\nRecorded before the saved answer, scoring and author metadata were revealed. This independent-check record supports human review; it is not an approval decision.\n\nAnswer: {}\n\nReasoning: {}\n\nOther plausible responses: {}\n\nLimitations: {}{}", report_text(&answer.answer), report_text(&answer.reasoning), report_text(&answer.alternatives.join("; ")), report_text(&answer.limitations.join("; ")), evidence)
+    }).unwrap_or_default();
     format!(
         "### AI pre-review: {}\n\nReport: {} · Provider: {} · Model: {}\n\nReviewed at: {}\n\nReviewed content hash: {}\n\nSubmission version: {} · Version {} · Frozen content hash: {}\n\n{}\n\nAI pre-review does not approve the item; human review is pending.",
         report_text(title),
@@ -242,7 +274,7 @@ fn ai_review_report_for_item(
         version.id,
         version.version_number,
         version.content_hash,
-        findings,
+        format_args!("{findings}{independent_answer}{checklist}"),
     )
 }
 
@@ -271,6 +303,7 @@ struct GithubItemFile {
     item_id: String,
     title: String,
     source: GithubItemSource,
+    #[serde(deserialize_with = "crate::language_items::legacy_identity::deserialize_package")]
     task_package: TaskPackage,
 }
 
@@ -294,27 +327,6 @@ struct GithubBatchManifestItem {
     registry_snapshot_path: String,
     task_package_schema_path: String,
     candidate_schema_path: String,
-}
-
-fn legacy_slot_name(id: &str) -> &'static str {
-    match id {
-        "R-A1-1" => "Signs, labels, and short notices",
-        "R-A1-2" => "Short messages and online information",
-        "R-A1-3" => "Practical structured information",
-        "R-A1-4" => "Short profiles, routines, and basic descriptions",
-        "L-A1-1" => "Basic personal and familiar information",
-        "L-A1-2" => "Explicit details in short dialogues",
-        "L-A1-3" => "Announcements, messages, and information records",
-        "L-A1-4" => "Simple communicative purposes and one-step instructions",
-        "W-A1-1" => "Complete a basic online form",
-        "W-A1-2" => "Reply to a very short practical message",
-        "W-A1-3" => "Relay simple information in writing",
-        "S-A1-1" => "Basic personal questions and answers",
-        "S-A1-2" => "Express direct needs and familiar content",
-        "S-A1-3" => "Simple everyday interaction and arrangement confirmation",
-        "S-A1-4" => "Relay simple information orally",
-        _ => "Registered Blueprint slot",
-    }
 }
 
 fn legacy_can_do_name(id: &str) -> &'static str {
@@ -352,26 +364,14 @@ fn item_format_name(id: &str) -> &str {
     }
 }
 
-fn slot_name<'a>(package: &TaskPackage, registry: &'a RegistrySnapshot) -> &'a str {
+fn item_rule_name<'a>(package: &TaskPackage, registry: &'a RegistrySnapshot) -> &'a str {
     registry
-        .blueprint_slots
+        .capabilities
         .iter()
-        .find(|slot| slot.id == package.blueprint_slot_id && !slot.display_name.trim().is_empty())
-        .map(|slot| slot.display_name.as_str())
-        .or_else(|| {
-            registry
-                .capabilities
-                .iter()
-                .find(|capability| {
-                    capability.blueprint_slot_id == package.blueprint_slot_id
-                        && capability.item_format_id == package.item_format_id
-                        && !capability.title.trim().is_empty()
-                })
-                .map(|capability| capability.title.as_str())
-        })
-        .unwrap_or_else(|| legacy_slot_name(&package.blueprint_slot_id))
+        .find(|rule| rule.item_rule_id == package.item_rule_id)
+        .map(|rule| rule.title.as_str())
+        .unwrap_or("Assessment task")
 }
-
 fn can_do_name<'a>(package: &TaskPackage, registry: &'a RegistrySnapshot) -> &'a str {
     registry
         .can_do_options
@@ -390,7 +390,7 @@ fn review_display_title(title: &str, package: &TaskPackage, registry: &RegistryS
     } else {
         format!(
             "{} — {}",
-            slot_name(package, registry),
+            item_rule_name(package, registry),
             item_format_name(&package.item_format_id)
         )
     }
@@ -417,9 +417,9 @@ fn review_focus_for_item(
         _ => "- [ ] The item structure matches the selected item format",
     };
     format!(
-        "## {}\n\n- Blueprint slot: {}\n- Primary Can-do: {}\n- Skill: {}\n- Communicative activity: {}\n- Item format: {}\n\n### Item-specific check\n\n{}",
+        "## {}\n\n- Item rule: {}\n- Primary Can-do: {}\n- Skill: {}\n- Communicative activity: {}\n- Item format: {}\n\n### Item-specific check\n\n{}",
         title,
-        slot_name(package, registry),
+        item_rule_name(package, registry),
         can_do_name(package, registry),
         package.content.primary_reported_skill,
         package.content.communicative_activity,
@@ -509,6 +509,7 @@ pub async fn post_batch(
 
         let version = if item.status == LanguageItemStatus::Draft {
             let mut package = item.draft.clone();
+            crate::language_items::legacy_identity::start_canonical_revision(&mut package);
             let version_number = state
                 .workbench_database
                 .versions
@@ -564,6 +565,11 @@ pub async fn post_batch(
                 item.id
             )));
         };
+        if version.package.integrity_provenance.is_some() {
+            return Err(conflict(
+                "This historical frozen version uses the previous identity contract. Create a revision and rerun checks before starting a new review submission.",
+            ));
+        }
         require_submission_ai_review(
             item,
             &version,
@@ -642,34 +648,62 @@ pub async fn post_batch(
             hex::encode(Sha256::digest(registry_version.as_bytes()))
         );
         let registry_snapshot_path = format!("{rules_directory}/snapshot.json");
-        let task_package_schema_path = format!("{rules_directory}/task-package.schema.json");
+        let exercise_kind = crate::language_items::exercise_templates::exercise_type(
+            &version.package.item_format_id,
+        );
+        let task_package_schema_path = match exercise_kind {
+            Some(kind) => format!("{rules_directory}/task-package-exercise-{kind}.schema.json"),
+            None => format!("{rules_directory}/task-package.schema.json"),
+        };
         let candidate_schema_path = format!(
             "{rules_directory}/{}.schema.json",
-            version.package.item_format_id
+            exercise_kind
+                .map(|kind| format!("exercise-{kind}"))
+                .unwrap_or_else(|| version.package.item_format_id.clone())
         );
-        let schema_index = [
-            "IF-SINGLE-SELECT",
-            "IF-MATCHING",
-            "IF-RESTRICTED-INPUT",
-            "IF-FORM-ENTRY",
-            "IF-TYPED-MESSAGE",
-            "IF-SPOKEN-SINGLE",
-            "IF-SPOKEN-MULTITURN",
-        ]
-        .iter()
-        .position(|id| *id == version.package.item_format_id)
-        .ok_or_else(|| conflict("Unregistered item format"))?;
-        let candidate_schema = registry
-            .candidate_schemas
-            .get(schema_index)
-            .ok_or_else(|| conflict("The pinned candidate schema is unavailable"))?;
-        for (path, value) in [
-            (&registry_snapshot_path, serde_json::to_value(&*registry)),
+        let (task_schema, candidate_schema) = if let Some(kind) = exercise_kind {
+            crate::language_items::exercise_templates::review_schemas(&registry, kind)
+                .map_err(|message| conflict(&message))?
+        } else {
+            let schema_index = [
+                "IF-SINGLE-SELECT",
+                "IF-MATCHING",
+                "IF-RESTRICTED-INPUT",
+                "IF-FORM-ENTRY",
+                "IF-TYPED-MESSAGE",
+                "IF-SPOKEN-SINGLE",
+                "IF-SPOKEN-MULTITURN",
+            ]
+            .iter()
+            .position(|id| *id == version.package.item_format_id)
+            .ok_or_else(|| conflict("Unregistered item format"))?;
+            let candidate_schema = registry
+                .candidate_schemas
+                .get(schema_index)
+                .ok_or_else(|| conflict("The pinned candidate schema is unavailable"))?;
             (
-                &task_package_schema_path,
-                Ok(registry.task_package_schema.clone()),
+                registry.task_package_schema.clone(),
+                candidate_schema.clone(),
+            )
+        };
+        let mut task_schema = task_schema;
+        if exercise_kind.is_none() {
+            crate::language_items::legacy_identity::upgrade_task_schema(&mut task_schema)
+                .map_err(|message| conflict(&message))?;
+        }
+        let mut review_snapshot = serde_json::to_value(&*registry)
+            .map_err(|_| conflict("Unable to serialize the pinned review rules"))?;
+        crate::language_items::legacy_identity::upgrade_mutable_registry_schema(
+            &mut review_snapshot,
+        )
+        .map_err(|message| conflict(&message))?;
+        for (path, value) in [
+            (
+                &registry_snapshot_path,
+                Ok::<_, serde_json::Error>(review_snapshot),
             ),
-            (&candidate_schema_path, Ok(candidate_schema.clone())),
+            (&task_package_schema_path, Ok(task_schema)),
+            (&candidate_schema_path, Ok(candidate_schema)),
         ] {
             if rule_paths.insert(path.clone()) {
                 let value =
@@ -1147,7 +1181,7 @@ fn submission_settings_match(reviewed: &TaskPackage, submitted: &TaskPackage) ->
         "/taskId",
         "/taskVersion",
         "/specVersions",
-        "/blueprintSlotId",
+        "/itemRuleId",
         "/taskFamilyId",
         "/itemFormatId",
         "/renderer",
@@ -1330,6 +1364,7 @@ async fn sync_review_batch(
                 .await?
             {
                 let mut expected = file.task_package.clone();
+                crate::language_items::legacy_identity::start_canonical_revision(&mut expected);
                 expected.task_version = existing.version_number.to_string();
                 if existing.content_hash != task_package_hash(&expected) {
                     return Err(conflict(
@@ -1346,6 +1381,7 @@ async fn sync_review_batch(
                     .await?
                     .map_or(1, |version| version.version_number + 1);
                 let mut package = file.task_package.clone();
+                crate::language_items::legacy_identity::start_canonical_revision(&mut package);
                 package.task_version = number.to_string();
                 let validation = validate_task_package(&package);
                 if !validation.valid {
@@ -1570,6 +1606,9 @@ mod tests {
             schema_version: ai::REVIEW_SCHEMA_VERSION.to_string(),
             spec_versions: package.spec_versions.clone(),
             findings: Vec::new(),
+            review_plan: None,
+            check_results: None,
+            blind_answer: Some(crate::language_items::blind_review::test_attempt(package)),
             status: "completed".to_string(),
             error: None,
             created_by: item.owner_email.clone(),
@@ -1603,7 +1642,7 @@ mod tests {
         let (mut item, version, _) = submission_fixture();
         item.status = LanguageItemStatus::Draft;
         let report = ai_review_fixture(&item, &item.draft, None);
-        for change in 0..13 {
+        for change in 0..16 {
             let mut other = report.clone();
             match change {
                 0 => other.content_hash = None,
@@ -1618,7 +1657,10 @@ mod tests {
                 9 => other.version_id = Some(version.id.clone()),
                 10 => other.prompt_id = "another-prompt".to_string(),
                 11 => other.prompt_version = "older-prompt".to_string(),
-                _ => other.schema_version = "another-schema".to_string(),
+                12 => other.schema_version = "another-schema".to_string(),
+                13 => other.blind_answer = None,
+                14 => other.blind_answer.as_mut().unwrap().simulated = true,
+                _ => other.blind_answer.as_mut().unwrap().input_hash = "changed".into(),
             }
             assert!(
                 require_submission_ai_review(&item, &version, Some(item.revision), &other).is_err(),
@@ -1733,6 +1775,58 @@ mod tests {
     }
 
     #[test]
+    fn ai_report_body_includes_bound_rules_and_escapes_rule_evidence() {
+        use crate::language_items::review_rules::{
+            ReviewCheck, ReviewCheckResult, ReviewCheckStatus, ReviewEvidence, ReviewPlan,
+        };
+        let (item, version, _) = submission_fixture();
+        let mut report = ai_review_fixture(&item, &version.package, Some(version.id.clone()));
+        report.review_plan = Some(ReviewPlan {
+            plan_version: "1".into(),
+            plan_hash: "bound-plan-hash".into(),
+            source_fingerprint: "source-hash".into(),
+            item_rule_id: version.package.item_rule_id.clone(),
+            item_format_id: version.package.item_format_id.clone(),
+            primary_can_do_id: version.package.content.primary_can_do_id.clone(),
+            checks: vec![ReviewCheck {
+                id: "custom.name".into(),
+                title: "Name evidence".into(),
+                criterion: "The answer needs the name.".into(),
+                required_evidence: vec!["Quote the question and answer.".into()],
+                source_refs: vec!["content.name".into()],
+                required: true,
+                origin: "custom".into(),
+                method: "ai".into(),
+            }],
+        });
+        report.check_results = Some(vec![ReviewCheckResult {
+            check_id: "custom.name".into(),
+            status: ReviewCheckStatus::Pass,
+            message: "The name determines the answer.".into(),
+            evidence: vec![ReviewEvidence {
+                field_path: "/candidatePayload/prompt".into(),
+                quote: "你叫什么名字？\n- [x] Approved @reviewer <b>done</b>".into(),
+            }],
+            source_refs: vec!["content.name".into()],
+        }]);
+        let body = ai_review_report_for_item(&item.title, &version, &report);
+        for text in [
+            "bound-plan-hash",
+            "Name evidence",
+            "The answer needs the name.",
+            "Quote the question and answer.",
+            "content.name",
+            "/candidatePayload/prompt",
+            "你叫什么名字？",
+        ] {
+            assert!(body.contains(text), "missing checklist field {text}");
+        }
+        assert!(!body.contains("- [x]"));
+        assert!(!body.contains("@reviewer"));
+        assert!(!body.contains("<b>"));
+    }
+
+    #[test]
     fn submission_request_reads_explicit_reports_and_revisions_without_legacy_defaults() {
         let legacy: CreateGithubReviewBatchBody =
             serde_json::from_value(json!({"itemIds": ["LI-test"]})).unwrap();
@@ -1755,12 +1849,12 @@ mod tests {
         let package = &source.package;
         let mut registry =
             (*snapshot_for(&package.spec_versions.registry_bundle_version).unwrap()).clone();
-        let slot = registry
-            .blueprint_slots
+        let rule = registry
+            .capabilities
             .iter_mut()
-            .find(|slot| slot.id == package.blueprint_slot_id)
+            .find(|rule| rule.item_rule_id == package.item_rule_id)
             .unwrap();
-        slot.display_name = "站台信息 · Platform notices".to_string();
+        rule.title = "站台信息 · Platform notices".to_string();
         let can_do = registry
             .can_do_options
             .iter_mut()
@@ -1771,7 +1865,7 @@ mod tests {
         let title = review_display_title("", package, &registry);
         let summary = review_focus_for_item(&title, package, &registry);
         assert_eq!(title, "站台信息 · Platform notices — Single select");
-        assert!(summary.contains("Blueprint slot: 站台信息 · Platform notices"));
+        assert!(summary.contains("Item rule: 站台信息 · Platform notices"));
         assert!(summary.contains("Primary Can-do: Find information on a platform notice"));
         assert_eq!(
             review_display_title(&item.title, package, &registry),
@@ -1780,11 +1874,11 @@ mod tests {
 
         let mut later_registry = registry.clone();
         later_registry
-            .blueprint_slots
+            .capabilities
             .iter_mut()
-            .find(|slot| slot.id == package.blueprint_slot_id)
+            .find(|rule| rule.item_rule_id == package.item_rule_id)
             .unwrap()
-            .display_name = "Later renamed notices".to_string();
+            .title = "Later renamed notices".to_string();
         assert!(
             review_display_title("", package, &later_registry).starts_with("Later renamed notices")
         );
@@ -1792,18 +1886,17 @@ mod tests {
     }
 
     #[test]
-    fn review_labels_preserve_legacy_name_fallbacks() {
+    fn review_labels_use_capability_titles_and_explicit_missing_rule_fallback() {
         let (_, source, _) = submission_fixture();
         let package = &source.package;
         let mut registry =
             (*snapshot_for(&package.spec_versions.registry_bundle_version).unwrap()).clone();
-        registry.blueprint_slots.clear();
         registry.can_do_options.clear();
         let capability = registry
             .capabilities
             .iter_mut()
             .find(|capability| {
-                capability.blueprint_slot_id == package.blueprint_slot_id
+                capability.item_rule_id == package.item_rule_id
                     && capability.item_format_id == package.item_format_id
             })
             .unwrap();
@@ -1818,10 +1911,7 @@ mod tests {
             legacy_can_do_name(&package.content.primary_can_do_id)
         );
         registry.capabilities.clear();
-        assert_eq!(
-            slot_name(package, &registry),
-            legacy_slot_name(&package.blueprint_slot_id)
-        );
+        assert_eq!(item_rule_name(package, &registry), "Assessment task");
     }
 
     #[test]
@@ -1945,7 +2035,7 @@ mod tests {
         for pointer in [
             "/taskVersion",
             "/specVersions/planningSpecVersion",
-            "/blueprintSlotId",
+            "/itemRuleId",
             "/taskFamilyId",
             "/itemFormatId",
             "/renderer/rendererVersion",

@@ -1,4 +1,4 @@
-import { inferImportField, mapContentTables, type ContentImportTable } from "./content-import-columns";
+import { inferContentKind, inferImportField, mapContentTables, type ContentImportTable } from "./content-import-columns";
 
 function delimitedRecords(text: string): Array<{ line: number; cells: string[] }> {
   const records: Array<{ line: number; cells: string[] }> = [];
@@ -55,7 +55,10 @@ export function parseContentTables(text: string, source = "Pasted input", requir
       if (cells.length !== records[0].cells.length) throw new Error(`${source}, row ${next + 1}: column count does not match the Markdown header. Escape literal pipes as \\|.`);
       records.push({ line: next + 1, cells }); next++;
     }
-    tables.push(tableFromRecords(records, `${source} (table ${tables.length + 1})`, true));
+    const table = tableFromRecords(records, `${source} (table ${tables.length + 1})`, true);
+    const heading = lines.slice(0, index - 1).reverse().find((line) => /^#{1,6}\s/.test(line));
+    table.defaultKind = heading ? inferContentKind(heading) : undefined;
+    tables.push(table);
     index = next;
   }
   if (tables.reduce((total, table) => total + table.rows.length, 0) > 5000) throw new Error("Import at most 5,000 content rows at a time.");

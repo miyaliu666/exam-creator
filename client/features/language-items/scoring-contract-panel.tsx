@@ -1,6 +1,7 @@
 import { Box, SimpleGrid, Stack, Text } from "@chakra-ui/react";
 
 import type { RegistrySnapshot, TaskPackage } from "./types";
+import { contentLanguage, contentLanguageLabel } from "./content-language";
 
 interface ScoringContractPanelProps {
   draft: TaskPackage;
@@ -126,6 +127,8 @@ function benchmarkLabel(version: string | undefined) {
 }
 
 export function ScoringContractPanel({ draft, registry }: ScoringContractPanelProps) {
+  const language = contentLanguage(draft.content);
+  const languageLabel = contentLanguageLabel(language);
   const contract = registry?.scoringContracts?.find(
     (entry) =>
       entry.scoringContractTemplateId === draft.scoringPackage.scoringContractTemplateId,
@@ -157,12 +160,12 @@ export function ScoringContractPanel({ draft, registry }: ScoringContractPanelPr
         <Box>
           <Text fontWeight="medium" mb={2}>Scoring points</Text>
           {(draft.scoringPackage.scoringPoints ?? []).map((point, index) => (
-            <Text key={point.scoringPointId}>{scoringPointLabel(point.scoringPointId, point.description, index)} — {point.points} points</Text>
+            <Text key={point.scoringPointId}>{language !== "zh" && point.scoringPointId === "SP-CONVENTIONS" ? `${languageLabel} and basic writing conventions` : scoringPointLabel(point.scoringPointId, point.description, index)} — {point.points} points</Text>
           ))}
         </Box>
         {contract.taskSpecificRequirements.length ? <Box>
           <Text fontWeight="medium" mb={2}>Response requirements</Text>
-          {contract.taskSpecificRequirements.map((requirement) => <Text key={requirement}>· {REQUIREMENT_LABELS[requirement] ?? requirement}</Text>)}
+          {contract.taskSpecificRequirements.map((requirement) => <Text key={requirement}>· {requirement === "at least one Chinese field" ? `Require ${languageLabel} in at least one field` : REQUIREMENT_LABELS[requirement] ?? requirement}</Text>)}
           {contract.capOrExclusion ? <Text mt={2} color="fg.warning">{CAP_LABELS[contract.capOrExclusion] ?? contract.capOrExclusion}</Text> : null}
         </Box> : null}
         {policies.map(([label, value]) => <Box key={label}><Text fontWeight="medium">{label}</Text><Text mt={1}>{value}</Text></Box>)}

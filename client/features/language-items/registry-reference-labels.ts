@@ -1,19 +1,19 @@
 import { createContext } from "react";
 
-import { ITEM_FORMAT_LABELS, WORKBENCH_LABELS, slotLabel } from "./labels";
+import { ITEM_FORMAT_LABELS, WORKBENCH_LABELS, itemRuleLabel } from "./labels";
 import { registryDisplayText } from "./registry-display-text";
 import type { RegistryCapability, RegistrySnapshot, RegistryValidationIssue } from "./types";
+import { getExerciseTemplateName } from "./exercise-template-names";
 
 export const RegistryTextContext = createContext(registryDisplayText);
 
-export function registrySlotName(snapshot: RegistrySnapshot, slotId: string) {
-  const name = slotLabel(slotId, snapshot);
-  return name === slotId ? WORKBENCH_LABELS.blueprintSlot : name;
+export function registryItemRuleName(snapshot: RegistrySnapshot, itemRuleId: string) {
+  const name = itemRuleLabel(itemRuleId, snapshot);
+  return name === itemRuleId ? WORKBENCH_LABELS.itemRules : name;
 }
 
-export function registryCombinationName(snapshot: RegistrySnapshot, capability: Pick<RegistryCapability, "blueprintSlotId" | "itemFormatId" | "primaryCanDoId">) {
-  const canDo = snapshot.canDoOptions.find((entry) => entry.id === capability.primaryCanDoId);
-  return `${registrySlotName(snapshot, capability.blueprintSlotId)} · ${ITEM_FORMAT_LABELS[capability.itemFormatId] ?? "Item format"} · ${registryDisplayText(canDo?.label ?? "Primary Can-do")}`;
+export function registryCombinationName(snapshot: RegistrySnapshot, capability: Pick<RegistryCapability, "itemRuleId" | "itemFormatId" | "primaryCanDoId">) {
+  return registryItemRuleName(snapshot, capability.itemRuleId);
 }
 
 export function registryReferenceName(snapshot: RegistrySnapshot, id: string, fallback: string) {
@@ -22,13 +22,13 @@ export function registryReferenceName(snapshot: RegistrySnapshot, id: string, fa
 
 function referenceNames(snapshot: RegistrySnapshot): Map<string, string> {
   const names = new Map<string, string>();
-  for (const entry of snapshot.capabilities) names.set(entry.blueprintSlotId, registrySlotName(snapshot, entry.blueprintSlotId));
+  for (const entry of snapshot.capabilities) names.set(entry.itemRuleId, registryItemRuleName(snapshot, entry.itemRuleId));
   for (const entry of [...snapshot.canDoOptions, ...snapshot.contextOptions, ...snapshot.contentIdOptions, ...snapshot.difficultyStandards]) {
     names.set(entry.id, registryDisplayText(entry.label));
   }
   for (const [id, label] of Object.entries(ITEM_FORMAT_LABELS)) names.set(id, label);
   for (const entry of [...(snapshot.taskFamilyOptions ?? []), ...(snapshot.referenceLabels ?? [])]) names.set(entry.id, registryDisplayText(entry.displayName));
-  for (const entry of snapshot.scoringContracts ?? []) names.set(entry.scoringContractTemplateId, registryDisplayText(entry.displayName ?? `${registrySlotName(snapshot, entry.blueprintSlotId)} · ${ITEM_FORMAT_LABELS[entry.itemFormatId] ?? "Scoring"}`));
+  for (const entry of snapshot.scoringContracts ?? []) names.set(entry.scoringContractTemplateId, registryDisplayText(entry.displayName ?? `${entry.itemRuleIds.map((id) => registryItemRuleName(snapshot, id)).join(" / ")} · ${ITEM_FORMAT_LABELS[entry.itemFormatId] ?? "Scoring"}`));
   return names;
 }
 
@@ -55,6 +55,10 @@ export function registryIssueText(snapshot: RegistrySnapshot, issue: RegistryVal
   if (section === "capabilities" && snapshot.capabilities[index]) location = registryCombinationName(snapshot, snapshot.capabilities[index]);
   if (section === "contextOptions") location = registryDisplayText(snapshot.contextOptions[index]?.label ?? "Context");
   if (section === "canDoOptions") location = registryDisplayText(snapshot.canDoOptions[index]?.label ?? "Can-do");
+  if (section === "exerciseTemplateRules") {
+    const rule = snapshot.exerciseTemplateRules?.[index];
+    if (rule) location = `${registryDisplayText(snapshot.canDoOptions.find((entry) => entry.id === rule.primaryCanDoId)?.label ?? "Can-do")} · ${getExerciseTemplateName(rule.exerciseType)}`;
+  }
   if (section === "contentIdOptions") location = registryDisplayText(snapshot.contentIdOptions[index]?.label ?? "Language content");
   if (section === "difficultyStandards") location = registryDisplayText(snapshot.difficultyStandards[index]?.label ?? "Difficulty");
   if (section === "capabilityDifficultyProfileSets") {

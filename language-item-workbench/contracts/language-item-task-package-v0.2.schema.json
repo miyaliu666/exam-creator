@@ -1,0 +1,448 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fcc:exam-creator:language-item-task-package:0.2",
+  "title": "Exam Creator Language Item TaskPackage v0.2",
+  "type": "object",
+  "required": [
+    "taskId",
+    "taskVersion",
+    "specVersions",
+    "itemRuleId",
+    "taskFamilyId",
+    "itemFormatId",
+    "renderer",
+    "candidatePayload",
+    "authoringPackage",
+    "scoringPackage",
+    "reviewPackage",
+    "mediaRefs",
+    "deliveryPolicyRefs",
+    "content",
+    "variation"
+  ],
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "taskVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "specVersions": {
+      "type": "object",
+      "required": [
+        "planningSpecVersion",
+        "registryBundleVersion",
+        "taskPackageVersion"
+      ],
+      "properties": {
+        "planningSpecVersion": {
+          "type": "string"
+        },
+        "registryBundleVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "taskPackageVersion": {
+          "const": "0.2"
+        }
+      },
+      "additionalProperties": false
+    },
+    "taskFamilyId": {
+      "enum": [
+        "TF-SIGNS-NOTICES",
+        "TF-SHORT-MESSAGE-COMPREHENSION",
+        "TF-STRUCTURED-INFORMATION",
+        "TF-SHORT-TEXT-COMPREHENSION",
+        "TF-LISTEN-AND-IDENTIFY",
+        "TF-SHORT-DIALOGUE-DETAIL",
+        "TF-LISTENING-INFORMATION-COMPLETION",
+        "TF-COMMUNICATIVE-PURPOSE",
+        "TF-FORM-COMPLETION",
+        "TF-SHORT-MESSAGE-RESPONSE",
+        "TF-WRITTEN-INFORMATION-RELAY",
+        "TF-PERSONAL-QA",
+        "TF-GUIDED-SPOKEN-PRODUCTION",
+        "TF-INTERACTIVE-ROLEPLAY",
+        "TF-SPOKEN-INFORMATION-RELAY"
+      ]
+    },
+    "itemFormatId": {
+      "enum": [
+        "IF-SINGLE-SELECT",
+        "IF-MATCHING",
+        "IF-RESTRICTED-INPUT",
+        "IF-FORM-ENTRY",
+        "IF-TYPED-MESSAGE",
+        "IF-SPOKEN-SINGLE",
+        "IF-SPOKEN-MULTITURN"
+      ]
+    },
+    "renderer": {
+      "type": "object",
+      "required": [
+        "rendererId",
+        "rendererVersion"
+      ],
+      "properties": {
+        "rendererId": {
+          "enum": [
+            "REN-SINGLE-SELECT",
+            "REN-MATCHING",
+            "REN-RESTRICTED-INPUT",
+            "REN-FORM-ENTRY",
+            "REN-TYPED-MESSAGE",
+            "REN-SPOKEN-SINGLE",
+            "REN-SPOKEN-MULTITURN"
+          ]
+        },
+        "rendererVersion": {
+          "const": "0.1"
+        }
+      },
+      "additionalProperties": false
+    },
+    "candidatePayload": {
+      "type": "object",
+      "description": "Validated against the candidate schema selected by itemFormatId."
+    },
+    "authoringPackage": {
+      "type": "object",
+      "required": [
+        "notes"
+      ],
+      "properties": {
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "englishTranslations": {
+          "type": "array",
+          "description": "Author/reviewer English references only. Never included in candidate payloads or delivery.",
+          "items": {
+            "type": "object",
+            "required": [
+              "path",
+              "sourceText",
+              "englishText"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "pattern": "^/",
+                "minLength": 2
+              },
+              "sourceText": {
+                "type": "string",
+                "minLength": 1
+              },
+              "englishText": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "scoringPackage": {
+      "type": "object",
+      "required": [
+        "itemScoringVersion",
+        "scoringContractTemplateId",
+        "scoringContractTemplateVersion",
+        "maxRawScore",
+        "scoringPoints",
+        "answerKeyRef",
+        "taskSpecificCriteria"
+      ],
+      "properties": {
+        "itemScoringVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scoringContractTemplateId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scoringContractTemplateVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "maxRawScore": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "scoringPoints": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "scoringPointId",
+              "description",
+              "points"
+            ],
+            "properties": {
+              "scoringPointId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "points": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "normalizationPolicyId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "answerKeyRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "taskSpecificCriteria": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "benchmarkSetVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "correctOptionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "correctMatches": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "acceptedResponses": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "rubricId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "reviewPackage": {
+      "type": "object",
+      "required": [
+        "gates"
+      ],
+      "properties": {
+        "gates": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    "mediaRefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "deliveryPolicyRefs": {
+      "type": "object",
+      "required": [
+        "navigationPolicyId",
+        "inputPolicyId",
+        "playbackPolicyId",
+        "recordingPolicyId",
+        "speakingRateProfileId",
+        "pauseProfileId"
+      ],
+      "properties": {
+        "navigationPolicyId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "inputPolicyId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "playbackPolicyId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recordingPolicyId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "speakingRateProfileId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pauseProfileId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "content": {
+      "type": "object",
+      "required": [
+        "primaryCanDoId",
+        "primaryReportedSkill",
+        "communicativeActivity",
+        "primaryDomain",
+        "contextId",
+        "difficultyBand",
+        "targetContentIds",
+        "supportingContentRefs",
+        "requiredInformationPoints"
+      ],
+      "properties": {
+        "primaryCanDoId": {
+          "type": "string",
+          "pattern": "^A1-"
+        },
+        "primaryReportedSkill": {
+          "enum": [
+            "Listening",
+            "Reading",
+            "Writing",
+            "Speaking"
+          ]
+        },
+        "communicativeActivity": {
+          "enum": [
+            "Reception",
+            "Production",
+            "Interaction",
+            "Mediation"
+          ]
+        },
+        "primaryDomain": {
+          "enum": [
+            "Personal",
+            "Public",
+            "Educational",
+            "Occupational"
+          ]
+        },
+        "contextId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Context identifier in the pinned Assessment Settings registry; includes built-in and user-created contexts."
+        },
+        "difficultyBand": {
+          "enum": [
+            "LowerA1",
+            "TypicalA1",
+            "UpperA1"
+          ]
+        },
+        "difficulty": {
+          "type": "object"
+        },
+        "targetContentIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "supportingContentRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "requiredInformationPoints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "pointType",
+              "label",
+              "required"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "pointType": {
+                "enum": [
+                  "date",
+                  "time",
+                  "location",
+                  "price",
+                  "quantity",
+                  "name",
+                  "action",
+                  "purpose",
+                  "other"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "required": {
+                "type": "boolean"
+              },
+              "sourceRef": {
+                "type": "string",
+                "minLength": 1
+              },
+              "scoringPointId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "language": {
+          "type": "string",
+          "enum": [
+            "zh",
+            "en",
+            "es"
+          ],
+          "description": "Language assessed by this item. Missing on legacy items means Chinese."
+        }
+      },
+      "additionalProperties": false
+    },
+    "variation": {},
+    "itemRuleId": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}

@@ -5,7 +5,7 @@ gates:
   checks:
   - required IDs and versions
   - schema validity
-  - slot-family-format-renderer compatibility
+  - item-rule-family-format-renderer compatibility
   - candidate/scoring/authoring separation
   - media and policy references
   - batch-plan match

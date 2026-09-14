@@ -16,10 +16,12 @@ test("content save failures expose structured field issues while unrelated error
 });
 
 test("draft ownership and saved state are not mislabeled as published", () => {
-  assert.equal(registryStatus(record, false, "owner").label, "Draft · Saved");
-  assert.equal(registryStatus(record, true, "owner").label, "Draft · Unsaved");
+  assert.equal(registryStatus(record, false, "owner").label, "Saved · Not applied");
+  assert.equal(registryStatus(record, true, "owner").label, "Unsaved changes");
   assert.equal(registryStatus(record, false, "other").label, "Read-only draft");
-  assert.equal(registryStatus({ ...record, status: "published", active: false }, false).label, "Previous publication");
+  assert.equal(registryStatus({ ...record, status: "published", active: false }, false).label, "Previous settings");
+  assert.equal(registryStatus({ ...record, status: "published", active: true }, false).label, "In use for new items");
+  assert.equal(registryStatus({ ...record, status: "retired", active: false }, false).label, "Retired settings");
 });
 test("publication changes identity even when the draft revision stays the same", () => {
   const published = { ...record, status: "published" as const, active: true };

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { migrateLegacyBrowserSetup } from "./legacy-item-rule-browser-migration";
 
 const EMPTY_DRAFT = {
-  slotId: "",
+  language: "zh",
+  itemRuleId: "",
   formatId: "",
   primaryCanDoId: "",
   domainId: "",
@@ -26,7 +28,7 @@ export function useNewItemDraft(scope: string, initialValues?: Partial<typeof EM
   const [draft, setDraft] = useState(() => {
     const initial = { ...EMPTY_DRAFT };
     try {
-      const saved: unknown = JSON.parse(sessionStorage.getItem(storageKey(scope)) ?? "null");
+      const saved: unknown = migrateLegacyBrowserSetup(JSON.parse(sessionStorage.getItem(storageKey(scope)) ?? "null"));
       if (saved && typeof saved === "object") {
         for (const key of Object.keys(initial) as Array<keyof typeof initial>) {
           const value: unknown = (saved as Record<string, unknown>)[key];

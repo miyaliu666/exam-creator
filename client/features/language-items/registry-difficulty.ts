@@ -36,12 +36,15 @@ export function selectedDifficultyStandard(snapshot: RegistrySnapshot, capabilit
 
 function ensureDifficultyProfile(snapshot: RegistrySnapshot, capability: RegistryCapability) {
   const existing = snapshot.capabilityDifficultyProfileSets?.find((profile) => capabilityKey(profile) === capabilityKey(capability));
-  if (existing) return existing;
+  if (existing) {
+    if (existing.itemFormatId !== capability.itemFormatId || existing.primaryCanDoId !== capability.primaryCanDoId) throw new Error("The difficulty profile belongs to different Item rules.");
+    return existing;
+  }
   // Editing a legacy global rule creates a local copy without rewriting other configurations.
   const standards = structuredClone(difficultyStandardsForCapability(snapshot, capability));
   const profile = {
-    id: `DPS-${capability.blueprintSlotId}-${capability.itemFormatId}-${capability.primaryCanDoId}`,
-    blueprintSlotId: capability.blueprintSlotId,
+    id: `DPS-${capability.itemRuleId}-${capability.itemFormatId}-${capability.primaryCanDoId}`,
+    itemRuleId: capability.itemRuleId,
     itemFormatId: capability.itemFormatId,
     primaryCanDoId: capability.primaryCanDoId,
     standards,
@@ -95,7 +98,9 @@ export function difficultyChoiceState(standard: DifficultyBandStandard, dimensio
   const options = DIFFICULTY_OPTIONS[dimension].filter((value) => value !== "notApplicable");
   const allowed = standard[ALLOWED_DIFFICULTY_FIELD[dimension]];
   const value = standard.defaultDrivers[dimension];
-  const invalid = !allowed.includes(value) || !options.includes(value) || allowed.some((entry) => !options.includes(entry));
+  // Historical ranges may include notApplicable alongside concrete similarities.
+  // Publication accepts those ranges; only new fixed choices use the narrower options.
+  const invalid = !allowed.includes(value) || !options.includes(value) || allowed.some((entry) => !DIFFICULTY_OPTIONS[dimension].includes(entry));
   return { options, allowed, value, invalid, fixed: allowed.length === 1 && allowed[0] === value && !invalid };
 }
 

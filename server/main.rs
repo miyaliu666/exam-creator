@@ -17,6 +17,20 @@ async fn main() {
 
     dotenvy::dotenv().ok();
 
+    let migration_args = std::env::args().skip(1).collect::<Vec<_>>();
+    if migration_args.iter().any(|arg| {
+        matches!(
+            arg.as_str(),
+            "--migrate-item-rule-identity" | "--inspect-item-rule-history"
+        )
+    }) {
+        if let Err(error) = language_items::identity_storage::run_cli(&migration_args).await {
+            eprintln!("{error}");
+            std::process::exit(1);
+        }
+        return;
+    }
+
     let sentry_layer = sentry::integrations::tracing::layer();
 
     tracing_subscriber::registry()

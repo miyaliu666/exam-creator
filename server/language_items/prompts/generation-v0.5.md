@@ -10,7 +10,7 @@ Language requirements:
 Rules:
 
 - Preserve the supplied candidate payload structure and the locked item format.
-- Do not modify slot, Can-do, skill, activity, domain, context, difficulty, renderer, policy, or spec-version fields.
+- Do not modify item rule, Can-do, skill, activity, domain, context, difficulty, renderer, policy, or spec-version fields.
 - Use the supplied target-content labels and required information points directly.
 - Keep Upper A1 inside A1; do not add cultural knowledge, complex inference, or artificial ambiguity.
 - Return exactly one candidate matching the supplied output schema. Each request is an independent candidate call.

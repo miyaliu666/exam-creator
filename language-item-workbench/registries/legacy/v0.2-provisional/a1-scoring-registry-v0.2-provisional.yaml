@@ -1,0 +1,428 @@
+registryType: A1ScoringRegistry
+registryVersion: 0.2-provisional
+normalizationRules:
+- normalizationRuleId: NORM-NONE-v0.1
+  scope: selection and matching IDs
+  allowedProcessing:
+  - validate submitted IDs
+  prohibitedProcessing:
+  - semantic guessing
+- normalizationRuleId: NORM-NUMBER-v0.1
+  scope: numbers, room and route identifiers
+  allowedProcessing:
+  - trim outer spaces
+  - Unicode NFKC
+  - fullwidth to halfwidth digits
+  - approved leading-zero handling
+  prohibitedProcessing:
+  - arithmetic correction
+  - digit substitution
+- normalizationRuleId: NORM-DATE-v0.1
+  scope: dates
+  allowedProcessing:
+  - trim outer spaces
+  - Unicode NFKC
+  - approved equivalence among YYYY-MM-DD, 年月日 and 月日 forms when task permits
+  prohibitedProcessing:
+  - swap month and day without approved locale rule
+  - infer missing year when required
+- normalizationRuleId: NORM-TIME-v0.1
+  scope: clock times
+  allowedProcessing:
+  - trim outer spaces
+  - Unicode NFKC
+  - approved equivalence among 9:00, 09:00 and 上午九点 when semantically identical
+  prohibitedProcessing:
+  - ignore AM/PM meaning
+  - round times
+- normalizationRuleId: NORM-PHONE-v0.1
+  scope: telephone numbers
+  allowedProcessing:
+  - trim outer spaces
+  - Unicode NFKC
+  - remove approved visual separators
+  prohibitedProcessing:
+  - reorder or substitute digits
+- normalizationRuleId: NORM-SHORT-CORE-TEXT-v0.1
+  scope: very short core text
+  allowedProcessing:
+  - trim outer spaces
+  - Unicode NFC
+  - ignore explicitly non-target final punctuation
+  prohibitedProcessing:
+  - simplified-traditional conversion
+  - homophone substitution
+  - grammar rewrite
+  - fuzzy semantic match
+- normalizationRuleId: NORM-FORM-v0.1
+  scope: mixed form fields
+  allowedProcessing:
+  - apply each field-specific approved normalization rule
+  prohibitedProcessing:
+  - one global fuzzy rule for all fields
+partialCreditPolicies:
+- partialCreditPolicyId: PC-NONE-v0.1
+  rule: One response yields full point or zero; no negative marking.
+- partialCreditPolicyId: PC-PER-MATCH-v0.1
+  rule: Each correct match earns its own point; an incorrect match does not remove another correct point.
+- partialCreditPolicyId: PC-PER-FIELD-v0.1
+  rule: Each valid independent field earns its defined point; invalid or blank fields score zero.
+- partialCreditPolicyId: PC-ANALYTIC-RUBRIC-v0.1
+  rule: Dimension scores are combined using the approved rubric; no hidden content receives credit.
+invalidResponsePolicies:
+- invalidResponsePolicyId: INVALID-OBJECTIVE-v0.1
+  rules:
+    blank: 0
+    invalidId: 0
+    multipleWhenSingle: 0
+    technicalFailure: NotScoredTechnical
+- invalidResponsePolicyId: INVALID-CONSTRUCTED-v0.1
+  rules:
+    blank: 0
+    completelyOffTopic: 0
+    noScorableLanguage: 0
+    technicalFailure: NotScoredTechnical
+    shortButRelevant: scoreActualEvidence
+technicalIncidentPolicy:
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  statuses:
+  - NotScoredTechnical
+  - ScoringHold
+  - Inconclusive
+  rule: A system failure must not automatically give the candidate a zero; first recover, allow a controlled retry, exclude the invalid item, or record insufficient evidence as appropriate.
+adjudicationPolicies:
+- adjudicationPolicyId: ADJ-NOT-APPLICABLE-v0.1
+  scope: objective items without scoring dispute
+- adjudicationPolicyId: ADJ-HUMAN-THIRD-RATER-v0.1
+  scope: constructed responses
+  triggers:
+  - any dimension differs by 2 or more bands
+  - validity disagreement
+  - difference may change skill or certification result
+  - technical or rubric gap flag
+raterQualificationPolicy:
+  raterQualificationPolicyId: RATER-A1-CONSTRUCTED-v0.1-provisional
+  applicableRubricIds:
+  - RUB-W-A1-v0.1
+  - RUB-S-A1-INTERACTION-v0.1
+  - RUB-S-A1-PRODUCTION-v0.1
+  benchmarkSetVersion: PendingRealCandidateResponses
+  qualificationThresholds: PendingPilotRatingStudy
+  status: StructureReadyEvidencePending
+scoringContractTemplates:
+- scoringContractTemplateId: SCT-R-A1-1-SINGLE-SELECT-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: R-A1-1
+  itemFormatId: IF-SINGLE-SELECT
+  scoringType: objective
+  normalizationRuleId: NORM-NONE-v0.1
+  partialCreditPolicyId: PC-NONE-v0.1
+  rubricId: notApplicable
+  invalidResponsePolicyId: INVALID-OBJECTIVE-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-NOT-APPLICABLE-v0.1
+  raterQualificationPolicyId: notApplicable
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-R-A1-1-MATCHING-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: R-A1-1
+  itemFormatId: IF-MATCHING
+  scoringType: objective
+  normalizationRuleId: NORM-NONE-v0.1
+  partialCreditPolicyId: PC-PER-MATCH-v0.1
+  rubricId: notApplicable
+  invalidResponsePolicyId: INVALID-OBJECTIVE-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-NOT-APPLICABLE-v0.1
+  raterQualificationPolicyId: notApplicable
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-R-A1-2-SINGLE-SELECT-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: R-A1-2
+  itemFormatId: IF-SINGLE-SELECT
+  scoringType: objective
+  normalizationRuleId: NORM-NONE-v0.1
+  partialCreditPolicyId: PC-NONE-v0.1
+  rubricId: notApplicable
+  invalidResponsePolicyId: INVALID-OBJECTIVE-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-NOT-APPLICABLE-v0.1
+  raterQualificationPolicyId: notApplicable
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-R-A1-2-MATCHING-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: R-A1-2
+  itemFormatId: IF-MATCHING
+  scoringType: objective
+  normalizationRuleId: NORM-NONE-v0.1
+  partialCreditPolicyId: PC-PER-MATCH-v0.1
+  rubricId: notApplicable
+  invalidResponsePolicyId: INVALID-OBJECTIVE-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-NOT-APPLICABLE-v0.1
+  raterQualificationPolicyId: notApplicable
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-R-A1-3-SINGLE-SELECT-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: R-A1-3
+  itemFormatId: IF-SINGLE-SELECT
+  scoringType: objective
+  normalizationRuleId: NORM-NONE-v0.1
+  partialCreditPolicyId: PC-NONE-v0.1
+  rubricId: notApplicable
+  invalidResponsePolicyId: INVALID-OBJECTIVE-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-NOT-APPLICABLE-v0.1
+  raterQualificationPolicyId: notApplicable
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-R-A1-3-MATCHING-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: R-A1-3
+  itemFormatId: IF-MATCHING
+  scoringType: objective
+  normalizationRuleId: NORM-NONE-v0.1
+  partialCreditPolicyId: PC-PER-MATCH-v0.1
+  rubricId: notApplicable
+  invalidResponsePolicyId: INVALID-OBJECTIVE-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-NOT-APPLICABLE-v0.1
+  raterQualificationPolicyId: notApplicable
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-R-A1-3-RESTRICTED-INPUT-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: R-A1-3
+  itemFormatId: IF-RESTRICTED-INPUT
+  scoringType: objectiveFields
+  normalizationRuleId: NORM-SHORT-CORE-TEXT-v0.1
+  partialCreditPolicyId: PC-PER-FIELD-v0.1
+  rubricId: notApplicable
+  invalidResponsePolicyId: INVALID-OBJECTIVE-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-NOT-APPLICABLE-v0.1
+  raterQualificationPolicyId: notApplicable
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-R-A1-4-SINGLE-SELECT-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: R-A1-4
+  itemFormatId: IF-SINGLE-SELECT
+  scoringType: objective
+  normalizationRuleId: NORM-NONE-v0.1
+  partialCreditPolicyId: PC-NONE-v0.1
+  rubricId: notApplicable
+  invalidResponsePolicyId: INVALID-OBJECTIVE-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-NOT-APPLICABLE-v0.1
+  raterQualificationPolicyId: notApplicable
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-R-A1-4-MATCHING-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: R-A1-4
+  itemFormatId: IF-MATCHING
+  scoringType: objective
+  normalizationRuleId: NORM-NONE-v0.1
+  partialCreditPolicyId: PC-PER-MATCH-v0.1
+  rubricId: notApplicable
+  invalidResponsePolicyId: INVALID-OBJECTIVE-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-NOT-APPLICABLE-v0.1
+  raterQualificationPolicyId: notApplicable
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-L-A1-1-SINGLE-SELECT-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: L-A1-1
+  itemFormatId: IF-SINGLE-SELECT
+  scoringType: objective
+  normalizationRuleId: NORM-NONE-v0.1
+  partialCreditPolicyId: PC-NONE-v0.1
+  rubricId: notApplicable
+  invalidResponsePolicyId: INVALID-OBJECTIVE-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-NOT-APPLICABLE-v0.1
+  raterQualificationPolicyId: notApplicable
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-L-A1-2-SINGLE-SELECT-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: L-A1-2
+  itemFormatId: IF-SINGLE-SELECT
+  scoringType: objective
+  normalizationRuleId: NORM-NONE-v0.1
+  partialCreditPolicyId: PC-NONE-v0.1
+  rubricId: notApplicable
+  invalidResponsePolicyId: INVALID-OBJECTIVE-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-NOT-APPLICABLE-v0.1
+  raterQualificationPolicyId: notApplicable
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-L-A1-3-SINGLE-SELECT-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: L-A1-3
+  itemFormatId: IF-SINGLE-SELECT
+  scoringType: objective
+  normalizationRuleId: NORM-NONE-v0.1
+  partialCreditPolicyId: PC-NONE-v0.1
+  rubricId: notApplicable
+  invalidResponsePolicyId: INVALID-OBJECTIVE-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-NOT-APPLICABLE-v0.1
+  raterQualificationPolicyId: notApplicable
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-L-A1-3-RESTRICTED-INPUT-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: L-A1-3
+  itemFormatId: IF-RESTRICTED-INPUT
+  scoringType: objectiveFields
+  normalizationRuleId: NORM-SHORT-CORE-TEXT-v0.1
+  partialCreditPolicyId: PC-PER-FIELD-v0.1
+  rubricId: notApplicable
+  invalidResponsePolicyId: INVALID-OBJECTIVE-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-NOT-APPLICABLE-v0.1
+  raterQualificationPolicyId: notApplicable
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-L-A1-4-SINGLE-SELECT-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: L-A1-4
+  itemFormatId: IF-SINGLE-SELECT
+  scoringType: objective
+  normalizationRuleId: NORM-NONE-v0.1
+  partialCreditPolicyId: PC-NONE-v0.1
+  rubricId: notApplicable
+  invalidResponsePolicyId: INVALID-OBJECTIVE-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-NOT-APPLICABLE-v0.1
+  raterQualificationPolicyId: notApplicable
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-W-A1-1-FORM-ENTRY-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: W-A1-1
+  itemFormatId: IF-FORM-ENTRY
+  scoringType: fieldCriteria
+  normalizationRuleId: NORM-FORM-v0.1
+  partialCreditPolicyId: PC-PER-FIELD-v0.1
+  rubricId: notApplicable
+  invalidResponsePolicyId: INVALID-OBJECTIVE-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-NOT-APPLICABLE-v0.1
+  raterQualificationPolicyId: notApplicable
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-W-A1-2-TYPED-MESSAGE-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: W-A1-2
+  itemFormatId: IF-TYPED-MESSAGE
+  scoringType: analyticRubric
+  normalizationRuleId: notApplicable
+  partialCreditPolicyId: PC-ANALYTIC-RUBRIC-v0.1
+  rubricId: RUB-W-A1-v0.1
+  invalidResponsePolicyId: INVALID-CONSTRUCTED-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-HUMAN-THIRD-RATER-v0.1
+  raterQualificationPolicyId: RATER-A1-CONSTRUCTED-v0.1-provisional
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-W-A1-3-TYPED-MESSAGE-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: W-A1-3
+  itemFormatId: IF-TYPED-MESSAGE
+  scoringType: analyticRubric
+  normalizationRuleId: notApplicable
+  partialCreditPolicyId: PC-ANALYTIC-RUBRIC-v0.1
+  rubricId: RUB-W-A1-v0.1
+  invalidResponsePolicyId: INVALID-CONSTRUCTED-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-HUMAN-THIRD-RATER-v0.1
+  raterQualificationPolicyId: RATER-A1-CONSTRUCTED-v0.1-provisional
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-S-A1-1-SPOKEN-MULTITURN-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: S-A1-1
+  itemFormatId: IF-SPOKEN-MULTITURN
+  scoringType: analyticRubric
+  normalizationRuleId: notApplicable
+  partialCreditPolicyId: PC-ANALYTIC-RUBRIC-v0.1
+  rubricId: RUB-S-A1-INTERACTION-v0.1
+  invalidResponsePolicyId: INVALID-CONSTRUCTED-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-HUMAN-THIRD-RATER-v0.1
+  raterQualificationPolicyId: RATER-A1-CONSTRUCTED-v0.1-provisional
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-S-A1-2-SPOKEN-SINGLE-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: S-A1-2
+  itemFormatId: IF-SPOKEN-SINGLE
+  scoringType: analyticRubric
+  normalizationRuleId: notApplicable
+  partialCreditPolicyId: PC-ANALYTIC-RUBRIC-v0.1
+  rubricId: RUB-S-A1-PRODUCTION-v0.1
+  invalidResponsePolicyId: INVALID-CONSTRUCTED-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-HUMAN-THIRD-RATER-v0.1
+  raterQualificationPolicyId: RATER-A1-CONSTRUCTED-v0.1-provisional
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-S-A1-3-SPOKEN-MULTITURN-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: S-A1-3
+  itemFormatId: IF-SPOKEN-MULTITURN
+  scoringType: analyticRubric
+  normalizationRuleId: notApplicable
+  partialCreditPolicyId: PC-ANALYTIC-RUBRIC-v0.1
+  rubricId: RUB-S-A1-INTERACTION-v0.1
+  invalidResponsePolicyId: INVALID-CONSTRUCTED-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-HUMAN-THIRD-RATER-v0.1
+  raterQualificationPolicyId: RATER-A1-CONSTRUCTED-v0.1-provisional
+  status: ProvisionalWorkbenchUse
+- scoringContractTemplateId: SCT-S-A1-4-SPOKEN-SINGLE-v0.1
+  templateVersion: 0.1-provisional
+  blueprintSlotId: S-A1-4
+  itemFormatId: IF-SPOKEN-SINGLE
+  scoringType: analyticRubric
+  normalizationRuleId: notApplicable
+  partialCreditPolicyId: PC-ANALYTIC-RUBRIC-v0.1
+  rubricId: RUB-S-A1-PRODUCTION-v0.1
+  invalidResponsePolicyId: INVALID-CONSTRUCTED-v0.1
+  technicalIncidentPolicyId: TECH-INCIDENT-v0.1
+  adjudicationPolicyId: ADJ-HUMAN-THIRD-RATER-v0.1
+  raterQualificationPolicyId: RATER-A1-CONSTRUCTED-v0.1-provisional
+  status: ProvisionalWorkbenchUse
+taskSpecificCriteria:
+- blueprintSlotId: W-A1-1
+  requirements:
+  - 4-6 fields
+  - at least one Chinese field
+  - field labels understood
+  - no real sensitive information
+  capOrExclusion: All-mechanical copying cannot alone satisfy the task.
+- blueprintSlotId: W-A1-2
+  requirements:
+  - respond to source message
+  - ask, state or confirm at least one arrangement detail
+  - 1-3 content points
+  capOrExclusion: Without actual message response or arrangement behavior, Task Fulfilment cannot exceed band 1 and A1-I3b is not evidenced.
+- blueprintSlotId: W-A1-3
+  requirements:
+  - select relevant information
+  - maintain key information accuracy
+  - address specified recipient and purpose
+  capOrExclusion: Pure copying without recipient-oriented message caps Task Fulfilment at band 1.
+- blueprintSlotId: S-A1-1
+  requirements:
+  - answer personal/familiar questions
+  - provide basic information
+  - ask one related question
+  capOrExclusion: No required initiation caps Interaction and Responsiveness at band 1.
+- blueprintSlotId: S-A1-2
+  requirements:
+  - address 1-3 prompted content points
+  - remain intelligible enough to identify key content
+  capOrExclusion: Reading a supplied sentence does not count as the target production.
+- blueprintSlotId: S-A1-3
+  requirements:
+  - respond across 2-3 turns
+  - complete required request/confirmation/repair
+  - actually speak
+  capOrExclusion: Selecting an option without speaking yields no Interaction evidence.
+- blueprintSlotId: S-A1-4
+  requirements:
+  - select recipient-relevant information
+  - relay key details accurately
+  - complete oral relay purpose
+  capOrExclusion: Reading the whole source without recipient-oriented relay caps task fulfilment at band 1.

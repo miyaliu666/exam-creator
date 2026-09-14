@@ -1,13 +1,15 @@
 import type { RegistrySnapshot } from "./types";
 import { registryDisplayText } from "./registry-display-text";
 import { languageTargetDisplayText } from "./language-target-labels";
+import { getExerciseTemplateName } from "./exercise-template-names";
+import exerciseCatalog from "../../../language-item-workbench/exercise-templates/catalog.json";
 
-// Shared field names distinguish the blueprint target, response format, and rule configuration.
+// Shared field names for ability, exercise template and item rules.
 export const WORKBENCH_LABELS = {
   itemBank: "Item Bank",
   itemSetup: "Item setup",
-  blueprintSlot: "Blueprint slot",
-  itemFormat: "Item format",
+
+  itemFormat: "Exercise template",
   primaryCanDo: "Primary Can-do",
   domain: "Domain",
   context: "Context",
@@ -18,10 +20,10 @@ export const WORKBENCH_LABELS = {
 } as const;
 
 export const CONTENT_KIND_LABELS: Record<string, string> = {
-  lexical: "词汇 / Vocabulary",
-  character: "汉字 / Characters",
-  grammar: "语法 / Grammar",
-  pragmatics: "语用 / Pragmatic functions",
+  lexical: "Vocabulary",
+  character: "Characters",
+  grammar: "Grammar",
+  pragmatics: "Pragmatic functions",
   supported: "Supporting material types",
 };
 
@@ -46,14 +48,21 @@ export const SKILL_LABELS: Record<string, string> = {
 };
 
 export const ITEM_FORMAT_LABELS: Record<string, string> = {
-  "IF-SINGLE-SELECT": "Single select",
-  "IF-MATCHING": "Matching",
-  "IF-RESTRICTED-INPUT": "Restricted input",
-  "IF-FORM-ENTRY": "Form entry",
-  "IF-TYPED-MESSAGE": "Typed message",
-  "IF-SPOKEN-SINGLE": "Spoken response",
-  "IF-SPOKEN-MULTITURN": "Spoken interaction",
+  "IF-SINGLE-SELECT": "Multiple choice",
+  "IF-MATCHING": "Match the columns",
+  "IF-RESTRICTED-INPUT": "Short-answer Questions",
+  "IF-FORM-ENTRY": getExerciseTemplateName("guided-writing"),
+  "IF-TYPED-MESSAGE": "Guided Writing",
+  "IF-SPOKEN-SINGLE": "Speaking",
+  "IF-SPOKEN-MULTITURN": getExerciseTemplateName("conversations"),
+  ...Object.fromEntries(exerciseCatalog.templates.map((template) => [`EXERCISE:${template.id}`, template.name])),
 };
+
+export function exerciseLabel(itemFormatId: string, primarySkill?: string) {
+  if (itemFormatId.startsWith("EXERCISE:")) return getExerciseTemplateName(itemFormatId.slice(9)) ?? itemFormatId;
+  if (itemFormatId === "IF-SINGLE-SELECT" && primarySkill === "Listening") return getExerciseTemplateName("listening");
+  return ITEM_FORMAT_LABELS[itemFormatId] ?? itemFormatId;
+}
 
 export const SUPPORTED_CONTENT_LABELS: Record<string, string> = {
   personName: "Person name",
@@ -85,24 +94,6 @@ export const REVIEW_DECISION_LABELS: Record<string, string> = {
   rejected: "Rejected",
   blocked: "Blocked",
   pending: "Pending",
-};
-
-export const SLOT_LABELS: Record<string, string> = {
-  "R-A1-1": "Signs, labels, and short notices",
-  "R-A1-2": "Short messages and online information",
-  "R-A1-3": "Practical structured information",
-  "R-A1-4": "Short profiles, routines, and basic descriptions",
-  "L-A1-1": "Basic personal and familiar information",
-  "L-A1-2": "Explicit details in short dialogues",
-  "L-A1-3": "Announcements, messages, and information records",
-  "L-A1-4": "Simple communicative purposes and one-step instructions",
-  "W-A1-1": "Complete a basic online form",
-  "W-A1-2": "Reply to a very short practical message",
-  "W-A1-3": "Relay simple information in writing",
-  "S-A1-1": "Basic personal questions and answers",
-  "S-A1-2": "Express direct needs and familiar content",
-  "S-A1-3": "Simple everyday interaction and arrangement confirmation",
-  "S-A1-4": "Relay simple information orally",
 };
 
 export const CAN_DO_LABELS: Record<string, string> = {
@@ -190,17 +181,22 @@ export function contentOptionLabel(
   return `${CONTENT_KIND_LABELS[option.kind] ?? option.kind}: ${label}`;
 }
 
-export function slotLabel(
+export function itemRuleLabel(
   id: string,
   registry: RegistrySnapshot | undefined,
   itemFormatId?: string,
 ) {
-  const slot = registry?.blueprintSlots?.find((entry) => entry.id === id);
-  if (slot?.displayName) return registryDisplayText(slot.displayName);
+  const rule = registry?.exerciseTemplateRules?.find((entry) => entry.id === id);
+  if (rule) {
+    const canDo = registry?.canDoOptions?.find((entry) => entry.id === rule.primaryCanDoId);
+    return `${registryDisplayText(canDo?.label ?? "Can-do")} · ${getExerciseTemplateName(rule.exerciseType)}`;
+  }
   const capability = registry?.capabilities.find(
     (entry) =>
-      entry.blueprintSlotId === id &&
+      entry.itemRuleId === id &&
       (!itemFormatId || entry.itemFormatId === itemFormatId),
   );
-  return capability?.title ? registryDisplayText(capability.title) : SLOT_LABELS[id] ?? id;
+  if (!capability) return "Item rules unavailable";
+  const canDo = registry?.canDoOptions?.find((entry) => entry.id === capability.primaryCanDoId);
+  return `${registryDisplayText(canDo?.label ?? "Can-do")} · ${exerciseLabel(capability.itemFormatId, capability.primaryReportedSkill)}`;
 }

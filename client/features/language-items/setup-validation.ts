@@ -1,6 +1,6 @@
 import type { RegistrySnapshot, TaskPackage } from "./types";
 import { isContentOptionCompatible } from "./content-compatibility";
-import { capabilityForDraft, contextSupportsCapability, difficultyStandardsForCapability } from "./registry-capability";
+import { capabilityForDraft, setupContextIsCompatible, difficultyStandardsForCapability } from "./registry-capability";
 
 export interface AuthoringSetupIssue {
   path: string;
@@ -17,9 +17,6 @@ export function validateAuthoringSetup(
   const issues: AuthoringSetupIssue[] = [];
   const addIssue = (path: string, message: string) => issues.push({ path, message });
   const capability = capabilityForDraft(registry, draft);
-  const context = registry.contextOptions.find(
-    (entry) => entry.id === draft.content.contextId,
-  );
 
   if (!title.trim()) addIssue("title", "Enter an item title");
   if (
@@ -29,9 +26,7 @@ export function validateAuthoringSetup(
     addIssue("content.primaryDomain", "Select an applicable domain");
   }
   if (
-    !capability?.allowedContextIds.includes(draft.content.contextId) ||
-    !context?.primaryDomains.includes(draft.content.primaryDomain) ||
-    (!!context && !!capability && !contextSupportsCapability(context, capability))
+    !setupContextIsCompatible(registry, capability, draft.content.primaryDomain, draft.content.contextId)
   ) {
     addIssue("content.contextId", "Select a context that matches the domain");
   }
@@ -42,7 +37,7 @@ export function validateAuthoringSetup(
       const entry = registry.contentIdOptions.find((option) => option.id === id);
       return !entry || (
         entry.kind === "supported" ||
-        !isContentOptionCompatible(entry, capability, draft.content.contextId)
+        !isContentOptionCompatible(entry, capability, draft.content.contextId, draft.content.language ?? "zh")
       );
     })
   ) {
@@ -55,7 +50,7 @@ export function validateAuthoringSetup(
   if ((draft.content.supportingContentRefs ?? []).some((id) => {
     const entry = registry.contentIdOptions.find((option) => option.id === id);
     return !entry || entry.kind !== "supported" ||
-      !isContentOptionCompatible(entry, capability, draft.content.contextId);
+      !isContentOptionCompatible(entry, capability, draft.content.contextId, draft.content.language ?? "zh");
   })) {
     addIssue("content.supportingContentRefs", "Remove supporting content that is unavailable for these item rules or context");
   }

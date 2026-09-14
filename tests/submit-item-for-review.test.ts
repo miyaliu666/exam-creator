@@ -99,3 +99,22 @@ test("provider transport failures preserve the error and never create a PR", asy
   assert.deepEqual(reports, []);
   assert.deepEqual(requests, []);
 });
+
+test("a new review without its independent answer is exposed but cannot create a PR", async () => {
+  const run = review({ promptId: "a1-item-independent-review", promptVersion: "0.6" });
+  const { input, reports, requests } = harness(run);
+  await assert.rejects(submitItemForReview(input), /independent answer.*missing or invalid/);
+  assert.deepEqual(reports, [run]);
+  assert.deepEqual(requests, []);
+});
+
+test("a recorded independent uncertainty does not reject a successfully reviewed item", async () => {
+  const run = review({ promptId: "a1-item-independent-review", promptVersion: "0.6", blindAnswer: {
+    protocolVersion: "1", promptVersion: "0.1", inputHash: "candidate-hash", simulated: false,
+    status: "insufficientInformation", answer: "", alternatives: [], reasoning: "The audio could not be played.",
+    evidence: [], limitations: ["Needs a human to listen to the recording."],
+  } });
+  const { input, requests } = harness(run);
+  assert.equal(await submitItemForReview(input), batch);
+  assert.equal(requests.length, 1);
+});

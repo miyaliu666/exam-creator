@@ -1,5 +1,12 @@
 # Exam Creator
 
+For the current single-origin Docker deployment with HTTP Basic authentication,
+see [Deployment at 8.210.43.194](DEPLOYMENT-8210.md). The earlier server is documented
+in [Deploy to Alibaba Cloud](DEPLOYMENT-ALIYUN.md). The application, API and
+WebSockets run together behind HTTPS. [Other deployment notes](DEPLOYMENT.md)
+describe the alternative Railway setup; its referenced `railway.json` and
+`.railwayignore` are not included in the current workspace.
+
 ## Language Exam Item Creator
 
 ### Local Setup
@@ -39,13 +46,15 @@ Set `MOCK_AUTH=true` in `.env` for local development. With the backend running i
 
 ### Workbench Flow
 
-Open **Item Bank** at `/language-items` to browse and filter items. **Item rules** in Assessment Settings define the reusable Blueprint slot × Item format × Primary Can-do combination and its rules. **Item setup** selects that combination plus Domain, Context, and Difficulty for a specific item.
+Open **Item Bank** at `/language-items` to browse and filter items. **Item rules** in Assessment Settings define each reusable Can-do and Exercise template configuration under one `itemRuleId`. **Item setup** selects that combination plus Domain, Context, and Difficulty for a specific item.
 
-**New items** uses one shared setup, quantity and language-target form for one or multiple items. Select **What this item should assess** for one item or **Targets required in every item** for several, and optionally **Different targets for different items**. **Preview each item's targets** shows the allocation before generation. **Options** holds an optional name and **AI drafts per item**, which defaults to one and accepts a positive whole number. Use **Add another setup** when the plan needs another setup group.
+**New items** uses one shared setup, quantity and language-target form for one or multiple items. Select **What this item should assess** for one item or **Targets required in every item** for several, and optionally **Different targets for different items**. **Preview each item's targets** shows the allocation before generation. **AI drafts per item** is always visible, defaults to one and accepts a positive whole number. New plans derive their names from their exercise templates; different setups are submitted separately. Previously saved plans keep their names and all setup groups.
 
 **Generate 1 item / Generate N items** opens **Generation jobs**, which holds progress, pause/resume and history. Each group shows its shared setup and required targets once; item rows show their identity, additional targets and generation state. Open an item, select **Use this draft** on an AI draft, edit, check and submit for review. Generation status and assigned targets do not establish approval or actual language use.
 
 A one-item plan can also use **Write manually**, which saves the selected targets and opens **Edit & preview** without calling AI. Empty manual drafts still need complete requirements before generation or submission. **Language coverage** can prepare a compatible creation plan from an explicit inventory goal. See [the item creation guide](language-item-workbench/ITEM-CREATION.md) for field meanings and review steps.
+
+Upgrading an existing database requires the offline [Item rule identity migration](ITEM-RULE-MIGRATION.md) before starting the new application. It preserves original review evidence and saved authoring work.
 
 ### AI Connection Troubleshooting
 

@@ -18,6 +18,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 
 import { ProtectedRoute } from "../components/protected-route";
 import { AuthContext } from "../contexts/auth";
+import { SignOutButton } from "../components/sign-out-button";
 import {
   adoptAiCandidate,
   exportLanguageItemToStaging,
@@ -98,7 +99,7 @@ function editableItemTitle(title: string) {
 function EditLanguageItem() {
   const { id } = useParams({ from: "/language-items/$id" });
   const { start } = useSearch({ from: "/language-items/$id" });
-  const { user, logout } = useContext(AuthContext)!;
+  const { user, logout, isPublicAccess } = useContext(AuthContext)!;
   const navigate = useNavigate();
   const confirmLeave = useRef(() => true);
   const itemQuery = useQuery({
@@ -114,12 +115,12 @@ function EditLanguageItem() {
         <Button size="sm" variant="outline" colorPalette="teal" onClick={() => navigate({ to: languageItemsRoute.to })}>
           Back to Item Bank
         </Button>
-        <Button size="sm" variant="outline" colorPalette="red" onClick={() => { if (confirmLeave.current()) logout(); }}>
+        <SignOutButton size="sm" variant="outline" colorPalette="red" onClick={() => { if (confirmLeave.current()) logout(); }}>
           Sign out / switch account
-        </Button>
-        <Text fontSize="xs" color="fg.muted">
+        </SignOutButton>
+        {!isPublicAccess && <Text fontSize="xs" color="fg.muted">
           Signed in as {user?.email}
-        </Text>
+        </Text>}
       </HStack>
       <Center>
         {itemQuery.isPending ? (
@@ -495,6 +496,9 @@ function WorkbenchEditor({ item, confirmLeave, writeManually }: { item: Language
   const previewEnglishTranslations = previewUsesSavedRoundTrip
     ? item.draft.authoringPackage.englishTranslations
     : draft.authoringPackage.englishTranslations;
+  const previewExerciseTemplate = previewUsesSavedRoundTrip
+    ? item.draft.authoringPackage.exerciseTemplate
+    : draft.authoringPackage.exerciseTemplate;
 
   const submitting = createGithubReviewMutation.isPending;
   const hasUnsavedChanges = usageDirty || (canEditDraft && (draftDirtyRef.current || autosaveState !== "saved"));
@@ -614,7 +618,7 @@ function WorkbenchEditor({ item, confirmLeave, writeManually }: { item: Language
               {hasAuthoredContent(draft.candidatePayload) ? "Back to editor" : "Write manually"}
             </Button>
           </> : <Button variant="outline" onClick={() => setSection("content")}>View item</Button>}
-          candidates={canEditDraft && latestRun ? <AiCandidatesPanel run={latestRun} isAdopting={adoptMutation.isPending} setupChanged={generationSetupChanged}
+          candidates={canEditDraft && latestRun ? <AiCandidatesPanel language={draft.content.language} run={latestRun} isAdopting={adoptMutation.isPending} setupChanged={generationSetupChanged}
             canAdopt={!submitting && !generationSetupChanged && setupIssues.length === 0} onAdopt={(runId, candidateId) => adoptMutation.mutate({ runId, candidateId })} /> : null} />
       ) : null}
 
@@ -633,7 +637,8 @@ function WorkbenchEditor({ item, confirmLeave, writeManually }: { item: Language
               readOnly={!canEditDraft || submitting} validationIssues={visibleValidationIssues} />
             <Stack gap={4} alignSelf="start">
               {!previewUsesSavedRoundTrip ? <Text fontSize="xs" color="fg.muted">Previewing your latest edits.</Text> : null}
-              <AuthorPreview rendererId={previewRendererId} payload={previewPayload}
+              <AuthorPreview language={draft.content.language} rendererId={previewRendererId} payload={previewPayload}
+                exerciseTemplate={previewExerciseTemplate}
                 englishTranslations={previewEnglishTranslations}
                 onTranslationChange={canEditDraft && !submitting ? (path, englishText) => updateDraft((next) => {
                   next.authoringPackage.englishTranslations = updateEnglishTranslation(next.candidatePayload, next.authoringPackage.englishTranslations, path, englishText);
@@ -645,7 +650,8 @@ function WorkbenchEditor({ item, confirmLeave, writeManually }: { item: Language
       ) : null}
 
       {section === "review" ? <Stack gap={5}>
-        <AuthorPreview rendererId={previewRendererId} payload={previewPayload}
+        <AuthorPreview language={draft.content.language} rendererId={previewRendererId} payload={previewPayload}
+          exerciseTemplate={previewExerciseTemplate}
           englishTranslations={previewEnglishTranslations} />
         {canEditDraft && (validation || setupIssues.length > 0 || submissionStage === "checking") ? <DraftCheckPanel validation={validation} setupIssues={setupIssues} checking={submissionStage === "checking"}
           disabled={submitting || itemActionBusy || autosaveState === "error"}

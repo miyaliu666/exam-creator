@@ -1,4 +1,9 @@
 import type { ComponentType, ReactNode } from "react";
+import { EXERCISE_TEMPLATES, createExerciseTemplateDraft, validateExerciseTemplateData } from "./exercise-template-catalog";
+import { ExerciseTemplateEditor } from "./exercise-template-editor";
+import { projectExerciseTemplateCandidate } from "./exercise-template-projection";
+import { ExerciseTemplateCandidatePreview } from "./exercise-template-candidate-preview";
+import { ITEM_FORMAT_LABELS } from "./labels";
 
 import {
   FormEntryPreview,
@@ -31,7 +36,21 @@ import type {
   TaskPackage,
   TypedMessageCandidatePayload,
   ValidationIssue,
+  ExerciseTemplateCandidatePayload,
 } from "./types";
+
+function SourceExerciseEditor({ draft, updateDraft }: ItemTemplateEditorProps) {
+  const exerciseType = draft.itemFormatId.slice("EXERCISE:".length);
+  const document = draft.authoringPackage.exerciseTemplate ?? { exerciseType, body: "", data: createExerciseTemplateDraft(exerciseType, {}, draft.content.language ?? "zh") };
+  const updateDocument = (data: Record<string, unknown>, body = document.body) => updateDraft((next) => {
+    const authored = { exerciseType, body, data };
+    next.authoringPackage.exerciseTemplate = authored;
+    next.candidatePayload = projectExerciseTemplateCandidate(authored);
+  });
+  return <ExerciseTemplateEditor exerciseType={exerciseType} value={document.data} body={document.body} itemLanguage={draft.content.language ?? "zh"}
+    onChange={(data) => updateDocument(data)} onBodyChange={(body) => updateDocument(document.data, body)}
+    issues={validateExerciseTemplateData(exerciseType, document.data)} />;
+}
 
 export interface ItemTemplateEditorProps {
   draft: TaskPackage;
@@ -54,14 +73,14 @@ export interface ItemTemplateDefinition {
  * TaskPackage adapters for the shared exercise-template catalog.
  *
  * The exercise type owns question structure and presentation. The adapter keeps
- * Blueprint metadata and answers in the Workbench's protected TaskPackage
+ * Assessment metadata and answers in the Workbench's protected TaskPackage
  * partitions; it is not a second Workbench-only template identity.
  */
 export const ITEM_TEMPLATE_REGISTRY: readonly ItemTemplateDefinition[] = [
   {
     itemFormatId: "IF-SINGLE-SELECT",
     rendererId: "REN-SINGLE-SELECT",
-    label: "Single-select template",
+    label: "Multiple choice",
     exerciseType: (draft) =>
       draft.content.primaryReportedSkill === "Listening" ? "listening" : "multiple-choice",
     adapterVersion: "0.2",
@@ -74,7 +93,7 @@ export const ITEM_TEMPLATE_REGISTRY: readonly ItemTemplateDefinition[] = [
   {
     itemFormatId: "IF-MATCHING",
     rendererId: "REN-MATCHING",
-    label: "Matching template",
+    label: "Match the columns",
     exerciseType: () => "match-columns",
     adapterVersion: "0.2",
     authoringSections: ["Instructions", "Left column", "Right column", "Matches"],
@@ -86,7 +105,7 @@ export const ITEM_TEMPLATE_REGISTRY: readonly ItemTemplateDefinition[] = [
   {
     itemFormatId: "IF-RESTRICTED-INPUT",
     rendererId: "REN-RESTRICTED-INPUT",
-    label: "Restricted-input template",
+    label: "Short-answer Questions",
     exerciseType: (draft) =>
       draft.content.primaryReportedSkill === "Listening"
         ? "listening-short-answer-questions"
@@ -101,7 +120,7 @@ export const ITEM_TEMPLATE_REGISTRY: readonly ItemTemplateDefinition[] = [
   {
     itemFormatId: "IF-FORM-ENTRY",
     rendererId: "REN-FORM-ENTRY",
-    label: "Form-entry template",
+    label: ITEM_FORMAT_LABELS["IF-FORM-ENTRY"],
     exerciseType: () => "form-entry",
     adapterVersion: "0.2",
     authoringSections: ["Situation", "Instructions", "Form fields", "Accepted values"],
@@ -113,7 +132,7 @@ export const ITEM_TEMPLATE_REGISTRY: readonly ItemTemplateDefinition[] = [
   {
     itemFormatId: "IF-TYPED-MESSAGE",
     rendererId: "REN-TYPED-MESSAGE",
-    label: "Typed-message template",
+    label: "Guided Writing",
     exerciseType: () => "guided-writing",
     adapterVersion: "0.2",
     authoringSections: ["Situation", "Recipient", "Purpose", "Required content", "Length"],
@@ -125,7 +144,7 @@ export const ITEM_TEMPLATE_REGISTRY: readonly ItemTemplateDefinition[] = [
   {
     itemFormatId: "IF-SPOKEN-SINGLE",
     rendererId: "REN-SPOKEN-SINGLE",
-    label: "Spoken-response template",
+    label: "Speaking",
     exerciseType: () => "speaking",
     adapterVersion: "0.2",
     authoringSections: ["Situation", "Prompt", "Preparation/response time", "Required content"],
@@ -137,7 +156,7 @@ export const ITEM_TEMPLATE_REGISTRY: readonly ItemTemplateDefinition[] = [
   {
     itemFormatId: "IF-SPOKEN-MULTITURN",
     rendererId: "REN-SPOKEN-MULTITURN",
-    label: "Spoken-interaction template",
+    label: ITEM_FORMAT_LABELS["IF-SPOKEN-MULTITURN"],
     exerciseType: () => "spoken-multiturn",
     adapterVersion: "0.2",
     authoringSections: ["Situation", "Roles", "Turns", "Communicative functions"],
@@ -146,6 +165,16 @@ export const ITEM_TEMPLATE_REGISTRY: readonly ItemTemplateDefinition[] = [
       <SpokenMultiturnPreview payload={payload as SpokenMultiturnCandidatePayload} />
     ),
   },
+  ...EXERCISE_TEMPLATES.map((template): ItemTemplateDefinition => ({
+    itemFormatId: `EXERCISE:${template.id}`,
+    rendererId: "REN-EXERCISE-TEMPLATE",
+    label: template.name,
+    exerciseType: () => template.id,
+    adapterVersion: "1.0",
+    authoringSections: template.fields.map((field) => field.label),
+    Editor: SourceExerciseEditor,
+    renderPreview: (payload) => <ExerciseTemplateCandidatePreview payload={payload as ExerciseTemplateCandidatePayload} />,
+  })),
 ];
 
 export function itemTemplateForFormat(itemFormatId: string) {

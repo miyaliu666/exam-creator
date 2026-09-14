@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fcc:language-item-review-output:0.2",
+  "type": "object",
+  "required": ["findings"],
+  "properties": {
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["category", "severity", "code", "fieldPath", "ruleRef", "message"],
+        "properties": {
+          "category": { "type": "string", "minLength": 1 },
+          "severity": { "enum": ["info", "warning", "error"] },
+          "code": { "type": "string", "minLength": 1 },
+          "fieldPath": { "type": "string", "minLength": 1 },
+          "ruleRef": { "type": "string", "minLength": 1 },
+          "message": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "checkResults": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["checkId", "status", "message", "evidence", "sourceRefs"],
+        "properties": {
+          "checkId": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["pass", "fail", "insufficientEvidence"] },
+          "message": { "type": "string", "minLength": 1 },
+          "sourceRefs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["fieldPath", "quote"],
+              "properties": {
+                "fieldPath": { "type": "string", "pattern": "^/(candidatePayload|scoringPackage)/" },
+                "quote": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

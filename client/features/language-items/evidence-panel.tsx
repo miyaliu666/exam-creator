@@ -42,7 +42,7 @@ function EvidenceForm({ view, ...props }: Props & { view: EvidenceView }) {
   const disabled = props.disabled || save.isPending;
   return <Stack gap={4}>
     <HStack flexWrap="wrap"><Badge colorPalette={view.current && !dirty ? "teal" : "orange"}>{dirty ? "Unsaved observations" : view.current ? "Recorded for this content" : view.record ? "Content changed · review again" : "Not yet recorded"}</Badge>
-      {view.record ? <Text fontSize="sm" color="fg.muted">{view.record.reviewedBy} · {new Date(view.record.createdAt).toLocaleString()}</Text> : null}</HStack>
+      {view.record ? <Text fontSize="sm" color="fg.muted">{view.record.reviewedBy} · {new Date(view.record.createdAt).toLocaleString("en-GB")}</Text> : null}</HStack>
     {!view.current && view.record ? <Text fontSize="sm" color="fg.warning">Earlier observations are shown for reference. Check them against the current item before saving again.</Text> : null}
     {form.targets.map((target, index) => {
       const option = props.registry.contentIdOptions.find((entry) => entry.id === target.targetContentId);

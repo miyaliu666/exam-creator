@@ -1,4 +1,5 @@
 import type { AiGenerationRun, AiGenerationSetupSnapshot, TaskPackage } from "./types";
+import { contentLanguage } from "./content-language";
 
 function canonical(value: unknown): string {
   if (value === undefined) return "null";
@@ -11,7 +12,8 @@ function canonical(value: unknown): string {
 
 export function aiGenerationSetupSnapshot(draft: TaskPackage): AiGenerationSetupSnapshot {
   return {
-    specVersions: draft.specVersions, blueprintSlotId: draft.blueprintSlotId, taskFamilyId: draft.taskFamilyId,
+    ...(contentLanguage(draft.content) !== "zh" ? { language: contentLanguage(draft.content) } : {}),
+    specVersions: draft.specVersions, itemRuleId: draft.itemRuleId, taskFamilyId: draft.taskFamilyId,
     itemFormatId: draft.itemFormatId, rendererId: draft.renderer.rendererId,
     primaryCanDoId: draft.content.primaryCanDoId, primaryDomain: draft.content.primaryDomain,
     contextId: draft.content.contextId, difficultyBand: draft.content.difficultyBand,
@@ -24,8 +26,9 @@ export function aiGenerationSetupSnapshot(draft: TaskPackage): AiGenerationSetup
 
 export function aiGenerationMatchesSetup(run: AiGenerationRun, draft: TaskPackage): boolean {
   const current = aiGenerationSetupSnapshot(draft);
-  if (run.generationSetupSnapshot) return canonical(run.generationSetupSnapshot) === canonical(current);
-  const keys = ["specVersions", "blueprintSlotId", "taskFamilyId", "itemFormatId", "rendererId",
+  if (run.generationSetupSnapshot) return canonical({ ...run.generationSetupSnapshot, language: contentLanguage(run.generationSetupSnapshot) }) === canonical({ ...current, language: contentLanguage(current) });
+  if (contentLanguage(draft.content) !== "zh") return false;
+  const keys = ["specVersions", "itemRuleId", "taskFamilyId", "itemFormatId", "rendererId",
     "primaryCanDoId", "primaryDomain", "contextId", "difficultyBand", "targetContentIds"] as const;
   return keys.every((key) => canonical(run[key]) === canonical(current[key])) &&
     canonical(run.requiredInformationPoints) === canonical(current.requiredInformationPoints.map((point) => point.label));

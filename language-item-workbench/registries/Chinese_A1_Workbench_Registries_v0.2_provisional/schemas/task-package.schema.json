@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:fcc:a1:task-package:0.2",
+  "$id": "urn:fcc:a1:task-package:0.3",
   "title": "Language task package",
   "type": "object",
   "required": [
     "taskId",
     "taskVersion",
     "specVersions",
-    "blueprintSlotId",
+    "itemRuleId",
     "taskFamilyId",
     "itemFormatId",
     "renderer",
@@ -25,9 +25,6 @@
     },
     "specVersions": {
       "type": "object"
-    },
-    "blueprintSlotId": {
-      "type": "string"
     },
     "taskFamilyId": {
       "type": "string"
@@ -77,6 +74,10 @@
     },
     "variation": {
       "type": "object"
+    },
+    "itemRuleId": {
+      "type": "string",
+      "minLength": 1
     }
   },
   "additionalProperties": false

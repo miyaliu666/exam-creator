@@ -21,10 +21,14 @@ export function validateAuthorTranslations(pkg) {
 
 export function packageForPinnedSchema(pkg, schema) {
   validateAuthorTranslations(pkg);
-  if (pkg.authoringPackage?.englishTranslations === undefined
-    || schema.properties?.authoringPackage?.properties?.englishTranslations !== undefined) return pkg;
-  // Published schemas stay immutable. This optional author-only extension has its own validation.
+  if (pkg.content?.language !== undefined) requireRule(['zh', 'en', 'es'].includes(pkg.content.language), 'Item language must be Chinese, English or Spanish');
+  const projectTranslations = pkg.authoringPackage?.englishTranslations !== undefined
+    && schema.properties?.authoringPackage?.properties?.englishTranslations === undefined;
+  const projectLanguage = pkg.content?.language !== undefined && schema.properties?.content?.properties?.language === undefined;
+  if (!projectTranslations && !projectLanguage) return pkg;
+  // Published schemas stay immutable. Optional extensions have independent business validation.
   const projected = structuredClone(pkg);
-  delete projected.authoringPackage.englishTranslations;
+  if (projectTranslations) delete projected.authoringPackage.englishTranslations;
+  if (projectLanguage) delete projected.content.language;
   return projected;
 }

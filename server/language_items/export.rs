@@ -106,7 +106,7 @@ fn assembly_tags(version: &LanguageItemVersion) -> Vec<String> {
     let package = &version.package;
     // Preserve existing tag quotas while exposing unambiguous language dimensions.
     let mut tags = vec![
-        package.blueprint_slot_id.clone(),
+        package.item_rule_id.clone(),
         package.content.primary_domain.clone(),
         package.content.context_id.clone(),
         package.content.difficulty_band.clone(),
@@ -117,6 +117,9 @@ fn assembly_tags(version: &LanguageItemVersion) -> Vec<String> {
         format!("can-do:{}", package.content.primary_can_do_id),
         format!("format:{}", package.item_format_id),
     ];
+    if let Some(language) = &package.content.language {
+        tags.push(format!("language:{language}"));
+    }
     tags.extend(
         package
             .content
@@ -215,9 +218,17 @@ mod tests {
         version.package.content.supporting_content_refs = vec!["LEX-THANKS".into()];
         let bundle = build_legacy_export(&version).unwrap();
         let tags = &bundle.exam.question_sets[0].questions[0].tags;
-        assert!(tags.contains(&version.package.blueprint_slot_id));
+        assert!(tags.contains(&version.package.item_rule_id));
         assert!(tags.contains(&"skill:Reading".to_string()));
         assert!(tags.contains(&"supporting:LEX-THANKS".to_string()));
+        assert!(!tags.iter().any(|tag| tag.starts_with("language:")));
+        let mut english = version.clone();
+        english.package.content.language = Some("en".into());
+        assert!(
+            build_legacy_export(&english).unwrap().exam.question_sets[0].questions[0]
+                .tags
+                .contains(&"language:en".into())
+        );
         assert_eq!(
             tags.iter()
                 .filter(|tag| *tag == "target:LEX-GOODBYE")

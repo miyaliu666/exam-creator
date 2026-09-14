@@ -1,7 +1,8 @@
 import { coverageContentOptions } from "./coverage-labels.ts";
-import type { CoverageOverview, CoverageOverviewState } from "./coverage-types";
+import { coverageContentScope } from "./coverage-content-scope.ts";
+import type { CoverageFilters, CoverageOverview, CoverageOverviewState } from "./coverage-types";
 import { CONTENT_KIND_LABELS } from "./labels.ts";
-import type { RegistrySnapshot } from "./types";
+import type { ContentIdOption, RegistrySnapshot } from "./types";
 
 export const COVERAGE_OVERVIEW_PAGE_SIZE = 25;
 export const COVERAGE_OVERVIEW_CATEGORIES = ["lexical", "grammar", "character", "pragmatics"];
@@ -27,8 +28,8 @@ export function summarizeCoverageRows(rows: CoverageOverviewRow[]) {
   return { total, approved, unapprovedOnly, noItems, approvedPercent: percent(approved), unapprovedOnlyPercent: percent(unapprovedOnly), noItemsPercent: percent(noItems) };
 }
 
-export function coverageOverviewRows(registry: RegistrySnapshot, data: CoverageOverview): CoverageOverviewRow[] {
-  const directory = new Map(registry.contentIdOptions.filter((entry) => entry.kind !== "supported").map((entry) => [entry.id, entry]));
+export function coverageOverviewRows(registry: RegistrySnapshot, data: CoverageOverview, entries: ContentIdOption[] = registry.contentIdOptions): CoverageOverviewRow[] {
+  const directory = new Map(entries.filter((entry) => entry.kind !== "supported").map((entry) => [entry.id, entry]));
   const labels = new Map(coverageContentOptions(registry).map((entry) => [entry.id, entry.label]));
   const counts = new Map(data.entries.map((entry) => [entry.id, entry]));
   // Sparse inventory counts must not remove unrepresented entries from the directory denominator.
@@ -41,8 +42,9 @@ export function coverageOverviewRows(registry: RegistrySnapshot, data: CoverageO
   }));
 }
 
-export function coverageOverviewModel(registry: RegistrySnapshot, data: CoverageOverview, state: CoverageOverviewState) {
-  const rows = coverageOverviewRows(registry, data);
+export function coverageOverviewModel(registry: RegistrySnapshot, data: CoverageOverview, state: CoverageOverviewState, itemFilters: CoverageFilters = {}) {
+  const scope = coverageContentScope(registry, itemFilters);
+  const rows = coverageOverviewRows(registry, data, scope.entries);
   const categories = coverageOverviewCategories(registry);
   const categoryRows = rows.filter((row) => !state.category || state.category === "all" || row.category === state.category);
   const normalize = (value: string) => value.normalize("NFKC").trim().toLocaleLowerCase();
@@ -55,11 +57,12 @@ export function coverageOverviewModel(registry: RegistrySnapshot, data: Coverage
   };
   matching.sort((left, right) => {
     const countDifference = state.sort === "name" ? 0 : (left[countKey[state.sort]] - right[countKey[state.sort]]) * (state.sort === "pending" ? -1 : 1);
-    return countDifference || name(left).localeCompare(name(right), "zh-Hans", { sensitivity: "base", numeric: true }) || left.id.localeCompare(right.id);
+    return countDifference || name(left).localeCompare(name(right), itemFilters.language ?? "zh", { sensitivity: "base", numeric: true }) || left.id.localeCompare(right.id);
   });
   const lastOffset = Math.max(0, Math.ceil(matching.length / COVERAGE_OVERVIEW_PAGE_SIZE) - 1) * COVERAGE_OVERVIEW_PAGE_SIZE;
   const offset = Math.min(Math.max(0, Math.floor(state.offset / COVERAGE_OVERVIEW_PAGE_SIZE) * COVERAGE_OVERVIEW_PAGE_SIZE), lastOffset);
   return {
+    hasMatchingSetup: scope.hasMatchingSetup,
     summary: summarizeCoverageRows(matching),
     categoryTotal: categoryRows.length,
     categories,

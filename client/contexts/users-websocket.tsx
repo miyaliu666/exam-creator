@@ -10,6 +10,8 @@ import {
 import { deserializeToPrisma } from "../utils/serde";
 import { Activity, User } from "../types";
 import { AuthContext } from "./auth";
+import { getSessionUser } from "../utils/fetch";
+import { startUsersWebSocket } from "./users-websocket-connection";
 
 // Split contexts to avoid unnecessary re-renders
 export const UsersWebSocketUsersContext = createContext<{
@@ -32,8 +34,6 @@ export function UsersWebSocketProvider({
   const wsRef = useRef<WebSocket | null>(null);
   const debounceRef = useRef<number | null>(null);
   const usersRef = useRef<User[]>(users);
-  const reconnectTimeoutRef = useRef<number | null>(null);
-  const reconnectDelayRef = useRef<number>(1_000);
 
   useEffect(() => {
     usersRef.current = users;
@@ -44,17 +44,16 @@ export function UsersWebSocketProvider({
       return;
     }
     setError(null);
-    reconnectDelayRef.current = 1_000;
-    let isMounted = true;
-
-    const connect = () => {
-      if (!isMounted) return;
-      let errorShown = false;
-
-      const ws = new WebSocket(`/ws/users?token=${user.webSocketToken}`);
-      wsRef.current = ws;
-
-      ws.onmessage = (event) => {
+    const stop = startUsersWebSocket({
+      initialToken: user.webSocketToken,
+      refreshToken: async () => {
+        const sessionUser = await getSessionUser();
+        if (!sessionUser || sessionUser.email !== user.email) throw new Error("The workspace account has changed.");
+        return sessionUser.webSocketToken;
+      },
+      createSocket: (token) => new WebSocket(`/ws/users?token=${encodeURIComponent(token)}`),
+      onSocket: (socket) => { wsRef.current = socket; },
+      onMessage: (event) => {
         const msg = JSON.parse(event.data);
         if (msg.type === "users-update" && Array.isArray(msg.data)) {
           const prismaData = deserializeToPrisma<User[]>(msg.data);
@@ -69,54 +68,19 @@ export function UsersWebSocketProvider({
             shallowEqualUsers(prev, userData) ? prev : userData
           );
         }
-      };
-
-      ws.onopen = () => {
-        if (!isMounted) return;
+      },
+      onOpen: () => {
         setError(null);
-        reconnectDelayRef.current = 1_000;
-        console.log("WebSocket connection established!");
-      };
-
-      ws.onclose = (event) => {
-        console.log("WebSocket connection closed:", event.code, event.reason);
-        if (!event.wasClean && !errorShown && isMounted) {
-          errorShown = true;
-          setError(
-            new Error(
-              `Websocket closed uncleanly: ${event.code} - ${event.reason}`
-            )
-          );
-        }
-        if (event.code !== 1000 && isMounted) {
-          const delay = reconnectDelayRef.current;
-          reconnectDelayRef.current = Math.min(delay * 2, 30_000);
-          reconnectTimeoutRef.current = window.setTimeout(connect, delay);
-        }
-      };
-
-      ws.onerror = () => {
-        if (!errorShown && isMounted) {
-          errorShown = true;
-          setError(new Error("Websocket error"));
-        }
-      };
-    };
-
-    connect();
+      },
+      onError: setError,
+    });
 
     return () => {
-      isMounted = false;
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
-      }
+      stop();
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
         debounceRef.current = null;
       }
-      wsRef.current?.close(1000, "Component unmounted");
-      wsRef.current = null;
     };
   }, [user]);
 

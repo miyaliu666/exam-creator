@@ -303,11 +303,12 @@ pub async fn get_review_queue(
 }
 
 #[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CreateItemBody {
+    language: Option<String>,
     title: Option<String>,
     template_id: Option<String>,
-    blueprint_slot_id: Option<String>,
+    item_rule_id: Option<String>,
     item_format_id: Option<String>,
     primary_can_do_id: Option<String>,
     primary_domain: Option<String>,
@@ -328,6 +329,32 @@ fn template_for_format(item_format_id: &str) -> Option<&'static str> {
     }
 }
 
+pub(crate) fn set_draft_language(
+    package: &mut TaskPackage,
+    language: &str,
+    registry: &RegistrySnapshot,
+) -> Result<(), Error> {
+    if !["zh", "en", "es"].contains(&language) {
+        return Err(Error::Server(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "Select Chinese, English, or Spanish as the item language".into(),
+        ));
+    }
+    package.content.language = Some(language.into());
+    if let Some(source) = package.authoring_package.exercise_template.as_mut() {
+        if let Some(data) = source.data.as_object_mut() {
+            data.insert(
+                "language".into(),
+                json!(if language == "zh" { "zh-CN" } else { language }),
+            );
+        }
+        crate::language_items::exercise_templates::refresh_package(package, registry)
+            .map_err(|message| Error::Server(StatusCode::UNPROCESSABLE_ENTITY, message))?;
+    }
+    crate::language_items::multilingual::localize_new_scaffold(package);
+    Ok(())
+}
+
 pub(crate) fn draft_for_capability(
     id: String,
     capability: &WorkbenchCapability,
@@ -336,6 +363,18 @@ pub(crate) fn draft_for_capability(
     requested_context_id: Option<&str>,
     requested_difficulty_band: Option<&str>,
 ) -> Result<TaskPackage, Error> {
+    if crate::language_items::exercise_templates::exercise_type(&capability.item_format_id)
+        .is_some()
+    {
+        return draft_for_exercise_template(
+            id,
+            capability,
+            registry,
+            requested_domain,
+            requested_context_id,
+            requested_difficulty_band,
+        );
+    }
     let template_id = template_for_format(&capability.item_format_id).ok_or_else(|| {
         Error::Server(
             StatusCode::BAD_REQUEST,
@@ -368,7 +407,7 @@ pub(crate) fn draft_for_capability(
                 StatusCode::UNPROCESSABLE_ENTITY,
                 format!(
                     "no active Context supports {} × {} × {} for the requested Domain",
-                    capability.blueprint_slot_id,
+                    capability.item_rule_id,
                     capability.item_format_id,
                     capability.primary_can_do_id
                 ),
@@ -390,7 +429,7 @@ pub(crate) fn draft_for_capability(
         ));
     }
 
-    package.blueprint_slot_id = capability.blueprint_slot_id.clone();
+    package.item_rule_id = capability.item_rule_id.clone();
     package.task_family_id = capability.task_family_id.clone();
     package.item_format_id = capability.item_format_id.clone();
     package.renderer.renderer_id = capability.renderer_id.clone();
@@ -438,6 +477,96 @@ pub(crate) fn draft_for_capability(
     Ok(package)
 }
 
+fn draft_for_exercise_template(
+    id: String,
+    capability: &WorkbenchCapability,
+    registry: &RegistrySnapshot,
+    requested_domain: Option<&str>,
+    requested_context_id: Option<&str>,
+    requested_difficulty_band: Option<&str>,
+) -> Result<TaskPackage, Error> {
+    use crate::language_items::exercise_templates::{self, ExerciseTemplateContent};
+    let mut package = TaskPackage::new(id);
+    package.spec_versions.registry_bundle_version = registry.bundle_version.clone();
+    package.item_rule_id = capability.item_rule_id.clone();
+    package.item_format_id = capability.item_format_id.clone();
+    package.task_family_id = capability.task_family_id.clone();
+    package.renderer.renderer_id = capability.renderer_id.clone();
+    package.content.primary_can_do_id = capability.primary_can_do_id.clone();
+    package.content.primary_reported_skill = capability.primary_reported_skill.clone();
+    package.content.communicative_activity = capability.communicative_activity.clone();
+    let rule = exercise_templates::rule_for(registry, &package)
+        .filter(|rule| rule.enabled)
+        .ok_or_else(|| {
+            Error::Server(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "The exercise template is not enabled for this Can-do.".into(),
+            )
+        })?;
+    let domain = requested_domain
+        .filter(|domain| !domain.is_empty())
+        .or_else(|| (rule.allowed_domains.len() == 1).then(|| rule.allowed_domains[0].as_str()))
+        .ok_or_else(|| {
+            Error::Server(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "Select a Domain for this exercise.".into(),
+            )
+        })?;
+    if !rule.allowed_domains.iter().any(|allowed| allowed == domain) {
+        return Err(Error::Server(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "This Domain is not allowed by the exercise rules.".into(),
+        ));
+    }
+    let context = requested_context_id.unwrap_or_default();
+    if context.is_empty() && !rule.allowed_context_ids.is_empty() {
+        return Err(Error::Server(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "Select one of the configured Contexts.".into(),
+        ));
+    }
+    if !context.is_empty()
+        && ((!rule.allowed_context_ids.is_empty()
+            && !rule
+                .allowed_context_ids
+                .iter()
+                .any(|allowed| allowed == context))
+            || !registry.context_options.iter().any(|entry| {
+                entry.id == context
+                    && context_supports_capability(entry, capability)
+                    && entry.primary_domains.iter().any(|value| value == domain)
+            }))
+    {
+        return Err(Error::Server(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            "This optional Context is not allowed by the exercise rules.".into(),
+        ));
+    }
+    package.content.primary_domain = domain.into();
+    package.content.context_id = context.into();
+    package.content.difficulty_band = requested_difficulty_band.unwrap_or("TypicalA1").into();
+    package.content.difficulty = Some(difficulty_for_selection(
+        capability,
+        registry,
+        &package.content.difficulty_band,
+    )?);
+    package.content.target_content_ids.clear();
+    package.content.supporting_content_refs.clear();
+    package.content.required_information_points.clear();
+    package.delivery_policy_refs = capability.delivery_policy_refs.clone();
+    package.scoring_package.scoring_contract_template_id =
+        capability.scoring_contract_template_id.clone();
+    package.scoring_package.scoring_contract_template_version = "1".into();
+    package.authoring_package.exercise_template = Some(ExerciseTemplateContent {
+        exercise_type: rule.exercise_type.clone(),
+        body: String::new(),
+        data: exercise_templates::default_data(registry, rule),
+    });
+    exercise_templates::refresh_package(&mut package, registry)
+        .map_err(|message| Error::Server(StatusCode::UNPROCESSABLE_ENTITY, message))?;
+    Ok(package)
+}
+
 fn difficulty_for_selection(
     capability: &WorkbenchCapability,
     registry: &RegistrySnapshot,
@@ -453,6 +582,10 @@ fn difficulty_for_selection(
     let mut difficulty = template_for_format(&capability.item_format_id)
         .and_then(|template| TaskPackage::from_template(String::new(), template))
         .and_then(|package| package.content.difficulty)
+        .or_else(|| {
+            crate::language_items::exercise_templates::exercise_type(&capability.item_format_id)
+                .map(|_| DifficultyProfile::r_a1_1_typical())
+        })
         .ok_or_else(|| {
             Error::Server(
                 StatusCode::UNPROCESSABLE_ENTITY,
@@ -464,17 +597,26 @@ fn difficulty_for_selection(
     difficulty.drivers.input_length = difficulty_standard.default_drivers.input_length.clone();
     difficulty.drivers.information_points = difficulty_standard.default_drivers.information_points;
     difficulty.drivers.support_level = difficulty_standard.default_drivers.support_level.clone();
-    difficulty.drivers.distractor_similarity = if matches!(
-        capability.item_format_id.as_str(),
-        "IF-SINGLE-SELECT" | "IF-MATCHING"
-    ) {
-        difficulty_standard
-            .default_drivers
-            .distractor_similarity
-            .clone()
-    } else {
-        "notApplicable".to_string()
-    };
+    difficulty.drivers.distractor_similarity =
+        if crate::language_items::exercise_templates::exercise_type(&capability.item_format_id)
+            .is_some()
+            || matches!(
+                capability.item_format_id.as_str(),
+                "IF-SINGLE-SELECT" | "IF-MATCHING"
+            )
+        {
+            difficulty_standard
+                .default_drivers
+                .distractor_similarity
+                .clone()
+        } else {
+            "notApplicable".to_string()
+        };
+    if crate::language_items::exercise_templates::exercise_type(&capability.item_format_id)
+        .is_some()
+    {
+        difficulty.drivers.output_length = "exerciseTemplateResponse".into();
+    }
     difficulty.drivers.independence_level = difficulty_standard
         .default_drivers
         .independence_level
@@ -488,14 +630,15 @@ fn apply_locked_draft_setup(
     previous: &TaskPackage,
     proposed: &mut TaskPackage,
 ) -> Result<(), Error> {
-    if proposed.blueprint_slot_id != previous.blueprint_slot_id
+    if proposed.item_rule_id != previous.item_rule_id
+        || proposed.content.effective_language() != previous.content.effective_language()
         || proposed.item_format_id != previous.item_format_id
         || proposed.content.primary_can_do_id != previous.content.primary_can_do_id
         || json!(&proposed.spec_versions) != json!(&previous.spec_versions)
     {
         return Err(Error::Server(
             StatusCode::UNPROCESSABLE_ENTITY,
-            "item rules and saved Assessment Settings are locked after item creation".to_string(),
+            "Item language, item rules and saved Assessment Settings are locked after item creation".to_string(),
         ));
     }
     if proposed.content.difficulty_band == previous.content.difficulty_band {
@@ -509,7 +652,7 @@ fn apply_locked_draft_setup(
         let registry = pinned_registry(&previous.spec_versions.registry_bundle_version)?;
         let capability = capability_for(
             &registry,
-            &previous.blueprint_slot_id,
+            &previous.item_rule_id,
             &previous.item_format_id,
             Some(&previous.content.primary_can_do_id),
         )
@@ -542,7 +685,7 @@ fn apply_locked_capability_contract(package: &mut TaskPackage) -> Result<(), Err
     let registry = pinned_registry(&package.spec_versions.registry_bundle_version)?;
     let capability = capability_for(
         &registry,
-        &package.blueprint_slot_id,
+        &package.item_rule_id,
         &package.item_format_id,
         Some(&package.content.primary_can_do_id),
     )
@@ -550,8 +693,8 @@ fn apply_locked_capability_contract(package: &mut TaskPackage) -> Result<(), Err
         Error::Server(
             StatusCode::UNPROCESSABLE_ENTITY,
             format!(
-                "item format {} is not allowed for blueprint slot {}",
-                package.item_format_id, package.blueprint_slot_id
+                "item format {} is not allowed for item rule {}",
+                package.item_format_id, package.item_rule_id
             ),
         )
     })?;
@@ -572,6 +715,10 @@ fn apply_locked_capability_contract(package: &mut TaskPackage) -> Result<(), Err
     package.content.primary_reported_skill = capability.primary_reported_skill.clone();
     package.content.communicative_activity = capability.communicative_activity.clone();
     package.delivery_policy_refs = capability.delivery_policy_refs.clone();
+    if crate::language_items::exercise_templates::exercise_type(&package.item_format_id).is_some() {
+        return crate::language_items::exercise_templates::refresh_package(package, &registry)
+            .map_err(|message| Error::Server(StatusCode::UNPROCESSABLE_ENTITY, message));
+    }
     package.scoring_package.item_scoring_version = "0.1".to_string();
     package.scoring_package.scoring_points.clear();
     package.scoring_package.max_raw_score = 0;
@@ -600,18 +747,18 @@ pub async fn post_item(
     let id = format!("LI-{}", Uuid::new_v4());
     let timestamp = now();
     let registry = active_snapshot();
-    let selected_capability = match (&body.blueprint_slot_id, &body.item_format_id) {
-        (Some(slot_id), Some(format_id)) => Some(
+    let selected_capability = match (&body.item_rule_id, &body.item_format_id) {
+        (Some(rule_id), Some(format_id)) => Some(
             capability_for(
                 &registry,
-                slot_id,
+                rule_id,
                 format_id,
                 body.primary_can_do_id.as_deref(),
             )
             .ok_or_else(|| {
                 Error::Server(
                     StatusCode::BAD_REQUEST,
-                    format!("item format {format_id} is not allowed for blueprint slot {slot_id}"),
+                    format!("item format {format_id} is not allowed for item rule {rule_id}"),
                 )
             })?,
         ),
@@ -619,7 +766,7 @@ pub async fn post_item(
         _ => {
             return Err(Error::Server(
                 StatusCode::BAD_REQUEST,
-                "blueprintSlotId and itemFormatId must be selected together".to_string(),
+                "itemRuleId and itemFormatId must be selected together".to_string(),
             ));
         }
     };
@@ -645,7 +792,7 @@ pub async fn post_item(
         })?;
         let capability = capability_for(
             &registry,
-            &template.blueprint_slot_id,
+            &template.item_rule_id,
             &template.item_format_id,
             Some(&template.content.primary_can_do_id),
         )
@@ -667,6 +814,11 @@ pub async fn post_item(
     };
     let mut draft = draft;
     draft.spec_versions.registry_bundle_version = registry.bundle_version.clone();
+    set_draft_language(
+        &mut draft,
+        body.language.as_deref().unwrap_or("zh"),
+        &registry,
+    )?;
     let item = LanguageItem {
         id: id.clone(),
         title: body
@@ -1030,6 +1182,7 @@ pub async fn post_version(
         + 1;
     let version_id = format!("LIV-{}", Uuid::new_v4());
     let mut package = item.draft.clone();
+    crate::language_items::legacy_identity::start_canonical_revision(&mut package);
     package.task_version = version_number.to_string();
     let content_hash = task_package_hash(&package);
     let version = LanguageItemVersion {
@@ -1160,6 +1313,7 @@ fn require_revision_pilot(event: &UsageEvent, version: &LanguageItemVersion) -> 
 
 fn new_revision_package(version: &LanguageItemVersion) -> TaskPackage {
     let mut package = version.package.clone();
+    crate::language_items::legacy_identity::start_canonical_revision(&mut package);
     package.task_version = "draft".to_string();
     if let Some(difficulty) = &mut package.content.difficulty {
         // Measurements belong to the frozen source, not to content that can now change.
@@ -1384,7 +1538,7 @@ pub async fn post_ai_generation(
         prompt_version: ai::GENERATION_PROMPT_VERSION.to_string(),
         output_schema_version: ai::GENERATION_OUTPUT_SCHEMA_VERSION.to_string(),
         spec_versions: item.draft.spec_versions.clone(),
-        blueprint_slot_id: item.draft.blueprint_slot_id.clone(),
+        item_rule_id: item.draft.item_rule_id.clone(),
         task_family_id: item.draft.task_family_id.clone(),
         item_format_id: item.draft.item_format_id.clone(),
         renderer_id: item.draft.renderer.renderer_id.clone(),
@@ -1653,8 +1807,9 @@ fn generation_setup_matches(run: &AiGenerationRun, package: &TaskPackage) -> boo
     }
     // Older runs did not persist the full brief. Compare every setup field they
     // did record without making unrelated title or payload edits stale a run.
-    json!(&run.spec_versions) == json!(&package.spec_versions)
-        && run.blueprint_slot_id == package.blueprint_slot_id
+    package.content.effective_language() == "zh"
+        && json!(&run.spec_versions) == json!(&package.spec_versions)
+        && run.item_rule_id == package.item_rule_id
         && run.task_family_id == package.task_family_id
         && run.item_format_id == package.item_format_id
         && run.renderer_id == package.renderer.renderer_id
@@ -1715,6 +1870,9 @@ pub async fn post_adopt_candidate(
     }
     let mut proposed = item.draft.clone();
     proposed.candidate_payload = candidate.candidate_payload.clone();
+    if candidate.proposed_exercise_template.is_some() {
+        proposed.authoring_package.exercise_template = candidate.proposed_exercise_template.clone();
+    }
     proposed.authoring_package.english_translations = candidate.english_translations.clone();
     if let Some(scoring_package) = &candidate.proposed_scoring_package {
         proposed.scoring_package = scoring_package.clone();
@@ -1831,10 +1989,28 @@ async fn build_ai_review_run(
     actor_email: &str,
 ) -> AiReviewRun {
     let metadata = ai::provider_metadata(&state.env_vars.language_item_ai);
-    let review = ai::review(&state.env_vars.language_item_ai, http_client, package).await;
-    let (findings, status, review_error) = match review {
-        Ok(findings) => (findings, "completed".to_string(), None),
-        Err(error) => (Vec::new(), "failed".to_string(), Some(error.to_string())),
+    let review = crate::language_items::review_rules::preliminary_review(
+        &state.env_vars.language_item_ai,
+        http_client,
+        package,
+    )
+    .await;
+    let blind_answer = review.blind_answer;
+    let (findings, review_plan, check_results, status, review_error) = match review.assessment {
+        Ok(review) => (
+            review.findings,
+            review.review_plan,
+            review.check_results,
+            "completed".to_string(),
+            None,
+        ),
+        Err(error) => (
+            Vec::new(),
+            None,
+            None,
+            "failed".to_string(),
+            Some(error.to_string()),
+        ),
     };
     AiReviewRun {
         id: format!("AIREV-{}", Uuid::new_v4()),
@@ -1850,6 +2026,9 @@ async fn build_ai_review_run(
         schema_version: ai::REVIEW_SCHEMA_VERSION.to_string(),
         spec_versions: package.spec_versions.clone(),
         findings,
+        review_plan,
+        check_results,
+        blind_answer,
         status,
         error: review_error,
         created_by: actor_email.to_string(),
@@ -2719,6 +2898,11 @@ mod tests {
             schema_version: ai::REVIEW_SCHEMA_VERSION.into(),
             spec_versions: item.draft.spec_versions.clone(),
             findings: vec![],
+            review_plan: None,
+            check_results: None,
+            blind_answer: Some(crate::language_items::blind_review::test_attempt(
+                &item.draft,
+            )),
             status: "completed".into(),
             error: None,
             created_by: item.owner_email.clone(),
@@ -2765,6 +2949,15 @@ mod tests {
         let legacy: AiReviewRun = serde_json::from_value(legacy).unwrap();
         assert!(legacy.content_hash.is_none());
         assert!(!legacy.matches_current_draft(&item));
+        let mut unblinded = run.clone();
+        unblinded.blind_answer = None;
+        assert!(!unblinded.matches_current_draft(&item));
+        let mut simulated = run.clone();
+        simulated.blind_answer.as_mut().unwrap().simulated = true;
+        assert!(!simulated.matches_current_draft(&item));
+        let mut outdated = run.clone();
+        outdated.prompt_version = "0.5".into();
+        assert!(!outdated.matches_current_draft(&item));
     }
 
     #[test]
@@ -3087,13 +3280,20 @@ mod tests {
     }
 
     #[test]
-    fn blueprint_selection_locks_contract_and_selects_a_valid_context() {
+    fn item_rule_selection_locks_contract_and_selects_a_valid_context() {
         let registry = snapshot();
         let capability = registry
             .capabilities
             .iter()
             .find(|entry| {
-                entry.blueprint_slot_id == "R-A1-2" && entry.item_format_id == "IF-MATCHING"
+                entry.item_rule_id
+                    == crate::language_items::legacy_identity::legacy_rule_id(
+                        "R-A1-2",
+                        "IF-MATCHING",
+                        &entry.primary_can_do_id,
+                    )
+                    .unwrap()
+                    && entry.item_format_id == "IF-MATCHING"
             })
             .expect("R-A1-2 matching capability");
         let package = draft_for_capability(
@@ -3106,7 +3306,7 @@ mod tests {
         )
         .expect("valid package");
 
-        assert_eq!(package.blueprint_slot_id, "R-A1-2");
+        assert_eq!(package.item_rule_id, capability.item_rule_id);
         assert_eq!(package.task_family_id, "TF-SHORT-MESSAGE-COMPREHENSION");
         assert_eq!(package.renderer.renderer_id, "REN-MATCHING");
         assert_eq!(
@@ -3125,7 +3325,14 @@ mod tests {
             .capabilities
             .iter()
             .find(|entry| {
-                entry.blueprint_slot_id == "L-A1-3" && entry.item_format_id == "IF-RESTRICTED-INPUT"
+                entry.item_rule_id
+                    == crate::language_items::legacy_identity::legacy_rule_id(
+                        "L-A1-3",
+                        "IF-RESTRICTED-INPUT",
+                        &entry.primary_can_do_id,
+                    )
+                    .unwrap()
+                    && entry.item_format_id == "IF-RESTRICTED-INPUT"
             })
             .expect("L-A1-3 restricted input capability");
         let package = draft_for_capability(
@@ -3160,7 +3367,7 @@ mod tests {
             let package = draft_for_capability(
                 format!(
                     "LI-{}-{}",
-                    capability.blueprint_slot_id, capability.item_format_id
+                    capability.item_rule_id, capability.item_format_id
                 ),
                 capability,
                 registry,
@@ -3170,7 +3377,7 @@ mod tests {
             )
             .expect("every exposed capability must be creatable");
 
-            assert_eq!(package.blueprint_slot_id, capability.blueprint_slot_id);
+            assert_eq!(package.item_rule_id, capability.item_rule_id);
             assert_eq!(package.task_family_id, capability.task_family_id);
             assert_eq!(package.item_format_id, capability.item_format_id);
             if !matches!(
@@ -3200,7 +3407,7 @@ mod tests {
                     .iter()
                     .all(|issue| issue.code != "registry.deliveryPolicy"),
                 "{} + {} produced an inconsistent delivery contract",
-                capability.blueprint_slot_id,
+                capability.item_rule_id,
                 capability.item_format_id
             );
             assert!(
@@ -3208,14 +3415,14 @@ mod tests {
                     .allowed_domains
                     .contains(&package.content.primary_domain),
                 "{} selected an invalid domain",
-                capability.blueprint_slot_id
+                capability.item_rule_id
             );
             assert!(
                 capability
                     .allowed_context_ids
                     .contains(&package.content.context_id),
                 "{} selected an invalid context",
-                capability.blueprint_slot_id
+                capability.item_rule_id
             );
         }
     }
@@ -3251,14 +3458,28 @@ mod tests {
             .capabilities
             .iter()
             .find(|entry| {
-                entry.blueprint_slot_id == "R-A1-3" && entry.item_format_id == "IF-MATCHING"
+                entry.item_rule_id
+                    == crate::language_items::legacy_identity::legacy_rule_id(
+                        "R-A1-3",
+                        "IF-MATCHING",
+                        &entry.primary_can_do_id,
+                    )
+                    .unwrap()
+                    && entry.item_format_id == "IF-MATCHING"
             })
             .expect("R-A1-3 matching capability");
         let restricted_input = registry
             .capabilities
             .iter()
             .find(|entry| {
-                entry.blueprint_slot_id == "R-A1-3" && entry.item_format_id == "IF-RESTRICTED-INPUT"
+                entry.item_rule_id
+                    == crate::language_items::legacy_identity::legacy_rule_id(
+                        "R-A1-3",
+                        "IF-RESTRICTED-INPUT",
+                        &entry.primary_can_do_id,
+                    )
+                    .unwrap()
+                    && entry.item_format_id == "IF-RESTRICTED-INPUT"
             })
             .expect("R-A1-3 restricted-input capability");
 
@@ -3279,7 +3500,14 @@ mod tests {
             .capabilities
             .iter()
             .find(|entry| {
-                entry.blueprint_slot_id == "R-A1-3" && entry.item_format_id == "IF-MATCHING"
+                entry.item_rule_id
+                    == crate::language_items::legacy_identity::legacy_rule_id(
+                        "R-A1-3",
+                        "IF-MATCHING",
+                        &entry.primary_can_do_id,
+                    )
+                    .unwrap()
+                    && entry.item_format_id == "IF-MATCHING"
             })
             .expect("R-A1-3 matching capability");
         let mut package = draft_for_capability(
@@ -3502,7 +3730,7 @@ mod tests {
             "id": "AIR-test", "itemId": package.task_id,
             "provider": "deterministic-mock", "model": "test", "modelVersion": "1",
             "promptId": "test", "promptVersion": "1", "outputSchemaVersion": "1",
-            "specVersions": package.spec_versions, "blueprintSlotId": package.blueprint_slot_id,
+            "specVersions": package.spec_versions, "itemRuleId": package.item_rule_id,
             "taskFamilyId": package.task_family_id, "itemFormatId": package.item_format_id,
             "rendererId": package.renderer.renderer_id, "primaryCanDoId": package.content.primary_can_do_id,
             "primaryDomain": package.content.primary_domain, "contextId": package.content.context_id,
@@ -3632,6 +3860,16 @@ mod tests {
             )];
         let run = generation_run_for(&package);
         assert!(generation_setup_matches(&run, &package));
+        let mut translated = package.clone();
+        translated.content.language = Some("en".into());
+        assert!(!generation_setup_matches(&run, &translated));
+        let english_run = generation_run_for(&translated);
+        assert!(generation_setup_matches(&english_run, &translated));
+        translated.content.language = Some("es".into());
+        assert!(!generation_setup_matches(&english_run, &translated));
+        assert!(apply_locked_draft_setup(&package, &mut translated).is_err());
+        translated.content.language = Some("zh".into());
+        assert!(generation_setup_matches(&run, &translated));
         for (path, value) in [
             ("/content/contextId", json!("another-context")),
             ("/content/difficultyBand", json!("UpperA1")),

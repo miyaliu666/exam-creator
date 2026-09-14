@@ -1,0 +1,304 @@
+{
+  "sourceProject": "markdown-exercise-templates",
+  "files": [
+    {
+      "path": "src/lib/schema.ts",
+      "sha256": "1c414a11e6e9d660bcb0f25681f37aade5c3df2eb176fedc8efd4abbd4dee16d"
+    },
+    {
+      "path": "src/lib/registry.ts",
+      "sha256": "cafe7dbfec8ffeca2fc8a6badae36a9106883d3f31f1d6f441b0e5a229530e07"
+    },
+    {
+      "path": "src/lib/grading.ts",
+      "sha256": "92962d050b748422c540c6a73431d2d4e48b3e6942ca2bc18906fff78406d4b3"
+    },
+    {
+      "path": "src/lib/segment.ts",
+      "sha256": "158a5ddcbec8b5b0a678d9836262e995d9979703d5c40576598a6fafb34b675e"
+    },
+    {
+      "path": "src/lib/pronunciation.ts",
+      "sha256": "9e6804b855930bffeebdcb49e0eb5d281524d2b32d5176a0d0ac1e8a5804f5cf"
+    },
+    {
+      "path": "src/lib/i18n.ts",
+      "sha256": "064216f723cdd99fe50fb27f4d26231c74ed9c175d191fb9ede64399ecd3a114"
+    },
+    {
+      "path": "src/lib/levelSupport.ts",
+      "sha256": "27dafe4cffaa74ffe84bb122fcd3d4e736d833b01166102b0b9646b6e0fc77d2"
+    },
+    {
+      "path": "src/lib/characters.ts",
+      "sha256": "6a08668a01a971aefc6249bb5d6ca8646b0f71f8ac4f79bcfd41868833835f56"
+    },
+    {
+      "path": "src/components/Shell.tsx",
+      "sha256": "93ee7e542d8118c1a448c1526930ac935e6670d4fc6e76aa604110f06038cbc3",
+      "adapted": true
+    },
+    {
+      "path": "src/components/QuestionList.tsx",
+      "sha256": "66c53ae630e721be784b2c82b642d897575f033a9d5bc1f57041ca4a180958e3"
+    },
+    {
+      "path": "src/components/CharacterHelper.tsx",
+      "sha256": "6765f8df3fb2b24453806d61303bb2c08e08dfd8ca0b4b934c01f3b25be10ca1",
+      "adapted": true
+    },
+    {
+      "path": "src/templates/types.ts",
+      "sha256": "b82fd81b6b38dd2168e706e653aea9d59a51f169c8c1aa5923e8dcc14b47828b"
+    },
+    {
+      "path": "src/styles.css",
+      "sha256": "78c3fbbe9fe23d9dcd0e00521ba30f93a454bef42d39f4712770b486c4eb63d8"
+    },
+    {
+      "path": "src/speech.d.ts",
+      "sha256": "b4ff812e0aa1f50fa30b87a2db42d775abe63e3131028bb4f1cdacecfb371efe"
+    },
+    {
+      "path": "src/templates/FillInBlanks.tsx",
+      "sha256": "d45c5a9b2cf4fd5e9642a879fc9dd2019db73d7edb4f077639282198841a415a"
+    },
+    {
+      "path": "src/templates/SentenceCompletion.tsx",
+      "sha256": "efa95ffbdc805561c67fe701adde70d7685acfaae9a7b37d0bc05b3d8490a9bc"
+    },
+    {
+      "path": "src/templates/MultipleChoice.tsx",
+      "sha256": "858859ac8a8396e0128769502094fa548d0f96b0e7bedd4925fa71612e49a7e8"
+    },
+    {
+      "path": "src/templates/MatchColumns.tsx",
+      "sha256": "d239c20c1b11f4ec8ad19734e16387083d4fecb8b9f23c058dbcbce58b935498"
+    },
+    {
+      "path": "src/templates/ImageLabel.tsx",
+      "sha256": "f2638db16a3560f1e15cc42ec4d60c245b96f515895e46c57d80b357eef6ff6c"
+    },
+    {
+      "path": "src/templates/Listening.tsx",
+      "sha256": "6dc37f56fbe22233f0b8f3c77a33b1419def2ac305ad9c4e1ba450989b070673"
+    },
+    {
+      "path": "src/templates/Dictation.tsx",
+      "sha256": "6db729b87128cb73e5a762c00a1b95dfa3b87f5561edf68c2ad25eeda52d75dd"
+    },
+    {
+      "path": "src/templates/Writing.tsx",
+      "sha256": "25cdc65a49516cc77ced835224e3516436140f4cb082237731ee07f780b86626"
+    },
+    {
+      "path": "src/templates/PictureSentence.tsx",
+      "sha256": "7f9d83b9ac2b8f0fc84779429d0079d33730de060289f89d57b97cd099d0a2cf"
+    },
+    {
+      "path": "src/templates/PictureStory.tsx",
+      "sha256": "dab02f2238934ab72c3723f11dcf3e5541d23ee096ab2abafd6b5537c4a7dc50"
+    },
+    {
+      "path": "src/templates/TwoTextEssay.tsx",
+      "sha256": "1b07e625c09e0aaa7b62fd9e402e6e70b0b01090dbb085dc6eb036a25f6647b7"
+    },
+    {
+      "path": "src/templates/SituationalWriting.tsx",
+      "sha256": "4f96c09cf74e386e7815256c32f0a0a84a34bddd8170c864f020f89bc0248b75"
+    },
+    {
+      "path": "src/templates/DescribePicture.tsx",
+      "sha256": "c3219b8b474f94196c373d1a40e859f7eea435d042757744e0b225b6e8237a21"
+    },
+    {
+      "path": "src/templates/ReportWriting.tsx",
+      "sha256": "790a20b27b414a2c7ad117a68760f72a8b2ee0b3615ccfcb33d02ef3a3e54069"
+    },
+    {
+      "path": "src/templates/OpinionEssay.tsx",
+      "sha256": "f6e6c89665184cec5d0d15ba1eeb73acd640d9091e615807f765eafdfac0d812"
+    },
+    {
+      "path": "src/templates/AnswerAnEmail.tsx",
+      "sha256": "c255b96bca97b03bd0f4717639c27db821a80dbb05695c9338c324a1eeee73b8"
+    },
+    {
+      "path": "src/templates/SummarizeText.tsx",
+      "sha256": "f3bb70321420da5e748f14d623b044b698132d61de3ae6d9362d7835c9962867"
+    },
+    {
+      "path": "src/templates/GuidedWriting.tsx",
+      "sha256": "80ccae0f579b67fceadac5272f5e544b2f701924d3033a0b786861d6a3d2b274"
+    },
+    {
+      "path": "src/templates/Speaking.tsx",
+      "sha256": "56c019c900c2314cbfe5e1d674a61336c393d0ab345e9074a2ceddf489367249",
+      "adapted": true
+    },
+    {
+      "path": "src/templates/Ordering.tsx",
+      "sha256": "7a1488c7c8920602b401356d32b0fcc889de972a7350ebdd6f8cb83b71bc9cb6"
+    },
+    {
+      "path": "src/templates/VocabularyRecognition.tsx",
+      "sha256": "8c2482d73462176a2cd85e467e0065daca540dcf776f6f290662e6117940a8c4"
+    },
+    {
+      "path": "src/templates/IdentifyIdea.tsx",
+      "sha256": "a61f304e0b5520568e41d210e5fb36a6485786dceb9aea4029f702d84a0f6cf8"
+    },
+    {
+      "path": "src/templates/TitleThePassage.tsx",
+      "sha256": "702a9804ab68d8a6decaa460d4d4d32776d2d33ed03b620a0c9fa0b621d3883e"
+    },
+    {
+      "path": "src/templates/CompleteThePassage.tsx",
+      "sha256": "5692a4eab733355fcbc407b53455797048c7365075255ee1d648adaff0c07aee"
+    },
+    {
+      "path": "src/templates/ChooseTheWord.tsx",
+      "sha256": "b2430afeddddab8424f1d0c3a73c3f40874ef7b57fbf7bb83da0761c3c80e2b4"
+    },
+    {
+      "path": "src/templates/MissingLetters.tsx",
+      "sha256": "1fba7074616a18f06cc4427baf2eadd22955982436eacb87ffadc2010de59ccc"
+    },
+    {
+      "path": "src/templates/DragToComplete.tsx",
+      "sha256": "0e20edd9d8a72aaec1bec169e1933f5c337bbc0e15150ea00a905a347a393baf"
+    },
+    {
+      "path": "src/templates/PassageReconstruction.tsx",
+      "sha256": "f992f3ffbee79016d5e3e7450b0fd56b74360e65234efad7fc8396c940924b65"
+    },
+    {
+      "path": "src/templates/ShortAnswerQuestions.tsx",
+      "sha256": "86769f39bdc3bca4818147b9ba470156d38a6e3b522ca6f5b5cd48a56442be5f"
+    },
+    {
+      "path": "src/templates/ListeningShortAnswerQuestions.tsx",
+      "sha256": "a795db00c345183cfe5f8388f2a230dfe492fdd27d22ccea140ba071084f5345"
+    },
+    {
+      "path": "src/templates/MatchingHeadings.tsx",
+      "sha256": "20179c1098c2a44a4614b983509731887359612a7816c6c5a60d19289540b27e"
+    },
+    {
+      "path": "src/templates/IdentifyInformation.tsx",
+      "sha256": "81115da5b97f0e0cdd8f2b4224326eda4dc20144ceb6dc8cb4ea2077718dd5f6"
+    },
+    {
+      "path": "src/templates/MatchingSentenceEndings.tsx",
+      "sha256": "295072e84fa0b9ed95beca7919d1a7c4885d396c5e0bb1f1b8f101e51ab355d6"
+    },
+    {
+      "path": "src/templates/ReadingSentenceCompletion.tsx",
+      "sha256": "fe5aef5de9c9218fc504adb25a2706a2538b1495282cd3f4ae6b7aeefe8dab28"
+    },
+    {
+      "path": "src/templates/WordFormation.tsx",
+      "sha256": "d879fde5dbe1633e94aa388322a09c90374060e2d54d1222a527a689a8aa5758"
+    },
+    {
+      "path": "src/templates/HighlightTheAnswer.tsx",
+      "sha256": "7358b7c302d4a9ccc71beb7ba4ff2dd91862572188ac844f2e8c824975ade53d"
+    },
+    {
+      "path": "src/templates/ListenAndChoosePicture.tsx",
+      "sha256": "dc9b87eb67e31de8c5cebe44718611de62f5de89502cc6907558d3f19f34b2e3"
+    },
+    {
+      "path": "src/templates/ListeningFillInBlanks.tsx",
+      "sha256": "ee7595a02fa6cc9d3bf0e232b8b6ede0dd313756c5a7ad5d7759855782f396ef"
+    },
+    {
+      "path": "src/templates/HighlightCorrectSummary.tsx",
+      "sha256": "964e9ef9ac20fd233fe05d279815366f061107e1171292cb71783618c85ea4ba"
+    },
+    {
+      "path": "src/templates/SelectMissingWord.tsx",
+      "sha256": "693c8542875f72f1a74c3e62a7cd5f2128ff0d18b92985b2d5563e657e969747"
+    },
+    {
+      "path": "src/templates/HighlightIncorrectWords.tsx",
+      "sha256": "60131aa6aef15daa7a546b4dd1b5318f9af2cdbf853159e89a343ec18b944a22"
+    },
+    {
+      "path": "src/templates/ListeningMatching.tsx",
+      "sha256": "26cfc72ae96f12eb6a055037c9abf76861ad537d4efc711f6403aaa325ff13d9"
+    },
+    {
+      "path": "src/templates/ListenAndRespond.tsx",
+      "sha256": "8ba40460209b437e6cf51ea3a41feaf46d2b7f17a1633739da23938f187fce8c"
+    },
+    {
+      "path": "src/templates/DiagramLabel.tsx",
+      "sha256": "3ab220f274f2893744f9278edb3e41d8f6f5ee3b07f3a77af60e80ad0f95649b"
+    },
+    {
+      "path": "src/templates/ListeningDiagramLabel.tsx",
+      "sha256": "5306d5c5dfbbd14312b941f7af9d1d35e71572f7f7c780455bb1c5163dc9198e"
+    },
+    {
+      "path": "src/templates/MultipleChoiceSingleAnswer.tsx",
+      "sha256": "ecbe534d85acd0280ff59cb3ad987d9eac5a3575333c3444b4166320251f23ef"
+    },
+    {
+      "path": "src/templates/BuildASentence.tsx",
+      "sha256": "c935fd5fc7c2aa3cc3f67042159fc41d84d9bf83f9febbbd9014aa4a67fe6bd5"
+    },
+    {
+      "path": "src/templates/Categorize.tsx",
+      "sha256": "272fc0c222a319c378c440095690807b36506327906001ec49392742ff8c1dd8"
+    },
+    {
+      "path": "src/templates/Pronunciation.tsx",
+      "sha256": "7b7e46f88fe48503d223281806672a7593c8ee199ce8f277325025218b3642fa"
+    },
+    {
+      "path": "src/templates/ReadAloud.tsx",
+      "sha256": "a61baf5d50d7d47ed41b09c6f8b88e00d4989a04ca61ad1ffd2a0042e5f07276"
+    },
+    {
+      "path": "src/templates/DescribeImage.tsx",
+      "sha256": "c81ddaab89a89baf29e4f32f9fdb5c2d612ce44cf3b7f967ac9334794da5bab3"
+    },
+    {
+      "path": "src/templates/Summary.tsx",
+      "sha256": "ba9875456fcaacd9b61fe151e7a220119a76786f94f8a53d16c1274845bd3b41"
+    },
+    {
+      "path": "src/templates/ListenAndSpeak.tsx",
+      "sha256": "be315b5964ea85cebcedf0d231c277449d896ac859fcc9499917c3b3cb3d928c"
+    },
+    {
+      "path": "src/templates/SentenceBuilds.tsx",
+      "sha256": "98c988c9d600b979096b38ab1258d79d4c97bc5b81935bb3d8d4d0f023b824b0"
+    },
+    {
+      "path": "src/templates/AnswerShortQuestion.tsx",
+      "sha256": "2af3c92c28c5e3f181e8a3803b64679328906793f204e650bf7ccd2d3b6c2b7d"
+    },
+    {
+      "path": "src/templates/Conversations.tsx",
+      "sha256": "f259d00931e7c69ab25375002b3e80023f35019fd3f0dff703e56b1d19154d21"
+    },
+    {
+      "path": "src/templates/ExpressOpinion.tsx",
+      "sha256": "9549378600dd2da626f4a5293464900461edc5cefe31f95f1cbb08ef1e2f49e1"
+    },
+    {
+      "path": "src/templates/ReadAndSpeak.tsx",
+      "sha256": "1ea2f8718c1b2ed74b211ba9da61999a96f039b0bc9d8395ad6eddd45ba8532d"
+    },
+    {
+      "path": "src/templates/RespondUsingInformation.tsx",
+      "sha256": "e422fe4f7056cca52be208291661c9a217a0ad92dfa8c5469c251603ebcdacb5"
+    },
+    {
+      "path": "src/templates/ArgumentEvaluation.tsx",
+      "sha256": "1db134df415c919486ee1216895d18afb839c4322d69502d993e73235899a397"
+    }
+  ]
+}

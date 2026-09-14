@@ -32,11 +32,12 @@ pub enum CoverageMatch {
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CoverageFilters {
+    pub language: Option<String>,
     pub skill: Option<String>,
     pub activity: Option<String>,
     pub domain: Option<String>,
     pub context_id: Option<String>,
-    pub blueprint_slot_id: Option<String>,
+    pub item_rule_id: Option<String>,
     pub primary_can_do_id: Option<String>,
     pub difficulty_band: Option<String>,
     pub item_format_id: Option<String>,
@@ -71,10 +72,11 @@ pub struct CoverageRequest {
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CoverageMetadata {
+    pub language: Option<String>,
     #[serde(default)]
     pub registry_version: String,
     #[serde(default)]
-    pub blueprint_slot_id: String,
+    pub item_rule_id: String,
     #[serde(default)]
     pub item_format_id: String,
     #[serde(default)]
@@ -103,6 +105,7 @@ pub struct CoverageVersion {
     pub version_number: u64,
     #[serde(default)]
     pub lifecycle_status: String,
+    #[serde(deserialize_with = "super::legacy_identity::deserialize_coverage_metadata")]
     pub metadata: CoverageMetadata,
     #[serde(default)]
     pub evidence: Vec<CoverageEvidence>,
@@ -178,6 +181,7 @@ pub struct CoverageItem {
     pub id: String,
     pub title: String,
     pub status: String,
+    #[serde(deserialize_with = "super::legacy_identity::deserialize_coverage_metadata")]
     pub draft: CoverageMetadata,
     #[serde(default)]
     pub versions: Vec<CoverageVersion>,
@@ -191,6 +195,7 @@ pub struct CoverageItemSummary {
     pub version_id: Option<String>,
     pub scope: CoverageScope,
     pub status: String,
+    #[serde(deserialize_with = "super::legacy_identity::deserialize_coverage_metadata")]
     pub metadata: CoverageMetadata,
 }
 
@@ -300,17 +305,27 @@ pub fn version_is_approved(version: &CoverageVersion, required_gates: Option<&[S
 }
 
 fn dimensions_match(metadata: &CoverageMetadata, filters: &CoverageFilters) -> bool {
+    if metadata.language.as_deref().unwrap_or("zh") != filters.language.as_deref().unwrap_or("zh") {
+        return false;
+    }
     [
         (&filters.skill, &metadata.skill),
         (&filters.domain, &metadata.domain),
-        (&filters.context_id, &metadata.context_id),
-        (&filters.blueprint_slot_id, &metadata.blueprint_slot_id),
+        (&filters.item_rule_id, &metadata.item_rule_id),
         (&filters.primary_can_do_id, &metadata.primary_can_do_id),
         (&filters.difficulty_band, &metadata.difficulty_band),
         (&filters.item_format_id, &metadata.item_format_id),
     ]
     .into_iter()
     .all(|(expected, actual)| expected.as_ref().is_none_or(|value| value == actual))
+        && filters.context_id.as_ref().is_none_or(|context| {
+            if context == "__NO_CONTEXT__" {
+                metadata.context_id.is_empty()
+                    && super::exercise_templates::exercise_type(&metadata.item_format_id).is_some()
+            } else {
+                context == &metadata.context_id
+            }
+        })
         && filters.activity.as_ref().is_none_or(|activity| {
             &metadata.activity == activity || metadata.activities.contains(activity)
         })
@@ -441,14 +456,15 @@ fn coverage_setup_counts<'a>(
     pending: impl Iterator<Item = &'a CoverageItemSummary>,
     filters: &CoverageFilters,
 ) -> Vec<CoverageSetupCount> {
-    let mut counts: BTreeMap<[String; 6], [usize; 2]> = BTreeMap::new();
+    let mut counts: BTreeMap<[String; 7], [usize; 2]> = BTreeMap::new();
     for (item, column) in approved
         .map(|item| (item, 0))
         .chain(pending.map(|item| (item, 1)))
     {
         let metadata = &item.metadata;
         let setup = [
-            metadata.blueprint_slot_id.clone(),
+            metadata.language.as_deref().unwrap_or("zh").to_string(),
+            metadata.item_rule_id.clone(),
             metadata.item_format_id.clone(),
             metadata.primary_can_do_id.clone(),
             metadata.domain.clone(),
@@ -461,19 +477,28 @@ fn coverage_setup_counts<'a>(
         .into_iter()
         .map(|(setup, [approved_count, pending_count])| {
             let [
-                blueprint_slot_id,
+                language,
+                item_rule_id,
                 item_format_id,
                 primary_can_do_id,
                 domain,
                 context_id,
                 difficulty_band,
             ] = setup;
+            let context_id = if context_id.is_empty()
+                && super::exercise_templates::exercise_type(&item_format_id).is_some()
+            {
+                "__NO_CONTEXT__".to_string()
+            } else {
+                context_id
+            };
             CoverageSetupCount {
                 filters: CoverageFilters {
+                    language: filters.language.as_ref().map(|_| language),
                     // Keep the query's activity membership: substituting the primary activity could broaden a drilldown.
                     skill: filters.skill.clone(),
                     activity: filters.activity.clone(),
-                    blueprint_slot_id: Some(blueprint_slot_id),
+                    item_rule_id: Some(item_rule_id),
                     item_format_id: Some(item_format_id),
                     primary_can_do_id: Some(primary_can_do_id),
                     domain: Some(domain),
@@ -576,7 +601,7 @@ pub fn analyze_coverage(
             ("skill", &metadata.skill),
             ("domain", &metadata.domain),
             ("contextId", &metadata.context_id),
-            ("blueprintSlotId", &metadata.blueprint_slot_id),
+            ("itemRuleId", &metadata.item_rule_id),
             ("primaryCanDoId", &metadata.primary_can_do_id),
             ("difficultyBand", &metadata.difficulty_band),
             ("itemFormatId", &metadata.item_format_id),
@@ -697,7 +722,7 @@ mod tests {
     fn setup_item(id: usize, targets: Option<Vec<&str>>, approved: bool) -> CoverageItem {
         let mut value = item(id, targets, approved);
         let metadata = CoverageMetadata {
-            blueprint_slot_id: "R1".into(),
+            item_rule_id: "R1".into(),
             item_format_id: "single".into(),
             primary_can_do_id: "read-notice".into(),
             activity: "Reception".into(),
@@ -711,6 +736,63 @@ mod tests {
     }
 
     #[test]
+    fn language_scopes_items_overview_setup_counts_and_goals_with_legacy_chinese_default() {
+        let mut items = vec![setup_item(1, Some(vec!["zh-target"]), true)];
+        for (index, language) in ["en", "es"].iter().enumerate() {
+            let mut value = setup_item(index + 2, Some(vec![language]), true);
+            value.draft.language = Some(language.to_string());
+            value.versions[0].metadata = value.draft.clone();
+            value.status = "draft".into();
+            items.push(value);
+        }
+        for language in [None, Some("zh"), Some("en"), Some("es")] {
+            let filters = CoverageFilters {
+                language: language.map(str::to_string),
+                ..Default::default()
+            };
+            let request = CoverageRequest {
+                filters: filters.clone(),
+                include_overview: true,
+                desired_count: Some(3),
+                ..Default::default()
+            };
+            let result = analyze_coverage(&items, &request, "v1");
+            let expected = if language == Some("en") {
+                "2"
+            } else if language == Some("es") {
+                "3"
+            } else {
+                "1"
+            };
+            assert_eq!(result.matched_count, 1);
+            assert_eq!(result.items[0].id, expected);
+            assert_eq!(result.setup_counts.len(), 1);
+            assert_eq!(result.setup_counts[0].filters.language, filters.language);
+            assert_eq!(result.setup_counts[0].approved_count, 1);
+            assert_eq!(
+                result.setup_counts[0].pending_count,
+                usize::from(expected != "1")
+            );
+            let overview = result.overview.unwrap();
+            assert_eq!(overview.entries.len(), 1);
+            assert_eq!(overview.approved_item_count, 1);
+            assert_eq!(overview.pending_item_count, usize::from(expected != "1"));
+            let goal = result.goal.unwrap();
+            assert_eq!(goal.approved_count, 1);
+            assert_eq!(goal.unfilled_count, 2);
+        }
+        let request = CoverageRequest {
+            selected_ids: vec!["zh-target".into()],
+            filters: CoverageFilters {
+                language: Some("en".into()),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        assert_eq!(analyze_coverage(&items, &request, "v1").matched_count, 0);
+    }
+
+    #[test]
     fn setup_counts_keep_every_dimension_joint_and_count_both_inventories_before_pagination() {
         let mut items = Vec::new();
         for dimension in 0..7 {
@@ -718,7 +800,7 @@ mod tests {
                 let mut value = setup_item(dimension * 5 + index, Some(vec!["A"]), index < 3);
                 let metadata = &mut value.draft;
                 match dimension {
-                    1 => metadata.blueprint_slot_id = "R2".into(),
+                    1 => metadata.item_rule_id = "R2".into(),
                     2 => metadata.item_format_id = "matching".into(),
                     3 => metadata.primary_can_do_id = "read-instruction".into(),
                     4 => metadata.domain = "Personal".into(),
@@ -933,6 +1015,41 @@ mod tests {
     }
 
     #[test]
+    fn no_context_exercise_setup_drilldown_does_not_include_named_or_missing_legacy_contexts() {
+        let mut no_context = setup_item(1, Some(vec!["A"]), true);
+        no_context.versions[0].metadata.item_format_id = "EXERCISE:multiple-choice".into();
+        no_context.versions[0].metadata.context_id.clear();
+        let mut named_context = no_context.clone();
+        named_context.id = "2".into();
+        named_context.versions[0].metadata.context_id = "school".into();
+        let mut incomplete_legacy = no_context.clone();
+        incomplete_legacy.id = "3".into();
+        incomplete_legacy.versions[0].metadata.item_format_id = "FMT-SINGLE-SELECT".into();
+        let items = [no_context, named_context, incomplete_legacy];
+        let overview = analyze_coverage(&items, &CoverageRequest::default(), "v1");
+        let setup = overview
+            .setup_counts
+            .iter()
+            .find(|row| row.filters.context_id.as_deref() == Some("__NO_CONTEXT__"))
+            .unwrap();
+        assert_eq!(setup.approved_count, 1);
+        let drilldown = analyze_coverage(
+            &items,
+            &CoverageRequest {
+                filters: CoverageFilters {
+                    context_id: Some("__NO_CONTEXT__".into()),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            "v1",
+        );
+        assert_eq!(drilldown.matched_count, 1);
+        assert_eq!(drilldown.setup_counts.len(), 1);
+        assert_eq!(&drilldown.setup_counts[0], setup);
+    }
+
+    #[test]
     fn setup_counts_apply_every_inventory_filter_and_report_both_unknown_inventories() {
         let mut approved = setup_item(1, None, true);
         approved.versions[0].metadata.activities = vec!["Mediation".into()];
@@ -946,9 +1063,10 @@ mod tests {
         known_pending.draft.core_ids = Some(vec!["A".into()]);
         let items = [approved, pending, known_approved, known_pending];
         let filters = CoverageFilters {
+            language: None,
             skill: Some("Reading".into()),
             activity: Some("Mediation".into()),
-            blueprint_slot_id: Some("R1".into()),
+            item_rule_id: Some("R1".into()),
             item_format_id: Some("single".into()),
             primary_can_do_id: Some("read-notice".into()),
             domain: Some("Public".into()),
@@ -976,7 +1094,7 @@ mod tests {
         for key in [
             "skill",
             "activity",
-            "blueprintSlotId",
+            "itemRuleId",
             "itemFormatId",
             "primaryCanDoId",
             "domain",
@@ -1550,7 +1668,7 @@ mod tests {
             activities: vec!["Mediation".into()],
             domain: "Public".into(),
             context_id: "shop".into(),
-            blueprint_slot_id: "R1".into(),
+            item_rule_id: "R1".into(),
             primary_can_do_id: "read-notice".into(),
             difficulty_band: "TypicalA1".into(),
             item_format_id: "single".into(),
@@ -1569,10 +1687,11 @@ mod tests {
                 activity: Some("Mediation".into()),
                 domain: Some("Public".into()),
                 context_id: Some("shop".into()),
-                blueprint_slot_id: Some("R1".into()),
+                item_rule_id: Some("R1".into()),
                 primary_can_do_id: Some("read-notice".into()),
                 difficulty_band: Some("TypicalA1".into()),
                 item_format_id: Some("single".into()),
+                language: None,
             },
             ..Default::default()
         };
@@ -1598,7 +1717,7 @@ mod tests {
                 ..request.filters.clone()
             },
             CoverageFilters {
-                blueprint_slot_id: Some("R2".into()),
+                item_rule_id: Some("R2".into()),
                 ..request.filters.clone()
             },
             CoverageFilters {

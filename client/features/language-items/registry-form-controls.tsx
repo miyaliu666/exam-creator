@@ -24,6 +24,7 @@ export function SelectField({
   options,
   onChange,
   disabled,
+  placeholder,
   translate = true,
 }: {
   label: string;
@@ -31,6 +32,7 @@ export function SelectField({
   options: FormOption[];
   onChange: (value: string) => void;
   disabled?: boolean;
+  placeholder?: string;
   translate?: boolean;
 }) {
   const displayText = useContext(RegistryTextContext);
@@ -38,7 +40,8 @@ export function SelectField({
     <Field.Root disabled={disabled}>
       <Field.Label>{label}</Field.Label>
       <NativeSelect.Root disabled={disabled}>
-        <NativeSelect.Field value={value} onChange={(event) => { if (!disabled) onChange(event.target.value); }}>
+        <NativeSelect.Field value={placeholder !== undefined && !options.some((option) => option.id === value) ? "" : value} onChange={(event) => { if (!disabled && (placeholder === undefined || event.target.value !== "")) onChange(event.target.value); }}>
+          {placeholder !== undefined ? <option value="" disabled hidden>{translate ? displayText(placeholder) : placeholder}</option> : null}
           {options.map((option) => (
             <option key={option.id} value={option.id}>{translate ? displayText(option.label) : option.label}</option>
           ))}

@@ -20,7 +20,7 @@ import { DevSignInOptions } from "../components/dev-sign-in-options";
 export function Login() {
   const navigate = useNavigate();
   const search = useSearch({ from: loginRoute.fullPath });
-  const { login, user, isLoading } = useContext(AuthContext)!;
+  const { login, user, isLoading, isPublicAccess } = useContext(AuthContext)!;
 
   const [error, setError] = useState<string | null>(search.error);
 
@@ -54,10 +54,10 @@ export function Login() {
               />
             </Alert.Root>
           )}
-          {isLoading ? (
+          {isLoading || isPublicAccess ? (
             <>
               <Text fontWeight="bold" fontSize="xl">
-                Logging in...
+                Loading workspace...
               </Text>
               <Spinner color={"teal.focusRing"} size="xl" />
             </>

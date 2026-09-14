@@ -5,7 +5,10 @@ use axum::{
     extract::{Query, State},
     response::{IntoResponse, Redirect},
 };
-use axum_extra::extract::{PrivateCookieJar, cookie::Cookie};
+use axum_extra::extract::{
+    PrivateCookieJar,
+    cookie::{Cookie, SameSite},
+};
 use http::{
     HeaderMap, StatusCode,
     header::{ACCEPT, HOST, USER_AGENT},
@@ -17,6 +20,8 @@ use oauth2::{
     basic::{BasicClient, BasicTokenType},
 };
 use reqwest::Client;
+use sha2::{Digest, Sha256};
+use tokio::sync::Mutex;
 use tower_sessions::Session;
 use tracing::{error, info, warn};
 use url::Url;
@@ -26,12 +31,25 @@ use crate::{database::prisma, errors::Error, state::ServerState};
 type GitHubClient =
     BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
 
+const GITHUB_OAUTH_STATE_KEY: &str = "github_oauth_state";
+const GITHUB_OAUTH_STATE_TTL_SECONDS: i64 = 600;
+
+// The in-memory session store has no atomic take operation. Serialize the short
+// load/remove/save sequence so concurrent callbacks cannot consume one state twice.
+static GITHUB_OAUTH_STATE_LOCK: Mutex<()> = Mutex::const_new(());
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct GitHubOAuthState {
+    secret: String,
+    expires_at: i64,
+}
+
 pub async fn github_login_handler(
     headers: HeaderMap,
-    _session: Session,
+    session: Session,
     State(server_state): State<ServerState>,
     Extension(github_client): Extension<GitHubClient>,
-) -> impl IntoResponse {
+) -> Result<Redirect, Error> {
     if server_state.env_vars.mock_auth {
         let host = headers
             .get(HOST)
@@ -43,25 +61,77 @@ pub async fn github_login_handler(
             &[("code", "anything"), ("state", "anything")],
         )
         .expect("Unreachable. Development static string parsing.");
-        return Redirect::to(redirect_url.as_str());
+        return Ok(Redirect::to(redirect_url.as_str()));
     }
 
-    let (authorize_url, _csrf_state) = github_client
+    begin_github_authorization(&session, &github_client).await
+}
+
+async fn begin_github_authorization(
+    session: &Session,
+    github_client: &GitHubClient,
+) -> Result<Redirect, Error> {
+    let (authorize_url, csrf_state) = github_client
         .authorize_url(CsrfToken::new_random)
         // .add_scope(Scope::new("user".to_string()))
         .add_scope(Scope::new("read:user".to_string()))
         .add_scope(Scope::new("user:email".to_string()))
         .url();
 
-    // TODO: Store csrf_state in session to later compare with state
-    // Redirect to authorize_url
-    Redirect::to(authorize_url.as_str())
+    let _guard = GITHUB_OAUTH_STATE_LOCK.lock().await;
+    if session.id().is_some() {
+        session.load().await?;
+    }
+    session
+        .insert(
+            GITHUB_OAUTH_STATE_KEY,
+            GitHubOAuthState {
+                secret: csrf_state.secret().to_owned(),
+                expires_at: chrono::Utc::now().timestamp() + GITHUB_OAUTH_STATE_TTL_SECONDS,
+            },
+        )
+        .await?;
+    session.save().await?;
+    Ok(Redirect::to(authorize_url.as_str()))
+}
+
+async fn consume_github_oauth_state(
+    session: &Session,
+    supplied_state: Option<&str>,
+) -> Result<(), Error> {
+    let invalid_state = || {
+        Error::Server(
+            StatusCode::BAD_REQUEST,
+            "Invalid or expired GitHub login. Please start sign-in again.".to_string(),
+        )
+    };
+    let _guard = GITHUB_OAUTH_STATE_LOCK.lock().await;
+    if session.id().is_none() {
+        return Err(invalid_state());
+    }
+    session.load().await?;
+    let expected = session
+        .remove::<GitHubOAuthState>(GITHUB_OAUTH_STATE_KEY)
+        .await?
+        .ok_or_else(invalid_state)?;
+
+    // Persist consumption before any token exchange, including failed callbacks.
+    session.save().await?;
+    let supplied = supplied_state.filter(|state| !state.is_empty());
+    let valid = supplied.is_some_and(|state| {
+        // Hashing avoids exposing matching prefixes of the secret through timing.
+        Sha256::digest(state.as_bytes()) == Sha256::digest(expected.secret.as_bytes())
+    });
+    if !valid || expected.expires_at <= chrono::Utc::now().timestamp() {
+        return Err(invalid_state());
+    }
+    Ok(())
 }
 
 #[derive(Debug, serde::Deserialize)]
 pub struct AuthCallbackQueryParams {
     code: AuthorizationCode,
-    state: String,
+    state: Option<String>,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -79,17 +149,17 @@ pub struct GitHubUserEmail {
 }
 
 pub async fn github_handler(
-    _session: Session,
+    session: Session,
     jar: PrivateCookieJar,
     Extension(github_client): Extension<GitHubClient>,
     Extension(http_client): Extension<Client>,
     State(server_state): State<ServerState>,
     Query(params): Query<AuthCallbackQueryParams>,
 ) -> Result<impl IntoResponse, Error> {
-    let AuthCallbackQueryParams {
-        code,
-        state: _state,
-    } = params;
+    let AuthCallbackQueryParams { code, state } = params;
+    if !server_state.env_vars.mock_auth {
+        consume_github_oauth_state(&session, state.as_deref()).await?;
+    }
 
     let (token, access_token) = get_access_token(
         code,
@@ -209,6 +279,7 @@ pub async fn github_handler(
         .path("/")
         .secure(!cfg!(debug_assertions))
         .http_only(true)
+        .same_site(SameSite::Lax)
         .max_age(expires_in.try_into()?);
 
     return Ok(jar.add(cookie));
@@ -310,7 +381,6 @@ async fn get_access_token(
         .request_async(http_client)
         .await
         .map_err(|e| Error::Server(StatusCode::INTERNAL_SERVER_ERROR, format!("{e}")))?;
-    // TODO: Compare session csrf with state
     // Check granted scopes includes necessary information:
     // https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authenticating-to-the-rest-api-with-an-oauth-app#checking-granted-scopes
     let scopes = token.scopes().ok_or(Error::Server(
@@ -333,4 +403,139 @@ async fn get_access_token(
 
     let access_token = token.access_token().secret().to_owned();
     Ok((token, access_token))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use oauth2::{AuthUrl, ClientId, TokenUrl};
+    use tower_sessions::MemoryStore;
+
+    use super::*;
+
+    fn github_client() -> GitHubClient {
+        BasicClient::new(ClientId::new("test-client".to_string()))
+            .set_auth_uri(
+                AuthUrl::new("https://github.com/login/oauth/authorize".to_string()).unwrap(),
+            )
+            .set_token_uri(
+                TokenUrl::new("https://github.com/login/oauth/access_token".to_string()).unwrap(),
+            )
+    }
+
+    async fn start_login(session: &Session) -> String {
+        let response = begin_github_authorization(session, &github_client())
+            .await
+            .unwrap()
+            .into_response();
+        let url = Url::parse(response.headers()[http::header::LOCATION].to_str().unwrap()).unwrap();
+        assert_eq!(url.host_str(), Some("github.com"));
+        let state = url
+            .query_pairs()
+            .find(|(name, _)| name == "state")
+            .unwrap()
+            .1
+            .into_owned();
+        assert!(!state.is_empty());
+        state
+    }
+
+    fn assert_invalid(result: Result<(), Error>) {
+        assert_eq!(
+            StatusCode::from(result.unwrap_err()),
+            StatusCode::BAD_REQUEST
+        );
+    }
+
+    #[tokio::test]
+    async fn oauth_state_is_bound_to_session_and_consumed_across_requests() {
+        let store = Arc::new(MemoryStore::default());
+        let login_session = Session::new(None, store.clone(), None);
+        let state = start_login(&login_session).await;
+        let other_browser = Session::new(None, store.clone(), None);
+        assert_invalid(consume_github_oauth_state(&other_browser, Some(&state)).await);
+
+        let callback_session = Session::new(login_session.id(), store.clone(), None);
+        consume_github_oauth_state(&callback_session, Some(&state))
+            .await
+            .unwrap();
+        let replay_session = Session::new(login_session.id(), store, None);
+        assert_invalid(consume_github_oauth_state(&replay_session, Some(&state)).await);
+    }
+
+    #[tokio::test]
+    async fn oauth_state_rejects_missing_empty_and_mismatched_callbacks() {
+        for supplied_state in [None, Some(""), Some("incorrect-state")] {
+            let store = Arc::new(MemoryStore::default());
+            let login_session = Session::new(None, store.clone(), None);
+            let state = start_login(&login_session).await;
+            let callback_session = Session::new(login_session.id(), store.clone(), None);
+            assert_invalid(consume_github_oauth_state(&callback_session, supplied_state).await);
+            let retry_session = Session::new(login_session.id(), store, None);
+            assert_invalid(consume_github_oauth_state(&retry_session, Some(&state)).await);
+        }
+    }
+
+    #[tokio::test]
+    async fn oauth_state_expires_and_cannot_be_retried() {
+        let store = Arc::new(MemoryStore::default());
+        let login_session = Session::new(None, store.clone(), None);
+        let state = start_login(&login_session).await;
+        login_session
+            .insert(
+                GITHUB_OAUTH_STATE_KEY,
+                GitHubOAuthState {
+                    secret: state.clone(),
+                    expires_at: chrono::Utc::now().timestamp() - 1,
+                },
+            )
+            .await
+            .unwrap();
+        login_session.save().await.unwrap();
+        let callback_session = Session::new(login_session.id(), store.clone(), None);
+        assert_invalid(consume_github_oauth_state(&callback_session, Some(&state)).await);
+        let retry_session = Session::new(login_session.id(), store, None);
+        assert_invalid(consume_github_oauth_state(&retry_session, Some(&state)).await);
+    }
+
+    #[tokio::test]
+    async fn oauth_state_new_login_uses_a_fresh_secret() {
+        let store = Arc::new(MemoryStore::default());
+        let login_session = Session::new(None, store.clone(), None);
+        let first_state = start_login(&login_session).await;
+        let second_state = start_login(&login_session).await;
+        assert_ne!(first_state, second_state);
+        let saved = login_session
+            .get::<GitHubOAuthState>(GITHUB_OAUTH_STATE_KEY)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(saved.secret, second_state);
+        assert!(saved.expires_at > chrono::Utc::now().timestamp());
+        let callback_session = Session::new(login_session.id(), store, None);
+        assert_invalid(consume_github_oauth_state(&callback_session, Some(&first_state)).await);
+    }
+
+    #[tokio::test]
+    async fn oauth_state_concurrent_callbacks_accept_only_one_request() {
+        let store = Arc::new(MemoryStore::default());
+        let login_session = Session::new(None, store.clone(), None);
+        let state = start_login(&login_session).await;
+        let first_callback = Session::new(login_session.id(), store.clone(), None);
+        let second_callback = Session::new(login_session.id(), store, None);
+        // Simulate two requests that both read the pending login before validation.
+        first_callback.load().await.unwrap();
+        second_callback.load().await.unwrap();
+        let (first, second) = tokio::join!(
+            consume_github_oauth_state(&first_callback, Some(&state)),
+            consume_github_oauth_state(&second_callback, Some(&state)),
+        );
+        assert_eq!(usize::from(first.is_ok()) + usize::from(second.is_ok()), 1);
+        if first.is_err() {
+            assert_invalid(first);
+        } else {
+            assert_invalid(second);
+        }
+    }
 }

@@ -17,7 +17,7 @@ test("literal checks distinguish missing words and characters from grammar and p
   const registry: RegistrySnapshot = {
     bundleVersion: "word-check-1", status: "published", limitations: [], sourceFingerprint: "fixture",
     capabilities: [{
-      blueprintSlotId: "R-A1-1", title: "Notices", taskFamilyId: "TF-NOTICES", itemFormatId: "IF-SINGLE-SELECT",
+      itemRuleId: "R-A1-1", title: "Notices", taskFamilyId: "TF-NOTICES", itemFormatId: "IF-SINGLE-SELECT",
       rendererId: "REN-SINGLE-SELECT", scoringContractTemplateId: "SCORE-NOTICE", primaryCanDoId: "A1-R1",
       primaryReportedSkill: "Reading", communicativeActivity: "Reception", allowedDomains: ["Public"],
       allowedContextIds: ["school"], observableEvidence: "Understand a direct question.",
@@ -29,7 +29,7 @@ test("literal checks distinguish missing words and characters from grammar and p
   const draft: TaskPackage = {
     taskId: "LI-WORD-CHECK", taskVersion: "draft",
     specVersions: { planningSpecVersion: "1", registryBundleVersion: "word-check-1", taskPackageVersion: "1" },
-    blueprintSlotId: "R-A1-1", taskFamilyId: "TF-NOTICES", itemFormatId: "IF-SINGLE-SELECT",
+    itemRuleId: "R-A1-1", taskFamilyId: "TF-NOTICES", itemFormatId: "IF-SINGLE-SELECT",
     renderer: { rendererId: "REN-SINGLE-SELECT", rendererVersion: "1" },
     candidatePayload: {
       stimulus: { text: "你是老师吗？", imageRefs: [], audioRef: null }, prompt: "请选择回答。",

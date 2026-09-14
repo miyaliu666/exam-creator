@@ -5,18 +5,17 @@ import { CoverageSetupGoal } from "./coverage-setup-goal";
 import { CoverageSetupTable } from "./coverage-setup-table";
 import { COVERAGE_SETUP_FIELDS, coverageAnalysisKey, type CoverageSetupGoalState } from "./coverage-setup-model";
 import type { CoverageBatchSuggestion, CoverageFilters, CoverageRequest, CoverageResponse } from "./coverage-types";
-import { DIFFICULTY_LABELS, ITEM_FORMAT_LABELS, WORKBENCH_LABELS, optionLabel, slotLabel } from "./labels";
+import { DIFFICULTY_LABELS, ITEM_FORMAT_LABELS, WORKBENCH_LABELS, optionLabel } from "./labels";
 import { itemStatusLabel } from "./item-status";
 import type { RegistrySnapshot } from "./types";
 
-export function CoverageResults({ data, request, registry, currentRegistry, accountScope, showItems, onItemsOpenChange, onInspect, onPlan, onChange, setupGoal, onSetupGoalChange }: {
+export function CoverageResults({ data, request, registry, currentRegistry, accountScope, onInspect, onPlan, onChange, setupGoal, onSetupGoalChange }: {
   data: CoverageResponse; request: CoverageRequest; registry: RegistrySnapshot; onChange: (update: Partial<CoverageRequest>) => void;
-  currentRegistry: RegistrySnapshot; accountScope: string; showItems: boolean;
+  currentRegistry: RegistrySnapshot; accountScope: string;
   onInspect: (filters: CoverageFilters, scope: CoverageRequest["scope"]) => void;
   onPlan: (suggestion: CoverageBatchSuggestion) => void;
   setupGoal?: CoverageSetupGoalState;
   onSetupGoalChange: (goal: CoverageSetupGoalState | undefined) => void;
-  onItemsOpenChange: (open: boolean) => void;
 }) {
   const contentLabels = new Map(coverageContentOptions(registry).map((option) => [option.id, option.label]));
   const contentLabel = (id: string) => contentLabels.get(id) ?? `${id} (unresolved reference)`;
@@ -25,7 +24,6 @@ export function CoverageResults({ data, request, registry, currentRegistry, acco
     if (!id) return "Unknown";
     if (key === "contextId") return optionLabel(id, registry.contextOptions);
     if (key === "primaryCanDoId") return optionLabel(id, registry.canDoOptions);
-    if (key === "blueprintSlotId") return slotLabel(id, registry);
     if (key === "difficultyBand") return DIFFICULTY_LABELS[id] ?? id;
     if (key === "itemFormatId") return ITEM_FORMAT_LABELS[id] ?? id;
     return id;
@@ -39,15 +37,16 @@ export function CoverageResults({ data, request, registry, currentRegistry, acco
         onInputTextChange={(inputText) => onSetupGoalChange({ ...setupGoal, inputText })}
         onNewItemTextChange={(newItemText) => onSetupGoalChange({ ...setupGoal, newItemText })}
         onInspectUnapproved={() => onInspect(setupGoal.filters, "drafts")} /> } : undefined} />
-    <details open={showItems} onToggle={(event) => onItemsOpenChange(event.currentTarget.open)}>
-      <Box as="summary" cursor="pointer" fontWeight="semibold">{request.scope === "approved" ? "Approved items" : "Unapproved items"} · {data.matchedCount}</Box>
-      <Stack gap={2} mt={3}>
-      <Box maxW="sm"><Text fontSize="sm" mb={1}>Item status</Text>
-        <NativeSelect.Root size="sm"><NativeSelect.Field aria-label="Item status" value={request.scope}
+    <Box as="section" aria-label="Matching items" borderWidth="1px" borderRadius="lg" p={4} minW={0}>
+      <HStack gap={3} flexWrap="wrap">
+        <Text as="h3" fontWeight="semibold" marginInlineEnd={1}>Items</Text>
+        <NativeSelect.Root size="sm" width="52" maxW="100%"><NativeSelect.Field aria-label="Item status" value={request.scope}
           onChange={(event) => onChange({ scope: event.target.value as CoverageRequest["scope"], offset: 0 })}>
           <option value="approved">Approved items</option><option value="drafts">Unapproved items</option>
         </NativeSelect.Field><NativeSelect.Indicator /></NativeSelect.Root>
-      </Box>
+        <Text fontSize="sm" color="fg.muted" role="status">{data.matchedCount} {data.matchedCount === 1 ? "item" : "items"}</Text>
+      </HStack>
+      <Stack gap={2} mt={3}>
       {data.unknownCount > 0 && <Text fontSize="xs" color="fg.muted">{data.unknownCount} items with unavailable target data excluded.</Text>}
       {data.items.length > 0 && <Box overflowX="auto">
         <Table.Root size="sm">
@@ -64,11 +63,10 @@ export function CoverageResults({ data, request, registry, currentRegistry, acco
               <Text fontSize="xs" color="fg.muted">{item.versionId ? "Approved content" : itemStatusLabel(item.status)}</Text>
             </Table.Cell>
             <Table.Cell>{item.metadata.skill}<Text fontSize="xs">{[...new Set([item.metadata.activity, ...item.metadata.activities].filter(Boolean))].join(" / ") || "Unknown activity"}</Text></Table.Cell>
-            <Table.Cell>{dimensionLabel("contextId", item.metadata.contextId)}<Text fontSize="xs">{WORKBENCH_LABELS.domain}: {item.metadata.domain || "Unknown"}</Text></Table.Cell>
+            <Table.Cell>{!item.metadata.contextId && item.metadata.itemFormatId.startsWith("EXERCISE:") ? "No predefined Context" : dimensionLabel("contextId", item.metadata.contextId)}<Text fontSize="xs">{WORKBENCH_LABELS.domain}: {item.metadata.domain || "Unknown"}</Text></Table.Cell>
             <Table.Cell>
-              {slotLabel(item.metadata.blueprintSlotId, registry)}
+              {dimensionLabel("primaryCanDoId", item.metadata.primaryCanDoId)}
               <Text fontSize="xs">{dimensionLabel("itemFormatId", item.metadata.itemFormatId)} · {dimensionLabel("difficultyBand", item.metadata.difficultyBand)}</Text>
-              <Text fontSize="xs">{dimensionLabel("primaryCanDoId", item.metadata.primaryCanDoId)}</Text>
             </Table.Cell>
             <Table.Cell><Text fontSize="xs">{contentList(item.metadata.coreIds)}</Text></Table.Cell>
           </Table.Row>)}</Table.Body>
@@ -99,6 +97,6 @@ export function CoverageResults({ data, request, registry, currentRegistry, acco
       </Stack>
     </Box>}
       </Stack>
-    </details>
+    </Box>
   </Stack>;
 }

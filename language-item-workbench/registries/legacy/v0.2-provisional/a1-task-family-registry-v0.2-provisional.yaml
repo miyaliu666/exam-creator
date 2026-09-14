@@ -1,0 +1,227 @@
+registryType: A1TaskFamilyRegistry
+registryVersion: 0.2-provisional
+entries:
+- taskFamilyId: TF-SIGNS-NOTICES
+  blueprintSlotIds:
+  - R-A1-1
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  - IF-MATCHING
+  coreBehavior: Understand the direct meaning of short signs, labels, or notices
+  requiredCapabilities:
+  - shortText
+  - imageOptional
+  - multiResponseGroup
+  prohibitedUses:
+  - Isolated character testing
+  - Purely visual guessing
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-SHORT-MESSAGE-COMPREHENSION
+  blueprintSlotIds:
+  - R-A1-2
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  - IF-MATCHING
+  coreBehavior: Find explicit facts in a short message or message thread
+  requiredCapabilities:
+  - messageThread
+  - sharedStimulus
+  prohibitedUses:
+  - Inferring attitude
+  - Extended emails
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-STRUCTURED-INFORMATION
+  blueprintSlotIds:
+  - R-A1-3
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  - IF-MATCHING
+  - IF-RESTRICTED-INPUT
+  coreBehavior: Locate information in menus, tables, and timetables
+  requiredCapabilities:
+  - semanticTable
+  - list
+  - sharedStimulus
+  prohibitedUses:
+  - Calculation
+  - Dense tables
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-SHORT-TEXT-COMPREHENSION
+  blueprintSlotIds:
+  - R-A1-4
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  - IF-MATCHING
+  coreBehavior: Understand profiles, routines, or one-step instructions
+  requiredCapabilities:
+  - shortContinuousText
+  prohibitedUses:
+  - Long stories
+  - Implied meaning
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-LISTEN-AND-IDENTIFY
+  blueprintSlotIds:
+  - L-A1-1
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  coreBehavior: Match short spoken information to people, images, or activities
+  requiredCapabilities:
+  - audio
+  - playLimit
+  - shortOptions
+  prohibitedUses:
+  - Minimal-pair tone traps
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-SHORT-DIALOGUE-DETAIL
+  blueprintSlotIds:
+  - L-A1-2
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  coreBehavior: Identify one explicit detail in a short dialogue
+  requiredCapabilities:
+  - multiVoiceAudio
+  - playLimit
+  prohibitedUses:
+  - Implied attitude
+  - Dependent questions
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-LISTENING-INFORMATION-COMPLETION
+  blueprintSlotIds:
+  - L-A1-3
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  - IF-RESTRICTED-INPUT
+  coreBehavior: Extract and record information from an announcement or message
+  requiredCapabilities:
+  - sharedAudio
+  - multipleFields
+  - autosave
+  prohibitedUses:
+  - Full-sentence dictation
+  - Extensive Chinese-character input
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-COMMUNICATIVE-PURPOSE
+  blueprintSlotIds:
+  - L-A1-4
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  coreBehavior: Understand a question, request, invitation, confirmation, or one-step instruction
+  requiredCapabilities:
+  - audio
+  - shortOptions
+  prohibitedUses:
+  - Treating selected responses as Interaction
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-FORM-COMPLETION
+  blueprintSlotIds:
+  - W-A1-1
+  allowedItemFormatIds:
+  - IF-FORM-ENTRY
+  coreBehavior: Enter basic details in a form
+  requiredCapabilities:
+  - mixedFieldTypes
+  - IME
+  - autosave
+  prohibitedUses:
+  - Real sensitive information
+  - Entirely mechanical copying
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-SHORT-MESSAGE-RESPONSE
+  blueprintSlotIds:
+  - W-A1-2
+  allowedItemFormatIds:
+  - IF-TYPED-MESSAGE
+  coreBehavior: Write a response for a specified recipient and purpose
+  requiredCapabilities:
+  - messageThread
+  - IME
+  - taskRubric
+  prohibitedUses:
+  - Predefined responses
+  - Extended emails
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-WRITTEN-INFORMATION-RELAY
+  blueprintSlotIds:
+  - W-A1-3
+  allowedItemFormatIds:
+  - IF-TYPED-MESSAGE
+  coreBehavior: Select information from source material and write it to a specified recipient
+  requiredCapabilities:
+  - visibleSource
+  - recipientPurpose
+  - taskRubric
+  prohibitedUses:
+  - Copying without a recipient
+  - Summarising multiple sources
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-PERSONAL-QA
+  blueprintSlotIds:
+  - S-A1-1
+  allowedItemFormatIds:
+  - IF-SPOKEN-MULTITURN
+  coreBehavior: Answer personal questions and ask a simple relevant question
+  requiredCapabilities:
+  - fixedPath
+  - multiRecording
+  - initiationPrompt
+  prohibitedUses:
+  - Memorised monologues
+  - Sensitive questions
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-GUIDED-SPOKEN-PRODUCTION
+  blueprintSlotIds:
+  - S-A1-2
+  allowedItemFormatIds:
+  - IF-SPOKEN-SINGLE
+  coreBehavior: Express a direct need or familiar content in response to a prompt
+  requiredCapabilities:
+  - preparationTimer
+  - recording
+  - upload
+  prohibitedUses:
+  - Reading aloud
+  - Complex explanations
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-INTERACTIVE-ROLEPLAY
+  blueprintSlotIds:
+  - S-A1-3
+  allowedItemFormatIds:
+  - IF-SPOKEN-MULTITURN
+  coreBehavior: Complete a predictable interaction of two to three turns
+  requiredCapabilities:
+  - fixedOrLimitedBranch
+  - multiRecording
+  - pathAudit
+  prohibitedUses:
+  - Generative follow-up questions
+  - Selection-only responses
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse
+- taskFamilyId: TF-SPOKEN-INFORMATION-RELAY
+  blueprintSlotIds:
+  - S-A1-4
+  allowedItemFormatIds:
+  - IF-SPOKEN-SINGLE
+  coreBehavior: Select information from source material and relay it orally
+  requiredCapabilities:
+  - visibleSource
+  - preparationTimer
+  - recording
+  prohibitedUses:
+  - Reading the entire source aloud
+  - Summarising multiple sources
+  version: 0.2-provisional
+  status: ProvisionalWorkbenchUse

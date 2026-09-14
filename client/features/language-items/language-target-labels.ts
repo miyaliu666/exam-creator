@@ -1,10 +1,12 @@
 import { CHARACTER_GLOSSES, LEXICAL_GLOSSES } from "./language-target-glosses.ts";
 import { LANGUAGE_TARGET_RULE_LABELS } from "./language-target-rule-labels.ts";
+import { contentLanguage } from "./content-language.ts";
 
 interface LanguageTargetOption {
   id: string;
   kind: string;
   label: string;
+  language?: string;
   englishGloss?: string;
   pattern?: string;
   meaning?: string;
@@ -18,6 +20,7 @@ export interface LanguageTargetLabel {
 }
 
 function legacyTargetLabel(option: LanguageTargetOption): LanguageTargetLabel {
+  if (contentLanguage(option) !== "zh") return { primary: option.label };
   const label = option.label.trim();
   const form = label.split(" · ")[0];
   const glosses = option.kind === "lexical" ? LEXICAL_GLOSSES

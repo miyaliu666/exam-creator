@@ -7,6 +7,7 @@ import { useContext, useEffect } from "react";
 import { ProtectedRoute } from "../components/protected-route";
 import { Header } from "../components/ui/header";
 import { AuthContext } from "../contexts/auth";
+import { SignOutButton } from "../components/sign-out-button";
 import { UsersWebSocketActivityContext } from "../contexts/users-websocket";
 import { getLanguageItemRegistry } from "../features/language-items/api";
 import { BatchAuthoringPanel } from "../features/language-items/batch-authoring-panel";
@@ -30,7 +31,7 @@ function LanguageItemBatches() {
     <Box minH="100vh" bg="bg" py={12} px={4}>
       <HStack position="fixed" top={3} left={8} zIndex={101} gap={3}>
         <Button variant="outline" colorPalette="teal" size="sm" onClick={() => navigate({ to: "/language-items" })}>Item Bank</Button>
-        <Button variant="outline" colorPalette="red" size="sm" onClick={() => logout()}>Sign out / switch account</Button>
+        <SignOutButton variant="outline" colorPalette="red" size="sm" onClick={() => logout()}>Sign out / switch account</SignOutButton>
       </HStack>
       <Center>
         <Stack gap={6} w="full" maxW="7xl">

@@ -41,13 +41,16 @@ where
 
         let Some(cookie) = cookiejar.get("sid").map(|cookie| cookie.value().to_owned()) else {
             warn!("no sid in jar");
-            return Err((StatusCode::UNAUTHORIZED, "登录状态已失效，请重新登录"));
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                "Your sign-in has expired. Please sign in again.",
+            ));
         };
 
         let user_session = state
             .production_database
             .exam_creator_session
-            .find_one(doc! {"session_id": cookie})
+            .find_one(doc! {"session_id": cookie, "expires_at": { "$gt": bson::DateTime::now() }})
             .await
             .map_err(|e| {
                 error!("db session find op failed: {e:?}");
@@ -56,7 +59,10 @@ where
                     "db session find op failed",
                 )
             })?
-            .ok_or((StatusCode::UNAUTHORIZED, "登录会话不存在，请重新登录"))?;
+            .ok_or((
+                StatusCode::UNAUTHORIZED,
+                "Your sign-in session was not found. Please sign in again.",
+            ))?;
 
         let user = state
             .production_database
@@ -67,7 +73,19 @@ where
                 error!("db user find op failed: {e:?}");
                 (StatusCode::INTERNAL_SERVER_ERROR, "db user find op failed")
             })?
-            .ok_or((StatusCode::UNAUTHORIZED, "登录账号不存在，请重新登录"))?;
+            .ok_or((
+                StatusCode::UNAUTHORIZED,
+                "Your account was not found. Please sign in again.",
+            ))?;
+
+        if state.env_vars.public_access
+            && state.env_vars.public_user_email.as_deref() != Some(user.email.as_str())
+        {
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                "This session does not belong to the public workspace account.",
+            ));
+        }
 
         let client_sync = &mut state.client_sync.lock().unwrap();
         if let Some(user) = client_sync.users.iter_mut().find(|u| u.email == user.email) {
@@ -132,7 +150,7 @@ pub async fn ws_handler_users(
     let session = state
         .production_database
         .exam_creator_session
-        .find_one(doc! { "session_id": cookie})
+        .find_one(doc! { "session_id": cookie, "expires_at": { "$gt": bson::DateTime::now() }})
         .await?
         .ok_or(Error::Server(
             StatusCode::BAD_REQUEST,
@@ -148,6 +166,15 @@ pub async fn ws_handler_users(
             StatusCode::BAD_REQUEST,
             format!("user not found: {}", session.user_id),
         ))?;
+
+    if state.env_vars.public_access
+        && state.env_vars.public_user_email.as_deref() != Some(user.email.as_str())
+    {
+        return Err(Error::Server(
+            StatusCode::UNAUTHORIZED,
+            "This session does not belong to the public workspace account.".into(),
+        ));
+    }
 
     let upgrade_res = ws.on_upgrade(move |socket| handle_users_ws(socket, user, state));
     Ok(upgrade_res)

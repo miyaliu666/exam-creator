@@ -5,9 +5,29 @@ use serde_json::{Map, Value};
 
 use super::{
     content_assessment::validate_assessment_rules,
+    content_context::content_context_issues,
     registry::{ContentIdOption, GRAMMAR_REGISTRY, LEXICON_REGISTRY, RegistrySnapshot},
     registry_store::{RegistryValidationIssue, RegistryValidationResult},
 };
+
+pub fn content_language(content: &ContentIdOption) -> Option<&str> {
+    match content.metadata.get("language") {
+        // Existing published entries predate language metadata and assess Chinese.
+        None => Some("zh"),
+        Some(Value::String(language)) if ["zh", "en", "es"].contains(&language.as_str()) => {
+            Some(language)
+        }
+        _ => None,
+    }
+}
+
+pub fn content_supports_current_assessment(content: &ContentIdOption) -> bool {
+    content_language(content).is_some()
+}
+
+pub fn content_matches_language(content: &ContentIdOption, language: &str) -> bool {
+    content_language(content) == Some(language)
+}
 
 struct SeedContent {
     kind: &'static str,
@@ -71,7 +91,10 @@ pub fn hydrate_draft_content_metadata(snapshot: &mut RegistrySnapshot) {
         let Some(source) = SEED_METADATA.get(&content.id) else {
             continue;
         };
-        if content.kind != source.kind || content.label != source.label {
+        if content.kind != source.kind
+            || content.label != source.label
+            || content_language(content) != Some("zh")
+        {
             continue;
         }
         let mut value = serde_json::to_value(&*content).expect("language content serializes");
@@ -109,7 +132,7 @@ fn required_metadata(
     issues: &mut Vec<RegistryValidationIssue>,
 ) {
     let (field, value, old_value, code) = match content.kind.as_str() {
-        "lexical" => (
+        "lexical" if content_language(content) != Some("en") => (
             "meaning",
             &content.meaning,
             previous.and_then(|old| old.meaning.as_ref()),
@@ -183,6 +206,38 @@ pub fn validate_language_content(
                 "Language content requires a name",
             );
         }
+        if content_language(content).is_none() {
+            issue(
+                &mut issues,
+                "registry.invalidContentLanguage",
+                format!("{path}.language"),
+                "Language must be Chinese (zh), English (en), or Spanish (es)",
+            );
+        } else if before.is_some_and(|entry| {
+            content_language(entry).is_some()
+                && content_language(entry) != content_language(content)
+        }) {
+            issue(
+                &mut issues,
+                "registry.contentLanguageImmutable",
+                format!("{path}.language"),
+                "An existing language content ID cannot change language; create a new entry instead",
+            );
+        }
+        // A source vocabulary level is an author-supplied label, independent of
+        // the A1 difficulty profiles and task compatibility rules.
+        if content
+            .level
+            .as_deref()
+            .is_some_and(|level| level.chars().any(char::is_control))
+        {
+            issue(
+                &mut issues,
+                "registry.invalidContentLevel",
+                format!("{path}.level"),
+                "Level must be a single-line text label without control characters",
+            );
+        }
         if !["lexical", "grammar", "character", "pragmatics", "supported"]
             .contains(&content.kind.as_str())
         {
@@ -213,6 +268,14 @@ pub fn validate_language_content(
         }
         required_metadata(content, before, previous.is_some(), index, &mut issues);
         validate_assessment_rules(snapshot, content, index, previous.is_none(), &mut issues);
+        for (field, message) in content_context_issues(content, snapshot) {
+            issue(
+                &mut issues,
+                "registry.contentContextScope",
+                format!("{path}.{field}"),
+                message,
+            );
+        }
         for (field, ids) in [
             ("canDoIds", &content.can_do_ids),
             ("contextIds", &content.context_ids),
@@ -273,6 +336,7 @@ mod tests {
         let mut published = snapshot().clone();
         let original = serde_json::to_value(&published.content_id_options).unwrap();
         assert!(original[0].get("meaning").is_none());
+        assert!(original[0].get("level").is_none());
         hydrate_published_registry_snapshot(&mut published);
         assert_eq!(
             original,
@@ -280,6 +344,141 @@ mod tests {
         );
         let restored: Vec<ContentIdOption> = serde_json::from_value(original.clone()).unwrap();
         assert_eq!(original, serde_json::to_value(restored).unwrap());
+    }
+
+    #[test]
+    fn multilingual_content_roundtrips_and_identical_forms_remain_separate_entries() {
+        let before = snapshot().clone();
+        let mut draft = before.clone();
+        let original = &before.content_id_options[0];
+        assert_eq!(content_language(original), Some("zh"));
+        assert!(!original.metadata.contains_key("language"));
+        for language in ["zh", "en", "es"] {
+            let mut entry = original.clone();
+            entry.id = format!("LEX-{language}-SHARED");
+            entry.label = "a".into();
+            entry.meaning = Some("A distinct language-specific entry".into());
+            entry
+                .metadata
+                .insert("language".into(), serde_json::json!(language));
+            entry
+                .metadata
+                .insert("sourceDetails".into(), serde_json::json!({"edition": 2}));
+            draft.content_id_options.push(entry);
+        }
+        assert!(validate_language_content(&draft, Some(&before)).valid);
+        let stored = serde_json::to_value(&draft).unwrap();
+        let mut restored: RegistrySnapshot = serde_json::from_value(stored.clone()).unwrap();
+        hydrate_published_registry_snapshot(&mut restored);
+        assert_eq!(serde_json::to_value(&restored).unwrap(), stored);
+        for entry in restored.content_id_options.iter().rev().take(3) {
+            assert!(content_language(entry).is_some());
+            assert_eq!(
+                entry.metadata["sourceDetails"],
+                serde_json::json!({"edition": 2})
+            );
+        }
+    }
+
+    #[test]
+    fn language_metadata_rejects_invalid_values_and_changes_to_existing_identity() {
+        let before = snapshot().clone();
+        for language in [
+            serde_json::json!("fr"),
+            serde_json::json!(""),
+            serde_json::json!(null),
+            serde_json::json!(2),
+            serde_json::json!(["en"]),
+        ] {
+            let mut draft = before.clone();
+            draft.content_id_options[0]
+                .metadata
+                .insert("language".into(), language);
+            for result in [
+                validate_language_content(&draft, Some(&before)),
+                validate_language_content(&draft, None),
+            ] {
+                assert!(result.issues.iter().any(|issue| {
+                    issue.code == "registry.invalidContentLanguage"
+                        && issue.path == "contentIdOptions.0.language"
+                }));
+            }
+            assert!(!content_supports_current_assessment(
+                &draft.content_id_options[0]
+            ));
+        }
+        let mut draft = before.clone();
+        draft.content_id_options[0]
+            .metadata
+            .insert("language".into(), serde_json::json!("zh"));
+        assert!(validate_language_content(&draft, Some(&before)).valid);
+        draft.content_id_options[0]
+            .metadata
+            .insert("language".into(), serde_json::json!("en"));
+        assert!(
+            validate_language_content(&draft, Some(&before))
+                .issues
+                .iter()
+                .any(|issue| { issue.code == "registry.contentLanguageImmutable" })
+        );
+    }
+
+    #[test]
+    fn source_levels_roundtrip_without_rewriting_rules_or_unknown_metadata() {
+        let before = snapshot().clone();
+        for level in ["A2", "HSK3", "3", "", "Advanced / 高级"] {
+            let mut stored = serde_json::to_value(&before).unwrap();
+            stored["contentIdOptions"][0]["level"] = serde_json::json!(level);
+            stored["contentIdOptions"][0]["sourceDetails"] =
+                serde_json::json!({"edition": 3, "labels": ["original"]});
+            let mut restored: RegistrySnapshot = serde_json::from_value(stored.clone()).unwrap();
+            assert_eq!(restored.content_id_options[0].level.as_deref(), Some(level));
+            assert!(
+                !restored.content_id_options[0]
+                    .metadata
+                    .contains_key("level")
+            );
+            assert!(validate_language_content(&restored, Some(&before)).valid);
+            assert_eq!(serde_json::to_value(&restored).unwrap(), stored);
+            hydrate_published_registry_snapshot(&mut restored);
+            assert_eq!(serde_json::to_value(&restored).unwrap(), stored);
+            prepare_registry_draft(&mut restored);
+            assert_eq!(restored.content_id_options[0].level.as_deref(), Some(level));
+            assert_eq!(
+                restored.content_id_options[0].metadata["sourceDetails"],
+                stored["contentIdOptions"][0]["sourceDetails"]
+            );
+        }
+    }
+
+    #[test]
+    fn invalid_source_levels_are_rejected_without_silently_coercing_values() {
+        let before = snapshot().clone();
+        for level in [
+            serde_json::json!(2),
+            serde_json::json!(["A2"]),
+            serde_json::json!({"value": "A2"}),
+        ] {
+            let mut entry = serde_json::to_value(&before.content_id_options[0]).unwrap();
+            entry["level"] = level;
+            assert!(serde_json::from_value::<ContentIdOption>(entry).is_err());
+        }
+        for level in ["A2\nB1", "HSK\t3", "A2\u{0000}"] {
+            let mut draft = before.clone();
+            draft.content_id_options[0].level = Some(level.to_string());
+            for result in [
+                validate_language_content(&draft, Some(&before)),
+                validate_language_content(&draft, None),
+            ] {
+                assert!(
+                    result
+                        .issues
+                        .iter()
+                        .any(|issue| issue.code == "registry.invalidContentLevel"
+                            && issue.path == "contentIdOptions.0.level")
+                );
+            }
+        }
     }
 
     #[test]
@@ -364,6 +563,74 @@ mod tests {
         let saved = draft.clone();
         draft.content_id_options.last_mut().unwrap().meaning = None;
         assert!(!validate_language_content(&draft, Some(&saved)).valid);
+    }
+
+    #[test]
+    fn english_vocabulary_can_be_saved_and_published_without_meaning() {
+        let before = snapshot().clone();
+        for meaning in [None, Some(""), Some("   "), Some("An optional definition")] {
+            let mut draft = before.clone();
+            let mut added = before.content_id_options[0].clone();
+            added.id = "LEX-EN-OPTIONAL-MEANING".into();
+            added.label = "about".into();
+            added.meaning = meaning.map(str::to_owned);
+            added
+                .metadata
+                .insert("language".into(), serde_json::json!("en"));
+            draft.content_id_options.push(added);
+            assert!(validate_language_content(&draft, Some(&before)).valid);
+            assert!(validate_language_content(&draft, None).valid);
+            let stored = serde_json::to_value(&draft).unwrap();
+            let restored: RegistrySnapshot = serde_json::from_value(stored.clone()).unwrap();
+            assert_eq!(serde_json::to_value(&restored).unwrap(), stored);
+
+            let mut updated = draft.clone();
+            updated.content_id_options.last_mut().unwrap().meaning = None;
+            assert!(validate_language_content(&updated, Some(&draft)).valid);
+            assert!(validate_language_content(&updated, None).valid);
+        }
+    }
+
+    #[test]
+    fn optional_english_meaning_does_not_relax_other_language_or_grammar_requirements() {
+        let before = snapshot().clone();
+        for language in [None, Some("zh"), Some("es")] {
+            let mut draft = before.clone();
+            let mut added = before.content_id_options[0].clone();
+            added.id = "LEX-REQUIRES-MEANING".into();
+            added.meaning = None;
+            if let Some(language) = language {
+                added
+                    .metadata
+                    .insert("language".into(), serde_json::json!(language));
+            }
+            draft.content_id_options.push(added);
+            assert!(
+                validate_language_content(&draft, Some(&before))
+                    .issues
+                    .iter()
+                    .any(|issue| issue.code == "registry.contentMeaningRequired")
+            );
+        }
+        let mut draft = before.clone();
+        let mut added = before
+            .content_id_options
+            .iter()
+            .find(|entry| entry.kind == "grammar")
+            .unwrap()
+            .clone();
+        added.id = "GR-EN-REQUIRES-PATTERN".into();
+        added.pattern = None;
+        added
+            .metadata
+            .insert("language".into(), serde_json::json!("en"));
+        draft.content_id_options.push(added);
+        assert!(
+            validate_language_content(&draft, Some(&before))
+                .issues
+                .iter()
+                .any(|issue| issue.code == "registry.contentPatternRequired")
+        );
     }
 
     #[test]

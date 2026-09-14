@@ -14,7 +14,7 @@ function parseRecovery(value: unknown): ManualCreationRecovery | undefined {
   const record = value as Record<string, unknown>;
   if (typeof record.itemId !== "string" || !record.itemId.trim() || record.itemId.length > 256 ||
       typeof record.setupKey !== "string" || !record.setupKey.trim() || record.setupKey.length > 8192) return undefined;
-  return { itemId: record.itemId, setupKey: record.setupKey };
+  return { itemId: record.itemId, setupKey: migrateLegacyManualRecoveryKey(record.setupKey) };
 }
 
 export function saveManualCreationRecovery(scope: string, recovery: ManualCreationRecovery) {
@@ -51,3 +51,4 @@ export function clearManualCreationRecovery(scope: string) {
     // Clearing in-memory recovery also works when browser storage is unavailable.
   }
 }
+import { migrateLegacyManualRecoveryKey } from "./legacy-item-rule-browser-migration";

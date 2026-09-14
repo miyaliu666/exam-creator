@@ -1,8 +1,12 @@
-FROM oven/bun:1 AS frontend_builder
+FROM oven/bun:1.3.11 AS bun_runtime
+
+# Prisma, Vite and Babel invoke Node; keep Bun for the checked-in lockfile.
+FROM node:22-bookworm AS frontend_builder
 WORKDIR /app
+COPY --from=bun_runtime /usr/local/bin/bun /usr/local/bin/bun
 
 # Copy dependency information first for better caching
-COPY package.json bun.lock ./
+COPY package.json bun.lock bunfig.toml ./
 RUN bun install --frozen-lockfile
 
 # Copy Prisma schema
@@ -10,11 +14,12 @@ COPY prisma/ prisma/
 COPY prisma.config.ts .
 
 # Generate Prisma client
-RUN bunx prisma generate
+RUN bun run prisma generate
 
 # Copy the rest of the frontend files
 COPY tsconfig.json vite.config.ts index.html ./
 COPY client/ client/
+COPY language-item-workbench/exercise-templates/ language-item-workbench/exercise-templates/
 COPY public/ public/
 
 # Build frontend
@@ -28,6 +33,7 @@ COPY server/ server/
 COPY prisma/ prisma/
 COPY language-item-workbench/registries/ language-item-workbench/registries/
 COPY language-item-workbench/contracts/ language-item-workbench/contracts/
+COPY language-item-workbench/exercise-templates/catalog.json language-item-workbench/exercise-templates/catalog.json
 COPY Cargo.toml Cargo.lock ./
 # Copy frontend build to the 'dist' directory for the server to use
 COPY --from=frontend_builder /app/dist /app/dist
@@ -35,8 +41,8 @@ COPY --from=frontend_builder /app/dist /app/dist
 # Build application
 RUN cargo build --locked --release
 
-# FROM gcr.io/distroless/cc-debian12 AS runtime
 FROM debian:bookworm-slim AS runtime
+WORKDIR /
 # Install runtime dependencies for Rust binary (OpenSSL for reqwest/oauth2/mongodb)
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends \
@@ -57,6 +63,10 @@ LABEL org.opencontainers.image.title="Exam Creator" \
 COPY --from=builder /app/target/release/server /server
 # Copy static assets from the 'dist' directory
 COPY --from=builder /app/dist /dist
+
+# The app reads Railway's PORT at runtime; 8080 is the local default.
+EXPOSE 8080
+USER 10001:10001
 
 # Set the entrypoint for the container
 ENTRYPOINT ["/server"]

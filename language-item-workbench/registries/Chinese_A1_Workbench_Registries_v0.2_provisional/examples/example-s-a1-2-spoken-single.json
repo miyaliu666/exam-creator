@@ -2,9 +2,10 @@
   "taskId": "EX-S-A1-2-001",
   "taskVersion": "0.1",
   "specVersions": {
-    "contentSpecVersion": "0.2-provisional"
+    "contentSpecVersion": "0.2-provisional",
+    "taskPackageVersion": "0.2",
+    "registryBundleVersion": "0.3-provisional"
   },
-  "blueprintSlotId": "S-A1-2",
   "taskFamilyId": "TF-GUIDED-SPOKEN-PRODUCTION",
   "itemFormatId": "IF-SPOKEN-SINGLE",
   "renderer": {
@@ -59,5 +60,6 @@
     "pauseProfileId": "PAUSE-A1-SENTENCE-v0.1"
   },
   "content": {},
-  "variation": {}
+  "variation": {},
+  "itemRuleId": "legacy-rule-18b146fee99ec17e7a1024be0628829b4e5b604b7a1dd728a9725906d73e2e32"
 }

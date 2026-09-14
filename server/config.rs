@@ -74,6 +74,8 @@ impl fmt::Debug for GithubReviewConfig {
 
 #[derive(Clone, Debug)]
 pub struct EnvVars {
+    /// Fixed HTTPS SPA entry point. Enables PKCE handoff login without third-party cookies.
+    pub frontend_url: Option<crate::routes::auth::cross_site::FrontendUrl>,
     /// Allowed origins for CORS
     ///
     /// ALLOWED_ORIGINS=http://localhost:3000,https://myapp.com
@@ -90,6 +92,10 @@ pub struct EnvVars {
     pub github_redirect_url: String,
     /// Whether to use mock authentication
     pub mock_auth: bool,
+    /// Explicit shared workspace access without an interactive sign-in.
+    pub public_access: bool,
+    /// Existing production author used by every public workspace session.
+    pub public_user_email: Option<String>,
     /// Provider used for Language Item candidate generation and AI pre-review.
     pub language_item_ai: LanguageItemAiProviderConfig,
     /// Optional GitHub repository used for the human review workflow.
@@ -125,23 +131,34 @@ impl EnvVars {
             }
         };
 
-        let allowed_origins = match var("ALLOWED_ORIGINS") {
-            Ok(origins_string) => origins_string
-                .split(',')
-                .map(|o| match o.parse() {
-                    Ok(origin) => origin,
-                    Err(e) => {
-                        error!("{o} cannot be parsed as HeaderValue");
-                        panic!("{}", e);
-                    }
-                })
-                .collect(),
-            Err(_e) => {
-                let default_allowed_origin = format!("http://127.0.0.1:{port}")
-                    .parse::<HeaderValue>()
-                    .expect("default origin to be parseable as HeaderValue");
-                warn!("No allowed origins set, defaulting to {default_allowed_origin:?}");
-                vec![default_allowed_origin]
+        let frontend_url = var("FRONTEND_URL")
+            .ok()
+            .filter(|value| !value.trim().is_empty())
+            .map(|value| {
+                crate::routes::auth::cross_site::FrontendUrl::parse(value.trim())
+                    .expect("valid FRONTEND_URL")
+            });
+        let allowed_origins = if let Some(frontend) = &frontend_url {
+            vec![frontend.origin().parse().expect("valid frontend origin")]
+        } else {
+            match var("ALLOWED_ORIGINS") {
+                Ok(origins_string) => origins_string
+                    .split(',')
+                    .map(|o| match o.parse() {
+                        Ok(origin) => origin,
+                        Err(e) => {
+                            error!("{o} cannot be parsed as HeaderValue");
+                            panic!("{}", e);
+                        }
+                    })
+                    .collect(),
+                Err(_e) => {
+                    let default_allowed_origin = format!("http://127.0.0.1:{port}")
+                        .parse::<HeaderValue>()
+                        .expect("default origin to be parseable as HeaderValue");
+                    warn!("No allowed origins set, defaulting to {default_allowed_origin:?}");
+                    vec![default_allowed_origin]
+                }
             }
         };
 
@@ -163,6 +180,25 @@ impl EnvVars {
             }
             Err(_e) => false,
         };
+        assert!(
+            !(frontend_url.is_some() && mock_auth),
+            "FRONTEND_URL cannot be combined with MOCK_AUTH"
+        );
+
+        let public_access = var("PUBLIC_ACCESS")
+            .ok()
+            .is_some_and(|value| value.eq_ignore_ascii_case("true"));
+        assert!(
+            !(public_access && mock_auth),
+            "PUBLIC_ACCESS cannot be combined with MOCK_AUTH"
+        );
+        assert!(
+            !(public_access && frontend_url.is_some()),
+            "PUBLIC_ACCESS requires a same-origin frontend; omit FRONTEND_URL"
+        );
+        let public_user_email =
+            parse_public_user_email(public_access, var("PUBLIC_USER_EMAIL").ok().as_deref())
+                .expect("valid public workspace account configuration");
 
         let language_item_ai = match var("LANGUAGE_ITEM_AI_PROVIDER")
             .unwrap_or_else(|_| "deterministic-mock".to_string())
@@ -269,7 +305,7 @@ impl EnvVars {
             Ok(v) => v,
             Err(_e) => {
                 // If no value provided, but MOCK_AUTH=true, then default, otherwise panic
-                if !mock_auth {
+                if !mock_auth && !public_access {
                     error!("GITHUB_CLIENT_ID not set");
                     panic!("GITHUB_CLIENT_ID required");
                 }
@@ -277,7 +313,7 @@ impl EnvVars {
             }
         };
         assert!(
-            !github_client_id.is_empty(),
+            public_access || !github_client_id.is_empty(),
             "GITHUB_CLIENT_ID must not be empty"
         );
 
@@ -285,7 +321,7 @@ impl EnvVars {
             Ok(v) => v,
             Err(_e) => {
                 // If no value provided, but MOCK_AUTH=true, then default, otherwise panic
-                if !mock_auth {
+                if !mock_auth && !public_access {
                     error!("GITHUB_CLIENT_SECRET not set");
                     panic!("GITHUB_CLIENT_SECRET required");
                 }
@@ -293,7 +329,7 @@ impl EnvVars {
             }
         };
         assert!(
-            !github_client_secret.is_empty(),
+            public_access || !github_client_secret.is_empty(),
             "GITHUB_CLIENT_SECRET must not be empty"
         );
 
@@ -359,9 +395,6 @@ impl EnvVars {
                 Some(dsn_string)
             }
             Err(_e) => {
-                if cfg!(not(debug_assertions)) {
-                    panic!("SENTRY_DSN is not allowed to be unset outside of a debug build");
-                }
                 warn!("SENTRY_DSN not set.");
                 None
             }
@@ -390,12 +423,15 @@ impl EnvVars {
         assert!(!supabase_key.is_empty(), "SUPABASE_KEY must not be empty");
 
         Self {
+            frontend_url,
             allowed_origins,
             cookie_key,
             github_client_id,
             github_client_secret,
             github_redirect_url,
             mock_auth,
+            public_access,
+            public_user_email,
             language_item_ai,
             github_review,
             mongodb_uri_production,
@@ -735,4 +771,59 @@ pub fn validate_config(exam: &prisma::ExamCreatorExam) -> Result<(), String> {
 
 fn valid_sentry_dsn(url: &str) -> bool {
     url.parse::<Dsn>().is_ok()
+}
+
+fn parse_public_user_email(
+    enabled: bool,
+    value: Option<&str>,
+) -> Result<Option<String>, &'static str> {
+    if !enabled {
+        return Ok(None);
+    }
+    let email = value.unwrap_or_default().trim().to_ascii_lowercase();
+    let Some((local, domain)) = email.split_once('@') else {
+        return Err("PUBLIC_USER_EMAIL is required when PUBLIC_ACCESS=true");
+    };
+    if email.len() > 254
+        || local.is_empty()
+        || domain.is_empty()
+        || domain.contains('@')
+        || email.chars().any(char::is_whitespace)
+    {
+        return Err("PUBLIC_USER_EMAIL must identify one existing author email");
+    }
+    Ok(Some(email))
+}
+
+#[cfg(test)]
+mod public_access_config_tests {
+    use super::parse_public_user_email;
+
+    #[test]
+    fn public_access_requires_an_explicit_single_account() {
+        for value in [
+            None,
+            Some(""),
+            Some("author"),
+            Some("@local"),
+            Some("a@"),
+            Some("a@b@c"),
+            Some("a b@local"),
+        ] {
+            assert!(parse_public_user_email(true, value).is_err());
+        }
+        assert_eq!(
+            parse_public_user_email(true, Some(" Author@exam-creator.local ")).unwrap(),
+            Some("author@exam-creator.local".into())
+        );
+    }
+
+    #[test]
+    fn disabled_public_access_does_not_enable_a_configured_account() {
+        assert_eq!(
+            parse_public_user_email(false, Some("author@local")).unwrap(),
+            None
+        );
+        assert_eq!(parse_public_user_email(false, None).unwrap(), None);
+    }
 }

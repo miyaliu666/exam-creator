@@ -1,6 +1,8 @@
 import { createRouter } from "@tanstack/react-router";
 
 import { queryClient } from "./query-client";
+import { appBasePath } from "../utils/deployment";
+import { captureBrowserLoginCallback } from "../utils/browser-session";
 
 import { authCallbackGithubRoute } from "../pages/auth-callback-github";
 import { attemptsRoute } from "../pages/attempts";
@@ -41,4 +43,5 @@ export const routeTree = rootRoute.addChildren([
   languageItemCoverageRoute,
 ]);
 
-export const router = createRouter({ routeTree, context: { queryClient } });
+captureBrowserLoginCallback();
+export const router = createRouter({ routeTree, context: { queryClient }, basepath: appBasePath });

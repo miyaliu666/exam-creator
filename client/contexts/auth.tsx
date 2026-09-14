@@ -1,4 +1,4 @@
-import { createContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Center, Heading, Stack, Text } from "@chakra-ui/react";
 import { SessionUser } from "../types";
 import {
@@ -8,69 +8,80 @@ import {
   loginWithGitHub,
   logout as deleteLogout,
 } from "../utils/fetch";
-
-const defaultDevIdentity = {
-  name: "Local User",
-  email: "author@exam-creator.local",
-};
-
-export const AuthContext = createContext<{
-  user: SessionUser | null;
-  isLoading: boolean;
-  isDevelopmentAuth: boolean;
-  login: () => Promise<void>;
-  logout: () => void;
-  checkLoginUser: () => Promise<void>;
-} | null>(null);
+import { loadAuthSession } from "../utils/auth-session";
+import { getAccessMode, isPublicAccessEnabled, openPublicSession } from "../utils/public-access";
+import { AuthContext } from "./auth-context";
+export { AuthContext } from "./auth-context";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDevelopmentAuth, setIsDevelopmentAuth] = useState(false);
+  const [isPublicAccess, setIsPublicAccess] = useState(false);
   const [connectionFailed, setConnectionFailed] = useState(false);
+  const pendingCheck = useRef<Promise<void> | null>(null);
+  const pendingRefresh = useRef<Promise<void> | null>(null);
 
-  async function checkLoginUser() {
+  const checkLoginUser = useCallback((): Promise<void> => {
+    if (pendingCheck.current) return pendingCheck.current;
     setIsLoading(true);
-    try {
-      const devLoginStatus = await getDevLoginStatus();
-      setIsDevelopmentAuth(devLoginStatus.enabled);
-      let sessionUser = await getSessionUser({ allowUnauthenticated: true });
-      if (!sessionUser && devLoginStatus.enabled) {
-        await loginWithDevIdentity(defaultDevIdentity);
-        sessionUser = await getSessionUser();
+    pendingCheck.current = (async () => {
+      try {
+        const session = await loadAuthSession({ getAccessMode, openPublicSession, getDevLoginStatus, getSessionUser, loginWithDevIdentity });
+        setIsDevelopmentAuth(session.isDevelopmentAuth);
+        setIsPublicAccess(session.isPublicAccess);
+        setUser(session.user);
+        setConnectionFailed(false);
+      } catch (e) {
+        console.debug(e);
+        setUser(null);
+        setConnectionFailed(true);
+      } finally {
+        setIsLoading(false);
+        pendingCheck.current = null;
       }
-      setUser(sessionUser);
-      setConnectionFailed(false);
-    } catch (e) {
-      console.debug(e);
-      setUser(null);
-      setConnectionFailed(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+    })();
+    return pendingCheck.current;
+  }, []);
 
   useEffect(() => {
+    const handlePublicSessionRestored = () => {
+      if (!isPublicAccessEnabled() || pendingRefresh.current) return;
+      // The new cookie has a fresh WebSocket token. Keep the current editor
+      // mounted while refreshing that token after an expired session.
+      pendingRefresh.current = getSessionUser({ allowUnauthenticated: true })
+        .then((sessionUser) => { if (sessionUser) setUser(sessionUser); })
+        .catch((error: unknown) => console.debug(error))
+        .finally(() => { pendingRefresh.current = null; });
+    };
     const handleSessionExpired = () => {
+      if (isPublicAccessEnabled()) {
+        void checkLoginUser();
+        return;
+      }
       setUser(null);
       setIsLoading(false);
     };
 
     window.addEventListener("exam-creator:session-expired", handleSessionExpired);
+    window.addEventListener("exam-creator:public-session-restored", handlePublicSessionRestored);
     void checkLoginUser();
     return () => {
       window.removeEventListener(
         "exam-creator:session-expired",
         handleSessionExpired,
       );
+      window.removeEventListener("exam-creator:public-session-restored", handlePublicSessionRestored);
     };
-  }, []);
+  }, [checkLoginUser]);
 
   const login = async () => {
+    if (isPublicAccessEnabled()) return checkLoginUser();
     await loginWithGitHub();
   };
 
   const logout = async () => {
+    if (isPublicAccessEnabled()) return;
     setIsLoading(true);
     try {
       await deleteLogout();
@@ -87,11 +98,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       isLoading,
       isDevelopmentAuth,
+      isPublicAccess,
       login,
       logout,
       checkLoginUser,
     }),
-    [user, isLoading, isDevelopmentAuth]
+    [user, isLoading, isDevelopmentAuth, isPublicAccess, checkLoginUser]
   );
 
   return (

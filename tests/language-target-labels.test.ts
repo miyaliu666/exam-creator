@@ -67,6 +67,18 @@ test("character glosses respect compound and grammatical senses", () => {
   assert.doesNotMatch(languageTargetDisplayText({ id: "LEX-A1-0104", kind: "lexical", label: "会" }), /meeting/);
 });
 
+test("explicit English and Spanish entries never inherit Chinese legacy aliases", () => {
+  for (const language of ["en", "es"]) {
+    const grammar = { id: "GR-A1-001", kind: "grammar", language, label: "State identity or category" };
+    assert.deepEqual(languageTargetLabel(grammar), { primary: grammar.label });
+    assert.equal(languageTargetMatchesSearch(grammar, "A 是 B"), false);
+    assert.deepEqual(languageTargetLabel({ ...grammar, pattern: "Subject + be + noun", englishGloss: "Identity" }), {
+      primary: grammar.label, pattern: "Subject + be + noun", english: "Identity",
+    });
+    assert.deepEqual(languageTargetLabel({ id: "LEX-A1-0003", kind: "lexical", language, label: "早上好" }), { primary: "早上好" });
+  }
+});
+
 test("authored content metadata overrides legacy display hints and is searchable", () => {
   const grammar = { id: "GR-A1-001", kind: "grammar", label: "State identity or category", englishGloss: "Authored identity rule", pattern: "甲 是 乙" };
   assert.equal(languageTargetLabel(grammar).english, "Authored identity rule");

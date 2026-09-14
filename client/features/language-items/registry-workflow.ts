@@ -42,12 +42,10 @@ export function shouldAdoptRegistryRecord(
 export function registryStatus(record: RegistryVersionRecord, dirty: boolean, email?: string) {
   if (record.status === "draft") {
     return {
-      label: record.createdBy !== email ? "Read-only draft" : dirty ? "Draft · Unsaved" : "Draft · Saved",
-      colorPalette: dirty ? "yellow" : "orange",
+      label: record.createdBy !== email ? "Read-only draft" : dirty ? "Unsaved changes" : "Saved · Not applied",
     };
   }
   return {
-    label: record.active ? "Published" : record.status === "retired" ? "Retired" : "Previous publication",
-    colorPalette: record.active ? "teal" : "gray",
+    label: record.active ? "In use for new items" : record.status === "retired" ? "Retired settings" : "Previous settings",
   };
 }

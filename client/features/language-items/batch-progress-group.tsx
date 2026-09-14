@@ -3,8 +3,9 @@ import { Badge, Box, Button, HStack, Stack, Table, Text } from "@chakra-ui/react
 import type { BatchGenerationChild, BatchGroup } from "./batch-api";
 import { additionalBatchTargets } from "./batch-progress-display";
 import { generationErrorMessage } from "./generation-message";
-import { DIFFICULTY_LABELS, DOMAIN_LABELS, ITEM_FORMAT_LABELS, WORKBENCH_LABELS, contentOptionLabel, optionLabel, slotLabel } from "./labels";
+import { DIFFICULTY_LABELS, DOMAIN_LABELS, exerciseLabel, WORKBENCH_LABELS, contentOptionLabel, optionLabel } from "./labels";
 import { languageTargetLabel } from "./language-target-labels";
+import { contentLanguage, contentLanguageLabel } from "./content-language";
 import type { RegistrySnapshot } from "./types";
 
 const CHILD_LABELS: Record<BatchGenerationChild["status"], string> = {
@@ -31,11 +32,11 @@ export function BatchProgressGroup({ group, groupIndex, grouped, children, regis
 }) {
   const hasAdditionalTargets = children.some((child) => additionalBatchTargets(child, group).length > 0);
   const fields = registry ? [
-    [WORKBENCH_LABELS.blueprintSlot, slotLabel(group.blueprintSlotId, registry, group.itemFormatId)],
-    [WORKBENCH_LABELS.itemFormat, ITEM_FORMAT_LABELS[group.itemFormatId] ?? group.itemFormatId],
+    ["Language", contentLanguageLabel(contentLanguage(group))],
+    [WORKBENCH_LABELS.itemFormat, exerciseLabel(group.itemFormatId, registry.capabilities.find((entry) => entry.itemRuleId === group.itemRuleId && entry.primaryCanDoId === group.primaryCanDoId)?.primaryReportedSkill)],
     [WORKBENCH_LABELS.primaryCanDo, optionLabel(group.primaryCanDoId, registry.canDoOptions)],
     [WORKBENCH_LABELS.domain, DOMAIN_LABELS[group.primaryDomain] ?? group.primaryDomain],
-    [WORKBENCH_LABELS.context, optionLabel(group.contextId, registry.contextOptions)],
+    [WORKBENCH_LABELS.context, group.contextId ? optionLabel(group.contextId, registry.contextOptions) : "No Context restriction"],
     [WORKBENCH_LABELS.difficulty, DIFFICULTY_LABELS[group.difficultyBand] ?? group.difficultyBand],
   ] : [];
   return <Stack gap={3} borderTopWidth="1px" pt={3}>

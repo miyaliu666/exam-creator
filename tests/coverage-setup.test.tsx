@@ -9,6 +9,7 @@ import { CoverageSetupTable } from "../client/features/language-items/coverage-s
 import { clearCreationSuggestion, readCreationSuggestion, saveCreationSuggestion } from "../client/features/language-items/creation-suggestion-storage";
 import type { CoverageFilters, CoverageRequest, CoverageResponse } from "../client/features/language-items/coverage-types";
 import type { DifficultyBandStandard, RegistrySnapshot } from "../client/features/language-items/types";
+import { NO_CONTEXT_FILTER } from "../client/features/language-items/coverage-context";
 
 const registry: RegistrySnapshot = {
   bundleVersion: "rules-1", status: "published", sourceFingerprint: "fixture", limitations: [], capabilities: [],
@@ -21,11 +22,11 @@ const registry: RegistrySnapshot = {
   canDoOptions: [{ id: "can-do-one", label: "Can-do one" }, { id: "can-do-two", label: "Can-do two" }],
 };
 const filters: CoverageFilters = {
-  blueprintSlotId: "R-A1-1", contextId: "context-one", domain: "Personal", difficultyBand: "TypicalA1",
+  itemRuleId: "R-A1-1", contextId: "context-one", domain: "Personal", difficultyBand: "TypicalA1",
   itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "can-do-one", skill: "Reading", activity: "Reading instructions",
 };
 const otherFilters: CoverageFilters = {
-  blueprintSlotId: "L-A1-1", contextId: "context-two", domain: "Public", difficultyBand: "UpperA1",
+  itemRuleId: "L-A1-1", contextId: "context-two", domain: "Public", difficultyBand: "UpperA1",
   itemFormatId: "IF-MATCHING", primaryCanDoId: "can-do-two", skill: "Listening", activity: "Listening to instructions",
 };
 const request: CoverageRequest = {
@@ -46,23 +47,59 @@ const renderTable = (response = data, query = request) => renderToStaticMarkup(
 );
 const visibleText = (markup: string) => markup.replace(/<style\b[^>]*>[\s\S]*?<\/style>/g, "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
-test("joint setup rows retain all six fields and both inventories irrespective of selected item scope", () => {
+test("setup drilldowns and goals preserve the language when older setup rows omit it", () => {
+  const scoped = { ...request, filters: { ...request.filters, language: "es" } };
+  assert.equal(coverageSetupQuery(scoped, filters, "drafts").filters?.language, "es");
+  const goal = coverageSetupGoalRequest(scoped, filters, 12);
+  assert.equal(goal.filters.language, "es");
+  assert.deepEqual(goal.selectedIds, scoped.selectedIds);
+  assert.notEqual(coverageAnalysisKey(scoped), coverageAnalysisKey(request));
+});
+
+test("Coverage creation handoff retains English and Spanish through session storage", () => {
+  const scope = "multilingual-coverage-handoff";
+  for (const language of ["en", "es"]) {
+    const suggestion = { registryVersion: registry.bundleVersion, filters: { ...filters, language }, targetContentIds: [language], desiredCount: 2 };
+    saveCreationSuggestion(scope, suggestion);
+    assert.deepEqual(readCreationSuggestion(scope), suggestion);
+    clearCreationSuggestion(scope);
+    assert.equal(readCreationSuggestion(scope), undefined);
+  }
+  saveCreationSuggestion(scope, { registryVersion: registry.bundleVersion, filters: { ...filters, language: "fr" }, targetContentIds: ["wrong"], desiredCount: 2 });
+  assert.equal(readCreationSuggestion(scope), undefined);
+});
+
+test("source exercise rows keep explicit no-Context filtering distinct from unknown or unfiltered Context", () => {
+  const sourceFilters = { ...filters, itemRuleId: "source-rule", itemFormatId: "EXERCISE:multiple-choice", contextId: NO_CONTEXT_FILTER };
+  const response = { ...data, setupCounts: [{ filters: sourceFilters, approvedCount: 0, pendingCount: 2 }] };
+  assert.equal(completeCoverageSetup(sourceFilters), true);
+  assert.equal(coverageSetupQuery(request, sourceFilters, "drafts").filters?.contextId, NO_CONTEXT_FILTER);
+  assert.notEqual(coverageAnalysisKey({ ...request, filters: sourceFilters }), coverageAnalysisKey({ ...request, filters: { ...sourceFilters, contextId: undefined } }));
+  assert.match(visibleText(renderTable(response)), /No predefined Context/);
+  const olderResponse = { ...data, setupCounts: [{ filters: { ...sourceFilters, contextId: "" }, approvedCount: 0, pendingCount: 2 }] };
+  assert.equal(coverageSetupRows(olderResponse, request, registry)?.[0].filters.contextId, NO_CONTEXT_FILTER);
+  const missing = { ...data, setupCounts: [{ filters: { ...sourceFilters, contextId: undefined }, approvedCount: 0, pendingCount: 2 }] };
+  assert.equal(completeCoverageSetup(coverageSetupRows(missing, request, registry)![0].filters), false);
+});
+
+test("joint setup rows show the five authoring fields and both inventories while retaining rule identity", () => {
   for (const scope of ["approved", "drafts"] as const) {
     const markup = renderTable({ ...data, scope }, { ...request, scope });
     const text = visibleText(markup);
     assert.match(text, /Coverage by item setup/);
     const headers = [...markup.matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/g)].map((match) => visibleText(match[1]));
-    for (const header of ["Blueprint slot", "Context", "Domain", "Difficulty", "Item format", "Primary Can-do", "Approved items", "Unapproved items"]) {
+    for (const header of ["Context", "Domain", "Difficulty", "Exercise template", "Primary Can-do", "Approved items", "Unapproved items"]) {
       assert.ok(headers.includes(header), `${header} has its own column`);
     }
+    assert.ok(!headers.includes("Blueprint slot") && !headers.includes("Item rule ID"));
     const body = markup.match(/<tbody\b[^>]*>([\s\S]*?)<\/tbody>/)?.[1] ?? "";
     const rows = [...body.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/g)].map((match) => visibleText(match[1]));
     assert.equal(rows.length, 2);
     const first = rows.find((row) => row.includes("Context one"));
     const second = rows.find((row) => row.includes("Context two"));
     assert.ok(first && second);
-    for (const label of ["Personal", "Typical A1", "Single select", "Can-do one"]) assert.ok(first.includes(label));
-    for (const label of ["Public", "Upper A1", "Matching", "Can-do two"]) assert.ok(second.includes(label));
+    for (const label of ["Personal", "Typical A1", "Multiple choice", "Can-do one"]) assert.ok(first.includes(label));
+    for (const label of ["Public", "Upper A1", "Match the columns", "Can-do two"]) assert.ok(second.includes(label));
     assert.match(first, /\b2\s+11\s+Set goal\b/);
     assert.match(second, /\b7\s+0\s+Set goal\b/);
     assert.doesNotMatch(text, /Item counts by attribute|INDEPENDENT-ATTRIBUTE|999/);
@@ -74,7 +111,7 @@ test("setup inventory counts come from the complete response, not the current it
   const populatedPage: CoverageResponse = { ...data, items: [{
     id: "page-only", title: "PAGE-ONLY-ITEM", versionId: null, scope: "drafts", status: "draft",
     metadata: {
-      registryVersion: registry.bundleVersion, blueprintSlotId: "PAGE-ONLY-SLOT", contextId: "PAGE-ONLY-CONTEXT",
+      registryVersion: registry.bundleVersion, itemRuleId: "PAGE-ONLY-SLOT", contextId: "PAGE-ONLY-CONTEXT",
       domain: "PAGE-ONLY-DOMAIN", difficultyBand: "LowerA1", itemFormatId: "IF-TYPED-MESSAGE", primaryCanDoId: "PAGE-ONLY-CANDO",
       skill: "Writing", activity: "Writing", activities: ["Writing"], coreIds: ["hello"], supportingIds: [],
     },
@@ -91,32 +128,56 @@ test("missing setup data remains distinct from a valid empty setup inventory", (
   assert.match(empty, /No matching item setups/);
 });
 
-test("results lead with joint setup counts and open matching items only after explicit drilldown", async () => {
+test("results show setup coverage and matching items as peer sections with one status selector and item count", async () => {
   // SSR checks rendering only; keep the request boundary out of the Node-specific BSON import chain.
   mock.module("../client/features/language-items/coverage-api", () => ({
     getLanguageCoverage: () => { throw new Error("Rendering coverage results must not request new coverage data"); },
   }));
   const { CoverageResults } = await import("../client/features/language-items/coverage-results");
-  for (const showItems of [false, true]) {
+  const cases = (["approved", "drafts"] as const).flatMap((scope) => [0, 1, data.matchedCount].map((matchedCount) => ({ scope, matchedCount })));
+  for (const { scope, matchedCount } of cases) {
     const markup = renderToStaticMarkup(<ChakraProvider value={defaultSystem}>
-      <CoverageResults data={data} request={request} registry={registry} currentRegistry={registry} accountScope="fixture"
-        showItems={showItems} onItemsOpenChange={noop} onSetupGoalChange={noop} onInspect={noop} onPlan={noop} onChange={noop} />
+      <CoverageResults data={{ ...data, scope, matchedCount }} request={{ ...request, scope }} registry={registry} currentRegistry={registry} accountScope="fixture"
+        onSetupGoalChange={noop} onInspect={noop} onPlan={noop} onChange={noop} />
     </ChakraProvider>);
     const text = visibleText(markup);
-    assert.ok(text.indexOf("Coverage by item setup") < text.indexOf(`Unapproved items · ${data.matchedCount}`));
-    const matching = [...markup.matchAll(/<details\b([^>]*)>([\s\S]*?)<\/details>/g)]
-      .find((match) => /aria-label="Item status"/.test(match[2]));
-    assert.ok(matching, "Matching items has its own disclosure");
-    assert.equal(/\bopen(?:=|\s|$)/.test(matching[1]), showItems);
-    assert.match(matching[2], /aria-label="Item status"/);
-    assert.match(visibleText(matching[2]), /Target combinations/,
+    const layoutMarkup = markup.replace(/<style\b[^>]*>[\s\S]*?<\/style>/g, "");
+    const setupSection = layoutMarkup.match(/<section\b[^>]*aria-label="Item setup coverage"[^>]*>([\s\S]*?)<\/section>/);
+    const matchingSection = layoutMarkup.match(/<section\b[^>]*aria-label="Matching items"[^>]*>([\s\S]*?)<\/section>/);
+    assert.ok(setupSection, "Setup coverage has its own section");
+    assert.ok(matchingSection, "Matching items has an always-visible section");
+    assert.doesNotMatch(setupSection[1], /<section\b/, "The item list is not nested under setup coverage");
+    assert.equal(layoutMarkup.slice(setupSection.index! + setupSection[0].length, matchingSection.index).trim(), "",
+      "Setup coverage and item results are adjacent sibling sections");
+    assert.ok(setupSection.index! < matchingSection.index!);
+    const setupHeadings = [...setupSection[1].matchAll(/<h3\b[^>]*>([\s\S]*?)<\/h3>/g)].map((heading) => visibleText(heading[1]));
+    const matching = matchingSection[1];
+    const itemHeadings = [...matching.matchAll(/<h3\b[^>]*>([\s\S]*?)<\/h3>/g)].map((heading) => visibleText(heading[1]));
+    assert.deepEqual(setupHeadings, ["Coverage by item setup"]);
+    assert.deepEqual(itemHeadings, ["Items"], "Item results use a peer heading without repeating the selected status");
+    const statusSelectors = [...matching.matchAll(/<select\b[^>]*aria-label="Item status"[^>]*>([\s\S]*?)<\/select>/g)];
+    assert.equal(statusSelectors.length, 1, "Item status remains accessible without a repeated visible label");
+    const selected = [...statusSelectors[0][1].matchAll(/<option\b([^>]*)>([\s\S]*?)<\/option>/g)]
+      .find((option) => /\bselected(?:=|\s|$)/.test(option[1]));
+    assert.ok(selected);
+    assert.match(selected[1], new RegExp(`value="${scope}"`));
+    assert.equal(visibleText(selected[2]), scope === "approved" ? "Approved items" : "Unapproved items");
+    const matchingText = visibleText(matching);
+    assert.match(matchingText, new RegExp(`\\b${matchedCount} ${matchedCount === 1 ? "item" : "items"}\\b`));
+    assert.doesNotMatch(matchingText, /Item status|(?:Approved|Unapproved) items\s*·/);
+    if (matchedCount === 1) assert.doesNotMatch(matchingText, /\b1 items\b/);
+    if (matchedCount === 0) assert.match(matchingText, /No matching items\./);
+    const disclosures = [...matching.matchAll(/<details\b[^>]*>([\s\S]*?)<\/details>/g)];
+    assert.equal(disclosures.length, 1, "Only Target combinations stays collapsed");
+    assert.doesNotMatch(disclosures[0][1], /aria-label="Item status"/);
+    assert.match(visibleText(disclosures[0][1]), /Target combinations/,
       "Status and combination counts are scoped to the item-detail inventory");
     assert.doesNotMatch(text, /Item counts by attribute|INDEPENDENT-ATTRIBUTE|999/);
   }
 });
 
 test("incomplete setup rows remain visible but cannot create a broader hidden-filter drilldown or goal", () => {
-  for (const missing of ["blueprintSlotId", "contextId", "domain", "difficultyBand", "itemFormatId", "primaryCanDoId"] as const) {
+  for (const missing of ["itemRuleId", "contextId", "domain", "difficultyBand", "itemFormatId", "primaryCanDoId"] as const) {
     const incomplete = { ...filters, [missing]: "" };
     const markup = renderTable({ ...data, setupCounts: [{ filters: incomplete, approvedCount: 2, pendingCount: 11 }] });
     const text = visibleText(markup);
@@ -176,7 +237,7 @@ test("nullable API setup dimensions survive the New items suggestion storage bou
   const before = structuredClone({ source, apiFilters });
   const goalRequest = coverageSetupGoalRequest(source, apiFilters, 17);
   const expectedFilters: CoverageFilters = {
-    blueprintSlotId: filters.blueprintSlotId, contextId: filters.contextId, domain: filters.domain,
+    itemRuleId: filters.itemRuleId, contextId: filters.contextId, domain: filters.domain,
     difficultyBand: filters.difficultyBand, itemFormatId: filters.itemFormatId, primaryCanDoId: filters.primaryCanDoId,
   };
   assert.deepEqual(goalRequest.filters, expectedFilters);
@@ -226,7 +287,7 @@ test("only a fully selected compatible setup can fill a known empty inventory wi
     allowedSupportLevels: ["high"], allowedDistractorSimilarities: ["clear"],
   };
   const compatible: RegistrySnapshot = { ...registry, difficultyStandards: [standard],
-    capabilities: [{ blueprintSlotId: "R-A1-1", title: "Notices", taskFamilyId: "TF1", itemFormatId: "IF-SINGLE-SELECT",
+    capabilities: [{ itemRuleId: "R-A1-1", title: "Notices", taskFamilyId: "TF1", itemFormatId: "IF-SINGLE-SELECT",
       rendererId: "renderer", scoringContractTemplateId: "scoring", primaryCanDoId: "can-do-one", primaryReportedSkill: "Reading",
       communicativeActivity: "Reading instructions", allowedDomains: ["Personal"], allowedContextIds: ["context-one"],
       observableEvidence: "Read a fact.", taskStructure: "Select one answer.", prohibitedUses: [], referenceTask: "A notice" }],

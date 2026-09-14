@@ -1,9 +1,10 @@
 export interface CoverageFilters {
+  language?: string;
   skill?: string;
   activity?: string;
   domain?: string;
   contextId?: string;
-  blueprintSlotId?: string;
+  itemRuleId?: string;
   primaryCanDoId?: string;
   difficultyBand?: string;
   itemFormatId?: string;
@@ -55,8 +56,9 @@ export interface CoveragePageState {
 }
 
 export interface CoverageMetadata {
+  language?: string;
   registryVersion: string;
-  blueprintSlotId: string;
+  itemRuleId: string;
   itemFormatId: string;
   primaryCanDoId: string;
   skill: string;

@@ -1,15 +1,16 @@
 import { isContentOptionCompatible } from "./content-compatibility.ts";
 import { isValidCandidateCount } from "./candidate-count.ts";
-import { contextsForCapability, difficultyStandardsForCapability } from "./registry-capability.ts";
+import { setupContextIsCompatible, difficultyStandardsForCapability } from "./registry-capability.ts";
 import type { BatchGroup, CreateBatchInput } from "./batch-api";
-import { slotLabel } from "./labels.ts";
+import { itemRuleLabel } from "./labels.ts";
+import { CONTENT_LANGUAGE_OPTIONS, contentLanguage } from "./content-language.ts";
 import type { RegistrySnapshot } from "./types";
 
 export const BATCH_ITEM_LIMIT = 50;
 export const BATCH_GROUP_LIMIT = 20;
 
 export function batchRequest(draft: CreateBatchInput, registry: RegistrySnapshot): CreateBatchInput {
-  const setups = [...new Set(draft.groups.map((group) => slotLabel(group.blueprintSlotId, registry)))];
+  const setups = [...new Set(draft.groups.map((group) => itemRuleLabel(group.itemRuleId, registry)))];
   const automaticName = setups.length <= 1 ? setups[0] ?? "Language items" : `${setups[0]} + ${setups.length - 1} setups`;
   return { ...draft, title: draft.title.trim() || automaticName.slice(0, 120) };
 }
@@ -27,7 +28,7 @@ export function allocatedBatchTargets(group: BatchGroup): string[][] {
 
 export function batchCapability(group: BatchGroup, registry: RegistrySnapshot) {
   return registry.capabilities.find((capability) =>
-    capability.blueprintSlotId === group.blueprintSlotId &&
+    capability.itemRuleId === group.itemRuleId &&
     capability.itemFormatId === group.itemFormatId &&
     capability.primaryCanDoId === group.primaryCanDoId);
 }
@@ -35,7 +36,7 @@ export function batchCapability(group: BatchGroup, registry: RegistrySnapshot) {
 export function batchTargetOptions(group: BatchGroup, registry: RegistrySnapshot) {
   const capability = batchCapability(group, registry);
   return registry.contentIdOptions.filter((option) =>
-    option.kind !== "supported" && isContentOptionCompatible(option, capability, group.contextId));
+    option.kind !== "supported" && isContentOptionCompatible(option, capability, group.contextId, contentLanguage(group)));
 }
 
 export function batchPlanIssues(groups: BatchGroup[], registry: RegistrySnapshot, candidatesPerItem: number, requireTargets = true) {
@@ -50,8 +51,8 @@ export function batchPlanIssues(groups: BatchGroup[], registry: RegistrySnapshot
   groups.forEach((group, index) => {
     const prefix = groups.length > 1 ? `Group ${index + 1}: ` : "";
     const capability = batchCapability(group, registry);
-    const context = contextsForCapability(registry, capability).find((entry) => entry.id === group.contextId);
-    if (!capability || !context?.primaryDomains.includes(group.primaryDomain) ||
+    if (!CONTENT_LANGUAGE_OPTIONS.some((option) => option.id === contentLanguage(group))) issues.push(`${prefix}choose Chinese, English or Spanish.`);
+    if (!capability || !setupContextIsCompatible(registry, capability, group.primaryDomain, group.contextId) ||
         !capability.allowedDomains.includes(group.primaryDomain) ||
         !difficultyStandardsForCapability(registry, capability).some((entry) => entry.id === group.difficultyBand)) {
       issues.push(`${prefix}review the setup against the current Assessment Settings.`);

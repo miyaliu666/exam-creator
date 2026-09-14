@@ -1,0 +1,115 @@
+{
+  "taskId": "LI-legacy-string-points",
+  "taskVersion": "1",
+  "specVersions": {
+    "planningSpecVersion": "0.2-provisional",
+    "registryBundleVersion": "0.2-provisional",
+    "taskPackageVersion": "0.1"
+  },
+  "blueprintSlotId": "R-A1-1",
+  "taskFamilyId": "TF-SIGNS-NOTICES",
+  "itemFormatId": "IF-MATCHING",
+  "renderer": {
+    "rendererId": "REN-MATCHING",
+    "rendererVersion": "0.1"
+  },
+  "candidatePayload": {
+    "stimulus": {
+      "text": "小华在买东西。",
+      "imageRefs": [],
+      "audioRef": null
+    },
+    "prompt": "每句话是在哪里说的？请连一连。",
+    "leftItems": [
+      {
+        "itemId": "L1",
+        "text": "我要买那件红色的衣服，谢谢！",
+        "imageRef": null
+      },
+      {
+        "itemId": "L2",
+        "text": "我要买两个面包，谢谢！",
+        "imageRef": null
+      }
+    ],
+    "rightItems": [
+      {
+        "itemId": "R1",
+        "text": "衣服店",
+        "imageRef": null
+      },
+      {
+        "itemId": "R2",
+        "text": "面包店",
+        "imageRef": null
+      }
+    ],
+    "shuffleRightItems": false,
+    "allowRightItemReuse": false
+  },
+  "authoringPackage": {
+    "notes": []
+  },
+  "scoringPackage": {
+    "scoringContractTemplateId": "SCT-R-A1-1-MATCHING-v0.1",
+    "correctMatches": {
+      "L1": "R1",
+      "L2": "R2"
+    }
+  },
+  "reviewPackage": {
+    "gates": {}
+  },
+  "mediaRefs": [],
+  "deliveryPolicyRefs": {
+    "navigationPolicyId": "NAV-REVIEW-WITHIN-MODULE-v0.1",
+    "inputPolicyId": "notApplicable",
+    "playbackPolicyId": "notApplicable",
+    "recordingPolicyId": "notApplicable",
+    "speakingRateProfileId": "notApplicable",
+    "pauseProfileId": "notApplicable"
+  },
+  "content": {
+    "primaryCanDoId": "A1-R1",
+    "primaryReportedSkill": "Reading",
+    "communicativeActivity": "Reception",
+    "primaryDomain": "Public",
+    "contextId": "D09",
+    "difficultyBand": "TypicalA1",
+    "difficulty": {
+      "intendedBand": "TypicalA1",
+      "status": "AuthorEstimated",
+      "drivers": {
+        "inputLength": "shortSentence",
+        "informationPoints": 1,
+        "supportLevel": "moderate",
+        "distractorSimilarity": "moderate",
+        "outputLength": "matchedOptions",
+        "interactionTurns": 0,
+        "preparationTimeSeconds": null,
+        "independenceLevel": "partlySupported",
+        "inferenceRequired": false
+      },
+      "rationale": [
+        "题面、支持程度与作答负荷符合所选 A1 内部难度"
+      ],
+      "empiricalDifficulty": {
+        "status": "NotPiloted",
+        "sampleId": null,
+        "observedBand": null,
+        "percentCorrect": null,
+        "discrimination": null,
+        "omissionRate": null,
+        "medianResponseTimeSeconds": null,
+        "decision": null
+      }
+    },
+    "targetContentIds": [
+      "LEX-A1-0006"
+    ],
+    "requiredInformationPoints": [
+      "活动地点"
+    ]
+  },
+  "variation": {}
+}

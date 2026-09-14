@@ -6,6 +6,9 @@
 target/
 dist/
 node_modules/
+**/node_modules/
+.pnpm-store/
+*.tsbuildinfo
 
 # Shuttle deployment
 .shuttle/
@@ -13,6 +16,11 @@ Shuttle.toml
 
 # Environment files
 *.env
+.env
+.env.*
+**/.env
+**/.env.*
+*.env.*
 sample.env
 
 # Documentation
@@ -21,6 +29,11 @@ CONTRIBUTING.md
 CHANGELOG.md
 AGENTS.md
 LICENSE
+DEPLOYMENT.md
+docs/
+language-item-workbench/docs/
+outputs/
+*.log
 
 # Docker files
 Dockerfile
@@ -29,6 +42,8 @@ Dockerfile
 # IDE and editor files
 .vscode/
 .idea/
+.agents/
+.codex/
 *.swp
 *.swo
 *~

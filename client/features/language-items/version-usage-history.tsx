@@ -11,7 +11,7 @@ export function VersionUsageHistory({ events, hasMore, busy, onLoadMore }: {
     <Stack mt={3} gap={3}>
       {!events.length ? <Text fontSize="sm" color="fg.muted">No use decisions recorded.</Text> : null}
       {events.map((event) => <Box as="details" key={event.id} borderWidth="1px" borderRadius="md" p={3}>
-        <Text as="summary" cursor="pointer" fontSize="sm">{event.change.kind === "state" ? VERSION_USAGE_LABELS[event.change.state] : "Pilot results recorded"} · {new Date(event.createdAt).toLocaleString()}</Text>
+        <Text as="summary" cursor="pointer" fontSize="sm">{event.change.kind === "state" ? VERSION_USAGE_LABELS[event.change.state] : "Pilot results recorded"} · {new Date(event.createdAt).toLocaleString("en-GB")}</Text>
         <Stack mt={3} gap={2}><Text fontSize="xs" color="fg.muted">{event.actorEmail}</Text>
           {event.change.kind === "pilot" ? <PilotResultSummary summary={event.change.summary} /> : <Text fontSize="sm" whiteSpace="pre-wrap">{event.change.reason}</Text>}
         </Stack>

@@ -14,7 +14,9 @@ use tracing::instrument;
 
 use crate::{database::prisma, errors::Error, state::ServerState};
 
+pub mod cross_site;
 pub mod github;
+pub mod public_access;
 
 /// Logs the user out by deleting the db session(s), and unsetting the sid
 #[instrument(skip_all, err(Debug), level = "debug")]
@@ -23,14 +25,6 @@ pub async fn delete_logout(
     jar: PrivateCookieJar,
     State(server_state): State<ServerState>,
 ) -> Result<PrivateCookieJar, Error> {
-    let _cookie = jar
-        .get("sid")
-        .map(|cookie| cookie.value().to_owned())
-        .ok_or(Error::Server(
-            StatusCode::UNAUTHORIZED,
-            format!("invalid sid in cookie jar"),
-        ))?;
-
     server_state
         .production_database
         .exam_creator_session

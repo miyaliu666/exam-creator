@@ -10,6 +10,7 @@ import { GenerationPromptButton } from "./generation-prompt-button";
 import { batchPlanIssues, batchRequest, BATCH_ITEM_LIMIT } from "./batch-plan";
 import { NewLanguageItemDialog, type NewLanguageItemSelection } from "./new-language-item-dialog";
 import { contentOptionLabel } from "./labels";
+import { contentLanguage, contentLanguageLabel } from "./content-language";
 import type { CoverageBatchSuggestion } from "./coverage-types";
 import type { RegistrySnapshot } from "./types";
 
@@ -59,6 +60,10 @@ export function BatchCreatePanel({ registry, scope, pending, error, suggestion, 
     const previous = draft.groups.at(editing.index);
     const suggested = editing.suggestion ? coverageSuggestionSetup(editing.suggestion, registry) : {};
     const next: BatchGroup = { itemCount: 1, requiredTargetContentIds: [], rotatingTargetContentIds: [], ...previous, ...suggested, ...selection };
+    if (previous && !editing.suggestion && contentLanguage(previous) !== contentLanguage(selection)) {
+      next.requiredTargetContentIds = [];
+      next.rotatingTargetContentIds = [];
+    }
     update({ groups: previous ? draft.groups.map((group, index) => index === editing.index ? next : group) : [next] });
     setEditing(null);
     if (editing.suggestion) onSuggestionUsed();
@@ -72,6 +77,7 @@ export function BatchCreatePanel({ registry, scope, pending, error, suggestion, 
         </HStack> : null}
         {suggestion ? <Box borderWidth="1px" borderRadius="md" p={3}><Stack gap={2}>
           <Text fontWeight="semibold">New items planned: {suggestion.desiredCount}</Text>
+          <Text fontSize="sm">Language: {contentLanguageLabel(contentLanguage(suggestion.filters))}</Text>
           <Text fontSize="sm">{suggestion.targetContentIds.map((id) => contentOptionLabel(id, registry)).join("; ")}</Text>
           {suggestion.desiredCount > BATCH_ITEM_LIMIT ? <Text fontSize="sm" color="fg.muted">Maximum {BATCH_ITEM_LIMIT} items per generation job.</Text> : null}
           <HStack><Button size="sm" variant="outline" disabled={pending || !suggestionSetup || draft.groups.length > 1}

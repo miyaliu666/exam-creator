@@ -44,7 +44,7 @@ const SPOKEN_MULTITURN_SCHEMA: &str = include_str!(concat!(
 ));
 const TASK_PACKAGE_SCHEMA: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/language-item-workbench/contracts/language-item-task-package-v0.1.schema.json"
+    "/language-item-workbench/contracts/language-item-task-package-v0.2.schema.json"
 ));
 const CHARACTER_REGISTRY: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
@@ -74,9 +74,9 @@ const CAN_DO_REGISTRY: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/language-item-workbench/registries/Chinese_A1_Workbench_Registries_v0.2_provisional/construct/a1-can-do-registry-v0.2-provisional.yaml"
 ));
-const SLOT_REGISTRY: &str = include_str!(concat!(
+const ITEM_RULE_REGISTRY: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
-    "/language-item-workbench/registries/Chinese_A1_Workbench_Registries_v0.2_provisional/blueprint/a1-slot-registry-v0.2-provisional.yaml"
+    "/language-item-workbench/registries/Chinese_A1_Workbench_Registries_v0.2_provisional/rules/a1-item-rule-registry-v0.3.yaml"
 ));
 const SCORING_REGISTRY: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
@@ -106,7 +106,7 @@ struct Manifest {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorkbenchCapability {
-    pub blueprint_slot_id: String,
+    pub item_rule_id: String,
     pub title: String,
     pub task_family_id: String,
     pub item_format_id: String,
@@ -142,6 +142,8 @@ pub struct ContentIdOption {
     pub can_do_ids: Vec<String>,
     pub context_ids: Vec<String>,
     pub mastery_scope: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub level: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub meaning: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -190,7 +192,7 @@ pub struct ScoringContractSummary {
     #[serde(default)]
     pub display_name: String,
     pub template_version: String,
-    pub blueprint_slot_id: String,
+    pub item_rule_ids: Vec<String>,
     pub item_format_id: String,
     pub scoring_type: String,
     pub normalization: ScoringPolicySummary,
@@ -248,19 +250,10 @@ pub struct DifficultyBandStandard {
 #[serde(rename_all = "camelCase")]
 pub struct CapabilityDifficultyProfileSet {
     pub id: String,
-    pub blueprint_slot_id: String,
+    pub item_rule_id: String,
     pub item_format_id: String,
     pub primary_can_do_id: String,
     pub standards: Vec<DifficultyBandStandard>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct BlueprintSlot {
-    pub id: String,
-    pub display_name: String,
-    pub description: String,
-    pub allowed_item_format_ids: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -271,7 +264,7 @@ pub struct NamedRegistryReference {
     #[serde(default)]
     pub kind: String,
     #[serde(default)]
-    pub blueprint_slot_ids: Vec<String>,
+    pub item_rule_ids: Vec<String>,
     #[serde(default)]
     pub allowed_item_format_ids: Vec<String>,
 }
@@ -279,15 +272,19 @@ pub struct NamedRegistryReference {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RegistrySnapshot {
+    #[serde(skip)]
+    pub(crate) integrity_source: Option<Value>,
     #[serde(default)]
     pub settings_schema_version: u32,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub exercise_template_rules: Vec<super::exercise_templates::ExerciseTemplateRule>,
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub exercise_template_schemas: std::collections::BTreeMap<String, Value>,
     pub bundle_version: String,
     pub status: String,
     pub limitations: Vec<String>,
     pub source_fingerprint: String,
     pub capabilities: Vec<WorkbenchCapability>,
-    #[serde(default)]
-    pub blueprint_slots: Vec<BlueprintSlot>,
     #[serde(default)]
     pub task_family_options: Vec<NamedRegistryReference>,
     #[serde(default)]
@@ -305,6 +302,8 @@ pub struct RegistrySnapshot {
     pub can_do_options: Vec<RegistryLabelOption>,
     pub scoring_contracts: Vec<ScoringContractSummary>,
     pub required_review_gate_ids: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub review_rule_sets: Vec<super::review_rules::ReviewRuleSet>,
 }
 
 fn default_difficulty_standards() -> Vec<DifficultyBandStandard> {
@@ -387,10 +386,7 @@ fn default_difficulty_standards() -> Vec<DifficultyBandStandard> {
 }
 
 fn difficulty_profile_set_id(capability: &WorkbenchCapability) -> String {
-    format!(
-        "DPS-{}-{}-{}",
-        capability.blueprint_slot_id, capability.item_format_id, capability.primary_can_do_id
-    )
+    format!("DPS-{}", capability.item_rule_id)
 }
 
 pub fn item_format_name(id: &str) -> &str {
@@ -407,32 +403,6 @@ pub fn item_format_name(id: &str) -> &str {
 }
 
 fn populate_readable_metadata(snapshot: &mut RegistrySnapshot) {
-    // Old snapshots only stored the slot title on each capability. Materialize one
-    // slot record on read; subsequent edits use that record as the title authority.
-    if snapshot.blueprint_slots.is_empty() {
-        for capability in &snapshot.capabilities {
-            if let Some(slot) = snapshot
-                .blueprint_slots
-                .iter_mut()
-                .find(|slot| slot.id == capability.blueprint_slot_id)
-            {
-                if !slot
-                    .allowed_item_format_ids
-                    .contains(&capability.item_format_id)
-                {
-                    slot.allowed_item_format_ids
-                        .push(capability.item_format_id.clone());
-                }
-            } else {
-                snapshot.blueprint_slots.push(BlueprintSlot {
-                    id: capability.blueprint_slot_id.clone(),
-                    display_name: capability.title.clone(),
-                    description: capability.task_family_core_behavior.clone(),
-                    allowed_item_format_ids: vec![capability.item_format_id.clone()],
-                });
-            }
-        }
-    }
     for capability in &snapshot.capabilities {
         if !snapshot
             .task_family_options
@@ -443,7 +413,7 @@ fn populate_readable_metadata(snapshot: &mut RegistrySnapshot) {
                 id: capability.task_family_id.clone(),
                 display_name: capability.task_family_core_behavior.clone(),
                 kind: "taskFamily".to_string(),
-                blueprint_slot_ids: Vec::new(),
+                item_rule_ids: Vec::new(),
                 allowed_item_format_ids: Vec::new(),
             });
         }
@@ -454,8 +424,8 @@ fn populate_readable_metadata(snapshot: &mut RegistrySnapshot) {
             .iter_mut()
             .find(|family| family.id == id)
         {
-            if family.blueprint_slot_ids.is_empty() {
-                family.blueprint_slot_ids = block_list(&block, "blueprintSlotIds", &HashMap::new());
+            if family.item_rule_ids.is_empty() {
+                family.item_rule_ids = block_list(&block, "itemRuleIds", &HashMap::new());
             }
             if family.allowed_item_format_ids.is_empty() {
                 family.allowed_item_format_ids =
@@ -466,7 +436,7 @@ fn populate_readable_metadata(snapshot: &mut RegistrySnapshot) {
                 id,
                 display_name: block_scalar(&block, &["coreBehavior"]).unwrap_or_default(),
                 kind: "taskFamily".to_string(),
-                blueprint_slot_ids: block_list(&block, "blueprintSlotIds", &HashMap::new()),
+                item_rule_ids: block_list(&block, "itemRuleIds", &HashMap::new()),
                 allowed_item_format_ids: block_list(
                     &block,
                     "allowedItemFormatIds",
@@ -477,14 +447,14 @@ fn populate_readable_metadata(snapshot: &mut RegistrySnapshot) {
     }
     for contract in &mut snapshot.scoring_contracts {
         if contract.display_name.trim().is_empty() {
-            let slot_name = snapshot
-                .blueprint_slots
+            let rule_name = snapshot
+                .capabilities
                 .iter()
-                .find(|slot| slot.id == contract.blueprint_slot_id)
-                .map(|slot| slot.display_name.as_str())
+                .find(|rule| contract.item_rule_ids.contains(&rule.item_rule_id))
+                .map(|rule| rule.title.as_str())
                 .unwrap_or("Assessment task");
             contract.display_name = format!(
-                "{slot_name} · {} scoring",
+                "{rule_name} · {} scoring",
                 item_format_name(&contract.item_format_id)
             );
         }
@@ -577,7 +547,7 @@ fn populate_readable_metadata(snapshot: &mut RegistrySnapshot) {
                 id: id.to_string(),
                 display_name: display_name.to_string(),
                 kind: kind.to_string(),
-                blueprint_slot_ids: Vec::new(),
+                item_rule_ids: Vec::new(),
                 allowed_item_format_ids: Vec::new(),
             });
         }
@@ -600,7 +570,7 @@ fn populate_readable_metadata(snapshot: &mut RegistrySnapshot) {
                     id: policy.policy_id.clone(),
                     display_name: policy.summary.clone(),
                     kind: "scoringPolicy".to_string(),
-                    blueprint_slot_ids: Vec::new(),
+                    item_rule_ids: Vec::new(),
                     allowed_item_format_ids: Vec::new(),
                 });
             }
@@ -609,6 +579,7 @@ fn populate_readable_metadata(snapshot: &mut RegistrySnapshot) {
 }
 
 pub fn normalize_registry_snapshot(snapshot: &mut RegistrySnapshot) {
+    super::exercise_templates::project_rules(snapshot);
     // Compatibility upgrades only apply to records written before the structured
     // settings schema. Authored values, including invalid ones, must survive reads.
     if snapshot.settings_schema_version >= 1 {
@@ -635,7 +606,7 @@ pub fn normalize_registry_snapshot(snapshot: &mut RegistrySnapshot) {
             .iter()
             .map(|capability| CapabilityDifficultyProfileSet {
                 id: difficulty_profile_set_id(capability),
-                blueprint_slot_id: capability.blueprint_slot_id.clone(),
+                item_rule_id: capability.item_rule_id.clone(),
                 item_format_id: capability.item_format_id.clone(),
                 primary_can_do_id: capability.primary_can_do_id.clone(),
                 standards: snapshot.difficulty_standards.clone(),
@@ -643,17 +614,25 @@ pub fn normalize_registry_snapshot(snapshot: &mut RegistrySnapshot) {
             .collect();
     }
     populate_readable_metadata(snapshot);
-    snapshot.settings_schema_version = 1;
+    snapshot.settings_schema_version = 3;
 }
 
 pub fn prepare_registry_draft(snapshot: &mut RegistrySnapshot) {
+    super::exercise_templates::prepare_draft(snapshot);
     migrate_legacy_context_domains(snapshot);
     normalize_registry_snapshot(snapshot);
+    snapshot.settings_schema_version = 3;
+    snapshot.integrity_source = None;
+    super::legacy_identity::upgrade_task_schema(&mut snapshot.task_package_schema)
+        .expect("Registered TaskPackage schema has a version contract");
     upgrade_draft_context_schema(snapshot);
     super::registry_content::hydrate_draft_content_metadata(snapshot);
-    // Historical slot lists described broad candidates. A newly authored draft
+    // Historical Context lists described broad candidates. A newly authored draft
     // starts with exactly the contexts item creation can actually select.
     for capability in &mut snapshot.capabilities {
+        if super::exercise_templates::exercise_type(&capability.item_format_id).is_some() {
+            continue;
+        }
         let primary_can_do_id = &capability.primary_can_do_id;
         capability.allowed_context_ids.retain(|id| {
             snapshot.context_options.iter().any(|context| {
@@ -677,6 +656,28 @@ pub fn prepare_registry_draft(snapshot: &mut RegistrySnapshot) {
             })
             .cloned()
             .collect();
+    }
+    simplify_language_content(snapshot);
+}
+
+/// Detect restrictions that a current draft must clear before publication.
+pub fn language_content_has_exceptions(snapshot: &RegistrySnapshot) -> bool {
+    snapshot.content_id_options.iter().any(|entry| {
+        !entry.context_ids.is_empty()
+            || !entry.assessment_rules.is_empty()
+            || entry.metadata.contains_key("contextScopeMode")
+            || entry.metadata.contains_key("excludedContextIds")
+    })
+}
+
+/// New drafts use the item rule's Context and review requirements directly.
+/// Historical published snapshots are never rewritten.
+pub fn simplify_language_content(snapshot: &mut RegistrySnapshot) {
+    for entry in &mut snapshot.content_id_options {
+        entry.context_ids.clear();
+        entry.assessment_rules.clear();
+        entry.metadata.remove("contextScopeMode");
+        entry.metadata.remove("excludedContextIds");
     }
 }
 
@@ -751,24 +752,19 @@ pub fn hydrate_published_registry_snapshot(snapshot: &mut RegistrySnapshot) {
 
 pub fn capability_for<'a>(
     snapshot: &'a RegistrySnapshot,
-    blueprint_slot_id: &str,
+    item_rule_id: &str,
     item_format_id: &str,
     primary_can_do_id: Option<&str>,
 ) -> Option<&'a WorkbenchCapability> {
-    if let Some(primary_can_do_id) = primary_can_do_id {
-        return snapshot.capabilities.iter().find(|capability| {
-            capability.blueprint_slot_id == blueprint_slot_id
-                && capability.item_format_id == item_format_id
-                && capability.primary_can_do_id == primary_can_do_id
-        });
-    }
-
-    let mut matches = snapshot.capabilities.iter().filter(|capability| {
-        capability.blueprint_slot_id == blueprint_slot_id
-            && capability.item_format_id == item_format_id
-    });
+    let mut matches = snapshot
+        .capabilities
+        .iter()
+        .filter(|capability| capability.item_rule_id == item_rule_id);
     let capability = matches.next()?;
-    matches.next().is_none().then_some(capability)
+    (matches.next().is_none()
+        && capability.item_format_id == item_format_id
+        && primary_can_do_id.is_none_or(|id| capability.primary_can_do_id == id))
+    .then_some(capability)
 }
 
 pub fn context_supports_capability(
@@ -786,7 +782,7 @@ pub fn difficulty_standards_for_capability<'a>(
         .capability_difficulty_profile_sets
         .iter()
         .find(|profile| {
-            profile.blueprint_slot_id == capability.blueprint_slot_id
+            profile.item_rule_id == capability.item_rule_id
                 && profile.item_format_id == capability.item_format_id
                 && profile.primary_can_do_id == capability.primary_can_do_id
         })
@@ -818,14 +814,14 @@ pub static REGISTRY: Lazy<RegistrySnapshot> = Lazy::new(|| {
     .collect();
     let task_package_schema: Value =
         serde_json::from_str(TASK_PACKAGE_SCHEMA).expect("valid TaskPackage JSON schema");
-    assert_eq!(manifest.bundle_version, "0.2-provisional");
+    assert_eq!(manifest.bundle_version, "0.3-provisional");
     assert_eq!(
         candidate_schemas[0].get("$id").and_then(Value::as_str),
         Some("urn:fcc:a1:single-select:0.2")
     );
     assert_eq!(
         task_package_schema.get("$id").and_then(Value::as_str),
-        Some("urn:fcc:exam-creator:language-item-task-package:0.1")
+        Some("urn:fcc:exam-creator:language-item-task-package:0.2")
     );
 
     let mut content_id_options = Vec::new();
@@ -867,7 +863,7 @@ pub static REGISTRY: Lazy<RegistrySnapshot> = Lazy::new(|| {
         .iter()
         .map(|capability| CapabilityDifficultyProfileSet {
             id: difficulty_profile_set_id(capability),
-            blueprint_slot_id: capability.blueprint_slot_id.clone(),
+            item_rule_id: capability.item_rule_id.clone(),
             item_format_id: capability.item_format_id.clone(),
             primary_can_do_id: capability.primary_can_do_id.clone(),
             standards: difficulty_standards.clone(),
@@ -875,13 +871,16 @@ pub static REGISTRY: Lazy<RegistrySnapshot> = Lazy::new(|| {
         .collect();
 
     let mut registry = RegistrySnapshot {
+        integrity_source: None,
         settings_schema_version: 0,
+        exercise_template_rules: vec![],
+        exercise_template_schemas: Default::default(),
         bundle_version: manifest.bundle_version,
         status: manifest.status,
         limitations: manifest.limitations,
-        source_fingerprint: "a1-registry:0.2-provisional:authoring-contracts-0.5".to_string(),
+        source_fingerprint: "a1-registry:0.3-provisional:item-rule-identity".to_string(),
         capabilities,
-        blueprint_slots: Vec::new(),
+
         task_family_options: Vec::new(),
         reference_labels: Vec::new(),
         candidate_schemas,
@@ -911,6 +910,7 @@ pub static REGISTRY: Lazy<RegistrySnapshot> = Lazy::new(|| {
         .into_iter()
         .map(str::to_string)
         .collect(),
+        review_rule_sets: Vec::new(),
     };
     populate_readable_metadata(&mut registry);
     registry
@@ -962,7 +962,7 @@ pub fn install_published_snapshot(snapshot: RegistrySnapshot, make_active: bool)
 }
 
 fn capabilities() -> Vec<WorkbenchCapability> {
-    let slot_anchors = list_anchors(SLOT_REGISTRY);
+    let rule_anchors = list_anchors(ITEM_RULE_REGISTRY);
     let can_do_details: HashMap<_, _> = entry_blocks(CAN_DO_REGISTRY, "canDoId")
         .into_iter()
         .map(|(id, block)| {
@@ -983,11 +983,11 @@ fn capabilities() -> Vec<WorkbenchCapability> {
             )
         })
         .collect();
-    let reference_tasks: HashMap<_, _> = entry_blocks(REFERENCE_TASK_REGISTRY, "slot")
+    let reference_tasks: HashMap<_, _> = entry_blocks(REFERENCE_TASK_REGISTRY, "itemRuleId")
         .into_iter()
-        .map(|(slot_id, block)| {
+        .map(|(rule_id, block)| {
             (
-                slot_id,
+                rule_id,
                 (
                     block_scalar(&block, &["valid"]).unwrap_or_default(),
                     block_scalar(&block, &["invalid"]).unwrap_or_default(),
@@ -995,17 +995,14 @@ fn capabilities() -> Vec<WorkbenchCapability> {
             )
         })
         .collect();
-    let scoring_by_slot_and_format: HashMap<_, _> =
+    let scoring_by_rule_and_format: HashMap<_, _> =
         entry_blocks(SCORING_REGISTRY, "scoringContractTemplateId")
             .into_iter()
-            .filter_map(|(id, block)| {
-                Some((
-                    (
-                        block_scalar(&block, &["blueprintSlotId"])?,
-                        block_scalar(&block, &["itemFormatId"])?,
-                    ),
-                    id,
-                ))
+            .flat_map(|(id, block)| {
+                let format = block_scalar(&block, &["itemFormatId"]).unwrap_or_default();
+                block_list(&block, "itemRuleIds", &HashMap::new())
+                    .into_iter()
+                    .map(move |rule| ((rule, format.clone()), id.clone()))
             })
             .collect();
     let renderer_details: HashMap<_, _> = entry_blocks(RENDERER_REGISTRY, "rendererId")
@@ -1022,20 +1019,20 @@ fn capabilities() -> Vec<WorkbenchCapability> {
         .collect();
 
     let mut result = Vec::new();
-    for (slot_id, block) in entry_blocks(SLOT_REGISTRY, "blueprintSlotId") {
-        let title = block_scalar(&block, &["title"]).unwrap_or_else(|| slot_id.clone());
+    for (rule_id, block) in entry_blocks(ITEM_RULE_REGISTRY, "itemRuleId") {
+        let title = block_scalar(&block, &["title"]).unwrap_or_else(|| rule_id.clone());
         let task_family_id = block_scalar(&block, &["taskFamilyId"]).unwrap_or_default();
         let primary_can_do_id = block_scalar(&block, &["primaryCanDoId"]).unwrap_or_default();
-        let supporting_can_do_ids = block_list(&block, "supportingCanDoIds", &slot_anchors);
+        let supporting_can_do_ids = block_list(&block, "supportingCanDoIds", &rule_anchors);
         let primary_reported_skill =
             block_scalar(&block, &["primaryReportedSkill"]).unwrap_or_default();
-        let communicative_activities = block_list(&block, "communicativeActivities", &slot_anchors);
+        let communicative_activities = block_list(&block, "communicativeActivities", &rule_anchors);
         let communicative_activity = communicative_activities
             .first()
             .cloned()
             .unwrap_or_default();
-        let allowed_domains = block_list(&block, "allowedDomains", &slot_anchors);
-        let allowed_context_ids = block_list(&block, "allowedContextIds", &slot_anchors);
+        let allowed_domains = block_list(&block, "allowedDomains", &rule_anchors);
+        let allowed_context_ids = block_list(&block, "allowedContextIds", &rule_anchors);
         let (observable_evidence, a1_boundary) = can_do_details
             .get(&primary_can_do_id)
             .cloned()
@@ -1045,25 +1042,35 @@ fn capabilities() -> Vec<WorkbenchCapability> {
             .cloned()
             .unwrap_or_default();
         let (reference_task, invalid_reference_task) =
-            reference_tasks.get(&slot_id).cloned().unwrap_or_default();
+            reference_tasks.get(&rule_id).cloned().unwrap_or_default();
 
-        for item_format_id in block_list(&block, "allowedItemFormatIds", &slot_anchors) {
+        for item_format_id in block_list(&block, "allowedItemFormatIds", &rule_anchors) {
             let Some((renderer_id, task_structure)) = implementation_for(&item_format_id) else {
                 continue;
             };
-            let Some(scoring_contract_template_id) = scoring_by_slot_and_format
-                .get(&(slot_id.clone(), item_format_id.clone()))
+            let Some(scoring_contract_template_id) = scoring_by_rule_and_format
+                .get(&(rule_id.clone(), item_format_id.clone()))
                 .cloned()
             else {
                 continue;
             };
-            let delivery_policy_refs = delivery_policy_for(&slot_id, &item_format_id);
+            let delivery_policy_refs = DeliveryPolicyRefs {
+                navigation_policy_id: block_scalar(&block, &["navigationPolicyId"])
+                    .unwrap_or_default(),
+                input_policy_id: block_scalar(&block, &["inputPolicyId"]).unwrap_or_default(),
+                playback_policy_id: block_scalar(&block, &["playbackPolicyId"]).unwrap_or_default(),
+                recording_policy_id: block_scalar(&block, &["recordingPolicyId"])
+                    .unwrap_or_default(),
+                speaking_rate_profile_id: block_scalar(&block, &["speakingRateProfileId"])
+                    .unwrap_or_default(),
+                pause_profile_id: block_scalar(&block, &["pauseProfileId"]).unwrap_or_default(),
+            };
             let (renderer_implementation_status, renderer_required_work) = renderer_details
                 .get(renderer_id)
                 .cloned()
                 .unwrap_or_default();
             result.push(WorkbenchCapability {
-                blueprint_slot_id: slot_id.clone(),
+                item_rule_id: rule_id.clone(),
                 title: title.clone(),
                 task_family_id: task_family_id.clone(),
                 item_format_id,
@@ -1092,55 +1099,6 @@ fn capabilities() -> Vec<WorkbenchCapability> {
         }
     }
     result
-}
-
-fn delivery_policy_for(slot_id: &str, item_format_id: &str) -> DeliveryPolicyRefs {
-    DeliveryPolicyRefs {
-        navigation_policy_id: if slot_id.starts_with("L-") {
-            "NAV-FORWARD-TASK-v0.1"
-        } else if slot_id.starts_with("S-") {
-            "NAV-FORWARD-RECORDING-v0.1"
-        } else {
-            "NAV-REVIEW-WITHIN-MODULE-v0.1"
-        }
-        .to_string(),
-        input_policy_id: if item_format_id == "IF-RESTRICTED-INPUT" {
-            "INPUT-RESTRICTED-FIELD-v0.1"
-        } else if slot_id.starts_with("W-") {
-            "INPUT-EXAM-STANDARDIZED-PINYIN-v0.1"
-        } else {
-            "notApplicable"
-        }
-        .to_string(),
-        playback_policy_id: if slot_id.starts_with("L-") {
-            "PLAY-COMPLETE-TWICE-v0.1"
-        } else {
-            "notApplicable"
-        }
-        .to_string(),
-        recording_policy_id: if matches!(slot_id, "S-A1-1" | "S-A1-3") {
-            "REC-MULTITURN-A1-v0.1"
-        } else if slot_id.starts_with("S-") {
-            "REC-SINGLE-A1-v0.1"
-        } else {
-            "notApplicable"
-        }
-        .to_string(),
-        speaking_rate_profile_id: if slot_id.starts_with('L') || slot_id.starts_with('S') {
-            "RATE-A1-CLEAR-SLOW-v0.1"
-        } else {
-            "notApplicable"
-        }
-        .to_string(),
-        pause_profile_id: if matches!(slot_id, "L-A1-2" | "S-A1-1" | "S-A1-3") {
-            "PAUSE-A1-DIALOGUE-v0.1"
-        } else if slot_id.starts_with('L') || slot_id.starts_with('S') {
-            "PAUSE-A1-SENTENCE-v0.1"
-        } else {
-            "notApplicable"
-        }
-        .to_string(),
-    }
 }
 
 fn implementation_for(item_format_id: &str) -> Option<(&'static str, &'static str)> {
@@ -1271,19 +1229,29 @@ fn scoring_contracts() -> Vec<ScoringContractSummary> {
             .map(|version| vec![format!("benchmarkSetVersion: {version}")])
             .unwrap_or_default(),
     };
-    let task_specific_criteria =
-        section_entry_blocks(SCORING_REGISTRY, "taskSpecificCriteria", "blueprintSlotId")
-            .into_iter()
-            .map(|(slot_id, block)| {
-                (
-                    slot_id,
-                    (
-                        block_list(&block, "requirements", &HashMap::new()),
-                        block_scalar(&block, &["capOrExclusion"]),
-                    ),
-                )
-            })
-            .collect::<HashMap<_, _>>();
+    let scoring_source: Value =
+        serde_yaml_ng::from_str(SCORING_REGISTRY).expect("Scoring registry is valid YAML");
+    let task_specific_criteria = scoring_source["taskSpecificCriteria"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .flat_map(|entry| {
+            let requirements = entry["requirements"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_str)
+                .map(str::to_string)
+                .collect::<Vec<_>>();
+            let cap = entry["capOrExclusion"].as_str().map(str::to_string);
+            entry["itemRuleIds"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_str)
+                .map(move |id| (id.to_string(), (requirements.clone(), cap.clone())))
+        })
+        .collect::<HashMap<_, _>>();
 
     section_entry_blocks(
         SCORING_REGISTRY,
@@ -1292,7 +1260,7 @@ fn scoring_contracts() -> Vec<ScoringContractSummary> {
     )
     .into_iter()
     .map(|(id, block)| {
-        let blueprint_slot_id = block_scalar(&block, &["blueprintSlotId"]).unwrap_or_default();
+        let item_rule_ids = block_list(&block, "itemRuleIds", &HashMap::new());
         let normalization_rule_id =
             block_scalar(&block, &["normalizationRuleId"]).unwrap_or_default();
         let partial_credit_policy_id =
@@ -1304,7 +1272,7 @@ fn scoring_contracts() -> Vec<ScoringContractSummary> {
         let rater_qualification_policy_id =
             block_scalar(&block, &["raterQualificationPolicyId"]).unwrap_or_default();
         let (task_specific_requirements, cap_or_exclusion) = task_specific_criteria
-            .get(&blueprint_slot_id)
+            .get(item_rule_ids.first().map(String::as_str).unwrap_or(""))
             .cloned()
             .unwrap_or_default();
 
@@ -1312,7 +1280,7 @@ fn scoring_contracts() -> Vec<ScoringContractSummary> {
             scoring_contract_template_id: id,
             display_name: String::new(),
             template_version: block_scalar(&block, &["templateVersion"]).unwrap_or_default(),
-            blueprint_slot_id,
+            item_rule_ids,
             item_format_id: block_scalar(&block, &["itemFormatId"]).unwrap_or_default(),
             scoring_type: block_scalar(&block, &["scoringType"]).unwrap_or_default(),
             normalization: policy_or_not_applicable(&normalization_rule_id, &normalization_rules),
@@ -1374,6 +1342,7 @@ fn content_ids(source: &str, key: &str, kind: &str, label_keys: &[&str]) -> Vec<
             can_do_ids: block_list(&block, "canDoIds", &anchors),
             context_ids: block_list(&block, "contextIds", &anchors),
             mastery_scope: block_scalar(&block, &["masteryScope"]),
+            level: None,
             meaning: None,
             pattern: None,
             pinyin: None,
@@ -1570,6 +1539,7 @@ mod tests {
     use std::collections::HashSet;
 
     use super::*;
+    use crate::language_items::legacy_identity::legacy_rule_id;
 
     #[test]
     fn explicit_primary_can_do_never_falls_back_to_a_different_capability() {
@@ -1578,43 +1548,29 @@ mod tests {
         assert!(
             capability_for(
                 &registry,
-                &first.blueprint_slot_id,
+                &first.item_rule_id,
                 &first.item_format_id,
                 Some("unknown")
             )
             .is_none()
         );
         assert!(
-            capability_for(
-                &registry,
-                &first.blueprint_slot_id,
-                &first.item_format_id,
-                None
-            )
-            .is_some()
+            capability_for(&registry, &first.item_rule_id, &first.item_format_id, None).is_some()
         );
         let mut second = first.clone();
         second.primary_can_do_id = "A1-R2".to_string();
         registry.capabilities.push(second);
         assert!(
-            capability_for(
-                &registry,
-                &first.blueprint_slot_id,
-                &first.item_format_id,
-                None
-            )
-            .is_none()
+            capability_for(&registry, &first.item_rule_id, &first.item_format_id, None).is_none()
         );
-        assert_eq!(
+        assert!(
             capability_for(
                 &registry,
-                &first.blueprint_slot_id,
+                &first.item_rule_id,
                 &first.item_format_id,
                 Some("A1-R2")
             )
-            .unwrap()
-            .primary_can_do_id,
-            "A1-R2"
+            .is_none()
         );
     }
 
@@ -1623,7 +1579,6 @@ mod tests {
         let mut serialized = serde_json::to_value(snapshot()).unwrap();
         for field in [
             "settingsSchemaVersion",
-            "blueprintSlots",
             "taskFamilyOptions",
             "referenceLabels",
             "capabilityDifficultyProfileSets",
@@ -1640,14 +1595,19 @@ mod tests {
         let mut restored: RegistrySnapshot = serde_json::from_value(serialized).unwrap();
         normalize_registry_snapshot(&mut restored);
         assert_eq!(restored.bundle_version, snapshot().bundle_version);
-        assert_eq!(restored.blueprint_slots.len(), 15);
+        assert!(
+            restored
+                .capabilities
+                .iter()
+                .all(|rule| !rule.title.is_empty())
+        );
         assert_eq!(
             restored.capabilities.len(),
             restored.capability_difficulty_profile_sets.len()
         );
         assert_eq!(
-            restored.capabilities[0].blueprint_slot_id,
-            snapshot().capabilities[0].blueprint_slot_id
+            restored.capabilities[0].item_rule_id,
+            snapshot().capabilities[0].item_rule_id
         );
         assert!(
             restored
@@ -1698,17 +1658,69 @@ mod tests {
     fn published_legacy_hydration_preserves_pinned_validation_semantics() {
         let mut published = snapshot().clone();
         published.settings_schema_version = 0;
-        published.blueprint_slots.clear();
         published.capability_difficulty_profile_sets.clear();
         let contexts = published.capabilities[0].allowed_context_ids.clone();
+        let title = published.capabilities[0].title.clone();
         hydrate_published_registry_snapshot(&mut published);
         assert_eq!(published.settings_schema_version, 0);
-        assert!(!published.blueprint_slots.is_empty());
+        assert_eq!(published.capabilities[0].title, title);
         assert_eq!(published.capabilities[0].allowed_context_ids, contexts);
         let mut draft = published.clone();
         prepare_registry_draft(&mut draft);
-        assert_eq!(draft.settings_schema_version, 1);
+        assert_eq!(draft.settings_schema_version, 3);
         assert_eq!(published.settings_schema_version, 0);
+    }
+
+    #[test]
+    fn new_drafts_remove_content_exceptions_without_rewriting_published_settings() {
+        let mut published = snapshot().clone();
+        let content = &mut published.content_id_options[0];
+        content.context_ids = vec!["D09".into()];
+        content
+            .metadata
+            .insert("contextScopeMode".into(), serde_json::json!("selected"));
+        content
+            .metadata
+            .insert("excludedContextIds".into(), serde_json::json!([]));
+        content.assessment_rules.push(
+            serde_json::from_value(serde_json::json!({
+                "itemRuleId": "rule", "itemFormatId": "IF-SINGLE-SELECT",
+                "primaryCanDoId": "can-do", "contextId": "D09", "applicability": "excluded"
+            }))
+            .unwrap(),
+        );
+        let before = serde_json::to_value(&published.content_id_options[0]).unwrap();
+        let mut draft = published.clone();
+        assert!(language_content_has_exceptions(&draft));
+        prepare_registry_draft(&mut draft);
+        assert!(!language_content_has_exceptions(&draft));
+        let current = &draft.content_id_options[0];
+        assert!(current.context_ids.is_empty());
+        assert!(current.assessment_rules.is_empty());
+        assert!(!current.metadata.contains_key("contextScopeMode"));
+        assert!(!current.metadata.contains_key("excludedContextIds"));
+        assert_eq!(
+            serde_json::to_value(&published.content_id_options[0]).unwrap(),
+            before
+        );
+    }
+
+    #[test]
+    fn new_draft_upgrades_task_identity_schema_without_changing_published_schema() {
+        let mut published = snapshot().clone();
+        published.task_package_schema["properties"]["specVersions"]["properties"]["taskPackageVersion"] =
+            serde_json::json!({"const":"0.1"});
+        let original = serde_json::to_value(&published).unwrap();
+        let mut draft = published.clone();
+        prepare_registry_draft(&mut draft);
+        assert_eq!(draft.settings_schema_version, 3);
+        assert_eq!(
+            draft
+                .task_package_schema
+                .pointer("/properties/specVersions/properties/taskPackageVersion/const"),
+            Some(&serde_json::json!("0.2"))
+        );
+        assert_eq!(serde_json::to_value(&published).unwrap(), original);
     }
 
     #[test]
@@ -1805,20 +1817,24 @@ mod tests {
             );
             let mut draft = published.clone();
             prepare_registry_draft(&mut draft);
-            for (slot, context_id) in [("W-A1-2", "D19"), ("W-A1-3", "D20"), ("S-A1-4", "D20")] {
+            for (source, format, primary, context_id) in [
+                ("W-A1-2", "IF-TYPED-MESSAGE", "A1-W2", "D19"),
+                ("W-A1-3", "IF-TYPED-MESSAGE", "A1-M2", "D20"),
+                ("S-A1-4", "IF-SPOKEN-SINGLE", "A1-M1", "D20"),
+            ] {
+                let rule_id = legacy_rule_id(source, format, primary).unwrap();
                 let context = draft
                     .context_options
                     .iter()
                     .find(|entry| entry.id == context_id)
                     .unwrap();
                 assert_eq!(context.primary_domains, ["Personal"]);
-                assert!(
-                    draft
-                        .capabilities
-                        .iter()
-                        .filter(|entry| entry.blueprint_slot_id == slot)
-                        .all(|entry| entry.allowed_context_ids.contains(&context_id.to_string()))
-                );
+                let rule = draft
+                    .capabilities
+                    .iter()
+                    .find(|entry| entry.item_rule_id == rule_id)
+                    .expect("Migrated rule exists");
+                assert!(rule.allowed_context_ids.contains(&context_id.to_string()));
             }
             let validation = super::super::registry_store::validate_registry(&draft);
             assert!(validation.valid, "{:?}", validation.issues);
@@ -1883,8 +1899,11 @@ mod tests {
             .map(|entry| entry.id.as_str())
             .collect();
 
-        assert_eq!(registry.bundle_version, "0.2-provisional");
-        assert_eq!(capability.blueprint_slot_id, "R-A1-1");
+        assert_eq!(registry.bundle_version, "0.3-provisional");
+        assert_eq!(
+            capability.item_rule_id,
+            legacy_rule_id("R-A1-1", "IF-SINGLE-SELECT", "A1-R1").unwrap()
+        );
         assert_eq!(capability.item_format_id, "IF-SINGLE-SELECT");
         assert_eq!(registry.capabilities.len(), 21);
         assert_eq!(
@@ -1901,7 +1920,7 @@ mod tests {
             .capabilities
             .iter()
             .find(|entry| {
-                entry.blueprint_slot_id == "R-A1-2" && entry.item_format_id == "IF-SINGLE-SELECT"
+                entry.item_rule_id == legacy_rule_id("R-A1-2", "IF-SINGLE-SELECT", "A1-R2").unwrap()
             })
             .expect("R-A1-2 single-select capability");
         assert!(
@@ -1913,10 +1932,10 @@ mod tests {
             registry
                 .capabilities
                 .iter()
-                .map(|entry| entry.blueprint_slot_id.as_str())
+                .map(|entry| entry.item_rule_id.as_str())
                 .collect::<HashSet<_>>()
                 .len(),
-            15
+            21
         );
         assert_eq!(
             registry
@@ -1976,7 +1995,9 @@ mod tests {
             .scoring_contracts
             .iter()
             .find(|entry| {
-                entry.blueprint_slot_id == "R-A1-3" && entry.item_format_id == "IF-MATCHING"
+                entry
+                    .item_rule_ids
+                    .contains(&legacy_rule_id("R-A1-3", "IF-MATCHING", "A1-R2").unwrap())
             })
             .expect("R-A1-3 matching scoring contract");
 
@@ -1996,7 +2017,11 @@ mod tests {
         let writing = registry
             .scoring_contracts
             .iter()
-            .find(|entry| entry.blueprint_slot_id == "W-A1-2")
+            .find(|entry| {
+                entry
+                    .item_rule_ids
+                    .contains(&legacy_rule_id("W-A1-2", "IF-TYPED-MESSAGE", "A1-W2").unwrap())
+            })
             .expect("W-A1-2 scoring contract");
         assert_eq!(writing.scoring_type, "analyticRubric");
         assert_eq!(writing.rubric_id, "RUB-W-A1-v0.1");

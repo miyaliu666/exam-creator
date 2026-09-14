@@ -2,11 +2,13 @@ use std::collections::HashSet;
 
 use super::{
     content_assessment::content_is_excluded,
+    content_context::content_context_matches,
     domain::{CandidatePayload, Stimulus, TaskPackage, ValidationIssue, ValidationResult},
     registry::{
         RegistrySnapshot, capability_for, context_supports_capability,
         difficulty_standards_for_capability, snapshot_for,
     },
+    registry_content::content_matches_language,
 };
 
 #[cfg(test)]
@@ -36,7 +38,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
     };
     let capability = capability_for(
         &registry,
-        &package.blueprint_slot_id,
+        &package.item_rule_id,
         &package.item_format_id,
         Some(&package.content.primary_can_do_id),
     );
@@ -132,9 +134,11 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                 "The selected Domain is not allowed by these item rules",
             );
         }
-        if !capability
-            .allowed_context_ids
-            .contains(&package.content.context_id)
+        if !(super::exercise_templates::exercise_type(&package.item_format_id).is_some()
+            && capability.allowed_context_ids.is_empty())
+            && !capability
+                .allowed_context_ids
+                .contains(&package.content.context_id)
         {
             issue(
                 &mut issues,
@@ -148,7 +152,7 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
             &mut issues,
             "registry.capability",
             "itemFormatId",
-            "This item format is not registered for the selected blueprint slot",
+            "This item format is not registered for the selected item rule",
         );
     }
     check_equal(
@@ -170,7 +174,11 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
         "contract.version",
         "specVersions.taskPackageVersion",
         &package.spec_versions.task_package_version,
-        "0.1",
+        if package.integrity_provenance.is_some() {
+            "0.1"
+        } else {
+            "0.2"
+        },
     );
     validate_authoring_setup(package, &registry, &mut issues);
     if !registry
@@ -227,10 +235,8 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
                     can_do_id == &capability.primary_can_do_id
                         || capability.supporting_can_do_ids.contains(can_do_id)
                 });
-            let context_matches = content_option.context_ids.is_empty()
-                || content_option
-                    .context_ids
-                    .contains(&package.content.context_id);
+            let context_matches =
+                content_context_matches(content_option, &package.content.context_id);
             let mastery_matches = mastery_scope_matches(
                 content_option.mastery_scope.as_deref(),
                 &capability.primary_reported_skill,
@@ -358,11 +364,14 @@ pub fn validate_task_package(package: &TaskPackage) -> ValidationResult {
     }
     validate_candidate_payload(package, &mut issues);
     validate_item_scoring_spec(package, &mut issues);
-    issues.extend(super::english_translations::validate_english_translations(
-        &package.candidate_payload,
-        &package.authoring_package.english_translations,
-        false,
-    ));
+    issues.extend(
+        super::english_translations::validate_english_translations_for_registry(
+            &package.candidate_payload,
+            &package.authoring_package.english_translations,
+            false,
+            &registry,
+        ),
+    );
 
     ValidationResult {
         valid: !issues.iter().any(|issue| issue.severity == "error"),
@@ -457,6 +466,7 @@ fn validate_item_scoring_spec(package: &TaskPackage, issues: &mut Vec<Validation
     }
 
     let expected_unit_ids: Vec<String> = match &package.candidate_payload {
+        CandidatePayload::ExerciseTemplate(_) => vec![],
         CandidatePayload::SingleSelect(_) => vec!["SP-ITEM".to_string()],
         CandidatePayload::Matching(payload) => payload
             .left_items
@@ -554,6 +564,30 @@ fn validate_candidate_private_metadata(
 
 pub fn validate_candidate_privacy(package: &TaskPackage) -> Vec<ValidationIssue> {
     let mut issues = Vec::new();
+    if matches!(
+        package.candidate_payload,
+        CandidatePayload::ExerciseTemplate(_)
+    ) {
+        let expected = package
+            .authoring_package
+            .exercise_template
+            .as_ref()
+            .and_then(|source| {
+                snapshot_for(&package.spec_versions.registry_bundle_version).and_then(|registry| {
+                    super::exercise_templates::project_candidate_for_registry(source, &registry)
+                        .ok()
+                })
+            })
+            .and_then(|projected| serde_json::to_value(projected).ok());
+        if expected.is_none() || expected != serde_json::to_value(&package.candidate_payload).ok() {
+            issue(
+                &mut issues,
+                "contract.exerciseTemplateProjection",
+                "candidatePayload",
+                "Candidate exercise content must equal its safe projection; private or unknown fields cannot be supplied directly.",
+            );
+        }
+    }
     let candidate = serde_json::to_value(&package.candidate_payload)
         .expect("candidate payload is serializable");
     validate_candidate_private_metadata(&candidate, "candidatePayload", &mut issues);
@@ -563,6 +597,13 @@ pub fn validate_candidate_privacy(package: &TaskPackage) -> Vec<ValidationIssue>
 fn validate_candidate_payload(package: &TaskPackage, issues: &mut Vec<ValidationIssue>) {
     issues.extend(validate_candidate_privacy(package));
     match &package.candidate_payload {
+        CandidatePayload::ExerciseTemplate(_) => {
+            if let Some(registry) = snapshot_for(&package.spec_versions.registry_bundle_version) {
+                issues.extend(super::exercise_templates::package_issues(
+                    package, &registry,
+                ));
+            }
+        }
         CandidatePayload::SingleSelect(payload) => {
             validate_stimulus(&payload.stimulus, "candidatePayload.stimulus", issues);
             required(
@@ -1061,9 +1102,41 @@ fn validate_authoring_setup(
     registry: &RegistrySnapshot,
     issues: &mut Vec<ValidationIssue>,
 ) {
+    let language = package.content.effective_language();
+    if !["zh", "en", "es"].contains(&language) {
+        issue(
+            issues,
+            "authoring.language",
+            "content.language",
+            "Select Chinese, English, or Spanish as the item language",
+        );
+    }
+    if let Some(source) = &package.authoring_package.exercise_template
+        && package.content.language.is_some()
+    {
+        if source
+            .data
+            .get("language")
+            .and_then(serde_json::Value::as_str)
+            .is_some_and(|source_language| {
+                let normalized = source_language
+                    .split(['-', '_'])
+                    .next()
+                    .unwrap_or(source_language);
+                normalized != language
+            })
+        {
+            issue(
+                issues,
+                "authoring.exerciseLanguage",
+                "authoringPackage.exerciseTemplate.data.language",
+                "Exercise content language must match the fixed item language",
+            );
+        }
+    }
     let capability = capability_for(
         registry,
-        &package.blueprint_slot_id,
+        &package.item_rule_id,
         &package.item_format_id,
         Some(&package.content.primary_can_do_id),
     );
@@ -1084,23 +1157,31 @@ fn validate_authoring_setup(
             "The selected Domain is not allowed by these item rules",
         );
     }
-    if capability.is_none_or(|entry| {
-        !entry
-            .allowed_context_ids
-            .contains(&package.content.context_id)
-    }) {
+    let optional_exercise_context =
+        super::exercise_templates::exercise_type(&package.item_format_id).is_some()
+            && capability.is_some_and(|entry| entry.allowed_context_ids.is_empty());
+    if !optional_exercise_context
+        && capability.is_none_or(|entry| {
+            !entry
+                .allowed_context_ids
+                .contains(&package.content.context_id)
+        })
+    {
         issue(
             issues,
             "authoring.context",
             "content.contextId",
             "The selected Context is not allowed by these item rules",
         );
-    } else if context.is_none_or(|entry| {
-        !entry
-            .primary_domains
-            .contains(&package.content.primary_domain)
-            || capability.is_none_or(|capability| !context_supports_capability(entry, capability))
-    }) {
+    } else if !(optional_exercise_context && package.content.context_id.is_empty())
+        && context.is_none_or(|entry| {
+            !entry
+                .primary_domains
+                .contains(&package.content.primary_domain)
+                || capability
+                    .is_none_or(|capability| !context_supports_capability(entry, capability))
+        })
+    {
         issue(
             issues,
             "authoring.domainContext",
@@ -1145,6 +1226,17 @@ fn validate_authoring_setup(
                 .iter()
                 .find(|entry| &entry.id == content_id)
             {
+                if !content_matches_language(content, language) {
+                    issue(
+                        issues,
+                        "authoring.contentLanguage",
+                        &path,
+                        &format!(
+                            "\"{}\" does not match this item's selected language",
+                            content.label
+                        ),
+                    );
+                }
                 if (content.kind == "supported") != supporting {
                     issue(
                         issues,
@@ -1153,8 +1245,7 @@ fn validate_authoring_setup(
                         "Core language targets and supporting content must remain in their respective sections",
                     );
                 }
-                let context_matches = content.context_ids.is_empty()
-                    || content.context_ids.contains(&package.content.context_id);
+                let context_matches = content_context_matches(content, &package.content.context_id);
                 let can_do_matches = capability.is_some_and(|capability| {
                     content.can_do_ids.is_empty()
                         || content.can_do_ids.contains(&capability.primary_can_do_id)
@@ -1246,7 +1337,7 @@ fn validate_difficulty_profile(
 ) {
     let standard = capability_for(
         registry,
-        &package.blueprint_slot_id,
+        &package.item_rule_id,
         &package.item_format_id,
         Some(&package.content.primary_can_do_id),
     )
@@ -1371,7 +1462,8 @@ fn validate_difficulty_profile(
     let uses_distractors = matches!(
         package.candidate_payload,
         CandidatePayload::SingleSelect(_) | CandidatePayload::Matching(_)
-    );
+    ) || super::exercise_templates::exercise_type(&package.item_format_id)
+        .is_some();
     let anchor_mismatch = drivers.information_points < standard.information_points_min
         || drivers.information_points > standard.information_points_max
         || !standard
@@ -1531,7 +1623,7 @@ mod tests {
             .capability_difficulty_profile_sets
             .iter_mut()
             .find(|profile| {
-                profile.blueprint_slot_id == package.blueprint_slot_id
+                profile.item_rule_id == package.item_rule_id
                     && profile.item_format_id == package.item_format_id
                     && profile.primary_can_do_id == package.content.primary_can_do_id
             })
@@ -1642,7 +1734,7 @@ mod tests {
             .capability_difficulty_profile_sets
             .iter_mut()
             .find(|profile| {
-                profile.blueprint_slot_id == package.blueprint_slot_id
+                profile.item_rule_id == package.item_rule_id
                     && profile.item_format_id == package.item_format_id
                     && profile.primary_can_do_id == package.content.primary_can_do_id
             })

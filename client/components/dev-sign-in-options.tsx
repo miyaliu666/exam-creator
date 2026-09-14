@@ -10,8 +10,9 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { getDevLoginStatus, loginWithDevIdentity } from "../utils/fetch";
+import { AuthContext } from "../contexts/auth";
 
 const presetUsers = [
   {
@@ -22,12 +23,14 @@ const presetUsers = [
 ] as const;
 
 export function DevSignInOptions() {
+  const auth = useContext(AuthContext);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const statusQuery = useQuery({
     queryKey: ["dev-login-status"],
     queryFn: getDevLoginStatus,
     retry: false,
+    enabled: !auth?.isPublicAccess,
   });
 
   const signinMutation = useMutation({
@@ -38,7 +41,7 @@ export function DevSignInOptions() {
     },
   });
 
-  if (statusQuery.data?.enabled !== true) {
+  if (auth?.isPublicAccess || statusQuery.data?.enabled !== true) {
     return null;
   }
 

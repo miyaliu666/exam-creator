@@ -1,3 +1,5 @@
+import type { ReviewCheckResult, ReviewPlan, ReviewRuleSet } from "./review-rule-types";
+
 export type LanguageItemStatus =
   | "draft"
   | "readyForReview"
@@ -122,6 +124,20 @@ export interface SpokenMultiturnCandidatePayload {
   routingRuleId: string;
 }
 
+/** Answer-free source template data for candidate-facing use. */
+export interface ExerciseTemplateCandidatePayload {
+  exerciseType: string;
+  body: string;
+  data: Record<string, unknown>;
+}
+
+/** Full source template data is accessible only to authors and reviewers. */
+export interface ExerciseTemplateAuthorData {
+  exerciseType: string;
+  body: string;
+  data: Record<string, unknown>;
+}
+
 export type CandidatePayload =
   | SingleSelectCandidatePayload
   | MatchingCandidatePayload
@@ -129,7 +145,8 @@ export type CandidatePayload =
   | FormEntryCandidatePayload
   | TypedMessageCandidatePayload
   | SpokenSingleCandidatePayload
-  | SpokenMultiturnCandidatePayload;
+  | SpokenMultiturnCandidatePayload
+  | ExerciseTemplateCandidatePayload;
 
 export interface CandidatePreview {
   taskId: string;
@@ -218,7 +235,7 @@ export interface TaskPackage {
     registryBundleVersion: string;
     taskPackageVersion: string;
   };
-  blueprintSlotId: string;
+  itemRuleId: string;
   taskFamilyId: string;
   itemFormatId: string;
   renderer: {
@@ -226,7 +243,7 @@ export interface TaskPackage {
     rendererVersion: string;
   };
   candidatePayload: CandidatePayload;
-  authoringPackage: { notes: string[]; englishTranslations?: EnglishTranslation[] };
+  authoringPackage: { notes: string[]; englishTranslations?: EnglishTranslation[]; exerciseTemplate?: ExerciseTemplateAuthorData };
   scoringPackage: {
     itemScoringVersion?: string;
     scoringContractTemplateId: string;
@@ -245,6 +262,8 @@ export interface TaskPackage {
   mediaRefs: string[];
   deliveryPolicyRefs: DeliveryPolicyRefs;
   content: {
+    /** Missing on legacy items means Chinese; fixed when the item is created. */
+    language?: string;
     primaryCanDoId: string;
     primaryReportedSkill: string;
     communicativeActivity: string;
@@ -370,6 +389,7 @@ export interface LanguageItemVersionDiff {
 }
 
 export interface AiCandidate {
+  proposedExerciseTemplate?: ExerciseTemplateAuthorData;
   id: string;
   ordinal: number;
   status: string;
@@ -405,7 +425,7 @@ export interface AiGenerationRun {
   promptVersion: string;
   outputSchemaVersion: string;
   specVersions: TaskPackage["specVersions"];
-  blueprintSlotId: string;
+  itemRuleId: string;
   taskFamilyId: string;
   itemFormatId: string;
   rendererId: string;
@@ -434,8 +454,10 @@ export interface AiGenerationRun {
 }
 
 export interface AiGenerationSetupSnapshot {
+  /** Missing on saved Chinese runs means Chinese. */
+  language?: string;
   specVersions: TaskPackage["specVersions"];
-  blueprintSlotId: string;
+  itemRuleId: string;
   taskFamilyId: string;
   itemFormatId: string;
   rendererId: string;
@@ -458,6 +480,19 @@ export interface AiFinding {
   message: string;
 }
 
+export interface BlindAnswerAttempt {
+  protocolVersion: "1";
+  promptVersion: "0.1";
+  inputHash: string;
+  simulated: boolean;
+  status: "answered" | "ambiguous" | "insufficientInformation";
+  answer: string;
+  alternatives: string[];
+  reasoning: string;
+  evidence: Array<{ fieldPath: string; quote: string }>;
+  limitations: string[];
+}
+
 export interface AiReviewRun {
   id: string;
   versionId: string | null;
@@ -472,6 +507,9 @@ export interface AiReviewRun {
   schemaVersion: string;
   specVersions: TaskPackage["specVersions"];
   findings: AiFinding[];
+  blindAnswer?: BlindAnswerAttempt;
+  reviewPlan?: ReviewPlan;
+  checkResults?: ReviewCheckResult[];
   status: string;
   error: string | null;
   createdBy: string;
@@ -558,7 +596,7 @@ export interface ScoringContractSummary {
   scoringContractTemplateId: string;
   displayName?: string;
   templateVersion: string;
-  blueprintSlotId: string;
+  itemRuleIds: string[];
   itemFormatId: string;
   scoringType: string;
   normalization: ScoringPolicySummary;
@@ -595,7 +633,7 @@ export interface DifficultyBandStandard {
 }
 
 export interface RegistryCapability {
-  blueprintSlotId: string;
+  itemRuleId: string;
   title: string;
   taskFamilyId: string;
   itemFormatId: string;
@@ -636,14 +674,14 @@ export interface RegistryContext {
 
 export interface CapabilityDifficultyProfileSet {
   id: string;
-  blueprintSlotId: string;
+  itemRuleId: string;
   itemFormatId: string;
   primaryCanDoId: string;
   standards: DifficultyBandStandard[];
 }
 
 export interface ContentAssessmentRule {
-  blueprintSlotId: string;
+  itemRuleId: string;
   itemFormatId: string;
   primaryCanDoId: string;
   contextId: string;
@@ -662,9 +700,14 @@ export interface ContentAssessmentRule {
 export interface ContentIdOption {
   id: string;
   kind: string;
+  /** Absent on legacy Chinese entries; new entries store an explicit language. */
+  language?: string;
   label: string;
+  level?: string;
   canDoIds: string[];
   contextIds: string[];
+  contextScopeMode?: "all" | "selected";
+  excludedContextIds?: string[];
   masteryScope: string | null;
   meaning?: string;
   pattern?: string;
@@ -679,20 +722,36 @@ export interface ContentIdOption {
   [key: string]: unknown;
 }
 
+export interface ExerciseTemplateRule {
+  id: string;
+  primaryCanDoId: string;
+  exerciseType: string;
+  enabled: boolean;
+  allowedDomains: string[];
+  /** Empty permits an author-described scenario without a registered Context. */
+  allowedContextIds: string[];
+  taskRequirements: string;
+  difficultyStandards: DifficultyBandStandard[];
+  scoring: {
+    method: "exactMatch" | "perResponse" | "analyticRubric";
+    criteria: string;
+    normalizationPolicy: string;
+  };
+  reviewCriteria: string[];
+  defaults: Record<string, unknown>;
+}
+
 export interface RegistrySnapshot {
+  exerciseTemplateRules?: ExerciseTemplateRule[];
+  exerciseTemplateSchemas?: Record<string, unknown>;
+  reviewRuleSets?: ReviewRuleSet[];
   settingsSchemaVersion?: number;
   bundleVersion: string;
   status: string;
   limitations: string[];
   sourceFingerprint: string;
   capabilities: RegistryCapability[];
-  blueprintSlots?: Array<{
-    id: string;
-    displayName: string;
-    description: string;
-    allowedItemFormatIds: string[];
-  }>;
-  taskFamilyOptions?: Array<{ id: string; displayName: string; blueprintSlotIds?: string[]; allowedItemFormatIds?: string[] }>;
+  taskFamilyOptions?: Array<{ id: string; displayName: string; itemRuleIds?: string[]; allowedItemFormatIds?: string[] }>;
   referenceLabels?: Array<{ id: string; displayName: string; kind: string }>;
   candidateSchemas: unknown[];
   taskPackageSchema: unknown;

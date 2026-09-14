@@ -2,7 +2,9 @@ use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
 
-use super::domain::{TaskPackage, task_package_hash};
+use super::domain::TaskPackage;
+#[cfg(test)]
+use super::domain::task_package_hash;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -131,11 +133,7 @@ pub fn evidence_is_current(record: &ItemEvidence, package: &TaskPackage) -> bool
 }
 
 pub fn evidence_content_hash(package: &TaskPackage) -> String {
-    let mut reviewed = package.clone();
-    // Freezing and review bookkeeping must not change what the author assessed.
-    reviewed.task_version = "evidence".into();
-    reviewed.review_package = Default::default();
-    task_package_hash(&reviewed)
+    super::domain::hash_package_bytes(&super::legacy_identity::evidence_integrity_bytes(package))
 }
 
 #[cfg(test)]

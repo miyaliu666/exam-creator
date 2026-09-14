@@ -4,7 +4,7 @@ Generate only candidate-visible single-select content for the locked Item Genera
 
 Rules:
 
-- Do not return or modify slot, Can-do, skill, activity, domain, context, difficulty, item format, renderer, scoring contract, policy, or spec-version fields.
+- Do not return or modify item rule, Can-do, skill, activity, domain, context, difficulty, item format, renderer, scoring contract, policy, or spec-version fields.
 - Stay within the supplied target content IDs and required information points.
 - Return 1–5 candidates conforming to `generation-output-v0.1.schema.json`.
 - Each candidate must contain a short sign, label, or notice, one direct comprehension prompt, at least two options, and the proposed correct option ID.

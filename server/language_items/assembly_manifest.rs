@@ -44,12 +44,14 @@ pub struct AssemblyScoring {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AssemblyManifest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
     pub manifest_version: String,
     pub scope: String,
     pub delivery_integration: String,
     pub source: AssemblySource,
     pub spec_versions: SpecVersions,
-    pub blueprint_slot: AssemblyReference,
+    pub item_rule: AssemblyReference,
     pub task_family: AssemblyReference,
     pub item_format: AssemblyReference,
     pub renderer: RendererRef,
@@ -88,7 +90,7 @@ pub fn build_assembly_manifest(
     }
     let capability = capability_for(
         registry,
-        &package.blueprint_slot_id,
+        &package.item_rule_id,
         &package.item_format_id,
         Some(&package.content.primary_can_do_id),
     );
@@ -105,6 +107,7 @@ pub fn build_assembly_manifest(
     let ready = approved && record_state == LanguageItemRecordState::Active;
     // This allowlist is intentionally independent of TaskPackage serialization: answers and author notes never enter assembly metadata.
     Ok(AssemblyManifest {
+        language: package.content.language.clone(),
         manifest_version: "1".into(),
         scope: "workbenchPreparation".into(),
         delivery_integration: "notConnected".into(),
@@ -115,14 +118,9 @@ pub fn build_assembly_manifest(
             content_hash: version.content_hash.clone(),
         },
         spec_versions: package.spec_versions.clone(),
-        blueprint_slot: reference(
-            &package.blueprint_slot_id,
-            registry
-                .blueprint_slots
-                .iter()
-                .find(|entry| entry.id == package.blueprint_slot_id)
-                .map(|entry| entry.display_name.as_str())
-                .or_else(|| capability.map(|entry| entry.title.as_str())),
+        item_rule: reference(
+            &package.item_rule_id,
+            capability.map(|entry| entry.title.as_str()),
         ),
         task_family: reference(
             &package.task_family_id,
@@ -287,6 +285,21 @@ mod tests {
             version.package.spec_versions.registry_bundle_version
         );
         assert_eq!(manifest.delivery_integration, "notConnected");
+        assert!(manifest.language.is_none());
+        let mut english = version.clone();
+        english.package.content.language = Some("en".into());
+        english.content_hash = task_package_hash(&english.package);
+        let manifest = build_assembly_manifest(
+            &english,
+            snapshot(),
+            true,
+            LanguageItemRecordState::Active,
+            UsageState::Pilot,
+            2,
+        )
+        .unwrap();
+        assert_eq!(manifest.language.as_deref(), Some("en"));
+        assert_eq!(manifest.source.content_hash, english.content_hash);
     }
 
     #[test]

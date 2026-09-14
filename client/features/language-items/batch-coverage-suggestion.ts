@@ -1,5 +1,6 @@
 import { isContentOptionCompatible } from "./content-compatibility.ts";
-import { contextsForCapability, difficultyStandardsForCapability } from "./registry-capability.ts";
+import { difficultyStandardsForCapability } from "./registry-capability.ts";
+import { NO_CONTEXT_FILTER, coverageContextMatchesFilter, coverageContextsForCapability } from "./coverage-context";
 import type { BatchGroup } from "./batch-api";
 import type { CoverageBatchSuggestion } from "./coverage-types";
 import type { RegistrySnapshot } from "./types";
@@ -17,26 +18,26 @@ export function coverageSuggestionSetup(suggestion: CoverageBatchSuggestion, reg
   const capabilities = registry.capabilities.filter((capability) =>
     (!filters.skill || filters.skill === capability.primaryReportedSkill) &&
     (!filters.activity || (capability.communicativeActivities ?? [capability.communicativeActivity]).includes(filters.activity)) &&
-    (!filters.blueprintSlotId || filters.blueprintSlotId === capability.blueprintSlotId) &&
+    (!filters.itemRuleId || filters.itemRuleId === capability.itemRuleId) &&
     (!filters.itemFormatId || filters.itemFormatId === capability.itemFormatId) &&
     (!filters.primaryCanDoId || filters.primaryCanDoId === capability.primaryCanDoId) &&
     (!filters.difficultyBand || difficultyStandardsForCapability(registry, capability).some((standard) => standard.id === filters.difficultyBand)));
-  const combinations = capabilities.flatMap((capability) => contextsForCapability(registry, capability)
-    .filter((context) => capability.allowedDomains.includes(context.primaryDomains[0]) &&
-      (!filters.contextId || filters.contextId === context.id) &&
-      (!filters.domain || context.primaryDomains.includes(filters.domain)) &&
+  const combinations = capabilities.flatMap((capability) => coverageContextsForCapability(registry, capability)
+    .filter((context) => coverageContextMatchesFilter(context.id, filters.contextId) &&
+      (!filters.domain || context.domain === filters.domain) &&
       suggestion.targetContentIds.every((id) => {
         const target = registry.contentIdOptions.find((entry) => entry.id === id);
-        return target && target.kind !== "supported" && isContentOptionCompatible(target, capability, context.id);
+        return target && target.kind !== "supported" && isContentOptionCompatible(target, capability, context.id, filters.language ?? "zh");
       }))
     .map((context) => ({ capability, context })));
   if (!combinations.length) return undefined;
   return {
-    blueprintSlotId: filters.blueprintSlotId ?? unique(combinations.map(({ capability }) => capability.blueprintSlotId)),
+    language: filters.language ?? "zh",
+    itemRuleId: filters.itemRuleId ?? unique(combinations.map(({ capability }) => capability.itemRuleId)),
     itemFormatId: filters.itemFormatId ?? unique(combinations.map(({ capability }) => capability.itemFormatId)),
     primaryCanDoId: filters.primaryCanDoId ?? unique(combinations.map(({ capability }) => capability.primaryCanDoId)),
-    primaryDomain: filters.domain ?? unique(combinations.map(({ context }) => context.primaryDomains[0])),
-    contextId: filters.contextId ?? unique(combinations.map(({ context }) => context.id)),
+    primaryDomain: filters.domain ?? unique(combinations.map(({ context }) => context.domain)),
+    contextId: filters.contextId === NO_CONTEXT_FILTER ? "" : filters.contextId ?? unique(combinations.map(({ context }) => context.id)),
     difficultyBand: filters.difficultyBand ?? "TypicalA1",
     itemCount: suggestion.desiredCount,
     requiredTargetContentIds: [...suggestion.targetContentIds],
@@ -47,9 +48,10 @@ export function coverageSuggestionSetup(suggestion: CoverageBatchSuggestion, reg
 export function setupMatchesCoverageSuggestion(suggestion: CoverageBatchSuggestion, selection: NewLanguageItemSelection, registry: RegistrySnapshot) {
   const filters = suggestion.filters;
   const dimensions = {
-    blueprintSlotId: selection.blueprintSlotId, itemFormatId: selection.itemFormatId,
+    language: selection.language ?? "zh",
+    itemRuleId: selection.itemRuleId, itemFormatId: selection.itemFormatId,
     primaryCanDoId: selection.primaryCanDoId, domain: selection.primaryDomain,
-    contextId: selection.contextId, difficultyBand: selection.difficultyBand,
+    contextId: !selection.contextId && selection.itemFormatId.startsWith("EXERCISE:") ? NO_CONTEXT_FILTER : selection.contextId, difficultyBand: selection.difficultyBand,
   };
   if (Object.entries(dimensions).some(([key, value]) => {
     const filter = filters[key as keyof typeof dimensions];

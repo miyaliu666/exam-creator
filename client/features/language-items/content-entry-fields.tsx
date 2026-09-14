@@ -1,7 +1,9 @@
-import { Field, SimpleGrid, Stack, Textarea } from "@chakra-ui/react";
+import { Button, Field, SimpleGrid, Stack, Textarea } from "@chakra-ui/react";
 import type { ReactNode } from "react";
 
 import { CONTENT_KIND_LABELS } from "./labels";
+import { CONTENT_LANGUAGE_OPTIONS, contentLanguage } from "./content-language";
+import { canGenerateContentPinyin, hasChineseContentName } from "./content-pinyin";
 import { SelectField, TextField } from "./registry-form-controls";
 import type { ContentIdOption, RegistrySnapshot } from "./types";
 
@@ -18,26 +20,31 @@ export function ContentEntryFields({ entry, snapshot, isNew, disabled, onChange,
   children?: ReactNode;
 }) {
   const kinds = [...new Set(["lexical", "grammar", "character", "pragmatics", "supported", ...snapshot.contentIdOptions.map((candidate) => candidate.kind)])];
-  const text = (key: "label" | "meaning" | "pattern" | "pinyin" | "englishGloss" | "restrictions" | "notes") => (value: string) => onChange({ ...entry, [key]: value });
+  const validLanguage = entry.language === undefined || CONTENT_LANGUAGE_OPTIONS.some(({ id }) => id === entry.language);
+  const text = (key: "label" | "meaning" | "pattern" | "pinyin" | "englishGloss" | "restrictions" | "notes" | "level") => (value: string) => onChange({ ...entry, [key]: value });
   return <Stack gap={4}>
     <SimpleGrid columns={{ base: 1, md: 2 }} gap={3}>
+      <SelectField label="Language" value={validLanguage ? contentLanguage(entry) : "__invalid"} options={[...(!validLanguage ? [{ id: "__invalid", label: "Unrecognized language — choose a language" }] : []), ...CONTENT_LANGUAGE_OPTIONS]} disabled={disabled || !isNew && validLanguage} onChange={(language) => onChange({ ...entry, language })} />
       <SelectField label="Category" value={entry.kind} options={kinds.map((id) => ({ id, label: CONTENT_KIND_LABELS[id] ?? id }))} disabled={disabled || !isNew} onChange={(kind) => onChange({ ...entry, kind })} />
       <TextField label={entry.kind === "lexical" ? "Word or phrase *" : entry.kind === "grammar" ? "Grammar name *" : "Name *"} value={entry.label} translate={false} disabled={disabled} onChange={text("label")} />
     </SimpleGrid>
+    <TextField label="Level" value={entry.level ?? ""} translate={false} disabled={disabled} onChange={text("level")} />
     {children}
-    {entry.kind === "lexical" ? <TextField label={`Meaning${isNew || entry.meaning !== undefined ? " *" : ""}`} value={entry.meaning ?? ""} translate={false} multiline disabled={disabled} onChange={text("meaning")} /> : null}
+    {entry.kind === "lexical" ? <TextField label={`Meaning${contentLanguage(entry) === "en" ? " (optional)" : isNew || entry.meaning !== undefined ? " *" : ""}`} value={entry.meaning ?? ""} translate={false} multiline disabled={disabled} onChange={text("meaning")} /> : null}
     {entry.kind === "grammar" ? <TextField label={`Structure${isNew || entry.pattern !== undefined ? " *" : ""}`} value={entry.pattern ?? ""} translate={false} disabled={disabled} onChange={text("pattern")} /> : null}
   </Stack>;
 }
 
-export function ContentEntryDetails({ entry, disabled, onChange }: {
+export function ContentEntryDetails({ entry, disabled, onChange, onGeneratePinyin, generatingPinyin }: {
   entry: ContentIdOption;
   disabled: boolean;
   onChange: (entry: ContentIdOption) => void;
+  onGeneratePinyin?: () => void;
+  generatingPinyin?: boolean;
 }) {
   return <Stack gap={4} mt={4}>
     <SimpleGrid columns={{ base: 1, md: 2 }} gap={3}>
-      {entry.kind === "lexical" || entry.kind === "character" || entry.pinyin !== undefined ? <TextField label="Pinyin" value={entry.pinyin ?? ""} translate={false} disabled={disabled} onChange={(pinyin) => onChange({ ...entry, pinyin })} /> : null}
+      {hasChineseContentName(entry) || entry.pinyin !== undefined ? <Stack gap={2}><TextField label="Pinyin" value={entry.pinyin ?? ""} translate={false} disabled={disabled} onChange={(pinyin) => onChange({ ...entry, pinyin })} />{onGeneratePinyin && (canGenerateContentPinyin(entry) || generatingPinyin) ? <Button size="sm" variant="outline" alignSelf="start" disabled={disabled || generatingPinyin} onClick={onGeneratePinyin}>{generatingPinyin ? "Generating pinyin…" : "Generate missing pinyin"}</Button> : null}</Stack> : null}
       <TextField label="English meaning" value={entry.englishGloss ?? ""} translate={false} disabled={disabled} onChange={(englishGloss) => onChange({ ...entry, englishGloss })} />
     </SimpleGrid>
     {entry.kind !== "lexical" && entry.meaning !== undefined ? <TextField label="Meaning" value={entry.meaning} translate={false} multiline disabled={disabled} onChange={(meaning) => onChange({ ...entry, meaning })} /> : null}

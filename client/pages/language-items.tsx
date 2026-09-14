@@ -20,6 +20,7 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { ProtectedRoute } from "../components/protected-route";
 import { Header } from "../components/ui/header";
 import { AuthContext } from "../contexts/auth";
+import { SignOutButton } from "../components/sign-out-button";
 import { UsersWebSocketActivityContext } from "../contexts/users-websocket";
 import {
   getGithubReviewStatus,
@@ -28,6 +29,8 @@ import {
   syncGithubReviewBatch,
 } from "../features/language-items/api";
 import { ITEM_STATUS_COPY } from "../features/language-items/item-status";
+import { FilterSelect } from "../features/language-items/filter-select";
+import { CONTENT_LANGUAGE_OPTIONS, contentLanguage } from "../features/language-items/content-language";
 import { WORKBENCH_LABELS } from "../features/language-items/labels";
 import { ItemBankList } from "../features/language-items/item-bank-list";
 import type {
@@ -66,6 +69,7 @@ function LanguageItems() {
   const [recordStateFilter, setRecordStateFilter] =
     useState<RecordStateFilter>("active");
   const [search, setSearch] = useState("");
+  const [languageFilter, setLanguageFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [skillFilter, setSkillFilter] = useState<SkillFilter>("all");
   const [difficultyFilter, setDifficultyFilter] = useState<DifficultyFilter>("all");
@@ -120,6 +124,7 @@ function LanguageItems() {
     (item) =>
       item.recordState === recordStateFilter &&
       matchesStatus(item, statusFilter) &&
+      (!languageFilter || contentLanguage(item.draft.content) === languageFilter) &&
       (skillFilter === "all" || item.draft.content.primaryReportedSkill === skillFilter) &&
       (difficultyFilter === "all" || item.draft.content.difficultyBand === difficultyFilter) &&
       (!normalizedSearch || [item.title, item.id]
@@ -132,9 +137,9 @@ function LanguageItems() {
         <Button variant="outline" colorPalette="teal" size="sm" onClick={() => navigate({ to: landingRoute.to })}>
           Back to home
         </Button>
-        <Button variant="outline" colorPalette="red" size="sm" onClick={() => logout()}>
+        <SignOutButton variant="outline" colorPalette="red" size="sm" onClick={() => logout()}>
           Sign out / switch account
-        </Button>
+        </SignOutButton>
       </HStack>
       <Center>
         <Stack gap={6} w="full" maxW="7xl">
@@ -178,6 +183,7 @@ function LanguageItems() {
 
           <HStack gap={3} flexWrap="wrap">
               <Input maxW="320px" size="sm" placeholder="Search by title or item ID" value={search} onChange={(event) => setSearch(event.target.value)} />
+              <Box w="160px"><FilterSelect label="Language" hideLabel placeholder="Language" value={languageFilter} options={[...CONTENT_LANGUAGE_OPTIONS]} onChange={setLanguageFilter} /></Box>
               <NativeSelect.Root size="sm" maxW="160px">
                 <NativeSelect.Field
                   aria-label="Item location"
@@ -192,38 +198,31 @@ function LanguageItems() {
                 </NativeSelect.Field>
                 <NativeSelect.Indicator />
               </NativeSelect.Root>
-              <NativeSelect.Root size="sm" maxW="180px">
-                <NativeSelect.Field value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}>
-                  <option value="all">All statuses</option>
-                  <option value="draft">{ITEM_STATUS_COPY.draft.label}</option>
-                  <option value="readyForReview">{ITEM_STATUS_COPY.readyForReview.label}</option>
-                  <option value="inReview">{ITEM_STATUS_COPY.inReview.label}</option>
-                  <option value="needsRevision">{ITEM_STATUS_COPY.needsRevision.label}</option>
-                  <option value="reviewBlocked">{ITEM_STATUS_COPY.reviewBlocked.label}</option>
-                  <option value="rejected">{ITEM_STATUS_COPY.rejected.label}</option>
-                  <option value="approved">Approved</option>
-                </NativeSelect.Field>
-                <NativeSelect.Indicator />
-              </NativeSelect.Root>
-              <NativeSelect.Root size="sm" maxW="150px">
-                <NativeSelect.Field value={skillFilter} onChange={(event) => setSkillFilter(event.target.value as SkillFilter)}>
-                  <option value="all">All skills</option>
-                  <option value="Reading">Reading</option>
-                  <option value="Listening">Listening</option>
-                  <option value="Writing">Writing</option>
-                  <option value="Speaking">Speaking</option>
-                </NativeSelect.Field>
-                <NativeSelect.Indicator />
-              </NativeSelect.Root>
-              <NativeSelect.Root size="sm" maxW="170px">
-                <NativeSelect.Field value={difficultyFilter} onChange={(event) => setDifficultyFilter(event.target.value as DifficultyFilter)}>
-                  <option value="all">All difficulties</option>
-                  <option value="LowerA1">Lower A1</option>
-                  <option value="TypicalA1">Typical A1</option>
-                  <option value="UpperA1">Upper A1</option>
-                </NativeSelect.Field>
-                <NativeSelect.Indicator />
-              </NativeSelect.Root>
+              <Box w="180px">
+                <FilterSelect label="Item status" hideLabel placeholder="Status" value={statusFilter === "all" ? "" : statusFilter}
+                  options={[
+                    { id: "draft", label: ITEM_STATUS_COPY.draft.label },
+                    { id: "readyForReview", label: ITEM_STATUS_COPY.readyForReview.label },
+                    { id: "inReview", label: ITEM_STATUS_COPY.inReview.label },
+                    { id: "needsRevision", label: ITEM_STATUS_COPY.needsRevision.label },
+                    { id: "reviewBlocked", label: ITEM_STATUS_COPY.reviewBlocked.label },
+                    { id: "rejected", label: ITEM_STATUS_COPY.rejected.label },
+                    { id: "approved", label: "Approved" },
+                  ]} onChange={(value) => setStatusFilter((value || "all") as StatusFilter)} />
+              </Box>
+              <Box w="150px">
+                <FilterSelect label="Skill" hideLabel placeholder="Skill" value={skillFilter === "all" ? "" : skillFilter}
+                  options={["Reading", "Listening", "Writing", "Speaking"].map((id) => ({ id, label: id }))}
+                  onChange={(value) => setSkillFilter((value || "all") as SkillFilter)} />
+              </Box>
+              <Box w="170px">
+                <FilterSelect label="Difficulty" hideLabel placeholder="Difficulty" value={difficultyFilter === "all" ? "" : difficultyFilter}
+                  options={[
+                    { id: "LowerA1", label: "Lower A1" },
+                    { id: "TypicalA1", label: "Typical A1" },
+                    { id: "UpperA1", label: "Upper A1" },
+                  ]} onChange={(value) => setDifficultyFilter((value || "all") as DifficultyFilter)} />
+              </Box>
           </HStack>
 
           {itemsQuery.isError && itemsQuery.data ? (
@@ -243,7 +242,7 @@ function LanguageItems() {
             </Box>
           ) : (
             <ItemBankList
-              selectionScope={JSON.stringify([user?.email, recordStateFilter, search, statusFilter, skillFilter, difficultyFilter])}
+              selectionScope={JSON.stringify([user?.email, recordStateFilter, search, languageFilter, statusFilter, skillFilter, difficultyFilter])}
               items={visibleItems}
               recordState={recordStateFilter}
               registry={registryQuery.data}

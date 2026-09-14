@@ -1,8 +1,9 @@
 import { Badge, Box, Button, Checkbox, HStack, Link, Stack, Table, Text } from "@chakra-ui/react";
 import { Archive, ExternalLink, RotateCcw, Trash2 } from "lucide-react";
 
-import { DIFFICULTY_LABELS, ITEM_FORMAT_LABELS, SKILL_LABELS, WORKBENCH_LABELS, slotLabel } from "./labels";
+import { DIFFICULTY_LABELS, exerciseLabel, SKILL_LABELS, WORKBENCH_LABELS, optionLabel } from "./labels";
 import { ITEM_STATUS_COPY } from "./item-status";
+import { contentLanguage, contentLanguageLabel } from "./content-language";
 import type { GithubReviewState, LanguageItem, LanguageItemRecordState, RegistrySnapshot } from "./types";
 
 const GITHUB_STATE_COPY: Record<
@@ -71,7 +72,7 @@ export function ItemTable({
               </Checkbox.Root>
             </Table.ColumnHeader>
             <Table.ColumnHeader>Item</Table.ColumnHeader>
-            <Table.ColumnHeader>{WORKBENCH_LABELS.blueprintSlot}</Table.ColumnHeader>
+            <Table.ColumnHeader>{WORKBENCH_LABELS.primaryCanDo}</Table.ColumnHeader>
             <Table.ColumnHeader>{WORKBENCH_LABELS.itemFormat} / difficulty</Table.ColumnHeader>
             <Table.ColumnHeader>Status</Table.ColumnHeader>
             <Table.ColumnHeader textAlign="center">{items[0].recordState === "active" ? "Archive" : "Restore"}</Table.ColumnHeader>
@@ -104,16 +105,17 @@ export function ItemTable({
                   <Button variant="plain" h="auto" p={0} fontWeight="semibold" disabled={!isActive || busy}>
                     {item.title || "Untitled item"}
                   </Button>
+                  <Text mt={1} fontSize="xs" color="fg.muted">{contentLanguageLabel(contentLanguage(item.draft.content))}</Text>
                 </Table.Cell>
                 <Table.Cell minW="180px">
-                  {slotLabel(item.draft.blueprintSlotId, registry, item.draft.itemFormatId)}
+                  {optionLabel(item.draft.content.primaryCanDoId, registry?.canDoOptions)}
                   <Text mt={1} fontSize="xs" color="fg.muted">
                     {SKILL_LABELS[item.draft.content.primaryReportedSkill] ?? item.draft.content.primaryReportedSkill}
                   </Text>
                 </Table.Cell>
                 <Table.Cell minW="160px">
                   <Text>
-                    {ITEM_FORMAT_LABELS[item.draft.itemFormatId] ?? item.draft.itemFormatId}
+                    {exerciseLabel(item.draft.itemFormatId, item.draft.content.primaryReportedSkill)}
                   </Text>
                   <Text mt={1} fontSize="xs" color="fg.muted">
                     {DIFFICULTY_LABELS[item.draft.content.difficultyBand] ?? item.draft.content.difficultyBand}

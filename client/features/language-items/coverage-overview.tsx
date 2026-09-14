@@ -4,7 +4,9 @@ import { useMemo, type ReactNode } from "react";
 import { CoverageFilterSection } from "./coverage-filter-section";
 import { coverageOverviewCategories, coverageOverviewModel } from "./coverage-overview-model";
 import { CoverageOverviewTable } from "./coverage-overview-table";
-import type { CoverageOverview, CoverageOverviewState } from "./coverage-types";
+import { contentLanguage, contentLanguageLabel } from "./content-language";
+import { FilterSelect } from "./filter-select";
+import type { CoverageFilters, CoverageOverview, CoverageOverviewState } from "./coverage-types";
 import { CONTENT_KIND_LABELS } from "./labels";
 import type { RegistrySnapshot } from "./types";
 
@@ -20,22 +22,25 @@ function SelectField({ label, value, options, onChange }: {
   </NativeSelect.Field><NativeSelect.Indicator /></NativeSelect.Root></Field.Root>;
 }
 
-export function CoverageOverviewPanel({ registry, data, state, filters, feedback, disabled, onReset, onStateChange, onInspect }: {
+export function CoverageOverviewPanel({ registry, data, state, itemFilters, filters, feedback, disabled, onReset, onStateChange, onInspect }: {
   registry: RegistrySnapshot; data?: CoverageOverview; state: CoverageOverviewState;
+  itemFilters?: CoverageFilters;
   filters: ReactNode; feedback?: ReactNode; disabled?: boolean; onReset?: () => void;
   onStateChange: (patch: Partial<CoverageOverviewState>) => void;
   onInspect: (id: string, scope: "approved" | "drafts") => void;
 }) {
-  const model = useMemo(() => data ? coverageOverviewModel(registry, data, state) : undefined, [registry, data, state]);
+  const model = useMemo(() => data ? coverageOverviewModel(registry, data, state, itemFilters) : undefined, [registry, data, state, itemFilters]);
   const summary = model?.summary;
+  const language = itemFilters?.language ?? "zh";
+  const selectedVersionHasLanguageContent = registry.contentIdOptions.some((entry) => entry.kind !== "supported" && contentLanguage(entry) === language);
   const change = (patch: Partial<CoverageOverviewState>) => onStateChange({ ...patch, offset: 0 });
   const missingApproved = !!data?.plannedUnknownCount;
   const missingPending = !!data?.pendingUnknownCount;
   const metrics = summary ? [
     { label: "Total", count: summary.total },
-    { label: "Has approved items", count: summary.approved, detail: percentage(summary.approvedPercent) },
-    { label: missingApproved ? "Only unapproved items recorded" : "Unapproved items only", count: summary.unapprovedOnly, detail: percentage(summary.unapprovedOnlyPercent) },
-    { label: missingApproved || missingPending ? "No recorded items" : "No items", count: summary.noItems, detail: percentage(summary.noItemsPercent) },
+    { label: "With approved items", count: summary.approved, detail: percentage(summary.approvedPercent) },
+    { label: missingApproved ? "Only unapproved items recorded" : "With unapproved items only", count: summary.unapprovedOnly, detail: percentage(summary.unapprovedOnlyPercent) },
+    { label: missingApproved || missingPending ? "No recorded items" : "Without items", count: summary.noItems, detail: percentage(summary.noItemsPercent) },
   ] : [];
   const missingTargets = [
     { count: data?.plannedUnknownCount ?? 0, label: "approved" }, { count: data?.pendingUnknownCount ?? 0, label: "unapproved" },
@@ -60,8 +65,8 @@ export function CoverageOverviewPanel({ registry, data, state, filters, feedback
     <CoverageFilterSection onReset={onReset}>
       <fieldset disabled={disabled} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         <SimpleGrid columns={{ base: 1, md: 2 }} gap={3}>
-          <SelectField label="Category" value={state.category === "all" ? "" : state.category}
-            options={[{ value: "", label: "All categories" }, ...coverageOverviewCategories(registry).map((category) => ({ value: category, label: CONTENT_KIND_LABELS[category] ?? category }))]}
+          <FilterSelect label="Category" value={state.category === "all" ? "" : state.category} disabled={disabled}
+            options={coverageOverviewCategories(registry).map((category) => ({ id: category, label: CONTENT_KIND_LABELS[category] ?? category }))}
             onChange={(category) => change({ category })} />
           <Field.Root><Field.Label>Search language content</Field.Label><Input size="sm" aria-label="Search language content" value={state.search} onChange={(event) => change({ search: event.target.value })} /></Field.Root>
         </SimpleGrid>
@@ -77,7 +82,10 @@ export function CoverageOverviewPanel({ registry, data, state, filters, feedback
         ]} onChange={(sort) => change({ sort: sort as CoverageOverviewState["sort"] })} />
         </Box>
       </HStack>
-      {model && (model.categoryTotal === 0 ? <Text role="status" color="fg.muted">No language content in this category.</Text> :
+      {model && (!model.hasMatchingSetup ? <Text role="status" color="fg.muted">No compatible item setup matches these filters.</Text> :
+      model.categoryTotal === 0 ? <Text role="status" color="fg.muted">{language !== "zh" && !selectedVersionHasLanguageContent
+        ? `The selected Assessment Settings version has no ${contentLanguageLabel(language)} language content. If you have already used a newer version, reopen Language coverage to load it. Otherwise, save and use the draft containing the imported entries for new items.`
+        : "No language content matches these filters."}</Text> :
       <CoverageOverviewTable rows={model.rows} total={model.matchedCount} offset={model.offset} onPage={(offset) => onStateChange({ offset })} onInspect={onInspect}
         onClearSearch={() => change({ search: "" })} unknownTargets={missingApproved || missingPending} />)}
     </Stack>

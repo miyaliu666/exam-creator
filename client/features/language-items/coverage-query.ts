@@ -13,6 +13,12 @@ function filterSignature(filters: CoverageFilters) {
 
 export function updateCoverageRequest(previous: CoverageRequest, patch: Partial<CoverageRequest>): CoverageRequest {
   const next = { ...previous, ...patch };
+  if ((previous.filters.language ?? "zh") !== (next.filters.language ?? "zh")) {
+    next.selectedIds = patch.selectedIds ?? [];
+    next.excludedIds = patch.excludedIds ?? [];
+    next.matchMode = patch.matchMode ?? "all";
+    next.pattern = undefined;
+  }
   const queryChanged = (["registryVersion", "role", "matchMode"] as const).some((key) => previous[key] !== next[key]) ||
     !sameIds(previous.selectedIds, next.selectedIds) || !sameIds(previous.excludedIds, next.excludedIds) ||
     !sameIds(previous.pattern, next.pattern) || filterSignature(previous.filters) !== filterSignature(next.filters);

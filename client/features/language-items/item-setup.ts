@@ -22,9 +22,9 @@ export function difficultyScheme(draft: TaskPackage, standard: DifficultyBandSta
     status: "AuthorEstimated",
     drivers: {
       ...standard.defaultDrivers,
-      distractorSimilarity: ["IF-SINGLE-SELECT", "IF-MATCHING"].includes(draft.itemFormatId)
+      distractorSimilarity: draft.itemFormatId.startsWith("EXERCISE:") || ["IF-SINGLE-SELECT", "IF-MATCHING"].includes(draft.itemFormatId)
         ? standard.defaultDrivers.distractorSimilarity : "notApplicable",
-      outputLength: output[draft.itemFormatId] ?? "selectedOption",
+      outputLength: draft.itemFormatId.startsWith("EXERCISE:") ? "exerciseTemplateResponse" : output[draft.itemFormatId] ?? "selectedOption",
       interactionTurns: draft.itemFormatId === "IF-SPOKEN-MULTITURN" ? 2 : draft.itemFormatId === "IF-SPOKEN-SINGLE" ? 1 : 0,
       preparationTimeSeconds: draft.itemFormatId === "IF-SPOKEN-SINGLE" ? 20 : null,
     },

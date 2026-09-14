@@ -17,21 +17,22 @@ function standard(id = "LowerA1"): DifficultyBandStandard {
 }
 
 function fixture() {
-  const first = { blueprintSlotId: "slot", itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "primary-1" } as RegistryCapability;
-  const second = { ...first, primaryCanDoId: "primary-2" };
+  const first = { itemRuleId: "slot", itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "primary-1" } as RegistryCapability;
+  const second = { ...first, itemRuleId: "second-rule", primaryCanDoId: "primary-2" };
   const snapshot = { settingsSchemaVersion: 1, difficultyStandards: DIFFICULTY_LEVELS.map(({ id }) => standard(id)),
     capabilityDifficultyProfileSets: [first, second].map((capability, index) => ({ ...capability, id: `profile-${index}`, standards: [standard()] })),
   } as RegistrySnapshot;
   return { snapshot, first, second };
 }
 
-test("difficulty reads and edits follow the selected slot, format and Primary Can-do", () => {
+test("difficulty reads and edits follow the selected rule and reject mismatched assertions", () => {
   const { snapshot, first, second } = fixture();
   changeDifficultyStandard(snapshot, second, "LowerA1", (entry) => { entry.description = "Second configuration"; });
   assert.equal(selectedDifficultyStandard(snapshot, first, "LowerA1")?.description, "Saved definition");
   assert.equal(selectedDifficultyStandard(snapshot, second, "LowerA1")?.description, "Second configuration");
   assert.equal(selectedDifficultyStandard(snapshot, { ...second, itemFormatId: "IF-MATCHING" }, "LowerA1"), undefined);
-  assert.equal(selectedDifficultyStandard(snapshot, { ...second, blueprintSlotId: "other-slot" }, "LowerA1"), undefined);
+  assert.throws(() => changeDifficultyStandard(snapshot, { ...second, itemFormatId: "IF-MATCHING" }, "LowerA1", () => assert.fail("Mismatched rules cannot change a profile")), /different Item rules/);
+  assert.equal(selectedDifficultyStandard(snapshot, { ...second, itemRuleId: "other-slot" }, "LowerA1"), undefined);
 });
 
 test("difficulty labels are fixed without rewriting saved labels", () => {
@@ -170,14 +171,14 @@ test("fixing a difficulty choice changes its driver and summary only in the sele
   assert.equal(selectedDifficultyStandard(snapshot, first, "LowerA1")?.description, "Saved definition");
 });
 
-test("choice formats retain saved not-applicable distractors until a valid similarity is explicitly chosen", () => {
+test("choice formats retain valid historical distractor ranges without mislabeling them as invalid", () => {
   const entry = standard();
   entry.allowedDistractorSimilarities = ["clear", "notApplicable"];
   const before = structuredClone(entry);
   const state = difficultyChoiceState(entry, "distractorSimilarity");
   assert.deepEqual(state.options, ["clear", "moderate", "close"]);
   assert.deepEqual(state.allowed, ["clear", "notApplicable"]);
-  assert.equal(state.invalid, true);
+  assert.equal(state.invalid, false);
   assert.equal(state.fixed, false);
   assert.deepEqual(entry, before);
   setFixedDifficultyValue(entry, "distractorSimilarity", "moderate");

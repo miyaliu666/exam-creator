@@ -7,6 +7,8 @@ import { AuthorPreview } from "../client/features/language-items/author-preview"
 import { translationRows, updateEnglishTranslation } from "../client/features/language-items/english-translations";
 import { ITEM_TEMPLATE_REGISTRY } from "../client/features/language-items/item-template-registry";
 import { CandidateRenderer } from "../client/features/language-items/renderer-registry";
+import { createExerciseTemplateDraft, EXERCISE_TEMPLATES, type ExerciseTemplateField } from "../client/features/language-items/exercise-template-catalog";
+import { projectExerciseTemplateCandidate } from "../client/features/language-items/exercise-template-projection";
 import type { CandidatePayload, EnglishTranslation, SingleSelectCandidatePayload } from "../client/features/language-items/types";
 
 const stimulus = { text: "请看时间表。", imageRefs: [], audioRef: null };
@@ -24,6 +26,18 @@ const payloads: Record<string, CandidatePayload> = {
     { turnId: "T2", speaker: "candidate", promptAudioRef: null, responseId: "R1", responseTimeSeconds: 45, requiredFunctionIds: ["说出姓名。", "PF-A1-001"] },
   ] }] },
 };
+
+function filledField(field: ExerciseTemplateField): unknown {
+  if (field.type === "string") return field.key === "src" ? "/media/example.mp3" : "请阅读材料。";
+  if (field.type === "object") return Object.fromEntries((field.properties ?? []).map(child => [child.key, filledField(child)]));
+  if (field.type === "array") return field.element ? Array.from({ length: Math.max(1, field.minItems ?? 0) }, () => filledField(field.element!)) : [];
+  if (field.type === "union") return field.variants?.[0] ? filledField(field.variants[0]) : "";
+  return field.default ?? field.values?.[0] ?? (field.type === "boolean" ? false : 0);
+}
+for (const template of EXERCISE_TEMPLATES) {
+  const data = { ...createExerciseTemplateDraft(template.id), ...Object.fromEntries(template.fields.map(field => [field.key, filledField(field)])), type: template.id, language: "zh", instructionLanguage: "en", title: "阅读材料", level: "A1" };
+  payloads[`EXERCISE:${template.id}`] = projectExerciseTemplateCandidate({ exerciseType: template.id, body: "请根据材料完成任务。", data });
+}
 
 for (const template of ITEM_TEMPLATE_REGISTRY) {
   test(`${template.itemFormatId}: bilingual author view includes each text field; candidate renderer has no English metadata`, () => {
@@ -79,4 +93,26 @@ test("legacy untranslated items keep their original candidate preview", () => {
   const markup = renderToStaticMarkup(<ChakraProvider value={defaultSystem}><AuthorPreview rendererId="REN-SINGLE-SELECT" payload={payloads["IF-SINGLE-SELECT"]} /></ChakraProvider>);
   assert.match(markup, /几点上课/);
   assert.doesNotMatch(markup, /Bilingual|Translation unavailable/);
+});
+
+test("generic translations collect nested public content while excluding answers, source metadata and unknown fields", () => {
+  const payload = projectExerciseTemplateCandidate({ exerciseType: "listening", body: "请听录音。", data: { title: "课程通知", language: "zh", level: "A1", audio: { src: "/notice.mp3", alt: "课程通知录音" }, transcript: "PRIVATE_TRANSCRIPT", teacherNotes: "PRIVATE_NOTES", questions: [{ prompt: "几点上课？", options: ["九点", "十点"], correct: 0, explanation: "PRIVATE_EXPLANATION" }] } });
+  payload.data.transcript = "PRIVATE_TRANSCRIPT";
+  payload.data.unknown = "PRIVATE_EXTENSION";
+  const rows = translationRows(payload);
+  for (const path of ["/body", "/data/title", "/data/audio/alt", "/data/questions/0/prompt", "/data/questions/0/options/0", "/data/questions/0/options/1"]) assert.ok(rows.some(row => row.path === path), path);
+  assert.ok(!rows.some(row => /correct|explanation|transcript|unknown|\/src$|\/language$|\/level$/.test(row.path)));
+  assert.ok(!rows.some(row => row.sourceText.includes("PRIVATE")));
+  assert.deepEqual(updateEnglishTranslation(payload, [], "/data/transcript", "Leaked answer"), []);
+});
+
+test("generic translations follow projected ordering and reject stale nested text", () => {
+  const payload = projectExerciseTemplateCandidate({ exerciseType: "match-columns", body: "", data: { pairs: [{ left: "早上", right: "早上好" }, { left: "晚上", right: "晚上好" }] } });
+  assert.equal(translationRows(payload).length, 4);
+  const path = "/data/rightItems/0";
+  const translated = updateEnglishTranslation(payload, [], path, "Good morning");
+  (payload.data.rightItems as string[])[0] = "再见";
+  assert.equal(translationRows(payload, translated).find(row => row.path === path)?.status, "stale");
+  assert.equal(translationRows(payload, translated).find(row => row.path === path)?.englishText, "");
+  assert.ok(!translationRows(payload).some(row => row.path.includes("pairs")));
 });

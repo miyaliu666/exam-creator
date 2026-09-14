@@ -25,11 +25,13 @@ dist-ssr
 *.sw?
 target/
 .env
+/.env.public
 /target
 
 .do
 
 # Local-only planning and Workbench documentation
 /docs/
+/outputs/
 /language-item-workbench/docs/
 /language-item-workbench/WORKSPACE-COMPLETION.md

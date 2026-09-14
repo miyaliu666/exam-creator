@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:fcc:language-item-blind-answer-output:0.1",
+  "type": "object",
+  "required": ["status", "answer", "alternatives", "reasoning", "evidence", "limitations"],
+  "properties": {
+    "status": { "type": "string", "enum": ["answered", "ambiguous", "insufficientInformation"] },
+    "answer": { "type": "string" },
+    "alternatives": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "reasoning": { "type": "string", "minLength": 1 },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["fieldPath", "quote"],
+        "properties": {
+          "fieldPath": { "type": "string", "pattern": "^/candidatePayload/" },
+          "quote": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "limitations": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  },
+  "additionalProperties": false
+}

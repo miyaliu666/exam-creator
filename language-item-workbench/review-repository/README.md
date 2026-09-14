@@ -56,8 +56,8 @@ Manifest 的每个 `items[]` 记录 `itemId`、`versionId`、`versionNumber`、`
 ## 4. 校验范围
 
 - 以受保护提交为唯一原始来源，校验分支祖先、batch、item identity、immutable source，拒绝额外文件、删题、跨批次修改、symlink、可执行文件或 submodule 伪装成 JSON。
-- 比对原始与 head 的 Manifest／规则文件字节，执行原始快照中的完整 Draft 2020-12 TaskPackage schema 和对应七种题型之一的 candidate schema，而不是宽松的替代 schema。Ajv 不加载远程引用。
-- 校验 slot × format × 唯一 Primary Can-do、task family、renderer、delivery、scoring contract／rubric、context/domain 和内容引用关系。
+- 比对原始与 head 的 Manifest／规则文件字节，执行原始快照中的完整 Draft 2020-12 TaskPackage schema，以及对应 Workbench 题型或 60 种源模板的固定 schema。Ajv 不加载远程引用。
+- 校验 item rule × format × 唯一 Primary Can-do、task family、renderer、delivery、scoring contract／rubric、context/domain 和内容引用关系。
 - 校验每组合难度范围；现代快照缺失组合不退回全局难度。用户新增的 context ID 可以通过语法校验，但必须真实存在于所锁定的快照并与配置兼容。
 - 检查答案引用、响应单元与计分点、计分合计、信息点引用；递归检查 candidate JSON 的嵌套对象和数组，阻止常见答案／评分／审核内部字段泄露，包括允许自由对象的 `sourceProfile`。
 - 英文对照是独立校验的可选作者资料。旧快照未声明 `englishTranslations` 时，仅在用于 schema 校验的临时副本中去掉这一已独立校验的字段；其他字段仍执行原始 schema，快照和提交文件不被改写。原文变化后旧译文不作为当前内容显示；历史未带译文的题目继续有效。
@@ -83,7 +83,7 @@ node scripts/validate-review.mjs --repo . --batch <batchId> --base <完整base�
 - 从旧 Python 校验器升级时，在默认分支完整安装本模板，并删除 `.github/workflows/validate-language-items.yml` 和 `scripts/validate_language_items.py`；旧脚本只接受 `schemaVersion: "1.0"`，会拒绝应用现在提交的 `1.1` 文件。先用真实 Git 历史、原始提交标签和 PR head 执行新版校验，再部署；历史 1.0 文件保留原样，新校验器只读取当前批次。
 - 默认分支升级后，给现有审题分支追加保持原 tree 的空提交以触发新的 `synchronize` 检查；不要把默认分支 merge/rebase 进题目分支，也不要只重跑旧 workflow。确认新 head 的 `language-item-review/validated` 成功；如分支保护仍要求旧 check，由维护者同步调整所要求的状态。
 - 服务端生成文件与 Manifest：`server/routes/language_item_github.rs`；创建原始提交标签：`server/language_items/github.rs`。
-- 主要服务端业务校验：`server/language_items/validation.rs`；完整 TaskPackage 契约：`language-item-workbench/contracts/language-item-task-package-v0.1.schema.json`。
+- 主要服务端业务校验：`server/language_items/validation.rs`；完整 TaskPackage 契约：`language-item-workbench/contracts/language-item-task-package-v0.2.schema.json`。
 - `tests/fixtures/` 保留真正的完整契约与 single-select／form-entry schema 的回归副本；运行时始终使用提交资产，不使用测试副本。
 - 只接收新的 schemaVersion 1.1 批次。旧 1.0 历史文件没有新的完整资产／不可变标签，不能伪装成 1.1；需要重新提交，或由维护者设计独立且有审计记录的迁移。
-- 已发布 Registry 快照和已经提交的规则资产不可变。context 语法从固定 D01–D20 扩展为注册表引用，不改变 TaskPackage 0.1 的字段结构；新版草稿经发布后，使用其新快照创建并提交题目。不要直接重写历史快照来让旧批次通过。
+- 已发布 Registry 快照和已经提交的规则资产不可变。新建设置使用 settingsSchemaVersion 3，TaskPackage 0.2 直接以 itemRuleId 标识规则；评分合同使用 itemRuleIds 关联可共用的规则。审核器在固定资产逐字节验证之后，才由 scripts/legacy/pinned-validation.mjs 判断是否属于历史 TaskPackage 0.1，历史包始终按原 schema 与原规则校验，不改写身份或来源 hash。当前包无法降级进入历史路径。不要重写历史快照来让旧批次通过。

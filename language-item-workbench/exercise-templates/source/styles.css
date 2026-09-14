@@ -1,0 +1,976 @@
+/* Self-hosted fonts — the exact files freeCodeCamp ships (Lato + the custom
+   Hack-ZeroSlash with its slashed zero). Served from /public/fonts. */
+@font-face { font-family: 'Lato'; font-weight: 300; font-style: normal; font-display: swap;
+  src: url('/fonts/lato/Lato-Light.woff') format('woff'); }
+@font-face { font-family: 'Lato'; font-weight: 300; font-style: italic; font-display: swap;
+  src: url('/fonts/lato/Lato-LightItalic.woff') format('woff'); }
+@font-face { font-family: 'Lato'; font-weight: 400; font-style: normal; font-display: swap;
+  src: url('/fonts/lato/Lato-Regular.woff') format('woff'); }
+@font-face { font-family: 'Lato'; font-weight: 400; font-style: italic; font-display: swap;
+  src: url('/fonts/lato/Lato-Italic.woff') format('woff'); }
+@font-face { font-family: 'Lato'; font-weight: 700; font-style: normal; font-display: swap;
+  src: url('/fonts/lato/Lato-Bold.woff') format('woff'); }
+@font-face { font-family: 'Lato'; font-weight: 700; font-style: italic; font-display: swap;
+  src: url('/fonts/lato/Lato-BoldItalic.woff') format('woff'); }
+
+@font-face { font-family: 'Hack-ZeroSlash'; font-weight: 400; font-style: normal; font-display: swap;
+  src: url('/fonts/hack/Hack-ZeroSlash-Regular.woff2') format('woff2'); }
+@font-face { font-family: 'Hack-ZeroSlash'; font-weight: 400; font-style: italic; font-display: swap;
+  src: url('/fonts/hack/Hack-ZeroSlash-Italic.woff2') format('woff2'); }
+@font-face { font-family: 'Hack-ZeroSlash'; font-weight: 700; font-style: normal; font-display: swap;
+  src: url('/fonts/hack/Hack-ZeroSlash-Bold.woff2') format('woff2'); }
+@font-face { font-family: 'Hack-ZeroSlash'; font-weight: 700; font-style: italic; font-display: swap;
+  src: url('/fonts/hack/Hack-ZeroSlash-BoldItalic.woff2') format('woff2'); }
+
+/* freeCodeCamp "Command-line Chic" — dark-first, theme-aware.
+   Base tokens (the navy gray ramp + accent pairs) resolve into the semantic
+   tokens the components below consume. Light mode reverses fg/bg roles. */
+:root {
+  /* base gray ramp — avoids pure black; darkest is deep navy */
+  --gray-00: #ffffff;
+  --gray-05: #f5f6f7;
+  --gray-10: #dfdfe2;
+  --gray-15: #d0d0d5;
+  --gray-45: #858591;
+  --gray-75: #3b3b4f;
+  --gray-80: #2a2a40;
+  --gray-85: #1b1b32;
+  --gray-90: #0a0a23;
+  /* accent pairs (light variant on dark bg / dark variant on light bg) */
+  --purple-light: #dbb8ff;  --purple-dark: #5a01a7;
+  --yellow-gold:  #ffbf00;
+  --blue-light:   #99c9ff;   --blue-dark:  #002ead;   --blue-mid: #198eee;
+  --green-light:  #acd157;   --green-dark: #00471b;
+  --red-light:    #ffadad;   --red-dark:   #850000;
+
+  /* semantic layer — DARK (the primary experience) */
+  --bg: var(--gray-90);
+  --surface: var(--gray-85);
+  --surface-2: var(--gray-80);
+  --border: var(--gray-75);
+  --text: var(--gray-05);
+  --muted: var(--gray-45);
+  --accent: var(--blue-light);       /* links, interactive borders */
+  --focus: var(--blue-mid);          /* universal focus ring */
+  --emphasis: var(--purple-light);   /* level badge, quotes */
+  --cta: var(--yellow-gold);         /* primary buttons */
+  --cta-text: var(--gray-90);
+  --correct: var(--green-light);
+  --correct-bg: rgba(172, 209, 87, 0.14);
+  --wrong: var(--red-light);
+  --wrong-bg: rgba(255, 173, 173, 0.14);
+  --highlight-a-bg: rgba(255, 191, 0, 0.22);
+  --highlight-b-bg: rgba(219, 184, 255, 0.28);
+  --radius: 5px;
+
+  --font-sans: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Hack-ZeroSlash', 'Fira Mono', Menlo, Consolas, monospace;
+
+  color-scheme: dark light;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: var(--gray-00);
+    --surface: var(--gray-05);
+    --surface-2: var(--gray-10);
+    --border: var(--gray-15);
+    --text: var(--gray-90);
+    --muted: var(--gray-45);
+    --accent: var(--blue-dark);
+    --emphasis: var(--purple-dark);
+    --correct: var(--green-dark);
+    --correct-bg: rgba(0, 71, 27, 0.10);
+    --wrong: var(--red-dark);
+    --wrong-bg: rgba(133, 0, 0, 0.08);
+    --highlight-a-bg: rgba(255, 191, 0, 0.30);
+    --highlight-b-bg: rgba(90, 1, 167, 0.16);
+  }
+}
+
+* { box-sizing: border-box; }
+
+/* 18px base is the floor of the system, not a suggestion. */
+html { font-size: 18px; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+}
+
+/* Monospace for code and for developer-facing UI labels — the terminal feel. */
+code, pre, .md code, .blank, .dictation-input, .char-key { font-family: var(--font-mono); }
+.badge, .nav-level, .nav-type, .sidebar h2, .word-bank h3, .match-column h3,
+.checklist h3, .cues h3, .rubric th, .rubric h3, .playback h3, .model-audio h3,
+.score, .audio-plays, .word-count { font-family: var(--font-mono); }
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+::selection { background: var(--blue-light-translucent, rgba(153, 201, 255, 0.3)); }
+
+/* ---------------------------------------------------------------- layout */
+
+.layout { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+
+.sidebar {
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1.25rem 1rem;
+  overflow-y: auto;
+  max-height: 100vh;
+  position: sticky;
+  top: 0;
+}
+.sidebar h2 { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+
+.sidebar-search {
+  display: block;
+  width: 100%;
+  font: inherit;
+  font-size: .85rem;
+  padding: .45rem .6rem;
+  margin: .4rem 0 .75rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
+.sidebar-search:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.sidebar ul { list-style: none; margin: 0; padding: 0; }
+
+.skill-group { margin-bottom: .25rem; }
+.skill-group summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .5rem .6rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text);
+  list-style: none;
+}
+.skill-group summary::-webkit-details-marker { display: none; }
+.skill-group summary::before { content: '▸'; color: var(--accent); margin-right: .4rem; }
+.skill-group[open] summary::before { content: '▾'; }
+.skill-group summary:hover { background: var(--surface-2); }
+.skill-count { font-weight: 400; color: var(--muted); }
+.skill-group ul { padding-left: .25rem; }
+
+/* Results for a skill+level search (e.g. "listening a2") — every task type
+ * whose own "By level" guidance covers that combination, regardless of
+ * whether a sample exists at that exact level. Each entry links straight to
+ * a real exercise page for quick access. */
+.capability-results { margin: .75rem 0 .25rem; padding-top: .6rem; border-top: 1px dashed var(--border); }
+.capability-heading {
+  margin: 0 0 .25rem;
+  padding: 0 .6rem;
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+}
+.capability-results ul { padding-left: .25rem; }
+
+.sidebar a {
+  display: grid;
+  gap: .1rem;
+  padding: .5rem .6rem;
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: var(--text);
+}
+.sidebar a:hover { background: var(--surface-2); }
+/* Active state is a subtle background shift + accent bar, not a color flood. */
+.sidebar a.active { background: var(--surface-2); box-shadow: inset 3px 0 0 var(--accent); }
+.nav-level { font-size: .7rem; font-weight: 700; color: var(--accent); }
+.nav-title { font-size: .9rem; font-weight: 500; }
+.nav-type { font-size: .7rem; color: var(--muted); }
+
+.content { padding: 2rem clamp(1rem, 4vw, 3rem); max-width: 60rem; }
+.empty { color: var(--muted); }
+
+.failures { margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+.failures h3 { font-size: .75rem; text-transform: uppercase; color: var(--wrong); }
+.failures pre { white-space: pre-wrap; font-size: .7rem; color: var(--wrong); margin: .25rem 0 1rem; }
+
+@media (max-width: 720px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; max-height: none; }
+}
+
+/* -------------------------------------------------------------- exercise */
+
+.exercise-header h1 { margin: .5rem 0 .25rem; font-size: 1.75rem; line-height: 1.2; }
+.title-row { display: flex; align-items: center; gap: .6rem; }
+.title-row h1 { margin: .5rem 0 .25rem; }
+.badges { display: flex; flex-wrap: wrap; gap: .4rem; }
+.badge {
+  font-size: .7rem;
+  font-weight: 600;
+  padding: .15rem .5rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+/* Level = emphasis (purple); type = interactive (blue). Text flips with theme. */
+.badge-level { background: var(--emphasis); border-color: var(--emphasis); color: var(--bg); }
+.badge-type { color: var(--accent); border-color: var(--accent); }
+.tags { font-size: .8rem; color: var(--muted); margin: .25rem 0 0; }
+
+.instructions { margin: 1rem 0 1.5rem; }
+.hint { font-size: .85rem; color: var(--muted); }
+.credit { font-size: .75rem; color: var(--muted); font-style: italic; }
+.error { color: var(--wrong); font-size: .9rem; }
+.word-scramble { font-size: 1rem; font-family: var(--font-mono); margin: 0 0 1.5rem; }
+
+.passage, .prompt, .cues {
+  background: var(--surface);
+  border-inline-start: 3px solid var(--emphasis);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin: 0 0 1.5rem;
+}
+/* Same box, no accent bar — used where the purple left border isn't wanted. */
+.no-accent { border-inline-start: none; }
+
+.exercise-footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.controls { display: flex; gap: .5rem; }
+
+.btn {
+  font: inherit;
+  font-size: .9rem;
+  padding: .5rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+/* Primary CTA is the gold button — the most prominent element on screen. */
+.btn-primary { background: var(--cta); border-color: var(--cta); color: var(--cta-text); font-weight: 700; }
+.btn-primary:hover:not(:disabled) { border-color: var(--cta); filter: brightness(1.08); }
+.btn-recording { background: var(--wrong); border-color: var(--wrong); color: var(--bg); }
+.btn-small { padding: .15rem .45rem; font-size: .8rem; line-height: 1; }
+
+.score { margin: 0; font-weight: 600; }
+.score-pass { color: var(--correct); }
+.score-fail { color: var(--wrong); }
+
+.feedback { display: flex; gap: .4rem; align-items: baseline; margin: .35rem 0; font-size: .85rem; }
+.feedback-correct { color: var(--correct); }
+.feedback-wrong { color: var(--wrong); }
+
+.teacher-notes {
+  margin-top: 2rem;
+  padding: 1rem 1.25rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.teacher-notes h3 { margin-top: 0; font-size: .8rem; text-transform: uppercase; color: var(--muted); }
+
+.language-switch {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-bottom: 1rem;
+}
+.language-switch-label { font-size: .85rem; color: var(--muted); }
+.language-switch .btn.active {
+  background: var(--surface-2);
+  border-color: var(--accent);
+  color: var(--accent);
+  cursor: default;
+}
+
+.passage-section { margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border); }
+.passage-section-label { margin: 0 0 .35rem; font-size: .8rem; text-transform: uppercase; color: var(--muted); }
+/* A `.blank` that needs room for a full sentence/heading rather than a
+   short inline word — sized to the question column instead of its content. */
+.blank-block { display: block; width: 100%; margin: .4rem 0; text-overflow: ellipsis; }
+
+/* ------------------------------------------------------------- highlight */
+
+.highlight-span { cursor: pointer; border-radius: 3px; padding: .05em 0; }
+.highlight-span:hover { background: var(--surface-2); }
+.highlight-span.highlight-a { background: var(--highlight-a-bg); }
+.highlight-span.highlight-b { background: var(--highlight-b-bg); }
+.highlight-span.highlight-a.highlight-b { background: linear-gradient(90deg, var(--highlight-a-bg), var(--highlight-b-bg)); }
+
+/* Per-word selection (Highlight Incorrect Words): chosen, then after
+   submission, correctly-caught / missed / wrongly-flagged. */
+.highlight-word { cursor: pointer; border-radius: 3px; padding: .05em .1em; }
+/* Scripts with no spaces between words (e.g. Chinese) should read as
+   continuous prose — the horizontal padding above would otherwise show as
+   visible gaps between words even though no space character is rendered. */
+.highlight-word-tight { padding-inline: 0; }
+.highlight-word:hover { background: var(--surface-2); }
+.highlight-word.word-selected { background: var(--accent); color: var(--bg); }
+.highlight-word.word-correct { background: var(--correct-bg); border-bottom: 2px solid var(--correct); }
+.highlight-word.word-wrong { background: var(--wrong-bg); border-bottom: 2px solid var(--wrong); text-decoration: line-through; }
+.highlight-word.word-missed { border-bottom: 2px dashed var(--wrong); }
+.highlight-question { padding: .75rem 1rem; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 1rem; }
+.highlight-question.active { border-color: var(--accent); }
+.highlight-preview { margin: .5rem 0 0; font-size: .85rem; color: var(--muted); }
+.highlight-swatch { display: inline-block; width: .7em; height: .7em; border-radius: 2px; margin-inline-end: .4rem; vertical-align: -.05em; }
+
+/* --------------------------------------------------------- picture choice */
+
+.picture-item { margin-bottom: 1.75rem; padding-bottom: 1.5rem; border-bottom: 1px dashed var(--border); }
+.picture-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.picture-choices { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .75rem; }
+.picture-choice {
+  display: block;
+  width: 130px;
+  padding: .5rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+}
+.picture-choice img { width: 100%; height: 90px; object-fit: cover; border-radius: 3px; display: block; }
+.picture-choice:hover:not(:disabled) { border-color: var(--accent); }
+.picture-choice.picture-chosen { border-color: var(--accent); }
+.picture-choice.picture-key { border-color: var(--correct); background: var(--correct-bg); }
+.picture-choice.picture-wrong { border-color: var(--wrong); background: var(--wrong-bg); }
+.picture-choice:disabled { cursor: default; }
+
+/* -------------------------------------------------------------- questions */
+
+.questions { display: grid; gap: 1.5rem; padding-inline-start: 1.25rem; }
+.question-prompt p { margin: 0 0 .5rem; font-weight: 500; }
+.options { list-style: none; margin: 0; padding: 0; display: grid; gap: .35rem; }
+.option {
+  display: flex;
+  gap: .6rem;
+  align-items: center;
+  padding: .5rem .75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.option:hover { border-color: var(--accent); }
+/* Multi-sentence paragraph options (e.g. summary choices) look better with
+   the radio aligned to the first line, not centered against the block. */
+.option-paragraph { align-items: flex-start; }
+.option-paragraph input { margin-top: .3rem; }
+.option-paragraph .md p:last-child { margin-bottom: 0; }
+.option-chosen { border-color: var(--accent); background: var(--surface); }
+.option-key { border-color: var(--correct); background: var(--correct-bg); }
+.option-wrong { border-color: var(--wrong); background: var(--wrong-bg); }
+
+/* -------------------------------------------------------- fill in blanks */
+
+.word-bank { margin-bottom: 1.5rem; }
+.word-bank h3 { font-size: .8rem; text-transform: uppercase; color: var(--muted); margin: 0 0 .5rem; }
+.word-bank ul { list-style: none; display: flex; flex-wrap: wrap; gap: .4rem; margin: 0; padding: 0; }
+.word-bank li {
+  padding: .25rem .6rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: .85rem;
+}
+
+.blank-items { display: grid; gap: 1.25rem; padding-inline-start: 1.25rem; }
+/* A non-interactive visual placeholder for a blank that's answered via a
+   separate options list rather than typed in place (e.g. Select Missing Word). */
+.blank-marker { font-weight: 700; color: var(--accent); margin: 0 .2rem; letter-spacing: .05em; }
+.blank-line { margin: 0; line-height: 2.4; }
+.blank {
+  font: inherit;
+  font-size: .95rem;
+  padding: .2rem .5rem;
+  margin: 0 .2rem;
+  border: none;
+  border-bottom: 2px solid var(--accent);
+  background: var(--surface);
+  border-radius: 4px 4px 0 0;
+  color: var(--text);
+}
+.blank:focus { outline: 2px solid var(--focus); outline-offset: 1px; }
+.blank-correct { border-bottom-color: var(--correct); background: var(--correct-bg); }
+.blank-wrong { border-bottom-color: var(--wrong); background: var(--wrong-bg); }
+.blank-answers { list-style: none; margin: .25rem 0 0; padding: 0; }
+.word-formation-prompt {
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  color: var(--muted);
+  margin-inline-start: .3rem;
+}
+
+/* ------------------------------------------------------------- matching */
+
+.match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.match-column h3 { font-size: .8rem; text-transform: uppercase; color: var(--muted); }
+.match-column ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.match-item {
+  width: 100%;
+  text-align: start;
+  font: inherit;
+  font-size: .9rem;
+  padding: .55rem .75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: .5rem;
+  align-items: center;
+}
+.match-item:hover:not(:disabled) { border-color: var(--accent); }
+.match-item:disabled { opacity: .55; cursor: not-allowed; }
+.match-active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.match-used { opacity: .4; }
+.match-correct { border-color: var(--correct); background: var(--correct-bg); }
+.match-wrong { border-color: var(--wrong); background: var(--wrong-bg); }
+.match-chip { font-size: .75rem; padding: .1rem .45rem; border-radius: 999px; background: var(--accent); color: #fff; }
+.match-answers { list-style: none; margin: 1.25rem 0 0; padding: 0; }
+
+@media (max-width: 640px) { .match-grid { grid-template-columns: 1fr; } }
+
+/* ---------------------------------------------------------- image label */
+
+.image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.25rem; }
+.image-card { margin: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+.image-card img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: var(--border); }
+.image-card figcaption { padding: .75rem; }
+.image-prompt { margin: 0 0 .5rem; font-size: .85rem; color: var(--muted); }
+.image-card .blank { width: 100%; margin: 0; }
+
+.describe-image-figure { margin: 0 0 1rem; text-align: center; }
+.describe-image-figure img {
+  max-width: min(100%, 420px);
+  max-height: 320px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.describe-picture-layout { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-start; margin-bottom: 1rem; }
+.describe-picture-layout .describe-image-figure { flex: 0 0 auto; margin-bottom: 0; }
+.describe-picture-answer { flex: 1 1 240px; min-width: 0; }
+.describe-picture-answer .writing-area { margin: 0; }
+
+.picture-story-images { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+.picture-story-images .describe-image-figure { flex: 1 1 200px; max-width: 240px; }
+.picture-story-images .describe-image-figure img {
+  width: 100%;
+  max-width: 100%;
+  height: 180px;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.situational-options .passage .btn { margin-top: .5rem; }
+
+.email-context { margin: 0 0 1rem; }
+.email-points { margin: 0 0 1rem; font-size: .85rem; color: var(--muted); }
+.email-meta { margin: 0 0 .35rem; font-size: .9rem; }
+.email-meta strong { margin-inline-end: .35rem; }
+.email-received .email-meta:last-of-type { margin-bottom: 1rem; padding-bottom: .75rem; border-bottom: 1px solid var(--border); }
+
+/* ------------------------------------------------- audio / listening */
+
+.audio { margin-bottom: 1.5rem; }
+.audio audio { width: 100%; }
+.audio-plays { font-size: .8rem; color: var(--muted); margin: .35rem 0 0; }
+.transcript { margin-top: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius); padding: .75rem 1rem; }
+.transcript summary { cursor: pointer; font-weight: 600; font-size: .9rem; }
+
+.dictation { display: grid; gap: 1.25rem; list-style: none; padding-inline-start: 0; }
+.dictation-input, .open-answer, .writing-area {
+  width: 100%;
+  font: inherit;
+  font-size: .95rem;
+  padding: .6rem .75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  resize: vertical;
+}
+.dictation-key { font-size: .9rem; margin: .35rem 0 0; }
+.word-hit { color: var(--correct); }
+.word-miss { color: var(--wrong); text-decoration: underline wavy; }
+
+/* ------------------------------------------------ writing / speaking */
+
+.word-count { font-size: .85rem; color: var(--muted); margin: .5rem 0 0; }
+.word-count-off { color: var(--wrong); }
+.word-count-over { color: var(--correct); }
+.word-count-ok { color: var(--correct); }
+
+.checklist { margin-top: 1.5rem; }
+.checklist h3, .cues h3, .rubric h3, .playback h3, .model-audio h3 {
+  font-size: .8rem; text-transform: uppercase; color: var(--muted); margin-bottom: .5rem;
+}
+.checklist ul, .cues ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .3rem; font-size: .9rem; }
+.checklist .checked { color: var(--correct); }
+
+.rubric { margin-top: 2rem; }
+.rubric table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.rubric th, .rubric td { text-align: start; padding: .5rem .6rem; border-bottom: 1px solid var(--border); }
+.rubric th { font-size: .75rem; text-transform: uppercase; color: var(--muted); }
+.rubric tfoot td { font-weight: 700; border-bottom: none; }
+
+.recorder { margin: 1.5rem 0; display: grid; gap: .75rem; justify-items: start; }
+.prep { font-size: 1.1rem; font-weight: 600; color: var(--accent); }
+.playback audio { width: 100%; }
+.sample-answer { margin-top: 1.5rem; border-inline-start: 3px solid var(--correct); background: var(--correct-bg); padding: .75rem 1rem; border-radius: var(--radius); }
+.sample-answer h4, .sample-answer summary { margin: 0 0 .5rem; font-size: .85rem; text-transform: uppercase; color: var(--correct); cursor: pointer; }
+
+/* ---------------------------------------------- ordering / categorize */
+
+.teacher-panel {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px dashed var(--border);
+}
+.teacher-intro { margin: 0 0 1rem; font-size: .95rem; }
+
+/* Shared by every template's "For teachers" panel (Ordering, Reading, ...). */
+.teacher-meta { display: grid; gap: .5rem; margin-bottom: 1.25rem; }
+.meta-row { display: grid; grid-template-columns: 5rem 1fr; gap: .5rem; align-items: baseline; }
+.meta-row dt {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--muted);
+}
+.meta-row dd { margin: 0; font-size: .9rem; white-space: pre-line; }
+.meta-row dd .md p { margin: 0; }
+
+/* Shared "Sample" panel — the boxed, gray window holding the actual task. */
+.sample-heading {
+  margin: 0 0 .5rem;
+  font-family: var(--font-mono);
+  font-size: .7rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+}
+.sample-box {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  padding: .75rem 1rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  /* Breaks out of .content's 60rem cap to use the empty space toward the
+     browser edge — left edge stays put (block layout grows rightward), and
+     the same gap kept on the left (via .content's own padding) is mirrored
+     on the right instead of running flush to the viewport edge. 280px is
+     .layout's sidebar column; each subtracted clamp() is one side's gap.
+     margin-left/-right are explicit (not "auto" resolved from direction) so
+     this anchors the same way under rtl exercises (Arabic, Hebrew) as it
+     does under ltr — the box itself is also pinned dir="ltr" in the markup
+     as a second safeguard. */
+  width: calc(100vw - 280px - 2 * clamp(1rem, 4vw, 3rem));
+  max-width: none;
+  margin-left: 0;
+  margin-right: auto;
+}
+@media (max-width: 720px) {
+  .sample-box { width: calc(100vw - 2 * clamp(1rem, 4vw, 3rem)); margin-left: 0; margin-right: auto; }
+}
+.sample-intro { margin: 0 0 1rem; font-size: .85rem; color: var(--muted); }
+.sample-box .controls { justify-content: center; margin-top: 1rem; }
+/* Opts a specific exercise back out of the full-width breakout above —
+   used for rtl exercises (Arabic, Hebrew fill-in-the-blank), where the
+   overflow-anchoring this relies on isn't reliable. */
+.sample-box-normal-width { width: auto; max-width: 100%; }
+
+/* Reading: passage and questions side by side so both stay visible at once
+   instead of scrolling the passage out of view to reach the questions. */
+.reading-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.reading-columns .passage { position: sticky; top: 1rem; max-height: 80vh; overflow-y: auto; }
+.reading-columns .questions { max-height: 80vh; overflow-y: auto; padding-inline-end: .5rem; }
+@media (max-width: 900px) {
+  .reading-columns { grid-template-columns: 1fr; }
+  .reading-columns .passage { position: static; max-height: none; overflow-y: visible; }
+  .reading-columns .questions { max-height: none; overflow-y: visible; }
+}
+
+.sentence-blank {
+  min-height: 2.5rem;
+  margin: 1rem 0;
+  padding: .5rem .75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: .85rem;
+  font-style: italic;
+  text-align: center;
+}
+
+.letter-word {
+  display: inline-flex;
+  gap: 2px;
+  margin: 0 .15rem;
+  vertical-align: middle;
+}
+.letter-box {
+  width: 1.4rem;
+  height: 1.6rem;
+  padding: 0;
+  text-align: center;
+  font: inherit;
+  font-size: .95rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+}
+.letter-given { background: var(--border); color: var(--muted); }
+.letter-box:focus { outline: 2px solid var(--focus); outline-offset: 1px; }
+.letter-correct { border-color: var(--correct); background: var(--correct-bg); }
+.letter-wrong { border-color: var(--wrong); background: var(--wrong-bg); }
+
+.ordering { list-style: decimal; display: grid; gap: .4rem; padding-inline-start: 1.5rem; }
+.ordering li {
+  display: flex; justify-content: space-between; align-items: center; gap: .75rem;
+  padding: .55rem .75rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+}
+.ordering-sentence li { display: inline-flex; }
+.ordering li[draggable='true'] { cursor: grab; }
+.ordering li[draggable='true']:active { cursor: grabbing; }
+.ord-grip { color: var(--muted); font-size: 1rem; line-height: 1; cursor: grab; user-select: none; touch-action: none; }
+.ord-controls { display: flex; gap: .25rem; }
+.ord-dragging { opacity: .45; }
+.ord-over { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
+.ord-correct { border-color: var(--correct); background: var(--correct-bg); }
+.ord-wrong { border-color: var(--wrong); background: var(--wrong-bg); }
+
+.vocab-word-card { text-align: center; padding: 2rem 1rem; margin-bottom: 1rem; }
+.vocab-progress { font-size: .8rem; text-transform: uppercase; color: var(--muted); margin: 0 0 1rem; }
+.vocab-word { font-size: 2rem; font-weight: 600; margin: 0 0 1.5rem; }
+.vocab-word-card .controls { justify-content: center; }
+.vocab-review { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: .4rem; }
+.vocab-review li {
+  display: flex; justify-content: space-between; align-items: center; gap: .75rem;
+  padding: .55rem .75rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+}
+.vocab-review-word { font-weight: 600; }
+.vocab-review-note { font-size: .85rem; color: var(--muted); }
+
+.pool { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1.5rem; min-height: 2.5rem; }
+.chip {
+  font: inherit; font-size: .85rem; padding: .3rem .7rem;
+  border: 1px solid var(--border); border-radius: 999px;
+  background: var(--surface); color: var(--text); cursor: pointer;
+}
+.chip:hover:not(:disabled) { border-color: var(--accent); }
+.chip-active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.chip-correct { border-color: var(--correct); background: var(--correct-bg); color: var(--correct); }
+.chip-wrong { border-color: var(--wrong); background: var(--wrong-bg); color: var(--wrong); }
+
+.categories { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+.category { border: 1px solid var(--border); border-radius: var(--radius); padding: .75rem; }
+.category-head {
+  width: 100%; font: inherit; font-weight: 600; font-size: .9rem;
+  padding: .4rem; margin-bottom: .5rem; cursor: pointer;
+  background: none; border: none; border-bottom: 2px solid var(--accent); color: var(--text);
+}
+.category ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .35rem; min-height: 2rem; }
+
+/* ------------------------------------------------------------- markdown */
+
+.md > :first-child { margin-top: 0; }
+.md > :last-child { margin-bottom: 0; }
+.md code { background: var(--surface); padding: .1rem .35rem; border-radius: 4px; font-size: .9em; }
+.md blockquote { border-inline-start: 3px solid var(--border); margin-inline-start: 0; padding-inline-start: 1rem; color: var(--muted); }
+
+/* --------------------------------------------------------------- builder */
+
+.new-link {
+  display: block;
+  text-align: center;
+  padding: .5rem;
+  margin-bottom: 1rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.new-link:hover { border-color: var(--accent); background: var(--bg); }
+.new-link.active { background: var(--accent); border-style: solid; border-color: var(--accent); color: #fff; }
+
+.builder-header h1 { margin: 0 0 .25rem; font-size: 1.6rem; }
+.builder-header { margin-bottom: 1.5rem; }
+.builder-header .ff { max-width: 22rem; margin-top: 1rem; }
+
+.builder-panes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem; align-items: start; }
+.builder-form h2, .builder-preview h2 {
+  font-size: .75rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--muted); margin: 0 0 .75rem;
+}
+.builder-preview { position: sticky; top: 1rem; }
+.builder-preview-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.preview-frame {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1.25rem; background: var(--bg); max-height: 70vh; overflow-y: auto;
+}
+.preview-invalid {
+  border: 1px dashed var(--wrong); border-radius: var(--radius);
+  padding: 1rem; background: var(--wrong-bg); color: var(--wrong); font-size: .85rem;
+}
+.preview-invalid pre { white-space: pre-wrap; margin: .5rem 0 0; font-size: .75rem; }
+.builder-source { margin-top: 1rem; }
+.builder-source summary { cursor: pointer; font-size: .8rem; color: var(--muted); }
+.builder-source pre {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: .75rem; overflow-x: auto; font-size: .75rem; max-height: 24rem;
+}
+
+@media (max-width: 900px) {
+  .builder-panes { grid-template-columns: 1fr; }
+  .builder-preview { position: static; }
+}
+
+/* ----------------------------------------------------------- form fields */
+
+.ff { display: grid; gap: .3rem; margin-bottom: 1rem; }
+.ff-inline { display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem; }
+.ff-label { font-size: .78rem; font-weight: 600; color: var(--muted); }
+.ff-input {
+  font: inherit; font-size: .9rem; padding: .45rem .6rem;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); color: var(--text); width: 100%; resize: vertical;
+}
+.ff-input:focus { outline: 2px solid var(--focus); outline-offset: 1px; }
+.ff-error { border-color: var(--wrong); }
+.ff-message { font-size: .75rem; color: var(--wrong); }
+.ff-hint { font-size: .78rem; color: var(--muted); margin: -.1rem 0 .1rem; line-height: 1.4; }
+
+.ff-object {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: .9rem 1rem .3rem; margin: 0 0 1rem;
+}
+.ff-object > legend { font-size: .75rem; font-weight: 700; text-transform: uppercase; color: var(--accent); padding: 0 .35rem; }
+
+.ff-array { gap: .5rem; }
+.ff-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.ff-list-scalar { gap: .3rem; }
+.ff-item { display: flex; gap: .5rem; align-items: flex-start; }
+.ff-item-body { flex: 1; min-width: 0; }
+.ff-item-body > .ff:last-child, .ff-item-body > .ff-object:last-child { margin-bottom: 0; }
+.ff-remove { flex-shrink: 0; color: var(--wrong); }
+
+/* ------------------------------------------------- script-aware fonts */
+
+/* Per-script system-font stacks, selected by the `lang` attribute the shell
+   sets on each exercise. No web fonts — these rely on OS-bundled families,
+   with Noto as a common last resort. */
+/* English UI chrome (teacher panel, sample-box controls, title) is pinned
+   lang="en" even inside a non-English exercise, but that attribute alone
+   does nothing for rendering — font-family still *inherits* from whichever
+   ancestor's `:lang()` rule matched (e.g. the CJK rules below on the outer
+   exercise). This rule gives lang="en" elements their own font-family so
+   they actually stop inheriting a CJK/RTL font instead of just failing to
+   match one. */
+:lang(en) { font-family: var(--font-sans); }
+:lang(ja) { font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic",
+  "Noto Sans JP", system-ui, sans-serif; }
+:lang(ko) { font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR",
+  system-ui, sans-serif; }
+:lang(zh), :lang(zh-Hans) { font-family: "PingFang SC", "Microsoft YaHei",
+  "Noto Sans SC", system-ui, sans-serif; }
+:lang(zh-Hant) { font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC",
+  system-ui, sans-serif; }
+
+/* The Latin-only Hack-ZeroSlash mono font (used for its slashed zero) has a
+   stray glyph at a handful of CJK codepoints — e.g. 个 renders as an unrelated
+   arrow — instead of falling through to a CJK-capable fallback. `.blank` /
+   `.dictation-input` / `.char-key` above set font-family directly, so they
+   don't just inherit the :lang() rules below; these overrides need the same
+   specificity (a compound selector) to actually win for CJK-language input. */
+.blank:lang(ja), .dictation-input:lang(ja), .char-key:lang(ja) {
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+}
+.blank:lang(ko), .dictation-input:lang(ko), .char-key:lang(ko) {
+  font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+}
+.blank:lang(zh), .dictation-input:lang(zh), .char-key:lang(zh),
+.blank:lang(zh-Hans), .dictation-input:lang(zh-Hans), .char-key:lang(zh-Hans) {
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+}
+.blank:lang(zh-Hant), .dictation-input:lang(zh-Hant), .char-key:lang(zh-Hant) {
+  font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif;
+}
+
+/* Arabic & Hebrew: give combining vowel marks vertical headroom so harakat and
+   niqqud are not clipped. Never letter-space or uppercase these — it breaks
+   Arabic cursive joining (our UI labels are separate English chrome). */
+:lang(ar), :lang(fa), :lang(ur) { font-family: "SF Arabic", "Segoe UI", Tahoma,
+  "Noto Sans Arabic", sans-serif; }
+:lang(he) { font-family: "SF Hebrew", "Segoe UI", Arial, "Noto Sans Hebrew", sans-serif; }
+.exercise:lang(ar), .exercise:lang(fa), .exercise:lang(ur),
+.exercise:lang(he) { line-height: 1.9; }
+
+/* The teacher-facing panel (title/intro/Format/Length/By level/Notes) and the
+   post-submit "Teacher notes" aside are English chrome, not scripted content
+   with diacritics, so they should read at the same line-height as every other
+   language instead of inheriting the Arabic/Hebrew boost above. */
+.exercise:lang(ar) .teacher-panel, .exercise:lang(fa) .teacher-panel,
+.exercise:lang(ur) .teacher-panel, .exercise:lang(he) .teacher-panel,
+.exercise:lang(ar) .teacher-notes, .exercise:lang(fa) .teacher-notes,
+.exercise:lang(ur) .teacher-notes, .exercise:lang(he) .teacher-notes {
+  line-height: 1.5;
+}
+
+/* RTL: keep answer blanks isolated so a mid-sentence input keeps its place,
+   and let inputs size to their own content direction. */
+.exercise[dir="rtl"] .blank { unicode-bidi: isolate; }
+.exercise[dir="rtl"] .blank-line { line-height: 2.6; }
+
+/* ---------------------------------------------- character-helper bar */
+
+.char-helper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px dashed var(--border);
+}
+.char-key {
+  font: inherit;
+  font-size: 1.05rem;
+  line-height: 1;
+  min-width: 2.1rem;
+  padding: .35rem .5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.char-key:hover { border-color: var(--accent); background: var(--bg); }
+
+/* ----------------------------------------------------------- pronunciation */
+
+.pron-live { font-family: var(--font-mono); font-size: .9rem; color: var(--muted); margin: .5rem 0 0; }
+.pron-interim { opacity: .55; }
+.pron-result { margin-top: 1.5rem; }
+.pron-marks { font-size: 1.2rem; line-height: 1.8; margin: .5rem 0; }
+
+/* --------------------------------------------- word-bank drag and drop */
+/* The resting appearance of .word-bank li is deliberately left untouched.
+   These rules add only the drag affordance and transient drag/drop states. */
+.word-bank li[draggable="true"] { cursor: grab; }
+.word-bank li[draggable="true"]:active { cursor: grabbing; }
+.word-bank li.dragging { opacity: .45; }
+
+/* Blank currently under the pointer during a drag. */
+.blank-drop { outline: 2px dashed var(--accent); outline-offset: 2px; }
+
+/* A block-level drop target for a full sentence/statement (e.g. Matching
+   (Listening)), as opposed to `.blank-target`'s short inline word slot. */
+.statement-target {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: .6rem .75rem;
+  margin: .5rem 0;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: start;
+  font: inherit;
+  color: var(--text);
+}
+.statement-target.statement-filled { border-style: solid; cursor: grab; }
+.statement-target-placeholder { color: var(--muted); font-style: italic; }
+
+/* Compact per-row layout for Matching (Listening): a play button and a
+   short select field, so the row stays narrow — the full sentence text
+   lives once in the `.statement-legend` box instead of in each row. */
+.matching-row { display: flex; align-items: center; gap: .6rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.matching-row-number { font-weight: 700; min-width: 1.25rem; }
+.btn-play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1rem;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.btn-play:hover:not(:disabled) { border-color: var(--accent); }
+.btn-play:disabled { opacity: .5; cursor: not-allowed; }
+.btn-play-active { opacity: 1; border-color: var(--accent); background: var(--surface-2); color: var(--accent); animation: btn-play-pulse 1s ease-in-out infinite; }
+@keyframes btn-play-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--highlight-a-bg); }
+  50% { box-shadow: 0 0 0 5px transparent; }
+}
+.compact-plays { font-size: .8rem; color: var(--muted); }
+.statement-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
+.statement-legend strong { margin-inline-end: .4rem; }
+.statement-legend li {
+  padding: .5rem .75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: .9rem;
+  cursor: pointer;
+}
+.statement-legend li[draggable='true'] { cursor: grab; }
+.statement-legend li[draggable='true']:active { cursor: grabbing; }
+.blank-target { min-width: 5rem; display: inline-block; cursor: pointer; }
+.blank-target[draggable='true'] { cursor: grab; }
+.blank-target[draggable='true']:active { cursor: grabbing; }
+
+/* Word-bank header row: label + drag-and-drop hint side by side. */
+.word-bank-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: .6rem;
+  margin-bottom: .5rem;
+}
+.word-bank-head h3 { margin: 0; }
+.word-bank-hint { font-size: .75rem; color: var(--muted); }

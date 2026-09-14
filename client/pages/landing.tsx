@@ -6,6 +6,7 @@ import { rootRoute } from "./root";
 import { ProtectedRoute } from "../components/protected-route";
 import { UsersWebSocketActivityContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
+import { SignOutButton } from "../components/sign-out-button";
 import { examsRoute } from "./exams";
 import { attemptsRoute } from "./attempts";
 import { LandingCard } from "../components/landing-card";
@@ -30,7 +31,7 @@ export function Landing() {
   return (
     <Box minH="100vh" bg={"bg"} py={12} px={4}>
       {!isDevelopmentAuth ? (
-        <Button
+        <SignOutButton
           position="fixed"
           top={3}
           right={8}
@@ -41,7 +42,7 @@ export function Landing() {
           onClick={() => logout()}
         >
           Sign out
-        </Button>
+        </SignOutButton>
       ) : null}
       <Center>
         <Stack gap={8} w="full" maxW="7xl">

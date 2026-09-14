@@ -3,13 +3,14 @@ import test from "node:test";
 
 import {
   addRegistryConfiguration, changeRegistryConfiguration, configurationBindings,
-  removeRegistryConfiguration, unusedConfigurationPrimaries,
+  removeRegistryConfiguration, compatibleConfigurationPrimaries,
 } from "../client/features/language-items/registry-configuration.ts";
-import type { DifficultyBandStandard, RegistryCapability, RegistrySnapshot, ScoringContractSummary } from "../client/features/language-items/types.ts";
+import { capabilityForDraft, capabilityKey } from "../client/features/language-items/registry-capability.ts";
+import type { DifficultyBandStandard, RegistryCapability, RegistrySnapshot, ScoringContractSummary, TaskPackage } from "../client/features/language-items/types.ts";
 
 function fixture() {
   const selected: RegistryCapability = {
-    blueprintSlotId: "slot", itemFormatId: "IF-TYPED-MESSAGE", primaryCanDoId: "primary",
+    itemRuleId: "slot", itemFormatId: "IF-TYPED-MESSAGE", primaryCanDoId: "primary",
     title: "Message", taskFamilyId: "family", rendererId: "renderer", scoringContractTemplateId: "contract",
     primaryReportedSkill: "Writing", communicativeActivity: "Production", communicativeActivities: ["Production", "Interaction"],
     supportingCanDoIds: ["support"], allowedContextIds: ["context"], allowedDomains: ["Personal"],
@@ -25,25 +26,26 @@ function fixture() {
   };
   const snapshot = {
     capabilities: [selected],
+    contentIdOptions: [],
     canDoOptions: [
       { id: "primary", label: "Original", primarySkill: "Writing", activity: "Production" },
       { id: "second", label: "Second", primarySkill: "Writing", activity: "Production" },
       { id: "other-skill", label: "Read", primarySkill: "Reading", activity: "Production" },
       { id: "other-activity", label: "Interact", primarySkill: "Writing", activity: "Interaction" },
     ],
-    scoringContracts: [{ scoringContractTemplateId: "contract", blueprintSlotId: "slot", itemFormatId: "IF-TYPED-MESSAGE" } as ScoringContractSummary],
-    taskFamilyOptions: [{ id: "family", displayName: "Messaging", blueprintSlotIds: ["slot"], allowedItemFormatIds: ["IF-TYPED-MESSAGE"] }],
+    scoringContracts: [{ scoringContractTemplateId: "contract", itemRuleIds: ["slot"], itemFormatId: "IF-TYPED-MESSAGE" } as ScoringContractSummary],
+    taskFamilyOptions: [{ id: "family", displayName: "Messaging", itemRuleIds: ["slot"], allowedItemFormatIds: ["IF-TYPED-MESSAGE"] }],
     difficultyStandards: [standard],
     capabilityDifficultyProfileSets: [{ ...selected, id: "profile", standards: [{ ...structuredClone(standard), description: "Customized original" }] }],
   } as RegistrySnapshot;
   return { snapshot, selected };
 }
 
-test("new configurations only accept an unused compatible primary and valid bindings", () => {
+test("new configurations accept compatible primaries and valid shared bindings", () => {
   const { snapshot, selected } = fixture();
-  assert.deepEqual(unusedConfigurationPrimaries(snapshot, selected).map((entry) => entry.id), ["second"]);
+  assert.deepEqual(compatibleConfigurationPrimaries(snapshot, selected).map((entry) => entry.id), ["primary", "second"]);
   const before = JSON.stringify(snapshot);
-  for (const primary of ["primary", "other-skill", "other-activity", "missing"]) {
+  for (const primary of ["other-skill", "other-activity", "missing"]) {
     assert.equal(addRegistryConfiguration(snapshot, selected, primary), undefined);
     assert.equal(JSON.stringify(snapshot), before);
   }
@@ -60,6 +62,9 @@ test("new primary has independent contexts, evidence and difficulty without copy
   const original = structuredClone(selected);
   const added = addRegistryConfiguration(snapshot, selected, "second")!;
   assert.ok(added);
+  assert.notEqual(added.itemRuleId, selected.itemRuleId);
+  assert.deepEqual(snapshot.scoringContracts?.[0].itemRuleIds, [selected.itemRuleId, added.itemRuleId]);
+  assert.deepEqual(snapshot.taskFamilyOptions?.[0].itemRuleIds, [selected.itemRuleId, added.itemRuleId]);
   assert.deepEqual(added.allowedContextIds, []);
   assert.deepEqual(added.allowedDomains, []);
   assert.deepEqual(added.supportingCanDoIds, []);
@@ -73,7 +78,8 @@ test("new primary has independent contexts, evidence and difficulty without copy
   profile.standards[0].description = "New estimate";
   assert.equal(snapshot.difficultyStandards[0].description, "Baseline");
   assert.equal(snapshot.capabilityDifficultyProfileSets![0].standards[0].description, "Customized original");
-  assert.equal(addRegistryConfiguration(snapshot, selected, "second"), undefined);
+  const another = addRegistryConfiguration(snapshot, selected, "second")!;
+  assert.notEqual(another.itemRuleId, added.itemRuleId);
 });
 
 test("configuration edits target stable identity after list reordering, never a stale index", () => {
@@ -84,22 +90,47 @@ test("configuration edits target stable identity after list reordering, never a 
   assert.equal(selected.observableEvidence, "Updated original");
   assert.equal(added.observableEvidence, "");
   const before = JSON.stringify(snapshot);
-  changeRegistryConfiguration(snapshot, { ...selected, blueprintSlotId: "missing" }, (entry) => { entry.title = "Wrong edit"; });
+  changeRegistryConfiguration(snapshot, { ...selected, itemRuleId: "missing" }, (entry) => { entry.title = "Wrong edit"; });
   assert.equal(JSON.stringify(snapshot), before);
 });
 
-test("removing a configuration deletes only its difficulty profile and preserves the Can-do library", () => {
+test("removing a rule cleans its references without deleting shared definitions or requiring siblings", () => {
   const { snapshot, selected } = fixture();
   const library = structuredClone(snapshot.canDoOptions);
-  assert.equal(removeRegistryConfiguration(snapshot, selected), undefined);
   const added = addRegistryConfiguration(snapshot, selected, "second")!;
-  const unrelated = { ...selected, blueprintSlotId: "another-slot" };
-  snapshot.capabilities.push(unrelated);
-  snapshot.capabilityDifficultyProfileSets!.push({ ...unrelated, id: "other", standards: [] });
-  assert.equal(removeRegistryConfiguration(snapshot, selected), added);
-  assert.ok(snapshot.capabilities.includes(unrelated));
+  removeRegistryConfiguration(snapshot, selected);
+  assert.deepEqual(snapshot.capabilities.map((rule) => rule.itemRuleId), [added.itemRuleId]);
+  assert.deepEqual(snapshot.scoringContracts?.[0].itemRuleIds, [added.itemRuleId]);
+  assert.deepEqual(snapshot.taskFamilyOptions?.[0].itemRuleIds, [added.itemRuleId]);
+  assert.deepEqual(snapshot.capabilityDifficultyProfileSets?.map((profile) => profile.itemRuleId), [added.itemRuleId]);
+  removeRegistryConfiguration(snapshot, added);
+  assert.deepEqual(snapshot.capabilities, []);
+  assert.deepEqual(snapshot.scoringContracts?.[0].itemRuleIds, []);
+  assert.deepEqual(snapshot.taskFamilyOptions?.[0].itemRuleIds, []);
+  assert.deepEqual(snapshot.capabilityDifficultyProfileSets, []);
   assert.deepEqual(snapshot.canDoOptions, library);
-  assert.equal(snapshot.capabilityDifficultyProfileSets!.length, 2);
-  assert.ok(snapshot.capabilityDifficultyProfileSets!.every((entry) => entry.blueprintSlotId !== "slot" || entry.primaryCanDoId === "second"));
-  assert.equal(removeRegistryConfiguration(snapshot, added), undefined);
+});
+
+test("two rules with the same Can-do and format retain distinct identity and authored requirements", () => {
+  const { snapshot, selected } = fixture();
+  const other = { ...structuredClone(selected), itemRuleId: "another-rule", taskStructure: "A different message" };
+  snapshot.capabilities.push(other);
+  const packageFor = (itemRuleId: string) => ({ itemRuleId, itemFormatId: selected.itemFormatId,
+    content: { primaryCanDoId: selected.primaryCanDoId } }) as TaskPackage;
+  assert.notEqual(capabilityKey(selected), capabilityKey(other));
+  assert.equal(capabilityForDraft(snapshot, packageFor(selected.itemRuleId)), selected);
+  assert.equal(capabilityForDraft(snapshot, packageFor(other.itemRuleId)), other);
+  changeRegistryConfiguration(snapshot, other, (rule) => { rule.taskStructure = "Edited separately"; });
+  assert.equal(selected.taskStructure, "A message");
+  assert.equal(other.taskStructure, "Edited separately");
+});
+
+test("a canonical rule ID does not authorize inconsistent format or Can-do assertions", () => {
+  const { snapshot, selected } = fixture();
+  const package_ = { itemRuleId: selected.itemRuleId, itemFormatId: selected.itemFormatId,
+    content: { primaryCanDoId: selected.primaryCanDoId } } as TaskPackage;
+  assert.equal(capabilityForDraft(snapshot, package_), selected);
+  assert.equal(capabilityForDraft(snapshot, { ...package_, itemRuleId: "missing" }), undefined);
+  assert.equal(capabilityForDraft(snapshot, { ...package_, itemFormatId: "IF-SINGLE-SELECT" }), undefined);
+  assert.equal(capabilityForDraft(snapshot, { ...package_, content: { ...package_.content, primaryCanDoId: "second" } }), undefined);
 });

@@ -1,4 +1,4 @@
-import { Badge, Box, Button, HStack, Spinner, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, HStack, Spinner, Stack, Text } from "@chakra-ui/react";
 import { useContext, useEffect, useState } from "react";
 
 import { AuthContext } from "../../contexts/auth";
@@ -15,22 +15,34 @@ export function RegistrySettingsPanel({ onDirtyChange, onBusyChange }: {
   const [stagedDirty, setStagedDirty] = useState(false);
   const settings = useRegistrySettings(user?.email, stagedDirty);
   const { record, editable, dirty, busy, feedback, publication } = settings;
+  useEffect(() => { setStagedDirty(false); }, [record?.id, settings.editorReset]);
   useEffect(() => { onDirtyChange?.(dirty || stagedDirty); }, [dirty, stagedDirty, onDirtyChange]);
   useEffect(() => { onBusyChange?.(busy); }, [busy, onBusyChange]);
-  const status = record ? registryStatus(record, dirty, user?.email) : null;
+  const status = record ? registryStatus(record, dirty || stagedDirty, user?.email) : null;
   const needsSave = dirty || stagedDirty || settings.remoteChanged;
 
   return (
-    <Box borderWidth="1px" borderRadius="xl" bg="bg" overflow="hidden">
+    <Box borderWidth="1px" borderRadius="xl" bg="bg">
       <Stack p={5} gap={4}>
-        {settings.loading ? <Spinner /> : null}
+        {settings.loading && !record ? <HStack role="status"><Spinner size="sm" /><Text>Loading settings…</Text></HStack> : null}
+        {settings.loadError ? <HStack flexWrap="wrap">
+          <Text role="alert" color="fg.error">Could not load settings: {settings.loadError}</Text>
+          <Button variant="outline" size="sm" loading={settings.refreshing} disabled={busy || settings.refreshing} onClick={settings.retryLoad}>Retry loading settings</Button>
+        </HStack> : null}
+        {!record && !settings.loading && !settings.loadError ? <Stack gap={3} align="start">
+          <Text role="status">No published settings are available.</Text>
+          <Button variant="outline" size="sm" loading={settings.refreshing} disabled={busy || settings.refreshing} onClick={settings.retryLoad}>Retry loading settings</Button>
+        </Stack> : null}
         {record ? <>
-          <HStack justify="space-between" gap={3} flexWrap="wrap">
+          <HStack justify="space-between" gap={3} flexWrap="wrap" position="sticky" top="3.5rem" zIndex={20} bg="bg" py={3} borderBottomWidth="1px">
+            <Stack gap={1}>
+              <Text role="status" fontSize="sm" color={dirty || stagedDirty ? "fg.warning" : "fg.muted"}>{status?.label}</Text>
+              {stagedDirty ? <Text fontSize="xs" color="fg.muted">Apply or cancel the open edits before saving.</Text> : null}
+            </Stack>
             <HStack flexWrap="wrap" gap={2}>
-              <Badge colorPalette={status?.colorPalette}>{status?.label}</Badge>
               {editable ? <>
-                <Button variant="outline" loading={settings.action === "save"} disabled={busy || !dirty || stagedDirty || settings.remoteChanged} onClick={() => settings.run("save")}>Save draft</Button>
-                <Button colorPalette="teal" title={needsSave ? "Save the draft first" : settings.staleBase ? "Start from the latest published settings" : "Review and confirm publication"} loading={settings.action === "prepare" || settings.action === "publish"} disabled={busy || needsSave || settings.staleBase || feedback.validation?.valid === false} onClick={() => settings.run("prepare")}>Publish</Button>
+                {dirty || stagedDirty ? <Button colorPalette="teal" title={stagedDirty ? "Apply or cancel the open edits first" : "Save changes without using them for new items"} loading={settings.action === "save"} disabled={busy || !dirty || stagedDirty || settings.remoteChanged} onClick={() => settings.run("save")}>Save changes</Button>
+                  : <Button colorPalette="teal" title={needsSave ? "Reload the saved draft first" : settings.staleBase ? "Start from the latest published settings" : "Check and confirm settings for new items"} loading={settings.action === "prepare" || settings.action === "publish"} disabled={busy || needsSave || settings.staleBase || feedback.validation?.valid === false} onClick={() => settings.run("prepare")}>Use for new items</Button>}
               </> : <Button colorPalette="teal" disabled={busy} loading={settings.action === "restart"} onClick={settings.restart}>Edit settings</Button>}
             </HStack>
           </HStack>
@@ -45,16 +57,8 @@ export function RegistrySettingsPanel({ onDirtyChange, onBusyChange }: {
           {settings.error ? <Text role="alert" color="fg.error">{settings.error}</Text> : null}
           {feedback.notice ? <Text role="status" color="fg.info">{feedback.notice}</Text> : null}
           {feedback.warnings?.map((warning) => <Text key={warning} role="alert" color="fg.warning">{warning}</Text>)}
-          {feedback.validation ? <RegistryValidationFeedback snapshot={record.snapshot} result={feedback.validation} /> : null}
-          <RegistryRuleEditor snapshot={record.snapshot} update={settings.update} disabled={!editable || busy || !!publication || settings.remoteChanged} onStagedDirtyChange={setStagedDirty} history={
-            <Stack gap={2}>
-              {settings.audit.map((event) => <HStack key={event.id} justify="space-between" align="start" gap={3} fontSize="sm">
-                <Text>{event.action.replace(/^registry[._]/, "").replace(/[._]/g, " ")} · {event.actorEmail}</Text>
-                <Text color="fg.muted" whiteSpace="nowrap">{new Date(event.createdAt).toLocaleString()}</Text>
-              </HStack>)}
-              {settings.auditError ? <Text color="fg.error">{settings.auditError}</Text> : !settings.audit.length ? <Text color="fg.muted">No changes recorded.</Text> : null}
-            </Stack>
-          } />
+          {feedback.validation && !feedback.validation.valid ? <RegistryValidationFeedback snapshot={record.snapshot} result={feedback.validation} /> : null}
+          <RegistryRuleEditor key={`${record.id}:${settings.editorReset}`} snapshot={record.snapshot} registryVersionId={record.id} expectedRevision={record.revision} published={record.status !== "draft"} update={settings.update} disabled={!editable || busy || !!publication || settings.remoteChanged} onStagedDirtyChange={setStagedDirty} />
         </> : settings.error ? <Text role="alert" color="fg.error">{settings.error}</Text> : null}
       </Stack>
       <RegistryPublishDialog publication={publication} busy={busy} onClose={settings.closePublication} onPublish={() => settings.run("publish")} />

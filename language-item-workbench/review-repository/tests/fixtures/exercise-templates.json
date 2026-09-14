@@ -1,0 +1,2603 @@
+[
+  {
+    "id": "multiple-choice",
+    "name": "Multiple choice",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "multiple-choice"
+        },
+        "title": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "A1",
+            "A2",
+            "B1",
+            "B2",
+            "C1",
+            "C2"
+          ]
+        },
+        "language": {
+          "type": "string",
+          "description": "BCP-47 language tag of the language being taught, e.g. \"pt-BR\", \"fr\", \"de\"."
+        },
+        "instructionLanguage": {
+          "type": "string",
+          "description": "Language the on-screen instructions/labels are written in. Leave unset to use the target language."
+        },
+        "tags": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        },
+        "estimatedMinutes": {
+          "type": "integer",
+          "description": "Minutes the exercise is expected to take.",
+          "exclusiveMinimum": 0
+        },
+        "teacherNotes": {
+          "type": "string",
+          "description": "Shown to the student after they submit, regardless of score."
+        },
+        "variantGroup": {
+          "type": "string",
+          "description": "Give the same id to two or more pages (usually the same exercise in different languages) to offer them as \"Try in other language\" swaps on each other. Only one member of the group appears in the sidebar."
+        },
+        "menuLabel": {
+          "type": "string",
+          "description": "Label shown in the sidebar menu. Falls back to a generic name for the exercise type, then to Title, when unset."
+        },
+        "passage": {
+          "type": "string",
+          "description": "Optional stimulus shown above every question."
+        },
+        "questions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "prompt": {
+                "type": "string"
+              },
+              "options": {
+                "type": "array",
+                "minItems": 2,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "correct": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    }
+                  }
+                ],
+                "description": "0-based index into `options` of the correct answer (the first option is 0). For a question with more than one correct option, use an array of indices instead, e.g. [0, 2]."
+              },
+              "explanation": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "prompt",
+              "options",
+              "correct"
+            ],
+            "additionalProperties": true
+          }
+        }
+      },
+      "required": [
+        "type",
+        "title",
+        "level",
+        "language",
+        "questions"
+      ],
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "fields": [
+      {
+        "key": "type",
+        "label": "Type",
+        "type": "literal",
+        "required": true,
+        "values": [
+          "multiple-choice"
+        ]
+      },
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "level",
+        "label": "Level",
+        "type": "enum",
+        "required": true,
+        "values": [
+          "A1",
+          "A2",
+          "B1",
+          "B2",
+          "C1",
+          "C2"
+        ]
+      },
+      {
+        "key": "language",
+        "label": "Language",
+        "type": "string",
+        "required": true,
+        "description": "BCP-47 language tag of the language being taught, e.g. \"pt-BR\", \"fr\", \"de\"."
+      },
+      {
+        "key": "instructionLanguage",
+        "label": "Instruction Language",
+        "type": "string",
+        "required": false,
+        "description": "Language the on-screen instructions/labels are written in. Leave unset to use the target language."
+      },
+      {
+        "key": "tags",
+        "label": "Tags",
+        "type": "array",
+        "required": false,
+        "default": [],
+        "element": {
+          "key": "entry",
+          "label": "Entry",
+          "type": "string",
+          "required": true
+        }
+      },
+      {
+        "key": "estimatedMinutes",
+        "label": "Estimated Minutes",
+        "type": "integer",
+        "required": false,
+        "exclusiveMinimum": 0,
+        "description": "Minutes the exercise is expected to take."
+      },
+      {
+        "key": "teacherNotes",
+        "label": "Teacher Notes",
+        "type": "string",
+        "required": false,
+        "description": "Shown to the student after they submit, regardless of score."
+      },
+      {
+        "key": "variantGroup",
+        "label": "Variant Group",
+        "type": "string",
+        "required": false,
+        "description": "Give the same id to two or more pages (usually the same exercise in different languages) to offer them as \"Try in other language\" swaps on each other. Only one member of the group appears in the sidebar."
+      },
+      {
+        "key": "menuLabel",
+        "label": "Menu Label",
+        "type": "string",
+        "required": false,
+        "description": "Label shown in the sidebar menu. Falls back to a generic name for the exercise type, then to Title, when unset."
+      },
+      {
+        "key": "passage",
+        "label": "Passage",
+        "type": "string",
+        "required": false,
+        "description": "Optional stimulus shown above every question."
+      },
+      {
+        "key": "questions",
+        "label": "Questions",
+        "type": "array",
+        "required": true,
+        "minItems": 1,
+        "element": {
+          "key": "entry",
+          "label": "Entry",
+          "type": "object",
+          "required": true,
+          "properties": [
+            {
+              "key": "prompt",
+              "label": "Prompt",
+              "type": "string",
+              "required": true
+            },
+            {
+              "key": "options",
+              "label": "Options",
+              "type": "array",
+              "required": true,
+              "minItems": 2,
+              "element": {
+                "key": "entry",
+                "label": "Entry",
+                "type": "string",
+                "required": true
+              }
+            },
+            {
+              "key": "correct",
+              "label": "Correct",
+              "type": "union",
+              "required": true,
+              "description": "0-based index into `options` of the correct answer (the first option is 0). For a question with more than one correct option, use an array of indices instead, e.g. [0, 2].",
+              "variants": [
+                {
+                  "key": "option1",
+                  "label": "Option1",
+                  "type": "integer",
+                  "required": true
+                },
+                {
+                  "key": "option2",
+                  "label": "Option2",
+                  "type": "array",
+                  "required": true,
+                  "element": {
+                    "key": "entry",
+                    "label": "Entry",
+                    "type": "integer",
+                    "required": true
+                  }
+                }
+              ]
+            },
+            {
+              "key": "explanation",
+              "label": "Explanation",
+              "type": "string",
+              "required": false
+            }
+          ]
+        }
+      }
+    ],
+    "projection": {
+      "version": 1,
+      "privatePaths": [
+        "tags",
+        "teacherNotes",
+        "variantGroup",
+        "menuLabel",
+        "questions.*.correct",
+        "questions.*.explanation"
+      ],
+      "transform": "none"
+    }
+  },
+  {
+    "id": "match-columns",
+    "name": "Match the columns",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "match-columns"
+        },
+        "title": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "A1",
+            "A2",
+            "B1",
+            "B2",
+            "C1",
+            "C2"
+          ]
+        },
+        "language": {
+          "type": "string",
+          "description": "BCP-47 language tag of the language being taught, e.g. \"pt-BR\", \"fr\", \"de\"."
+        },
+        "instructionLanguage": {
+          "type": "string",
+          "description": "Language the on-screen instructions/labels are written in. Leave unset to use the target language."
+        },
+        "tags": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        },
+        "estimatedMinutes": {
+          "type": "integer",
+          "description": "Minutes the exercise is expected to take.",
+          "exclusiveMinimum": 0
+        },
+        "teacherNotes": {
+          "type": "string",
+          "description": "Shown to the student after they submit, regardless of score."
+        },
+        "variantGroup": {
+          "type": "string",
+          "description": "Give the same id to two or more pages (usually the same exercise in different languages) to offer them as \"Try in other language\" swaps on each other. Only one member of the group appears in the sidebar."
+        },
+        "menuLabel": {
+          "type": "string",
+          "description": "Label shown in the sidebar menu. Falls back to a generic name for the exercise type, then to Title, when unset."
+        },
+        "leftHeading": {
+          "type": "string",
+          "default": "A"
+        },
+        "rightHeading": {
+          "type": "string",
+          "default": "B"
+        },
+        "pairs": {
+          "type": "array",
+          "description": "Each correct left/right pair. The left column is shown in order; the right column is shuffled for display.",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "properties": {
+              "left": {
+                "type": "string"
+              },
+              "right": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "left",
+              "right"
+            ],
+            "additionalProperties": true
+          }
+        },
+        "distractors": {
+          "type": "array",
+          "description": "Extra right-hand items with no matching left-hand item, so the last pair can't be guessed by elimination.",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "type",
+        "title",
+        "level",
+        "language",
+        "pairs"
+      ],
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "fields": [
+      {
+        "key": "type",
+        "label": "Type",
+        "type": "literal",
+        "required": true,
+        "values": [
+          "match-columns"
+        ]
+      },
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "level",
+        "label": "Level",
+        "type": "enum",
+        "required": true,
+        "values": [
+          "A1",
+          "A2",
+          "B1",
+          "B2",
+          "C1",
+          "C2"
+        ]
+      },
+      {
+        "key": "language",
+        "label": "Language",
+        "type": "string",
+        "required": true,
+        "description": "BCP-47 language tag of the language being taught, e.g. \"pt-BR\", \"fr\", \"de\"."
+      },
+      {
+        "key": "instructionLanguage",
+        "label": "Instruction Language",
+        "type": "string",
+        "required": false,
+        "description": "Language the on-screen instructions/labels are written in. Leave unset to use the target language."
+      },
+      {
+        "key": "tags",
+        "label": "Tags",
+        "type": "array",
+        "required": false,
+        "default": [],
+        "element": {
+          "key": "entry",
+          "label": "Entry",
+          "type": "string",
+          "required": true
+        }
+      },
+      {
+        "key": "estimatedMinutes",
+        "label": "Estimated Minutes",
+        "type": "integer",
+        "required": false,
+        "exclusiveMinimum": 0,
+        "description": "Minutes the exercise is expected to take."
+      },
+      {
+        "key": "teacherNotes",
+        "label": "Teacher Notes",
+        "type": "string",
+        "required": false,
+        "description": "Shown to the student after they submit, regardless of score."
+      },
+      {
+        "key": "variantGroup",
+        "label": "Variant Group",
+        "type": "string",
+        "required": false,
+        "description": "Give the same id to two or more pages (usually the same exercise in different languages) to offer them as \"Try in other language\" swaps on each other. Only one member of the group appears in the sidebar."
+      },
+      {
+        "key": "menuLabel",
+        "label": "Menu Label",
+        "type": "string",
+        "required": false,
+        "description": "Label shown in the sidebar menu. Falls back to a generic name for the exercise type, then to Title, when unset."
+      },
+      {
+        "key": "leftHeading",
+        "label": "Left Heading",
+        "type": "string",
+        "required": false,
+        "default": "A"
+      },
+      {
+        "key": "rightHeading",
+        "label": "Right Heading",
+        "type": "string",
+        "required": false,
+        "default": "B"
+      },
+      {
+        "key": "pairs",
+        "label": "Pairs",
+        "type": "array",
+        "required": true,
+        "minItems": 2,
+        "description": "Each correct left/right pair. The left column is shown in order; the right column is shuffled for display.",
+        "element": {
+          "key": "entry",
+          "label": "Entry",
+          "type": "object",
+          "required": true,
+          "properties": [
+            {
+              "key": "left",
+              "label": "Left",
+              "type": "string",
+              "required": true
+            },
+            {
+              "key": "right",
+              "label": "Right",
+              "type": "string",
+              "required": true
+            }
+          ]
+        }
+      },
+      {
+        "key": "distractors",
+        "label": "Distractors",
+        "type": "array",
+        "required": false,
+        "default": [],
+        "description": "Extra right-hand items with no matching left-hand item, so the last pair can't be guessed by elimination.",
+        "element": {
+          "key": "entry",
+          "label": "Entry",
+          "type": "string",
+          "required": true
+        }
+      }
+    ],
+    "projection": {
+      "version": 1,
+      "privatePaths": [
+        "tags",
+        "teacherNotes",
+        "variantGroup",
+        "menuLabel",
+        "pairs",
+        "distractors"
+      ],
+      "transform": "independent-columns"
+    }
+  },
+  {
+    "id": "ordering",
+    "name": "Put in order",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "ordering"
+        },
+        "title": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "A1",
+            "A2",
+            "B1",
+            "B2",
+            "C1",
+            "C2"
+          ]
+        },
+        "language": {
+          "type": "string",
+          "description": "BCP-47 language tag of the language being taught, e.g. \"pt-BR\", \"fr\", \"de\"."
+        },
+        "instructionLanguage": {
+          "type": "string",
+          "description": "Language the on-screen instructions/labels are written in. Leave unset to use the target language."
+        },
+        "tags": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        },
+        "estimatedMinutes": {
+          "type": "integer",
+          "description": "Minutes the exercise is expected to take.",
+          "exclusiveMinimum": 0
+        },
+        "teacherNotes": {
+          "type": "string",
+          "description": "Shown to the student after they submit, regardless of score."
+        },
+        "variantGroup": {
+          "type": "string",
+          "description": "Give the same id to two or more pages (usually the same exercise in different languages) to offer them as \"Try in other language\" swaps on each other. Only one member of the group appears in the sidebar."
+        },
+        "menuLabel": {
+          "type": "string",
+          "description": "Label shown in the sidebar menu. Falls back to a generic name for the exercise type, then to Title, when unset."
+        },
+        "items": {
+          "type": "array",
+          "description": "Items in their CORRECT order — write them out correctly, the app shuffles them for the student to reorder.",
+          "minItems": 2,
+          "items": {
+            "type": "string"
+          }
+        },
+        "layout": {
+          "type": "string",
+          "enum": [
+            "sentence",
+            "list"
+          ],
+          "description": "\"sentence\": items are words/phrases reordered inline, forming one sentence. \"list\": items are stacked as separate blocks (e.g. steps in a process).",
+          "default": "list"
+        }
+      },
+      "required": [
+        "type",
+        "title",
+        "level",
+        "language",
+        "items"
+      ],
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "fields": [
+      {
+        "key": "type",
+        "label": "Type",
+        "type": "literal",
+        "required": true,
+        "values": [
+          "ordering"
+        ]
+      },
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "level",
+        "label": "Level",
+        "type": "enum",
+        "required": true,
+        "values": [
+          "A1",
+          "A2",
+          "B1",
+          "B2",
+          "C1",
+          "C2"
+        ]
+      },
+      {
+        "key": "language",
+        "label": "Language",
+        "type": "string",
+        "required": true,
+        "description": "BCP-47 language tag of the language being taught, e.g. \"pt-BR\", \"fr\", \"de\"."
+      },
+      {
+        "key": "instructionLanguage",
+        "label": "Instruction Language",
+        "type": "string",
+        "required": false,
+        "description": "Language the on-screen instructions/labels are written in. Leave unset to use the target language."
+      },
+      {
+        "key": "tags",
+        "label": "Tags",
+        "type": "array",
+        "required": false,
+        "default": [],
+        "element": {
+          "key": "entry",
+          "label": "Entry",
+          "type": "string",
+          "required": true
+        }
+      },
+      {
+        "key": "estimatedMinutes",
+        "label": "Estimated Minutes",
+        "type": "integer",
+        "required": false,
+        "exclusiveMinimum": 0,
+        "description": "Minutes the exercise is expected to take."
+      },
+      {
+        "key": "teacherNotes",
+        "label": "Teacher Notes",
+        "type": "string",
+        "required": false,
+        "description": "Shown to the student after they submit, regardless of score."
+      },
+      {
+        "key": "variantGroup",
+        "label": "Variant Group",
+        "type": "string",
+        "required": false,
+        "description": "Give the same id to two or more pages (usually the same exercise in different languages) to offer them as \"Try in other language\" swaps on each other. Only one member of the group appears in the sidebar."
+      },
+      {
+        "key": "menuLabel",
+        "label": "Menu Label",
+        "type": "string",
+        "required": false,
+        "description": "Label shown in the sidebar menu. Falls back to a generic name for the exercise type, then to Title, when unset."
+      },
+      {
+        "key": "items",
+        "label": "Items",
+        "type": "array",
+        "required": true,
+        "minItems": 2,
+        "description": "Items in their CORRECT order — write them out correctly, the app shuffles them for the student to reorder.",
+        "element": {
+          "key": "entry",
+          "label": "Entry",
+          "type": "string",
+          "required": true
+        }
+      },
+      {
+        "key": "layout",
+        "label": "Layout",
+        "type": "enum",
+        "required": false,
+        "values": [
+          "sentence",
+          "list"
+        ],
+        "default": "list",
+        "description": "\"sentence\": items are words/phrases reordered inline, forming one sentence. \"list\": items are stacked as separate blocks (e.g. steps in a process)."
+      }
+    ],
+    "projection": {
+      "version": 1,
+      "privatePaths": [
+        "tags",
+        "teacherNotes",
+        "variantGroup",
+        "menuLabel",
+        "items"
+      ],
+      "transform": "unordered-items"
+    }
+  },
+  {
+    "id": "missing-letters",
+    "name": "Type the Missing Letters",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "missing-letters"
+        },
+        "title": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "A1",
+            "A2",
+            "B1",
+            "B2",
+            "C1",
+            "C2"
+          ]
+        },
+        "language": {
+          "type": "string",
+          "description": "BCP-47 language tag of the language being taught, e.g. \"pt-BR\", \"fr\", \"de\"."
+        },
+        "instructionLanguage": {
+          "type": "string",
+          "description": "Language the on-screen instructions/labels are written in. Leave unset to use the target language."
+        },
+        "tags": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        },
+        "estimatedMinutes": {
+          "type": "integer",
+          "description": "Minutes the exercise is expected to take.",
+          "exclusiveMinimum": 0
+        },
+        "teacherNotes": {
+          "type": "string",
+          "description": "Shown to the student after they submit, regardless of score."
+        },
+        "variantGroup": {
+          "type": "string",
+          "description": "Give the same id to two or more pages (usually the same exercise in different languages) to offer them as \"Try in other language\" swaps on each other. Only one member of the group appears in the sidebar."
+        },
+        "menuLabel": {
+          "type": "string",
+          "description": "Label shown in the sidebar menu. Falls back to a generic name for the exercise type, then to Title, when unset."
+        },
+        "passageTitle": {
+          "type": "string",
+          "description": "Optional heading shown above the passage."
+        },
+        "text": {
+          "type": "string",
+          "description": "The passage text. Keep the first and last sentences plain text. Mark partial words in between as `{word|given}` — `word` is the full correct word, `given` is how many of its leading letters are shown, e.g. `{lack|2}` pre-fills \"la\" and asks the student to type \"ck\"."
+        }
+      },
+      "required": [
+        "type",
+        "title",
+        "level",
+        "language",
+        "text"
+      ],
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "fields": [
+      {
+        "key": "type",
+        "label": "Type",
+        "type": "literal",
+        "required": true,
+        "values": [
+          "missing-letters"
+        ]
+      },
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "level",
+        "label": "Level",
+        "type": "enum",
+        "required": true,
+        "values": [
+          "A1",
+          "A2",
+          "B1",
+          "B2",
+          "C1",
+          "C2"
+        ]
+      },
+      {
+        "key": "language",
+        "label": "Language",
+        "type": "string",
+        "required": true,
+        "description": "BCP-47 language tag of the language being taught, e.g. \"pt-BR\", \"fr\", \"de\"."
+      },
+      {
+        "key": "instructionLanguage",
+        "label": "Instruction Language",
+        "type": "string",
+        "required": false,
+        "description": "Language the on-screen instructions/labels are written in. Leave unset to use the target language."
+      },
+      {
+        "key": "tags",
+        "label": "Tags",
+        "type": "array",
+        "required": false,
+        "default": [],
+        "element": {
+          "key": "entry",
+          "label": "Entry",
+          "type": "string",
+          "required": true
+        }
+      },
+      {
+        "key": "estimatedMinutes",
+        "label": "Estimated Minutes",
+        "type": "integer",
+        "required": false,
+        "exclusiveMinimum": 0,
+        "description": "Minutes the exercise is expected to take."
+      },
+      {
+        "key": "teacherNotes",
+        "label": "Teacher Notes",
+        "type": "string",
+        "required": false,
+        "description": "Shown to the student after they submit, regardless of score."
+      },
+      {
+        "key": "variantGroup",
+        "label": "Variant Group",
+        "type": "string",
+        "required": false,
+        "description": "Give the same id to two or more pages (usually the same exercise in different languages) to offer them as \"Try in other language\" swaps on each other. Only one member of the group appears in the sidebar."
+      },
+      {
+        "key": "menuLabel",
+        "label": "Menu Label",
+        "type": "string",
+        "required": false,
+        "description": "Label shown in the sidebar menu. Falls back to a generic name for the exercise type, then to Title, when unset."
+      },
+      {
+        "key": "passageTitle",
+        "label": "Passage Title",
+        "type": "string",
+        "required": false,
+        "description": "Optional heading shown above the passage."
+      },
+      {
+        "key": "text",
+        "label": "Text",
+        "type": "string",
+        "required": true,
+        "description": "The passage text. Keep the first and last sentences plain text. Mark partial words in between as `{word|given}` — `word` is the full correct word, `given` is how many of its leading letters are shown, e.g. `{lack|2}` pre-fills \"la\" and asks the student to type \"ck\"."
+      }
+    ],
+    "projection": {
+      "version": 1,
+      "privatePaths": [
+        "tags",
+        "teacherNotes",
+        "variantGroup",
+        "menuLabel",
+        "text"
+      ],
+      "transform": "masked-letters"
+    }
+  },
+  {
+    "id": "listening-fill-in-blanks",
+    "name": "Fill in the Blanks",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "listening-fill-in-blanks"
+        },
+        "title": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "A1",
+            "A2",
+            "B1",
+            "B2",
+            "C1",
+            "C2"
+          ]
+        },
+        "language": {
+          "type": "string",
+          "description": "BCP-47 language tag of the language being taught, e.g. \"pt-BR\", \"fr\", \"de\"."
+        },
+        "instructionLanguage": {
+          "type": "string",
+          "description": "Language the on-screen instructions/labels are written in. Leave unset to use the target language."
+        },
+        "tags": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        },
+        "estimatedMinutes": {
+          "type": "integer",
+          "description": "Minutes the exercise is expected to take.",
+          "exclusiveMinimum": 0
+        },
+        "teacherNotes": {
+          "type": "string",
+          "description": "Shown to the student after they submit, regardless of score."
+        },
+        "variantGroup": {
+          "type": "string",
+          "description": "Give the same id to two or more pages (usually the same exercise in different languages) to offer them as \"Try in other language\" swaps on each other. Only one member of the group appears in the sidebar."
+        },
+        "menuLabel": {
+          "type": "string",
+          "description": "Label shown in the sidebar menu. Falls back to a generic name for the exercise type, then to Title, when unset."
+        },
+        "audio": {
+          "type": "object",
+          "description": "The recording the student listens to for the answers.",
+          "properties": {
+            "src": {
+              "type": "string",
+              "description": "Path to the file under `public/media/`, e.g. \"/media/example.mp3\" or \"/media/example.svg\"."
+            },
+            "alt": {
+              "type": "string",
+              "description": "Shown to screen readers and used as a fallback caption."
+            },
+            "credit": {
+              "type": "string",
+              "description": "Optional attribution shown under the image/audio, e.g. for a photo's source."
+            }
+          },
+          "required": [
+            "src"
+          ],
+          "additionalProperties": true
+        },
+        "maxPlays": {
+          "type": "integer",
+          "description": "How many times the recording may be played. Leave unset for unlimited.",
+          "exclusiveMinimum": 0
+        },
+        "matching": {
+          "type": "object",
+          "description": "Fine-tune how a typed answer is matched (case, accents, punctuation, script-specific folding). Leave unset to use sensible defaults for the exercise language.",
+          "default": {},
+          "properties": {
+            "caseSensitive": {
+              "type": "boolean",
+              "description": "Require the exact same upper/lower case as the stored answer.",
+              "default": false
+            },
+            "accentSensitive": {
+              "type": "boolean",
+              "description": "Latin scripts only: when off (default), \"cafe\" matches \"café\". Has no effect on scripts where marks form distinct letters (Cyrillic й/ё, etc.).",
+              "default": false
+            },
+            "punctuationSensitive": {
+              "type": "boolean",
+              "description": "Require the exact same punctuation as the stored answer.",
+              "default": false
+            },
+            "script": {
+              "type": "string",
+              "enum": [
+                "latin",
+                "cyrillic",
+                "cjk",
+                "arabic",
+                "hebrew"
+              ],
+              "description": "Overrides the writing system auto-detected from `language`. Only set this if the exercise language is misdetected."
+            },
+            "foldWidth": {
+              "type": "boolean",
+              "description": "CJK only: treat full-width and half-width forms as equal (ﾃｽﾄ = テスト). On by default."
+            },
+            "foldKana": {
+              "type": "boolean",
+              "description": "Japanese only: treat katakana and hiragana as equal (ト = と). Off by default."
+            },
+            "foldYo": {
+              "type": "boolean",
+              "description": "Russian only: treat ё and е as equal. Off by default, since they are technically distinct letters."
+            },
+            "stripHarakat": {
+              "type": "boolean",
+              "description": "Arabic only: ignore harakat/tashkeel vowel marks, which students usually omit when typing. On by default."
+            },
+            "foldAlef": {
+              "type": "boolean",
+              "description": "Arabic only: treat alef variants, taa marbuta, and alef maqsura as their base letter (أإآ→ا, ة→ه, ى→ي). Off by default."
+            },
+            "stripNiqqud": {
+              "type": "boolean",
+              "description": "Hebrew only: ignore niqqud vowel points, which students usually omit when typing. On by default."
+            }
+          },
+          "required": [],
+          "additionalProperties": true
+        },
+        "text": {
+          "type": "string",
+          "description": "The transcript of the recording, with each missing word marked using `___` (3 or more underscores). Must match the audio exactly, blanks included."
+        },
+        "blanks": {
+          "type": "array",
+          "description": "One answer per blank, in the same order the blanks appear in `text`.",
+          "minItems": 1,
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "alternatives": {
+                    "type": "array",
+                    "default": [],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "hint": {
+                    "type": "string"
+                  },
+                  "explanation": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "value"
+                ],
+                "additionalProperties": true
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "type",
+        "title",
+        "level",
+        "language",
+        "audio",
+        "text",
+        "blanks"
+      ],
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "fields": [
+      {
+        "key": "type",
+        "label": "Type",
+        "type": "literal",
+        "required": true,
+        "values": [
+          "listening-fill-in-blanks"
+        ]
+      },
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "level",
+        "label": "Level",
+        "type": "enum",
+        "required": true,
+        "values": [
+          "A1",
+          "A2",
+          "B1",
+          "B2",
+          "C1",
+          "C2"
+        ]
+      },
+      {
+        "key": "language",
+        "label": "Language",
+        "type": "string",
+        "required": true,
+        "description": "BCP-47 language tag of the language being taught, e.g. \"pt-BR\", \"fr\", \"de\"."
+      },
+      {
+        "key": "instructionLanguage",
+        "label": "Instruction Language",
+        "type": "string",
+        "required": false,
+        "description": "Language the on-screen instructions/labels are written in. Leave unset to use the target language."
+      },
+      {
+        "key": "tags",
+        "label": "Tags",
+        "type": "array",
+        "required": false,
+        "default": [],
+        "element": {
+          "key": "entry",
+          "label": "Entry",
+          "type": "string",
+          "required": true
+        }
+      },
+      {
+        "key": "estimatedMinutes",
+        "label": "Estimated Minutes",
+        "type": "integer",
+        "required": false,
+        "exclusiveMinimum": 0,
+        "description": "Minutes the exercise is expected to take."
+      },
+      {
+        "key": "teacherNotes",
+        "label": "Teacher Notes",
+        "type": "string",
+        "required": false,
+        "description": "Shown to the student after they submit, regardless of score."
+      },
+      {
+        "key": "variantGroup",
+        "label": "Variant Group",
+        "type": "string",
+        "required": false,
+        "description": "Give the same id to two or more pages (usually the same exercise in different languages) to offer them as \"Try in other language\" swaps on each other. Only one member of the group appears in the sidebar."
+      },
+      {
+        "key": "menuLabel",
+        "label": "Menu Label",
+        "type": "string",
+        "required": false,
+        "description": "Label shown in the sidebar menu. Falls back to a generic name for the exercise type, then to Title, when unset."
+      },
+      {
+        "key": "audio",
+        "label": "Audio",
+        "type": "object",
+        "required": true,
+        "description": "The recording the student listens to for the answers.",
+        "properties": [
+          {
+            "key": "src",
+            "label": "Src",
+            "type": "string",
+            "required": true,
+            "description": "Path to the file under `public/media/`, e.g. \"/media/example.mp3\" or \"/media/example.svg\"."
+          },
+          {
+            "key": "alt",
+            "label": "Alt",
+            "type": "string",
+            "required": false,
+            "description": "Shown to screen readers and used as a fallback caption."
+          },
+          {
+            "key": "credit",
+            "label": "Credit",
+            "type": "string",
+            "required": false,
+            "description": "Optional attribution shown under the image/audio, e.g. for a photo's source."
+          }
+        ]
+      },
+      {
+        "key": "maxPlays",
+        "label": "Max Plays",
+        "type": "integer",
+        "required": false,
+        "exclusiveMinimum": 0,
+        "description": "How many times the recording may be played. Leave unset for unlimited."
+      },
+      {
+        "key": "matching",
+        "label": "Matching",
+        "type": "object",
+        "required": false,
+        "default": {},
+        "description": "Fine-tune how a typed answer is matched (case, accents, punctuation, script-specific folding). Leave unset to use sensible defaults for the exercise language.",
+        "properties": [
+          {
+            "key": "caseSensitive",
+            "label": "Case Sensitive",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "description": "Require the exact same upper/lower case as the stored answer."
+          },
+          {
+            "key": "accentSensitive",
+            "label": "Accent Sensitive",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "description": "Latin scripts only: when off (default), \"cafe\" matches \"café\". Has no effect on scripts where marks form distinct letters (Cyrillic й/ё, etc.)."
+          },
+          {
+            "key": "punctuationSensitive",
+            "label": "Punctuation Sensitive",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "description": "Require the exact same punctuation as the stored answer."
+          },
+          {
+            "key": "script",
+            "label": "Script",
+            "type": "enum",
+            "required": false,
+            "values": [
+              "latin",
+              "cyrillic",
+              "cjk",
+              "arabic",
+              "hebrew"
+            ],
+            "description": "Overrides the writing system auto-detected from `language`. Only set this if the exercise language is misdetected."
+          },
+          {
+            "key": "foldWidth",
+            "label": "Fold Width",
+            "type": "boolean",
+            "required": false,
+            "description": "CJK only: treat full-width and half-width forms as equal (ﾃｽﾄ = テスト). On by default."
+          },
+          {
+            "key": "foldKana",
+            "label": "Fold Kana",
+            "type": "boolean",
+            "required": false,
+            "description": "Japanese only: treat katakana and hiragana as equal (ト = と). Off by default."
+          },
+          {
+            "key": "foldYo",
+            "label": "Fold Yo",
+            "type": "boolean",
+            "required": false,
+            "description": "Russian only: treat ё and е as equal. Off by default, since they are technically distinct letters."
+          },
+          {
+            "key": "stripHarakat",
+            "label": "Strip Harakat",
+            "type": "boolean",
+            "required": false,
+            "description": "Arabic only: ignore harakat/tashkeel vowel marks, which students usually omit when typing. On by default."
+          },
+          {
+            "key": "foldAlef",
+            "label": "Fold Alef",
+            "type": "boolean",
+            "required": false,
+            "description": "Arabic only: treat alef variants, taa marbuta, and alef maqsura as their base letter (أإآ→ا, ة→ه, ى→ي). Off by default."
+          },
+          {
+            "key": "stripNiqqud",
+            "label": "Strip Niqqud",
+            "type": "boolean",
+            "required": false,
+            "description": "Hebrew only: ignore niqqud vowel points, which students usually omit when typing. On by default."
+          }
+        ]
+      },
+      {
+        "key": "text",
+        "label": "Text",
+        "type": "string",
+        "required": true,
+        "description": "The transcript of the recording, with each missing word marked using `___` (3 or more underscores). Must match the audio exactly, blanks included."
+      },
+      {
+        "key": "blanks",
+        "label": "Blanks",
+        "type": "array",
+        "required": true,
+        "minItems": 1,
+        "description": "One answer per blank, in the same order the blanks appear in `text`.",
+        "element": {
+          "key": "entry",
+          "label": "Entry",
+          "type": "union",
+          "required": true,
+          "variants": [
+            {
+              "key": "option1",
+              "label": "Option1",
+              "type": "string",
+              "required": true
+            },
+            {
+              "key": "option2",
+              "label": "Option2",
+              "type": "object",
+              "required": true,
+              "properties": [
+                {
+                  "key": "value",
+                  "label": "Value",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "key": "alternatives",
+                  "label": "Alternatives",
+                  "type": "array",
+                  "required": false,
+                  "default": [],
+                  "element": {
+                    "key": "entry",
+                    "label": "Entry",
+                    "type": "string",
+                    "required": true
+                  }
+                },
+                {
+                  "key": "hint",
+                  "label": "Hint",
+                  "type": "string",
+                  "required": false
+                },
+                {
+                  "key": "explanation",
+                  "label": "Explanation",
+                  "type": "string",
+                  "required": false
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "projection": {
+      "version": 1,
+      "privatePaths": [
+        "tags",
+        "teacherNotes",
+        "variantGroup",
+        "menuLabel",
+        "matching",
+        "blanks.*.hint",
+        "blanks.*.explanation",
+        "blanks"
+      ],
+      "transform": "blank-count"
+    }
+  },
+  {
+    "id": "diagram-label",
+    "name": "Summary, Note, Table, Flow-chart, or Diagram Completion",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "diagram-label"
+        },
+        "title": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "A1",
+            "A2",
+            "B1",
+            "B2",
+            "C1",
+            "C2"
+          ]
+        },
+        "language": {
+          "type": "string",
+          "description": "BCP-47 language tag of the language being taught, e.g. \"pt-BR\", \"fr\", \"de\"."
+        },
+        "instructionLanguage": {
+          "type": "string",
+          "description": "Language the on-screen instructions/labels are written in. Leave unset to use the target language."
+        },
+        "tags": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        },
+        "estimatedMinutes": {
+          "type": "integer",
+          "description": "Minutes the exercise is expected to take.",
+          "exclusiveMinimum": 0
+        },
+        "teacherNotes": {
+          "type": "string",
+          "description": "Shown to the student after they submit, regardless of score."
+        },
+        "variantGroup": {
+          "type": "string",
+          "description": "Give the same id to two or more pages (usually the same exercise in different languages) to offer them as \"Try in other language\" swaps on each other. Only one member of the group appears in the sidebar."
+        },
+        "menuLabel": {
+          "type": "string",
+          "description": "Label shown in the sidebar menu. Falls back to a generic name for the exercise type, then to Title, when unset."
+        },
+        "matching": {
+          "type": "object",
+          "description": "Fine-tune how a typed answer is matched (case, accents, punctuation, script-specific folding). Leave unset to use sensible defaults for the exercise language.",
+          "default": {},
+          "properties": {
+            "caseSensitive": {
+              "type": "boolean",
+              "description": "Require the exact same upper/lower case as the stored answer.",
+              "default": false
+            },
+            "accentSensitive": {
+              "type": "boolean",
+              "description": "Latin scripts only: when off (default), \"cafe\" matches \"café\". Has no effect on scripts where marks form distinct letters (Cyrillic й/ё, etc.).",
+              "default": false
+            },
+            "punctuationSensitive": {
+              "type": "boolean",
+              "description": "Require the exact same punctuation as the stored answer.",
+              "default": false
+            },
+            "script": {
+              "type": "string",
+              "enum": [
+                "latin",
+                "cyrillic",
+                "cjk",
+                "arabic",
+                "hebrew"
+              ],
+              "description": "Overrides the writing system auto-detected from `language`. Only set this if the exercise language is misdetected."
+            },
+            "foldWidth": {
+              "type": "boolean",
+              "description": "CJK only: treat full-width and half-width forms as equal (ﾃｽﾄ = テスト). On by default."
+            },
+            "foldKana": {
+              "type": "boolean",
+              "description": "Japanese only: treat katakana and hiragana as equal (ト = と). Off by default."
+            },
+            "foldYo": {
+              "type": "boolean",
+              "description": "Russian only: treat ё and е as equal. Off by default, since they are technically distinct letters."
+            },
+            "stripHarakat": {
+              "type": "boolean",
+              "description": "Arabic only: ignore harakat/tashkeel vowel marks, which students usually omit when typing. On by default."
+            },
+            "foldAlef": {
+              "type": "boolean",
+              "description": "Arabic only: treat alef variants, taa marbuta, and alef maqsura as their base letter (أإآ→ا, ة→ه, ى→ي). Off by default."
+            },
+            "stripNiqqud": {
+              "type": "boolean",
+              "description": "Hebrew only: ignore niqqud vowel points, which students usually omit when typing. On by default."
+            }
+          },
+          "required": [],
+          "additionalProperties": true
+        },
+        "passage": {
+          "type": "string",
+          "description": "The descriptive passage the student reads to work out each label."
+        },
+        "layout": {
+          "type": "string",
+          "enum": [
+            "diagram",
+            "summary",
+            "notes",
+            "table",
+            "flow-chart"
+          ],
+          "description": "Which visual format this task uses. \"diagram\" needs an image with numbered callouts (fill in `image`); every other value needs Markdown text with numbered markers like \"(1)\" instead (fill in `content`).",
+          "default": "diagram"
+        },
+        "image": {
+          "type": "object",
+          "description": "The diagram image, with numbered callouts baked into the image itself. Required when layout is \"diagram\"; unused otherwise.",
+          "properties": {
+            "src": {
+              "type": "string",
+              "description": "Path to the file under `public/media/`, e.g. \"/media/example.mp3\" or \"/media/example.svg\"."
+            },
+            "alt": {
+              "type": "string",
+              "description": "Shown to screen readers and used as a fallback caption."
+            },
+            "credit": {
+              "type": "string",
+              "description": "Optional attribution shown under the image/audio, e.g. for a photo's source."
+            }
+          },
+          "required": [
+            "src"
+          ],
+          "additionalProperties": true
+        },
+        "content": {
+          "type": "string",
+          "description": "Markdown text (a summary paragraph, a note outline, a pipe table, or an arrow-separated flow chart) with numbered blank markers like \"(1)\" showing where each label belongs. Required when layout is anything other than \"diagram\"."
+        },
+        "maxWordsPerLabel": {
+          "type": "integer",
+          "description": "Maximum words allowed per label answer, shown to the student as an instruction (e.g. \"ONE WORD ONLY\").",
+          "exclusiveMinimum": 0
+        },
+        "labels": {
+          "type": "array",
+          "description": "One answer per numbered position (1), (2), ... in order, matching the callouts/markers in the image or content.",
+          "minItems": 1,
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string"
+                  },
+                  "alternatives": {
+                    "type": "array",
+                    "default": [],
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "hint": {
+                    "type": "string"
+                  },
+                  "explanation": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "value"
+                ],
+                "additionalProperties": true
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "type",
+        "title",
+        "level",
+        "language",
+        "passage",
+        "labels"
+      ],
+      "additionalProperties": true,
+      "x-sourceRefinements": [
+        "(d) => (d.layout === 'diagram' ? !!d.image : !!d.content), {\r\n    message: \"`image` is required when `layout` is 'diagram'; `content` is required for every other layout.\",\r\n  }"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "required": [
+                    "layout"
+                  ]
+                }
+              },
+              {
+                "properties": {
+                  "layout": {
+                    "enum": [
+                      "diagram"
+                    ]
+                  }
+                },
+                "required": [
+                  "layout"
+                ]
+              }
+            ]
+          },
+          "then": {
+            "required": [
+              "image"
+            ]
+          },
+          "else": {
+            "required": [
+              "content"
+            ]
+          }
+        }
+      ]
+    },
+    "fields": [
+      {
+        "key": "type",
+        "label": "Type",
+        "type": "literal",
+        "required": true,
+        "values": [
+          "diagram-label"
+        ]
+      },
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "level",
+        "label": "Level",
+        "type": "enum",
+        "required": true,
+        "values": [
+          "A1",
+          "A2",
+          "B1",
+          "B2",
+          "C1",
+          "C2"
+        ]
+      },
+      {
+        "key": "language",
+        "label": "Language",
+        "type": "string",
+        "required": true,
+        "description": "BCP-47 language tag of the language being taught, e.g. \"pt-BR\", \"fr\", \"de\"."
+      },
+      {
+        "key": "instructionLanguage",
+        "label": "Instruction Language",
+        "type": "string",
+        "required": false,
+        "description": "Language the on-screen instructions/labels are written in. Leave unset to use the target language."
+      },
+      {
+        "key": "tags",
+        "label": "Tags",
+        "type": "array",
+        "required": false,
+        "default": [],
+        "element": {
+          "key": "entry",
+          "label": "Entry",
+          "type": "string",
+          "required": true
+        }
+      },
+      {
+        "key": "estimatedMinutes",
+        "label": "Estimated Minutes",
+        "type": "integer",
+        "required": false,
+        "exclusiveMinimum": 0,
+        "description": "Minutes the exercise is expected to take."
+      },
+      {
+        "key": "teacherNotes",
+        "label": "Teacher Notes",
+        "type": "string",
+        "required": false,
+        "description": "Shown to the student after they submit, regardless of score."
+      },
+      {
+        "key": "variantGroup",
+        "label": "Variant Group",
+        "type": "string",
+        "required": false,
+        "description": "Give the same id to two or more pages (usually the same exercise in different languages) to offer them as \"Try in other language\" swaps on each other. Only one member of the group appears in the sidebar."
+      },
+      {
+        "key": "menuLabel",
+        "label": "Menu Label",
+        "type": "string",
+        "required": false,
+        "description": "Label shown in the sidebar menu. Falls back to a generic name for the exercise type, then to Title, when unset."
+      },
+      {
+        "key": "matching",
+        "label": "Matching",
+        "type": "object",
+        "required": false,
+        "default": {},
+        "description": "Fine-tune how a typed answer is matched (case, accents, punctuation, script-specific folding). Leave unset to use sensible defaults for the exercise language.",
+        "properties": [
+          {
+            "key": "caseSensitive",
+            "label": "Case Sensitive",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "description": "Require the exact same upper/lower case as the stored answer."
+          },
+          {
+            "key": "accentSensitive",
+            "label": "Accent Sensitive",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "description": "Latin scripts only: when off (default), \"cafe\" matches \"café\". Has no effect on scripts where marks form distinct letters (Cyrillic й/ё, etc.)."
+          },
+          {
+            "key": "punctuationSensitive",
+            "label": "Punctuation Sensitive",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "description": "Require the exact same punctuation as the stored answer."
+          },
+          {
+            "key": "script",
+            "label": "Script",
+            "type": "enum",
+            "required": false,
+            "values": [
+              "latin",
+              "cyrillic",
+              "cjk",
+              "arabic",
+              "hebrew"
+            ],
+            "description": "Overrides the writing system auto-detected from `language`. Only set this if the exercise language is misdetected."
+          },
+          {
+            "key": "foldWidth",
+            "label": "Fold Width",
+            "type": "boolean",
+            "required": false,
+            "description": "CJK only: treat full-width and half-width forms as equal (ﾃｽﾄ = テスト). On by default."
+          },
+          {
+            "key": "foldKana",
+            "label": "Fold Kana",
+            "type": "boolean",
+            "required": false,
+            "description": "Japanese only: treat katakana and hiragana as equal (ト = と). Off by default."
+          },
+          {
+            "key": "foldYo",
+            "label": "Fold Yo",
+            "type": "boolean",
+            "required": false,
+            "description": "Russian only: treat ё and е as equal. Off by default, since they are technically distinct letters."
+          },
+          {
+            "key": "stripHarakat",
+            "label": "Strip Harakat",
+            "type": "boolean",
+            "required": false,
+            "description": "Arabic only: ignore harakat/tashkeel vowel marks, which students usually omit when typing. On by default."
+          },
+          {
+            "key": "foldAlef",
+            "label": "Fold Alef",
+            "type": "boolean",
+            "required": false,
+            "description": "Arabic only: treat alef variants, taa marbuta, and alef maqsura as their base letter (أإآ→ا, ة→ه, ى→ي). Off by default."
+          },
+          {
+            "key": "stripNiqqud",
+            "label": "Strip Niqqud",
+            "type": "boolean",
+            "required": false,
+            "description": "Hebrew only: ignore niqqud vowel points, which students usually omit when typing. On by default."
+          }
+        ]
+      },
+      {
+        "key": "passage",
+        "label": "Passage",
+        "type": "string",
+        "required": true,
+        "description": "The descriptive passage the student reads to work out each label."
+      },
+      {
+        "key": "layout",
+        "label": "Layout",
+        "type": "enum",
+        "required": false,
+        "values": [
+          "diagram",
+          "summary",
+          "notes",
+          "table",
+          "flow-chart"
+        ],
+        "default": "diagram",
+        "description": "Which visual format this task uses. \"diagram\" needs an image with numbered callouts (fill in `image`); every other value needs Markdown text with numbered markers like \"(1)\" instead (fill in `content`)."
+      },
+      {
+        "key": "image",
+        "label": "Image",
+        "type": "object",
+        "required": false,
+        "description": "The diagram image, with numbered callouts baked into the image itself. Required when layout is \"diagram\"; unused otherwise.",
+        "properties": [
+          {
+            "key": "src",
+            "label": "Src",
+            "type": "string",
+            "required": true,
+            "description": "Path to the file under `public/media/`, e.g. \"/media/example.mp3\" or \"/media/example.svg\"."
+          },
+          {
+            "key": "alt",
+            "label": "Alt",
+            "type": "string",
+            "required": false,
+            "description": "Shown to screen readers and used as a fallback caption."
+          },
+          {
+            "key": "credit",
+            "label": "Credit",
+            "type": "string",
+            "required": false,
+            "description": "Optional attribution shown under the image/audio, e.g. for a photo's source."
+          }
+        ]
+      },
+      {
+        "key": "content",
+        "label": "Content",
+        "type": "string",
+        "required": false,
+        "description": "Markdown text (a summary paragraph, a note outline, a pipe table, or an arrow-separated flow chart) with numbered blank markers like \"(1)\" showing where each label belongs. Required when layout is anything other than \"diagram\"."
+      },
+      {
+        "key": "maxWordsPerLabel",
+        "label": "Max Words Per Label",
+        "type": "integer",
+        "required": false,
+        "exclusiveMinimum": 0,
+        "description": "Maximum words allowed per label answer, shown to the student as an instruction (e.g. \"ONE WORD ONLY\")."
+      },
+      {
+        "key": "labels",
+        "label": "Labels",
+        "type": "array",
+        "required": true,
+        "minItems": 1,
+        "description": "One answer per numbered position (1), (2), ... in order, matching the callouts/markers in the image or content.",
+        "element": {
+          "key": "entry",
+          "label": "Entry",
+          "type": "union",
+          "required": true,
+          "variants": [
+            {
+              "key": "option1",
+              "label": "Option1",
+              "type": "string",
+              "required": true
+            },
+            {
+              "key": "option2",
+              "label": "Option2",
+              "type": "object",
+              "required": true,
+              "properties": [
+                {
+                  "key": "value",
+                  "label": "Value",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "key": "alternatives",
+                  "label": "Alternatives",
+                  "type": "array",
+                  "required": false,
+                  "default": [],
+                  "element": {
+                    "key": "entry",
+                    "label": "Entry",
+                    "type": "string",
+                    "required": true
+                  }
+                },
+                {
+                  "key": "hint",
+                  "label": "Hint",
+                  "type": "string",
+                  "required": false
+                },
+                {
+                  "key": "explanation",
+                  "label": "Explanation",
+                  "type": "string",
+                  "required": false
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "projection": {
+      "version": 1,
+      "privatePaths": [
+        "tags",
+        "teacherNotes",
+        "variantGroup",
+        "menuLabel",
+        "matching",
+        "labels.*.hint",
+        "labels.*.explanation",
+        "labels"
+      ],
+      "transform": "label-count"
+    }
+  },
+  {
+    "id": "build-a-sentence",
+    "name": "Build a Sentence",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "build-a-sentence"
+        },
+        "title": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "A1",
+            "A2",
+            "B1",
+            "B2",
+            "C1",
+            "C2"
+          ]
+        },
+        "language": {
+          "type": "string",
+          "description": "BCP-47 language tag of the language being taught, e.g. \"pt-BR\", \"fr\", \"de\"."
+        },
+        "instructionLanguage": {
+          "type": "string",
+          "description": "Language the on-screen instructions/labels are written in. Leave unset to use the target language."
+        },
+        "tags": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        },
+        "estimatedMinutes": {
+          "type": "integer",
+          "description": "Minutes the exercise is expected to take.",
+          "exclusiveMinimum": 0
+        },
+        "teacherNotes": {
+          "type": "string",
+          "description": "Shown to the student after they submit, regardless of score."
+        },
+        "variantGroup": {
+          "type": "string",
+          "description": "Give the same id to two or more pages (usually the same exercise in different languages) to offer them as \"Try in other language\" swaps on each other. Only one member of the group appears in the sidebar."
+        },
+        "menuLabel": {
+          "type": "string",
+          "description": "Label shown in the sidebar menu. Falls back to a generic name for the exercise type, then to Title, when unset."
+        },
+        "question": {
+          "type": "string",
+          "description": "The question or prompt the student answers by typing out the full sentence built from the scrambled words."
+        },
+        "words": {
+          "type": "array",
+          "description": "The words in their CORRECT order — write them out correctly, the app shuffles them for display. The student sees them scrambled as a reference and types out the full sentence (not drag-and-drop).",
+          "minItems": 2,
+          "items": {
+            "type": "string"
+          }
+        },
+        "matching": {
+          "type": "object",
+          "description": "Fine-tune how a typed answer is matched (case, accents, punctuation, script-specific folding). Leave unset to use sensible defaults for the exercise language.",
+          "default": {},
+          "properties": {
+            "caseSensitive": {
+              "type": "boolean",
+              "description": "Require the exact same upper/lower case as the stored answer.",
+              "default": false
+            },
+            "accentSensitive": {
+              "type": "boolean",
+              "description": "Latin scripts only: when off (default), \"cafe\" matches \"café\". Has no effect on scripts where marks form distinct letters (Cyrillic й/ё, etc.).",
+              "default": false
+            },
+            "punctuationSensitive": {
+              "type": "boolean",
+              "description": "Require the exact same punctuation as the stored answer.",
+              "default": false
+            },
+            "script": {
+              "type": "string",
+              "enum": [
+                "latin",
+                "cyrillic",
+                "cjk",
+                "arabic",
+                "hebrew"
+              ],
+              "description": "Overrides the writing system auto-detected from `language`. Only set this if the exercise language is misdetected."
+            },
+            "foldWidth": {
+              "type": "boolean",
+              "description": "CJK only: treat full-width and half-width forms as equal (ﾃｽﾄ = テスト). On by default."
+            },
+            "foldKana": {
+              "type": "boolean",
+              "description": "Japanese only: treat katakana and hiragana as equal (ト = と). Off by default."
+            },
+            "foldYo": {
+              "type": "boolean",
+              "description": "Russian only: treat ё and е as equal. Off by default, since they are technically distinct letters."
+            },
+            "stripHarakat": {
+              "type": "boolean",
+              "description": "Arabic only: ignore harakat/tashkeel vowel marks, which students usually omit when typing. On by default."
+            },
+            "foldAlef": {
+              "type": "boolean",
+              "description": "Arabic only: treat alef variants, taa marbuta, and alef maqsura as their base letter (أإآ→ا, ة→ه, ى→ي). Off by default."
+            },
+            "stripNiqqud": {
+              "type": "boolean",
+              "description": "Hebrew only: ignore niqqud vowel points, which students usually omit when typing. On by default."
+            }
+          },
+          "required": [],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "type",
+        "title",
+        "level",
+        "language",
+        "question",
+        "words"
+      ],
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "fields": [
+      {
+        "key": "type",
+        "label": "Type",
+        "type": "literal",
+        "required": true,
+        "values": [
+          "build-a-sentence"
+        ]
+      },
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "level",
+        "label": "Level",
+        "type": "enum",
+        "required": true,
+        "values": [
+          "A1",
+          "A2",
+          "B1",
+          "B2",
+          "C1",
+          "C2"
+        ]
+      },
+      {
+        "key": "language",
+        "label": "Language",
+        "type": "string",
+        "required": true,
+        "description": "BCP-47 language tag of the language being taught, e.g. \"pt-BR\", \"fr\", \"de\"."
+      },
+      {
+        "key": "instructionLanguage",
+        "label": "Instruction Language",
+        "type": "string",
+        "required": false,
+        "description": "Language the on-screen instructions/labels are written in. Leave unset to use the target language."
+      },
+      {
+        "key": "tags",
+        "label": "Tags",
+        "type": "array",
+        "required": false,
+        "default": [],
+        "element": {
+          "key": "entry",
+          "label": "Entry",
+          "type": "string",
+          "required": true
+        }
+      },
+      {
+        "key": "estimatedMinutes",
+        "label": "Estimated Minutes",
+        "type": "integer",
+        "required": false,
+        "exclusiveMinimum": 0,
+        "description": "Minutes the exercise is expected to take."
+      },
+      {
+        "key": "teacherNotes",
+        "label": "Teacher Notes",
+        "type": "string",
+        "required": false,
+        "description": "Shown to the student after they submit, regardless of score."
+      },
+      {
+        "key": "variantGroup",
+        "label": "Variant Group",
+        "type": "string",
+        "required": false,
+        "description": "Give the same id to two or more pages (usually the same exercise in different languages) to offer them as \"Try in other language\" swaps on each other. Only one member of the group appears in the sidebar."
+      },
+      {
+        "key": "menuLabel",
+        "label": "Menu Label",
+        "type": "string",
+        "required": false,
+        "description": "Label shown in the sidebar menu. Falls back to a generic name for the exercise type, then to Title, when unset."
+      },
+      {
+        "key": "question",
+        "label": "Question",
+        "type": "string",
+        "required": true,
+        "description": "The question or prompt the student answers by typing out the full sentence built from the scrambled words."
+      },
+      {
+        "key": "words",
+        "label": "Words",
+        "type": "array",
+        "required": true,
+        "minItems": 2,
+        "description": "The words in their CORRECT order — write them out correctly, the app shuffles them for display. The student sees them scrambled as a reference and types out the full sentence (not drag-and-drop).",
+        "element": {
+          "key": "entry",
+          "label": "Entry",
+          "type": "string",
+          "required": true
+        }
+      },
+      {
+        "key": "matching",
+        "label": "Matching",
+        "type": "object",
+        "required": false,
+        "default": {},
+        "description": "Fine-tune how a typed answer is matched (case, accents, punctuation, script-specific folding). Leave unset to use sensible defaults for the exercise language.",
+        "properties": [
+          {
+            "key": "caseSensitive",
+            "label": "Case Sensitive",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "description": "Require the exact same upper/lower case as the stored answer."
+          },
+          {
+            "key": "accentSensitive",
+            "label": "Accent Sensitive",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "description": "Latin scripts only: when off (default), \"cafe\" matches \"café\". Has no effect on scripts where marks form distinct letters (Cyrillic й/ё, etc.)."
+          },
+          {
+            "key": "punctuationSensitive",
+            "label": "Punctuation Sensitive",
+            "type": "boolean",
+            "required": false,
+            "default": false,
+            "description": "Require the exact same punctuation as the stored answer."
+          },
+          {
+            "key": "script",
+            "label": "Script",
+            "type": "enum",
+            "required": false,
+            "values": [
+              "latin",
+              "cyrillic",
+              "cjk",
+              "arabic",
+              "hebrew"
+            ],
+            "description": "Overrides the writing system auto-detected from `language`. Only set this if the exercise language is misdetected."
+          },
+          {
+            "key": "foldWidth",
+            "label": "Fold Width",
+            "type": "boolean",
+            "required": false,
+            "description": "CJK only: treat full-width and half-width forms as equal (ﾃｽﾄ = テスト). On by default."
+          },
+          {
+            "key": "foldKana",
+            "label": "Fold Kana",
+            "type": "boolean",
+            "required": false,
+            "description": "Japanese only: treat katakana and hiragana as equal (ト = と). Off by default."
+          },
+          {
+            "key": "foldYo",
+            "label": "Fold Yo",
+            "type": "boolean",
+            "required": false,
+            "description": "Russian only: treat ё and е as equal. Off by default, since they are technically distinct letters."
+          },
+          {
+            "key": "stripHarakat",
+            "label": "Strip Harakat",
+            "type": "boolean",
+            "required": false,
+            "description": "Arabic only: ignore harakat/tashkeel vowel marks, which students usually omit when typing. On by default."
+          },
+          {
+            "key": "foldAlef",
+            "label": "Fold Alef",
+            "type": "boolean",
+            "required": false,
+            "description": "Arabic only: treat alef variants, taa marbuta, and alef maqsura as their base letter (أإآ→ا, ة→ه, ى→ي). Off by default."
+          },
+          {
+            "key": "stripNiqqud",
+            "label": "Strip Niqqud",
+            "type": "boolean",
+            "required": false,
+            "description": "Hebrew only: ignore niqqud vowel points, which students usually omit when typing. On by default."
+          }
+        ]
+      }
+    ],
+    "projection": {
+      "version": 1,
+      "privatePaths": [
+        "tags",
+        "teacherNotes",
+        "variantGroup",
+        "menuLabel",
+        "matching",
+        "words"
+      ],
+      "transform": "unordered-words"
+    }
+  },
+  {
+    "id": "categorize",
+    "name": "Categorize",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "categorize"
+        },
+        "title": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "A1",
+            "A2",
+            "B1",
+            "B2",
+            "C1",
+            "C2"
+          ]
+        },
+        "language": {
+          "type": "string",
+          "description": "BCP-47 language tag of the language being taught, e.g. \"pt-BR\", \"fr\", \"de\"."
+        },
+        "instructionLanguage": {
+          "type": "string",
+          "description": "Language the on-screen instructions/labels are written in. Leave unset to use the target language."
+        },
+        "tags": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        },
+        "estimatedMinutes": {
+          "type": "integer",
+          "description": "Minutes the exercise is expected to take.",
+          "exclusiveMinimum": 0
+        },
+        "teacherNotes": {
+          "type": "string",
+          "description": "Shown to the student after they submit, regardless of score."
+        },
+        "variantGroup": {
+          "type": "string",
+          "description": "Give the same id to two or more pages (usually the same exercise in different languages) to offer them as \"Try in other language\" swaps on each other. Only one member of the group appears in the sidebar."
+        },
+        "menuLabel": {
+          "type": "string",
+          "description": "Label shown in the sidebar menu. Falls back to a generic name for the exercise type, then to Title, when unset."
+        },
+        "categories": {
+          "type": "array",
+          "description": "The category names the student sorts items into, shown as the drop targets/columns.",
+          "minItems": 2,
+          "items": {
+            "type": "string"
+          }
+        },
+        "items": {
+          "type": "array",
+          "description": "Items to sort, shown shuffled. Each item's `category` must exactly match one of the `categories` above.",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "description": "The item's text, shown shuffled among all items."
+              },
+              "category": {
+                "type": "string",
+                "description": "Must exactly match one of the strings in `categories` above — this is the item's correct category."
+              }
+            },
+            "required": [
+              "text",
+              "category"
+            ],
+            "additionalProperties": true
+          }
+        }
+      },
+      "required": [
+        "type",
+        "title",
+        "level",
+        "language",
+        "categories",
+        "items"
+      ],
+      "additionalProperties": true,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "fields": [
+      {
+        "key": "type",
+        "label": "Type",
+        "type": "literal",
+        "required": true,
+        "values": [
+          "categorize"
+        ]
+      },
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "string",
+        "required": true
+      },
+      {
+        "key": "level",
+        "label": "Level",
+        "type": "enum",
+        "required": true,
+        "values": [
+          "A1",
+          "A2",
+          "B1",
+          "B2",
+          "C1",
+          "C2"
+        ]
+      },
+      {
+        "key": "language",
+        "label": "Language",
+        "type": "string",
+        "required": true,
+        "description": "BCP-47 language tag of the language being taught, e.g. \"pt-BR\", \"fr\", \"de\"."
+      },
+      {
+        "key": "instructionLanguage",
+        "label": "Instruction Language",
+        "type": "string",
+        "required": false,
+        "description": "Language the on-screen instructions/labels are written in. Leave unset to use the target language."
+      },
+      {
+        "key": "tags",
+        "label": "Tags",
+        "type": "array",
+        "required": false,
+        "default": [],
+        "element": {
+          "key": "entry",
+          "label": "Entry",
+          "type": "string",
+          "required": true
+        }
+      },
+      {
+        "key": "estimatedMinutes",
+        "label": "Estimated Minutes",
+        "type": "integer",
+        "required": false,
+        "exclusiveMinimum": 0,
+        "description": "Minutes the exercise is expected to take."
+      },
+      {
+        "key": "teacherNotes",
+        "label": "Teacher Notes",
+        "type": "string",
+        "required": false,
+        "description": "Shown to the student after they submit, regardless of score."
+      },
+      {
+        "key": "variantGroup",
+        "label": "Variant Group",
+        "type": "string",
+        "required": false,
+        "description": "Give the same id to two or more pages (usually the same exercise in different languages) to offer them as \"Try in other language\" swaps on each other. Only one member of the group appears in the sidebar."
+      },
+      {
+        "key": "menuLabel",
+        "label": "Menu Label",
+        "type": "string",
+        "required": false,
+        "description": "Label shown in the sidebar menu. Falls back to a generic name for the exercise type, then to Title, when unset."
+      },
+      {
+        "key": "categories",
+        "label": "Categories",
+        "type": "array",
+        "required": true,
+        "minItems": 2,
+        "description": "The category names the student sorts items into, shown as the drop targets/columns.",
+        "element": {
+          "key": "entry",
+          "label": "Entry",
+          "type": "string",
+          "required": true
+        }
+      },
+      {
+        "key": "items",
+        "label": "Items",
+        "type": "array",
+        "required": true,
+        "minItems": 2,
+        "description": "Items to sort, shown shuffled. Each item's `category` must exactly match one of the `categories` above.",
+        "element": {
+          "key": "entry",
+          "label": "Entry",
+          "type": "object",
+          "required": true,
+          "properties": [
+            {
+              "key": "text",
+              "label": "Text",
+              "type": "string",
+              "required": true,
+              "description": "The item's text, shown shuffled among all items."
+            },
+            {
+              "key": "category",
+              "label": "Category",
+              "type": "string",
+              "required": true,
+              "description": "Must exactly match one of the strings in `categories` above — this is the item's correct category."
+            }
+          ]
+        }
+      }
+    ],
+    "projection": {
+      "version": 1,
+      "privatePaths": [
+        "tags",
+        "teacherNotes",
+        "variantGroup",
+        "menuLabel",
+        "items.*.category"
+      ],
+      "transform": "unordered-categories"
+    }
+  }
+]

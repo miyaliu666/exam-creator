@@ -12,30 +12,31 @@ use crate::{
             CoverageScope, analyze_coverage, confirmed_references, version_is_approved,
         },
         registry::{active_snapshot, capability_for, snapshot_for},
+        registry_content::content_matches_language,
     },
     state::ServerState,
 };
 
 fn metadata_projection(prefix: &str) -> Document {
-    [
-        ("registryVersion", "specVersions.registryBundleVersion"),
-        ("blueprintSlotId", "blueprintSlotId"),
-        ("itemFormatId", "itemFormatId"),
-        ("primaryCanDoId", "content.primaryCanDoId"),
-        ("skill", "content.primaryReportedSkill"),
-        ("activity", "content.communicativeActivity"),
-        ("domain", "content.primaryDomain"),
-        ("contextId", "content.contextId"),
-        ("difficultyBand", "content.difficultyBand"),
-        ("coreIds", "content.targetContentIds"),
-        ("supportingIds", "content.supportingContentRefs"),
-    ]
-    .into_iter()
-    .map(|(key, path)| (key.to_string(), format!("${prefix}.{path}").into()))
-    .collect()
+    let mut projection =
+        crate::language_items::legacy_identity::coverage_metadata_projection(prefix);
+    projection.insert(
+        "language",
+        doc! { "$ifNull": [format!("${prefix}.content.language"), "zh"] },
+    );
+    projection
 }
 
 fn validate_request(request: &CoverageRequest) -> Result<(), Error> {
+    if !matches!(
+        request.filters.language.as_deref().unwrap_or("zh"),
+        "zh" | "en" | "es"
+    ) {
+        return Err(Error::Server(
+            StatusCode::BAD_REQUEST,
+            "Choose Chinese, English, or Spanish for coverage.".to_string(),
+        ));
+    }
     if request.scope == CoverageScope::Drafts && matches!(request.role, CoverageRole::Confirmed) {
         return Err(Error::Server(
             StatusCode::BAD_REQUEST,
@@ -94,15 +95,18 @@ pub async fn post_coverage(
         .iter()
         .chain(&request.excluded_ids)
         .any(|id| {
-            !registry
-                .content_id_options
-                .iter()
-                .any(|option| &option.id == id)
+            !registry.content_id_options.iter().any(|option| {
+                &option.id == id
+                    && content_matches_language(
+                        option,
+                        request.filters.language.as_deref().unwrap_or("zh"),
+                    )
+            })
         })
     {
         return Err(Error::Server(
             StatusCode::BAD_REQUEST,
-            "A selected language point is not defined in this Assessment Settings version"
+            "A selected language point is not defined for this language in this Assessment Settings version"
                 .to_string(),
         ));
     }
@@ -181,7 +185,13 @@ pub async fn post_coverage(
         let target_ids = registry
             .content_id_options
             .iter()
-            .filter(|option| option.kind != "supported")
+            .filter(|option| {
+                option.kind != "supported"
+                    && content_matches_language(
+                        option,
+                        request.filters.language.as_deref().unwrap_or("zh"),
+                    )
+            })
             .map(|option| option.id.as_str())
             .collect::<std::collections::BTreeSet<_>>();
         overview
@@ -195,7 +205,7 @@ fn hydrate_activities(metadata: &mut CoverageMetadata) {
     if let Some(registry) = snapshot_for(&metadata.registry_version)
         && let Some(capability) = capability_for(
             &registry,
-            &metadata.blueprint_slot_id,
+            &metadata.item_rule_id,
             &metadata.item_format_id,
             Some(&metadata.primary_can_do_id),
         )
@@ -211,7 +221,11 @@ mod tests {
     #[test]
     fn projection_cannot_include_payload_answers_or_review_content() {
         let projection = metadata_projection("package");
-        assert_eq!(projection.len(), 11);
+        assert_eq!(projection.len(), 13);
+        assert_eq!(
+            projection.get_document("language").unwrap(),
+            &doc! { "$ifNull": ["$package.content.language", "zh"] }
+        );
         let serialized = projection.to_string();
         for private_field in [
             "candidatePayload",
@@ -232,5 +246,19 @@ mod tests {
         assert!(validate_request(&request).is_ok());
         request.excluded_ids.push("point-0".to_string());
         assert!(validate_request(&request).is_err());
+    }
+
+    #[test]
+    fn coverage_language_requires_a_supported_code_and_defaults_legacy_requests_to_chinese() {
+        let mut request = CoverageRequest::default();
+        assert!(validate_request(&request).is_ok());
+        for language in ["zh", "en", "es"] {
+            request.filters.language = Some(language.into());
+            assert!(validate_request(&request).is_ok());
+        }
+        for language in ["", "fr", "English"] {
+            request.filters.language = Some(language.into());
+            assert!(validate_request(&request).is_err());
+        }
     }
 }

@@ -38,17 +38,17 @@ pub const PROVIDER: &str = "deterministic-mock";
 pub const MODEL: &str = "workbench-fixture-v1";
 pub const MODEL_VERSION: &str = "1";
 pub const GENERATION_PROMPT_ID: &str = "a1-item-generation";
-pub const GENERATION_PROMPT_VERSION: &str = "0.7";
+pub const GENERATION_PROMPT_VERSION: &str = "0.9";
 pub const REVIEW_PROMPT_ID: &str = "a1-item-independent-review";
-pub const REVIEW_PROMPT_VERSION: &str = "0.4";
-pub const REVIEW_SCHEMA_VERSION: &str = "0.1";
+pub const REVIEW_PROMPT_VERSION: &str = "0.7";
+pub const REVIEW_SCHEMA_VERSION: &str = "0.2";
 pub const GENERATION_OUTPUT_SCHEMA_VERSION: &str = "0.3";
 const MAX_CONCURRENT_CANDIDATE_REQUESTS: usize = 5;
-pub const GENERATION_PROMPT: &str = include_str!("prompts/generation-v0.7.md");
+pub const GENERATION_PROMPT: &str = include_str!("prompts/generation-v0.9.md");
 pub const GENERATION_OUTPUT_SCHEMA: &str =
     include_str!("prompts/generation-output-v0.3.schema.json");
-pub const REVIEW_PROMPT: &str = include_str!("prompts/review-v0.4.md");
-pub const REVIEW_OUTPUT_SCHEMA: &str = include_str!("prompts/review-output-v0.1.schema.json");
+pub const REVIEW_PROMPT: &str = include_str!("prompts/review-v0.7.md");
+pub const REVIEW_OUTPUT_SCHEMA: &str = include_str!("prompts/review-output-v0.2.schema.json");
 
 fn pinned_registry(package: &TaskPackage) -> Result<Arc<RegistrySnapshot>, Error> {
     snapshot_for(&package.spec_versions.registry_bundle_version).ok_or_else(|| {
@@ -68,7 +68,7 @@ fn pinned_difficulty_standard<'a>(
 ) -> Result<&'a DifficultyBandStandard, Error> {
     capability_for(
         registry,
-        &package.blueprint_slot_id,
+        &package.item_rule_id,
         &package.item_format_id,
         Some(&package.content.primary_can_do_id),
     )
@@ -116,6 +116,8 @@ pub fn provider_metadata(config: &LanguageItemAiProviderConfig) -> ProviderMetad
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct GeneratedCandidate {
     candidate_payload: CandidatePayload,
+    #[serde(default)]
+    exercise_template: Option<super::exercise_templates::ExerciseTemplateContent>,
     proposed_scoring_package: ScoringPackage,
     // Missing provider metadata is a repairable validation issue; legacy saved candidates also omit it.
     #[serde(default)]
@@ -469,20 +471,53 @@ fn generation_structured_request<'a>(
     output_schema["properties"]["candidates"]["maxItems"] = json!(1);
     output_schema["properties"]["candidates"]["items"]["properties"]["candidatePayload"] =
         registry.candidate_schemas[schema_index].clone();
+    if let Some(kind) = super::exercise_templates::exercise_type(&package.item_format_id) {
+        let mut source_schema = registry
+            .exercise_template_schemas
+            .get(kind)
+            .cloned()
+            .ok_or_else(|| {
+                Error::Server(
+                    StatusCode::UNPROCESSABLE_ENTITY,
+                    "The pinned exercise template schema is unavailable.".into(),
+                )
+            })?;
+        if let Some(object) = source_schema.as_object_mut() {
+            object.remove("x-exercise-template");
+            object.remove("$schema");
+        }
+        let item_schema = &mut output_schema["properties"]["candidates"]["items"];
+        item_schema["properties"]["candidatePayload"] = json!({"type":"object","required":["exerciseType","body","data"],
+            "properties":{"exerciseType":{"const":kind},"body":{"type":"string"},"data":{"type":"object"}},"additionalProperties":false});
+        item_schema["properties"]["exerciseTemplate"] = json!({"type":"object","required":["exerciseType","body","data"],
+            "properties":{"exerciseType":{"const":kind},"body":{"type":"string"},"data":source_schema},"additionalProperties":false});
+        item_schema["required"]
+            .as_array_mut()
+            .expect("candidate required fields")
+            .push(json!("exerciseTemplate"));
+        item_schema["properties"]["englishTranslations"]["minItems"] = json!(0);
+    }
+    if package.content.effective_language() == "en" {
+        output_schema["properties"]["candidates"]["items"]["properties"]["englishTranslations"]["minItems"] =
+            json!(0);
+    }
     let selected_content = package
         .content
         .target_content_ids
         .iter()
         .filter_map(|id| {
-            registry
-                .content_id_options
-                .iter()
-                .find(|entry| &entry.id == id)
+            registry.content_id_options.iter().find(|entry| {
+                &entry.id == id
+                    && super::registry_content::content_matches_language(
+                        entry,
+                        package.content.effective_language(),
+                    )
+            })
         })
         .map(|content| {
             content_for_assessment(
                 content,
-                &package.blueprint_slot_id,
+                &package.item_rule_id,
                 &package.item_format_id,
                 &package.content.primary_can_do_id,
                 &package.content.context_id,
@@ -495,7 +530,7 @@ fn generation_structured_request<'a>(
         .find(|entry| entry.id == package.content.context_id);
     let capability = capability_for(
         &registry,
-        &package.blueprint_slot_id,
+        &package.item_rule_id,
         &package.item_format_id,
         Some(&package.content.primary_can_do_id),
     );
@@ -516,12 +551,14 @@ fn generation_structured_request<'a>(
         .and_then(|candidate| candidate.proposed_scoring_package.as_ref())
         .unwrap_or(&package.scoring_package);
     let repair_issues = repair_candidate.map(|candidate| &candidate.validation.issues);
-    let input = json!({
+    let mut input = json!({
         "requestedCandidateCount": 1,
         "candidateOrdinal": ordinal,
         "variationFocus": variation_focus,
         "lockedConstraints": {
-            "blueprintSlotId": package.blueprint_slot_id,
+            "language": package.content.effective_language(),
+            "languageName": super::multilingual::language_name(package.content.effective_language()),
+            "itemRuleId": package.item_rule_id,
             "taskFamilyId": package.task_family_id,
             "itemFormatId": package.item_format_id,
             "rendererId": package.renderer.renderer_id,
@@ -544,7 +581,7 @@ fn generation_structured_request<'a>(
         "currentCandidatePayload": current_payload,
         "currentScoringPackage": current_scoring,
         "currentEnglishTranslations": repair_candidate.map(|candidate| &candidate.english_translations),
-        "currentTranslationSourceFields": translation_source_fields(current_payload),
+        "currentTranslationSourceFields": super::english_translations::translation_source_fields_for_registry(current_payload, &registry),
         "repairValidationIssues": repair_issues,
         "instruction": if repair_candidate.is_some() {
             "Repair this candidate once so every supplied deterministic validation issue is resolved. Return exactly one candidate."
@@ -552,6 +589,21 @@ fn generation_structured_request<'a>(
             "Generate exactly one independent candidate."
         },
     });
+    if let Some(plan) = super::review_rules::plan_for_package(package)? {
+        input["taskBrief"]["reviewPlan"] = json!(plan);
+    }
+    if super::exercise_templates::exercise_type(&package.item_format_id).is_some() {
+        input["exerciseTemplate"] = json!(
+            repair_candidate
+                .and_then(|candidate| candidate.proposed_exercise_template.as_ref())
+                .or(package.authoring_package.exercise_template.as_ref())
+        );
+        input["taskBrief"]["exerciseTemplateRule"] =
+            json!(super::exercise_templates::rule_for(&registry, package));
+        input["exerciseTemplateInstructions"] = json!(
+            "Return complete authored source data, including answers, only in exerciseTemplate.data. Keep its exact exerciseType and source schema. candidatePayload must contain exerciseType, body and an empty data object; the server derives the candidate-visible projection. Preserve configured defaults and the pinned scoring criteria. Do not place answers, transcripts, teacher notes, examples or grading data in candidatePayload. A missing Context means no predefined Context; follow the selected Domain and task requirements."
+        );
+    }
     Ok(StructuredOutputRequest {
         api_key,
         base_url,
@@ -570,10 +622,20 @@ fn generation_structured_request<'a>(
     })
 }
 
+#[cfg(test)]
 pub async fn review(
     config: &LanguageItemAiProviderConfig,
     http_client: &Client,
     package: &TaskPackage,
+) -> Result<Vec<AiFinding>, Error> {
+    review_after_independent_answer(config, http_client, package, None).await
+}
+
+pub(super) async fn review_after_independent_answer(
+    config: &LanguageItemAiProviderConfig,
+    http_client: &Client,
+    package: &TaskPackage,
+    blind_answer: Option<&super::blind_review::BlindAnswerAttempt>,
 ) -> Result<Vec<AiFinding>, Error> {
     match config {
         LanguageItemAiProviderConfig::DeterministicMock => Ok(review_mock(package)),
@@ -595,7 +657,7 @@ pub async fn review(
                 .find(|entry| entry.id == package.content.context_id);
             let capability = capability_for(
                 &registry,
-                &package.blueprint_slot_id,
+                &package.item_rule_id,
                 &package.item_format_id,
                 Some(&package.content.primary_can_do_id),
             );
@@ -617,7 +679,7 @@ pub async fn review(
                 .map(|content| {
                     content_for_assessment(
                         content,
-                        &package.blueprint_slot_id,
+                        &package.item_rule_id,
                         &package.item_format_id,
                         &package.content.primary_can_do_id,
                         &package.content.context_id,
@@ -625,7 +687,7 @@ pub async fn review(
                 })
                 .collect::<Vec<_>>();
             let mut allowed_rule_refs = vec![
-                format!("slot.{}", package.blueprint_slot_id),
+                format!("itemRule.{}", package.item_rule_id),
                 format!("canDo.{}", package.content.primary_can_do_id),
                 format!("context.{}", package.content.context_id),
                 format!("difficulty.{}", package.content.difficulty_band),
@@ -653,6 +715,10 @@ pub async fn review(
 
             let mut output_schema: Value = serde_json::from_str(REVIEW_OUTPUT_SCHEMA)
                 .expect("review output schema is valid JSON");
+            output_schema["properties"]
+                .as_object_mut()
+                .expect("review properties")
+                .remove("checkResults");
             output_schema["properties"]["findings"]["items"]["properties"]["ruleRef"]["enum"] =
                 json!(allowed_rule_refs);
             output_schema["properties"]["findings"]["items"]["properties"]["category"]["enum"] =
@@ -666,7 +732,9 @@ pub async fn review(
                     "automatedPrecheck"
                 ]);
             let input = json!({
+                "language": package.content.effective_language(),
                 "taskPackage": package,
+                "independentAnswer": blind_answer,
                 "registryRules": {
                     "bundleVersion": registry.bundle_version,
                     "capability": capability,
@@ -711,7 +779,7 @@ pub async fn review(
     }
 }
 
-fn validate_review_findings(
+pub(super) fn validate_review_findings(
     findings: &[AiFinding],
     allowed_rule_refs: &[String],
 ) -> Result<(), Error> {
@@ -754,6 +822,55 @@ struct StructuredOutputRequest<'a> {
 }
 
 const DEEPSEEK_JSON_ATTEMPTS: usize = 2;
+
+pub(super) async fn request_rule_output(
+    config: &LanguageItemAiProviderConfig,
+    http_client: &Client,
+    instructions: &str,
+    input: Value,
+    format_name: &str,
+    schema: Value,
+    example: Value,
+) -> Result<Value, Error> {
+    let (api_key, base_url, model) = match config {
+        LanguageItemAiProviderConfig::DeepSeek {
+            api_key,
+            base_url,
+            model,
+        }
+        | LanguageItemAiProviderConfig::OpenAi {
+            api_key,
+            base_url,
+            model,
+        } => (api_key, base_url, model),
+        LanguageItemAiProviderConfig::DeterministicMock => {
+            return Err(Error::Server(
+                StatusCode::BAD_REQUEST,
+                "Offline simulation does not send AI requests".into(),
+            ));
+        }
+    };
+    let request = StructuredOutputRequest {
+        api_key,
+        base_url,
+        model,
+        instructions,
+        input,
+        format_name,
+        schema,
+        example,
+    };
+    let mut calls = Vec::new();
+    match config {
+        LanguageItemAiProviderConfig::DeepSeek { .. } => {
+            deepseek_chat_structured_output(http_client, request, &mut calls).await
+        }
+        LanguageItemAiProviderConfig::OpenAi { .. } => {
+            responses_structured_output(http_client, request, &mut calls).await
+        }
+        LanguageItemAiProviderConfig::DeterministicMock => unreachable!(),
+    }
+}
 
 fn deepseek_request_body(request: &StructuredOutputRequest<'_>, attempt: usize) -> Value {
     let user_content = json!({
@@ -1052,20 +1169,46 @@ fn candidate_from_provider(
 ) -> AiCandidate {
     let GeneratedCandidate {
         candidate_payload,
+        exercise_template,
         proposed_scoring_package,
         english_translations,
     } = generated;
     let mut proposed = package.clone();
     proposed.candidate_payload = candidate_payload.clone();
+    if super::exercise_templates::exercise_type(&package.item_format_id).is_some() {
+        proposed.authoring_package.exercise_template = exercise_template;
+    }
     proposed.authoring_package.english_translations.clear();
     merge_provider_answer_proposal(&mut proposed, proposed_scoring_package);
     proposed.ensure_item_scoring_spec();
+    let projection_error =
+        if super::exercise_templates::exercise_type(&package.item_format_id).is_some() {
+            pinned_registry(package).ok().and_then(|registry| {
+                super::exercise_templates::refresh_package(&mut proposed, &registry).err()
+            })
+        } else {
+            None
+        };
     let mut validation = validate_task_package(&proposed);
-    validation.issues.extend(validate_english_translations(
-        &candidate_payload,
-        &english_translations,
-        true,
-    ));
+    if let Some(message) = projection_error {
+        validation.issues.push(super::domain::ValidationIssue {
+            severity: "error".into(),
+            code: "exerciseTemplate.projection".into(),
+            path: "authoringPackage.exerciseTemplate".into(),
+            rule_ref: "exerciseTemplate.schema".into(),
+            message,
+        });
+    }
+    if let Ok(registry) = pinned_registry(&proposed) {
+        validation.issues.extend(
+            super::english_translations::validate_english_translations_for_registry(
+                &proposed.candidate_payload,
+                &english_translations,
+                proposed.content.effective_language() != "en",
+                &registry,
+            ),
+        );
+    }
     validation.valid = !validation
         .issues
         .iter()
@@ -1074,7 +1217,8 @@ fn candidate_from_provider(
         id: Uuid::new_v4().to_string(),
         ordinal,
         status: if validation.valid { "valid" } else { "invalid" }.to_string(),
-        candidate_payload,
+        candidate_payload: proposed.candidate_payload.clone(),
+        proposed_exercise_template: proposed.authoring_package.exercise_template.clone(),
         english_translations,
         proposed_correct_option_id: proposed.scoring_package.correct_option_id.clone(),
         proposed_scoring_package: Some(proposed.scoring_package),
@@ -1111,13 +1255,32 @@ fn generate_mock_candidate(package: &TaskPackage, index: u64) -> AiCandidate {
     debug_assert!(!GENERATION_PROMPT.is_empty() && !GENERATION_OUTPUT_SCHEMA.is_empty());
     let mut proposed = package.clone();
     populate_mock_candidate(&mut proposed, index);
-    let english_translations = mock_english_translations(&proposed.candidate_payload);
+    let english_translations = match proposed.content.effective_language() {
+        "en" => vec![],
+        "es" => {
+            let mut english = proposed.clone();
+            english.content.language = Some("en".into());
+            super::multilingual::populate_mock(&mut english, index);
+            let fields = translation_source_fields(&english.candidate_payload);
+            translation_source_fields(&proposed.candidate_payload)
+                .into_iter()
+                .filter_map(|(path, source_text)| {
+                    fields.get(&path).map(|english_text| EnglishTranslation {
+                        path,
+                        source_text,
+                        english_text: english_text.clone(),
+                    })
+                })
+                .collect()
+        }
+        _ => mock_english_translations(&proposed.candidate_payload),
+    };
     proposed.authoring_package.english_translations.clear();
     let mut validation = validate_task_package(&proposed);
     validation.issues.extend(validate_english_translations(
         &proposed.candidate_payload,
         &english_translations,
-        true,
+        proposed.content.effective_language() != "en",
     ));
     validation.valid = !validation
         .issues
@@ -1132,6 +1295,7 @@ fn generate_mock_candidate(package: &TaskPackage, index: u64) -> AiCandidate {
             "invalid".to_string()
         },
         candidate_payload: proposed.candidate_payload.clone(),
+        proposed_exercise_template: proposed.authoring_package.exercise_template.clone(),
         english_translations,
         proposed_correct_option_id: proposed.scoring_package.correct_option_id.clone(),
         proposed_scoring_package: Some(proposed.scoring_package.clone()),
@@ -1142,6 +1306,7 @@ fn generate_mock_candidate(package: &TaskPackage, index: u64) -> AiCandidate {
 fn populate_mock_candidate(package: &mut TaskPackage, index: u64) {
     let suffix = index + 1;
     match &mut package.candidate_payload {
+        CandidatePayload::ExerciseTemplate(_) => {}
         CandidatePayload::SingleSelect(payload) => {
             *payload = SingleSelectCandidatePayload {
                 stimulus: Stimulus {
@@ -1241,6 +1406,9 @@ fn populate_mock_candidate(package: &mut TaskPackage, index: u64) {
                 }
             }
         }
+    }
+    if package.content.effective_language() != "zh" {
+        super::multilingual::populate_mock(package, index);
     }
 }
 
@@ -1580,7 +1748,7 @@ mod tests {
             .capabilities
             .iter()
             .find(|entry| {
-                entry.blueprint_slot_id == package.blueprint_slot_id
+                entry.item_rule_id == package.item_rule_id
                     && entry.item_format_id == package.item_format_id
             })
             .expect("registered capability");
@@ -1610,7 +1778,10 @@ mod tests {
                 .iter()
                 .find(|entry| {
                     let context_matches =
-                        entry.context_ids.is_empty() || entry.context_ids.contains(&context_id);
+                        crate::language_items::content_context::content_context_matches(
+                            entry,
+                            &context_id,
+                        );
                     let can_do_matches = entry.can_do_ids.is_empty()
                         || entry.can_do_ids.contains(&capability.primary_can_do_id)
                         || entry
@@ -1655,6 +1826,62 @@ mod tests {
     }
 
     #[test]
+    fn multilingual_mock_candidates_and_prompts_follow_locked_language() {
+        for language in ["en", "es"] {
+            for template in [
+                "reading-single-select",
+                "reading-matching",
+                "reading-restricted-input",
+                "writing-form-entry",
+                "writing-typed-message",
+                "speaking-single",
+                "speaking-multiturn",
+            ] {
+                let mut package = generation_ready_package(template);
+                let mut registry = snapshot().clone();
+                registry.bundle_version = format!("multilingual-{language}-{template}");
+                for entry in &mut registry.content_id_options {
+                    if package.content.target_content_ids.contains(&entry.id) {
+                        entry.metadata.insert("language".into(), json!(language));
+                    }
+                }
+                super::super::registry::install_published_snapshot(registry.clone(), false);
+                package.spec_versions.registry_bundle_version = registry.bundle_version.clone();
+                crate::routes::language_items::set_draft_language(
+                    &mut package,
+                    language,
+                    &registry,
+                )
+                .unwrap();
+                let candidate = generate_mock_candidate(&package, 0);
+                assert!(
+                    candidate.validation.valid,
+                    "{language} {template}: {:?}",
+                    candidate.validation.issues
+                );
+                assert!(
+                    !super::super::english_translations::has_chinese(
+                        &serde_json::to_string(&candidate.candidate_payload).unwrap()
+                    ),
+                    "{language} {template}"
+                );
+                if language == "en" {
+                    assert!(candidate.english_translations.is_empty());
+                } else {
+                    assert!(!candidate.english_translations.is_empty());
+                }
+                let config = LanguageItemAiProviderConfig::DeepSeek {
+                    api_key: "test".into(),
+                    base_url: "http://localhost".into(),
+                    model: "test".into(),
+                };
+                let request = generation_structured_request(&config, &package, 1, None).unwrap();
+                assert_eq!(request.input["lockedConstraints"]["language"], language);
+            }
+        }
+    }
+
+    #[test]
     fn review_findings_reject_unknown_severity_and_unsupported_rules() {
         let rules = vec!["review.automatedPrecheck".to_string()];
         let mut finding = AiFinding {
@@ -1679,10 +1906,10 @@ mod tests {
 
     #[test]
     fn prompts_and_output_schemas_are_versioned_and_parseable() {
-        assert_eq!(GENERATION_PROMPT_VERSION, "0.7");
-        assert_eq!(REVIEW_PROMPT_VERSION, "0.4");
-        assert!(GENERATION_PROMPT.starts_with("# Chinese A1 Item Generation Prompt v0.7"));
-        assert!(REVIEW_PROMPT.starts_with("# A1 Independent Review Prompt v0.4"));
+        assert_eq!(GENERATION_PROMPT_VERSION, "0.9");
+        assert_eq!(REVIEW_PROMPT_VERSION, "0.7");
+        assert!(GENERATION_PROMPT.starts_with("# Multilingual A1 Item Generation Prompt v0.9"));
+        assert!(REVIEW_PROMPT.starts_with("# A1 Independent Review Prompt v0.7"));
         let generation: serde_json::Value =
             serde_json::from_str(GENERATION_OUTPUT_SCHEMA).expect("generation schema is JSON");
         let review: serde_json::Value =
@@ -1693,7 +1920,7 @@ mod tests {
         );
         assert_eq!(
             review.get("$id").and_then(serde_json::Value::as_str),
-            Some("urn:fcc:language-item-review-output:0.1")
+            Some("urn:fcc:language-item-review-output:0.2")
         );
     }
 
@@ -1706,7 +1933,7 @@ mod tests {
             .capability_difficulty_profile_sets
             .iter_mut()
             .find(|profile| {
-                profile.blueprint_slot_id == package.blueprint_slot_id
+                profile.item_rule_id == package.item_rule_id
                     && profile.item_format_id == package.item_format_id
                     && profile.primary_can_do_id == package.content.primary_can_do_id
             })
@@ -1765,7 +1992,7 @@ mod tests {
                 .iter()
                 .all(|candidate| candidate.validation.valid)
         );
-        assert_eq!(package.blueprint_slot_id, original.blueprint_slot_id);
+        assert_eq!(package.item_rule_id, original.item_rule_id);
         assert_eq!(package.content.difficulty_band, "UpperA1");
         assert_eq!(package.task_family_id, original.task_family_id);
     }
@@ -1806,6 +2033,7 @@ mod tests {
         let candidate = candidate_from_provider(
             &package,
             GeneratedCandidate {
+                exercise_template: None,
                 candidate_payload: package.candidate_payload.clone(),
                 english_translations: mock_english_translations(&package.candidate_payload),
                 proposed_scoring_package: incomplete_scoring,
@@ -1852,6 +2080,7 @@ mod tests {
         let candidate = candidate_from_provider(
             &package,
             GeneratedCandidate {
+                exercise_template: None,
                 candidate_payload: package.candidate_payload.clone(),
                 english_translations: mock_english_translations(&package.candidate_payload),
                 proposed_scoring_package: sparse_provider_scoring,
@@ -1947,6 +2176,7 @@ mod tests {
         let fixed = candidate_from_provider(
             &package,
             GeneratedCandidate {
+                exercise_template: None,
                 candidate_payload: package.candidate_payload.clone(),
                 proposed_scoring_package: package.scoring_package.clone(),
                 english_translations: mock_english_translations(&package.candidate_payload),
@@ -1990,7 +2220,7 @@ mod tests {
     #[tokio::test]
     async fn offline_evaluation_matches_the_seven_format_baseline_reproducibly() {
         let baseline: Value =
-            serde_json::from_str(include_str!("evals/offline-baseline.v1.json")).unwrap();
+            serde_json::from_str(include_str!("evals/offline-baseline.v2.json")).unwrap();
         assert_eq!(baseline["promptVersion"], GENERATION_PROMPT_VERSION);
         assert_eq!(
             baseline["outputSchemaVersion"],

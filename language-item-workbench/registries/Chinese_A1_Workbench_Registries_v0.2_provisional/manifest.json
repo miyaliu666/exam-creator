@@ -1,7 +1,7 @@
 {
-  "bundleVersion": "0.2-provisional",
+  "bundleVersion": "0.3-provisional",
   "generatedFrom": "Chinese_A1_Exam_Planning_ch1-8_plus_Appendix_A_v0.1.md",
-  "generatedAt": "2026-09-03",
+  "generatedAt": "2026-09-14",
   "counts": {
     "lexicon": 413,
     "characters": 349,
@@ -9,12 +9,12 @@
     "pragmatics": 18,
     "canDos": 16,
     "contexts": 20,
-    "slots": 15,
     "taskFamilies": 15,
     "itemFormats": 7,
     "renderers": 7,
     "scoringContracts": 21,
-    "schemas": 9
+    "schemas": 9,
+    "itemRules": 21
   },
   "status": "ProvisionalWorkbenchUse",
   "limitations": [

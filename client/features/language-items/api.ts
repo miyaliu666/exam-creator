@@ -1,4 +1,5 @@
 import { authorizedFetch } from "../../utils/fetch";
+import type { ReviewPlanPreview, ReviewRuleSuggestions } from "./review-rule-types";
 import type {
   AiGenerationRun,
   AiProviderStatus,
@@ -129,6 +130,29 @@ export async function getLanguageItemAiProvider(): Promise<AiProviderStatus> {
   return readJson(await authorizedFetch("/api/language-items/ai-provider"));
 }
 
+export interface RegistryReviewPlanInput {
+  versionId: string;
+  expectedRevision: number;
+  snapshot: RegistrySnapshot;
+  itemRuleId: string;
+  itemFormatId: string;
+  primaryCanDoId: string;
+}
+
+export async function previewRegistryReviewPlan(input: RegistryReviewPlanInput): Promise<ReviewPlanPreview> {
+  const { versionId, ...body } = input;
+  return readJson(await authorizedFetch(`/api/language-assessment/registry/drafts/${encodeURIComponent(versionId)}/review-plan`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  }));
+}
+
+export async function generateRegistryReviewRules(input: RegistryReviewPlanInput): Promise<ReviewRuleSuggestions> {
+  const { versionId, ...body } = input;
+  return readJson(await authorizedFetch(`/api/language-assessment/registry/drafts/${encodeURIComponent(versionId)}/review-rule-suggestions`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  }));
+}
+
 export async function getGithubReviewStatus(): Promise<GithubIntegrationStatus> {
   return readJson(
     await authorizedFetch("/api/language-items/github-review/status"),
@@ -170,7 +194,8 @@ export async function getLanguageItemReviewQueue(): Promise<LanguageItem[]> {
 
 export async function createLanguageItem(
   input: {
-    blueprintSlotId: string;
+    language?: string;
+    itemRuleId: string;
     itemFormatId: string;
     primaryCanDoId: string;
     primaryDomain: string;

@@ -80,7 +80,7 @@ export function MetadataFields({
   const capability = capabilityForDraft(registry, draft);
   const compatibleContent = (registry?.contentIdOptions ?? []).filter(
     (entry) =>
-      isContentOptionCompatible(entry, capability, draft.content.contextId),
+      isContentOptionCompatible(entry, capability, draft.content.contextId, draft.content.language ?? "zh"),
   );
   const selectedSupportingContent = draft.content.supportingContentRefs ?? [];
   const authoredText = candidateText(draft.candidatePayload);
@@ -167,7 +167,7 @@ export function MetadataFields({
     <>
       <Field.Root invalid={!!issueFor("content.targetContentIds")}>
         <Field.Label>What this item should assess</Field.Label>
-        <Text fontSize="sm" color="fg.muted">Choose the vocabulary, grammar, Chinese characters or pragmatic functions candidates should understand or use to answer this item.</Text>
+        <Text fontSize="sm" color="fg.muted">Choose the vocabulary, grammar, characters or pragmatic functions candidates should understand or use to answer this item.</Text>
         <HStack mb={2} flexWrap="wrap">
           {CONTENT_KINDS.map((kind) => (
             <Button
@@ -187,7 +187,7 @@ export function MetadataFields({
         </HStack>
         <Input
           aria-label="Search language content"
-          placeholder={`搜索 / Search ${CONTENT_KIND_LABELS[contentKind]}`}
+          placeholder={`Search ${CONTENT_KIND_LABELS[contentKind]}`}
           value={contentSearch}
           onChange={(event) => {
             setContentSearch(event.target.value);

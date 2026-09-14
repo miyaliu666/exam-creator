@@ -1,0 +1,128 @@
+[
+  {
+    "blueprintSlotId": "R-A1-1",
+    "itemFormatId": "IF-SINGLE-SELECT",
+    "primaryCanDoId": "A1-R1",
+    "itemRuleId": "legacy-rule-5a24db839969ad64af09b47ec5dc290b4b81d186dff05b732dc1eee72beb0e61"
+  },
+  {
+    "blueprintSlotId": "R-A1-1",
+    "itemFormatId": "IF-MATCHING",
+    "primaryCanDoId": "A1-R1",
+    "itemRuleId": "legacy-rule-01eeec4aa91e2dceb1fc541825c8a04e89f31042c2ad7b48e8e975bb939312f4"
+  },
+  {
+    "blueprintSlotId": "R-A1-2",
+    "itemFormatId": "IF-SINGLE-SELECT",
+    "primaryCanDoId": "A1-R2",
+    "itemRuleId": "legacy-rule-e4f4749bbd9657cc5cbd123ec0e4e78a53a904ed7a3fb6645b0f8785475c10d2"
+  },
+  {
+    "blueprintSlotId": "R-A1-2",
+    "itemFormatId": "IF-MATCHING",
+    "primaryCanDoId": "A1-R2",
+    "itemRuleId": "legacy-rule-ebf86e0da1ccfdbe2d2cb0021c9c65e462c89ff04c77bfb7be83f77d23eb79a2"
+  },
+  {
+    "blueprintSlotId": "R-A1-3",
+    "itemFormatId": "IF-SINGLE-SELECT",
+    "primaryCanDoId": "A1-R2",
+    "itemRuleId": "legacy-rule-c7bdf2f8d5ea3548c61903733dcf1a3858a86df5f8d991b0f8285dee87c373d2"
+  },
+  {
+    "blueprintSlotId": "R-A1-3",
+    "itemFormatId": "IF-MATCHING",
+    "primaryCanDoId": "A1-R2",
+    "itemRuleId": "legacy-rule-8ced5ccc6232e4028e84ca0390ae0fb5a87052c9ab9c639535bdb1fe2f1394f3"
+  },
+  {
+    "blueprintSlotId": "R-A1-3",
+    "itemFormatId": "IF-RESTRICTED-INPUT",
+    "primaryCanDoId": "A1-R2",
+    "itemRuleId": "legacy-rule-d1775c583ae5f0b644810331eefbff706606a780d545b0c3b830ae3a3118b266"
+  },
+  {
+    "blueprintSlotId": "R-A1-4",
+    "itemFormatId": "IF-SINGLE-SELECT",
+    "primaryCanDoId": "A1-R2",
+    "itemRuleId": "legacy-rule-5fa4216cddda47e533b010dc502b346330c31001384df2f0a5fbdacdb5f3afe2"
+  },
+  {
+    "blueprintSlotId": "R-A1-4",
+    "itemFormatId": "IF-MATCHING",
+    "primaryCanDoId": "A1-R2",
+    "itemRuleId": "legacy-rule-a1daa2da2d260188aa170dd4b829b74ae7dd40cf9b742ab30959220997855615"
+  },
+  {
+    "blueprintSlotId": "L-A1-1",
+    "itemFormatId": "IF-SINGLE-SELECT",
+    "primaryCanDoId": "A1-L1",
+    "itemRuleId": "legacy-rule-6ad1140cba78a3c8b3485fe8e72646858a7315ed97f18ec1c3d633247b81c379"
+  },
+  {
+    "blueprintSlotId": "L-A1-2",
+    "itemFormatId": "IF-SINGLE-SELECT",
+    "primaryCanDoId": "A1-L2",
+    "itemRuleId": "legacy-rule-9a4558438d8db256a74a48331487a5f205e588f682ef0c3c92b9d78d791cf9c0"
+  },
+  {
+    "blueprintSlotId": "L-A1-3",
+    "itemFormatId": "IF-SINGLE-SELECT",
+    "primaryCanDoId": "A1-L2",
+    "itemRuleId": "legacy-rule-19c43a5b1c9e0975798a675bdce28e8d69b82a2bf302f2844b9d58e8cff21c16"
+  },
+  {
+    "blueprintSlotId": "L-A1-3",
+    "itemFormatId": "IF-RESTRICTED-INPUT",
+    "primaryCanDoId": "A1-L2",
+    "itemRuleId": "legacy-rule-1b340a20c4571e4600ab27fe1575bc4b7416bd3542c83a313680a73c5eab59c2"
+  },
+  {
+    "blueprintSlotId": "L-A1-4",
+    "itemFormatId": "IF-SINGLE-SELECT",
+    "primaryCanDoId": "A1-L3",
+    "itemRuleId": "legacy-rule-858349f939552c707469941227cac3db92134d3155692027cb687d959b3af46b"
+  },
+  {
+    "blueprintSlotId": "W-A1-1",
+    "itemFormatId": "IF-FORM-ENTRY",
+    "primaryCanDoId": "A1-W1",
+    "itemRuleId": "legacy-rule-5e505212f0bb4843b429f3167cf0c85cb8d393973990e523b9bf23af58339bf4"
+  },
+  {
+    "blueprintSlotId": "W-A1-2",
+    "itemFormatId": "IF-TYPED-MESSAGE",
+    "primaryCanDoId": "A1-W2",
+    "itemRuleId": "legacy-rule-24afd085454c01024191fa5f08c830907a891f28f2286948b7490968e97c4310"
+  },
+  {
+    "blueprintSlotId": "W-A1-3",
+    "itemFormatId": "IF-TYPED-MESSAGE",
+    "primaryCanDoId": "A1-M2",
+    "itemRuleId": "legacy-rule-a8b19cb94037155dc6a1c8975e33e04af5ab76c6b98206770353425894b13144"
+  },
+  {
+    "blueprintSlotId": "S-A1-1",
+    "itemFormatId": "IF-SPOKEN-MULTITURN",
+    "primaryCanDoId": "A1-I1",
+    "itemRuleId": "legacy-rule-e3351cc6d0277220ab52e838a632ab203b600496d4e3f2d4e41c0c4ed341166e"
+  },
+  {
+    "blueprintSlotId": "S-A1-2",
+    "itemFormatId": "IF-SPOKEN-SINGLE",
+    "primaryCanDoId": "A1-S2",
+    "itemRuleId": "legacy-rule-18b146fee99ec17e7a1024be0628829b4e5b604b7a1dd728a9725906d73e2e32"
+  },
+  {
+    "blueprintSlotId": "S-A1-3",
+    "itemFormatId": "IF-SPOKEN-MULTITURN",
+    "primaryCanDoId": "A1-I2",
+    "itemRuleId": "legacy-rule-3cdb3f05762f5de91d1cc2ca529900528b6312f29470b150dd63dc631dda6b17"
+  },
+  {
+    "blueprintSlotId": "S-A1-4",
+    "itemFormatId": "IF-SPOKEN-SINGLE",
+    "primaryCanDoId": "A1-M1",
+    "itemRuleId": "legacy-rule-8a543f21723a84bc5b9f181b4961ae2cd1c6f908a0371f6997ebf1b733fb366b"
+  }
+]

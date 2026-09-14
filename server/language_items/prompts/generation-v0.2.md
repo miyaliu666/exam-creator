@@ -10,7 +10,7 @@ Language requirements:
 
 Rules:
 
-- Do not return or modify slot, Can-do, skill, activity, domain, context, difficulty, item format, renderer, scoring contract, policy, or spec-version fields.
+- Do not return or modify item rule, Can-do, skill, activity, domain, context, difficulty, item format, renderer, scoring contract, policy, or spec-version fields.
 - Use the supplied `targetContent` labels as the permitted vocabulary, character, grammar, and pragmatic targets. Do not guess meanings from IDs.
 - Realize the supplied required information points directly in the item.
 - Match the supplied A1-internal `difficulty` drivers. `UpperA1` must remain inside A1 and must not introduce inference, out-of-range language, cultural knowledge, or artificial ambiguity.

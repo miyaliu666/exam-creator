@@ -63,7 +63,8 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
 
     let session_store = MemoryStore::default();
     let session_layer = SessionManagerLayer::new(session_store)
-        .with_secure(false)
+        .with_secure(!cfg!(debug_assertions))
+        .with_same_site(axum_extra::extract::cookie::SameSite::Lax)
         .with_expiry(Expiry::OnInactivity(time::Duration::seconds(
             env_vars.session_ttl_in_s.try_into().unwrap_or(i64::MAX),
         )));
@@ -201,20 +202,6 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .allow_credentials(true)
         .allow_origin(env_vars.allowed_origins);
 
-    let github_client_id = ClientId::new(env_vars.github_client_id);
-
-    let github_client_secret = ClientSecret::new(env_vars.github_client_secret);
-
-    let auth_url = AuthUrl::new("https://github.com/login/oauth/authorize".to_string())?;
-    let token_url = TokenUrl::new("https://github.com/login/oauth/access_token".to_string())?;
-
-    // Set up the config for the GitHub OAuth2 process.
-    let github_client = BasicClient::new(github_client_id)
-        .set_client_secret(github_client_secret)
-        .set_auth_uri(auth_url)
-        .set_token_uri(token_url)
-        .set_redirect_uri(RedirectUrl::new(env_vars.github_redirect_url)?);
-
     let http_client = reqwest::ClientBuilder::new()
         // Following redirects opens the client up to SSRF vulnerabilities.
         .redirect(reqwest::redirect::Policy::none())
@@ -226,14 +213,42 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
     );
     routes::language_item_batches::start_recovery_worker(server_state.clone(), http_client.clone());
 
-    let app = if cfg!(debug_assertions) && env_vars.mock_auth {
-        warn!("Debug assertions are enabled; adding dev login route.");
-        Router::new().route("/auth/login/dev", post(routes::auth::post_dev_login))
+    let app = if env_vars.public_access {
+        Router::new().route(
+            "/auth/session/public",
+            post(routes::auth::public_access::post_public_session),
+        )
     } else {
+        let github_client = BasicClient::new(ClientId::new(env_vars.github_client_id))
+            .set_client_secret(ClientSecret::new(env_vars.github_client_secret))
+            .set_auth_uri(AuthUrl::new(
+                "https://github.com/login/oauth/authorize".to_string(),
+            )?)
+            .set_token_uri(TokenUrl::new(
+                "https://github.com/login/oauth/access_token".to_string(),
+            )?)
+            .set_redirect_uri(RedirectUrl::new(env_vars.github_redirect_url)?);
         Router::new()
+            .route(
+                "/auth/login/github",
+                get(routes::auth::github::github_login_handler),
+            )
+            .route("/auth/github", get(routes::auth::github::github_handler))
+            .route("/auth/logout", delete(routes::auth::delete_logout))
+            .layer(Extension(github_client))
+    };
+    let app = if cfg!(debug_assertions) && env_vars.mock_auth && !env_vars.public_access {
+        warn!("Debug assertions are enabled; adding dev login route.");
+        app.route("/auth/login/dev", post(routes::auth::post_dev_login))
+    } else {
+        app
     };
 
     let app = app
+        .route(
+            "/auth/access-mode",
+            get(routes::auth::public_access::get_access_mode),
+        )
         .route(
             "/auth/login/dev/status",
             get(routes::auth::get_dev_login_status),
@@ -274,6 +289,14 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
         .route(
             "/api/language-assessment/registry/drafts/{version_id}/validate",
             post(routes::language_assessment_settings::post_validate),
+        )
+        .route(
+            "/api/language-assessment/registry/drafts/{version_id}/review-plan",
+            post(routes::language_assessment_settings::post_review_plan),
+        )
+        .route(
+            "/api/language-assessment/registry/drafts/{version_id}/review-rule-suggestions",
+            post(routes::language_assessment_settings::post_review_rule_suggestions),
         )
         .route(
             "/api/language-assessment/registry/drafts/{version_id}/impact",
@@ -530,12 +553,6 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
             "/api/events/attempts/{attempt_id}",
             get(routes::events::get_events_by_attempt_id),
         )
-        .route(
-            "/auth/login/github",
-            get(routes::auth::github::github_login_handler),
-        )
-        .route("/auth/github", get(routes::auth::github::github_handler))
-        .route("/auth/logout", delete(routes::auth::delete_logout))
         .route("/status/ping", get(routes::get_status_ping))
         .route("/ws/exam/{exam_id}", any(extractor::ws_handler_exam))
         .route("/ws/users", any(extractor::ws_handler_users))
@@ -560,7 +577,6 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
             std::time::Duration::from_millis(env_vars.request_timeout_in_ms),
         ))
         .layer(RequestBodyLimitLayer::new(env_vars.request_body_size_limit))
-        .layer(Extension(github_client))
         .layer(Extension(http_client))
         .layer(
             TraceLayer::new_for_http()
@@ -568,7 +584,8 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
                 // path is useful for figuring out which handler the request was routed to.
                 .make_span_with(|req: &Request| {
                     let method = req.method();
-                    let uri = req.uri();
+                    // OAuth codes and WebSocket tickets can occur in query strings.
+                    let uri = req.uri().path();
 
                     // axum automatically adds this extension.
                     let matched_path = req
@@ -580,7 +597,7 @@ pub async fn app(env_vars: EnvVars) -> Result<Router, Error> {
                 })
                 .on_request(|request: &Request, _span: &tracing::Span| {
                     let method = request.method();
-                    let uri = request.uri();
+                    let uri = request.uri().path();
                     tracing::debug!("--> {} {}", method, uri);
                 })
                 .on_response(

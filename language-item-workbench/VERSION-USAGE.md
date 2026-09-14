@@ -56,7 +56,7 @@ Pilot results are append-only. To correct a report, append a new report with its
 
 ## Assembly manifest
 
-**Download assembly manifest** produces a metadata-only record from the selected frozen version. It pins item/version/content identity, Assessment Settings and schema references, Blueprint slot, format, Can-do, Domain, Context, intended difficulty, language targets, renderer/scoring/delivery references and current Workbench availability.
+**Download assembly manifest** produces a metadata-only record from the selected frozen version. It pins item/version/content identity, Assessment Settings and schema references, Item rule identity, format, Can-do, Domain, Context, intended difficulty, language targets, renderer/scoring/delivery references and current Workbench availability.
 
 The manifest excludes item text, answer keys, author translations and author notes. It is an assembly-preparation artifact, not a candidate delivery package. Availability for pilot or live assembly requires an active item, approved intact version and the corresponding recorded use state. Its usage revision is a point-in-time snapshot; a future assembler must recheck availability when reserving or delivering items.
 
@@ -74,6 +74,6 @@ Review authority, frozen TaskPackage schemas, canonical item IDs, Coverage's sav
 
 ## Subsequent work
 
-The next Workbench preparation layer is an exam-form plan with section / slot counts, target difficulty mix, total planned duration, shared-material and incompatible-item constraints, and a shortage report against available immutable versions. It should consume the assembly manifest without creating another editable copy of item metadata.
+The next Workbench preparation layer is an exam-form plan with section / item rule counts, target difficulty mix, total planned duration, shared-material and incompatible-item constraints, and a shortage report against available immutable versions. It should consume the assembly manifest without creating another editable copy of item metadata.
 
 Before automatic pilot import, define a delivery receipt and event contract carrying form version, item version, pseudonymous attempt identity, item position, presented time, answer updates, item enter/leave, pause/resume, visibility and completion reason. Record server receipt time separately from client event time; deduplicate event IDs; retain omissions and interrupted attempts. Calculate elapsed and active time separately, and keep shared-stimulus reading time at its proper level. Full legacy integration and data collection are a later phase.

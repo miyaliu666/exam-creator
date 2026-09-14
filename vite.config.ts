@@ -1,11 +1,33 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import prism from "vite-plugin-prismjs";
+import { normalizeApiBaseUrl, normalizeBasePath, pagesFallbackHtml, pagesRestoreScript } from "./client/utils/deployment-paths";
 
 // https://vite.dev/config/
-export default defineConfig(async () => ({
+export default defineConfig(async ({ mode, command }) => {
+  const environment = loadEnv(mode, process.cwd(), "VITE_");
+  const base = normalizeBasePath(process.env.VITE_BASE_PATH ?? environment.VITE_BASE_PATH);
+  const apiOrigin = normalizeApiBaseUrl(process.env.VITE_API_BASE_URL ?? environment.VITE_API_BASE_URL, command === "build");
+  const pages = base !== "/" || Boolean(apiOrigin);
+  return {
+  base,
   plugins: [
+    {
+      name: "exam-creator-pages-navigation",
+      transformIndexHtml: {
+        order: "pre",
+        handler: () => pages ? [
+          { tag: "meta", attrs: { name: "referrer", content: "no-referrer" }, injectTo: "head-prepend" },
+          { tag: "script", children: pagesRestoreScript(base), injectTo: "head-prepend" },
+        ] : [],
+      },
+      generateBundle() {
+        if (!pages) return;
+        this.emitFile({ type: "asset", fileName: "404.html", source: pagesFallbackHtml(base) });
+        this.emitFile({ type: "asset", fileName: ".nojekyll", source: "" });
+      },
+    },
     react(),
     babel({ presets: [reactCompilerPreset()] }),
     prism({
@@ -177,4 +199,5 @@ export default defineConfig(async () => ({
       },
     },
   },
-}));
+  };
+});

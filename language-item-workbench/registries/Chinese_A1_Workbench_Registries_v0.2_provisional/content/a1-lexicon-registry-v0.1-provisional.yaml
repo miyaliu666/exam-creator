@@ -138,7 +138,7 @@ humanReviewRequired:
 - 逐条核对拼音、轻声、变调、多音字和 TTS 读音
 - 复核 canDoIds 与 contextIds；当前为首轮功能映射，不是最终专家批准结果
 - 完成 GF0025-2021 和 TOCFL 初级逐项对照
-- 通过一组代表性样题验证本清单能否支持 15 个 Blueprint Slot
+- 通过一组代表性样题验证本清单能否支持 21 条 Item rules
 entries:
 - lexicalId: LEX-A1-0001
   form: 你好

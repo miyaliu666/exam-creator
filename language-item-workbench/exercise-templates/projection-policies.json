@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "privateFieldNames": ["teacherNotes", "variantGroup", "tags", "menuLabel", "matching", "rubric", "sampleAnswer", "modelAnswer", "modelAudio", "transcript", "revealTranscriptAfterSubmit", "hint", "explanation", "correct", "correctIndex", "correctAnswer", "answer", "answers", "isReal", "incorrectIndices", "autoScore", "passThreshold"],
+  "overrides": {
+    "match-columns": {"privatePaths": ["pairs", "distractors"], "transform": "independent-columns"},
+    "ordering": {"privatePaths": ["items"], "transform": "unordered-items"},
+    "build-a-sentence": {"privatePaths": ["words"], "transform": "unordered-words"},
+    "missing-letters": {"privatePaths": ["text"], "transform": "masked-letters"},
+    "categorize": {"privatePaths": ["items.*.category"], "transform": "unordered-categories"},
+    "pronunciation": {"privatePaths": ["target"], "transform": "none"},
+    "sentence-builds": {"privatePaths": ["target"], "transform": "none"},
+    "listening-fill-in-blanks": {"privatePaths": ["blanks"], "transform": "blank-count"},
+    "diagram-label": {"privatePaths": ["labels"], "transform": "label-count"},
+    "listening-diagram-label": {"privatePaths": ["labels"], "transform": "label-count"}
+  }
+}

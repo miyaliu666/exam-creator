@@ -2,9 +2,9 @@ import { Badge, Box, Link, Stack, Text } from "@chakra-ui/react";
 
 const SOURCES = [
   { title: "CEFR descriptors", url: "https://www.coe.int/en/web/common-european-framework-reference-languages/cefr-descriptors-search", purpose: "Can-do and communicative activity reference. A Chinese vocabulary list or a CEFR equivalence claim needs separate evidence." },
-  { title: "国际中文教育中文水平等级标准 · GF0025-2021", url: "https://hudong.moe.gov.cn/jyb_sjzl/ziliao/A19/202111/t20211118_580755.html", purpose: "Chinese language elements and level descriptions. Its levels are not automatically equivalent to this project's A1." },
-  { title: "TBCL · 華語文語料庫與能力基準", url: "https://coct.naer.edu.tw/", purpose: "Word, grammar and proficiency references. Check language variety, edition and the intended learner group." },
-  { title: "BCC · 北京语言大学语料库", url: "https://bcc.blcu.edu.cn/", purpose: "Use examples and context. Choose the relevant spoken or written corpus; general frequency does not establish A1 difficulty." },
+  { title: "Chinese Proficiency Grading Standards for International Chinese Language Education · GF0025-2021", url: "https://hudong.moe.gov.cn/jyb_sjzl/ziliao/A19/202111/t20211118_580755.html", purpose: "Chinese language elements and level descriptions. Its levels are not automatically equivalent to this project's A1." },
+  { title: "TBCL · Taiwan Benchmarks for the Chinese Language", url: "https://coct.naer.edu.tw/", purpose: "Word, grammar and proficiency references. Check language variety, edition and the intended learner group." },
+  { title: "BCC · Beijing Language and Culture University Corpus", url: "https://bcc.blcu.edu.cn/", purpose: "Use examples and context. Choose the relevant spoken or written corpus; general frequency does not establish A1 difficulty." },
   { title: "HSK official resources", url: "https://admin.chinesetest.cn/godownload.do", purpose: "Published exam specifications and examples for design research. Do not use existing questions as rewrite templates." },
   { title: "TOCFL official resources", url: "https://tocfl.edu.tw/tocfl/index.php/teach/test/page/1", purpose: "Task design and public examples. Verify permission for each intended use before copying or importing materials." },
 ];

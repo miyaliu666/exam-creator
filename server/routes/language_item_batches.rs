@@ -512,7 +512,7 @@ fn queued_run(
         prompt_version: ai::GENERATION_PROMPT_VERSION.to_string(),
         output_schema_version: ai::GENERATION_OUTPUT_SCHEMA_VERSION.to_string(),
         spec_versions: package.spec_versions.clone(),
-        blueprint_slot_id: package.blueprint_slot_id.clone(),
+        item_rule_id: package.item_rule_id.clone(),
         task_family_id: package.task_family_id.clone(),
         item_format_id: package.item_format_id.clone(),
         renderer_id: package.renderer.renderer_id.clone(),

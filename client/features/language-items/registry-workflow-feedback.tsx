@@ -30,7 +30,7 @@ export function RegistryPublishDialog({ publication, busy, onClose, onPublish }:
       <Dialog.Backdrop />
       <Dialog.Positioner>
         <Dialog.Content maxW="3xl">
-          <Dialog.Header><Dialog.Title>Publish settings for new items?</Dialog.Title></Dialog.Header>
+          <Dialog.Header><Dialog.Title>Use these settings for new items?</Dialog.Title></Dialog.Header>
           <Dialog.Body>
             {publication ? <Stack gap={4}>
               <RegistryValidationFeedback snapshot={publication.record.snapshot} result={publication.validation} />
@@ -39,7 +39,7 @@ export function RegistryPublishDialog({ publication, busy, onClose, onPublish }:
           </Dialog.Body>
           <Dialog.Footer>
             <Button variant="outline" disabled={busy} onClick={onClose}>Cancel</Button>
-            <Button colorPalette="teal" loading={busy} disabled={busy || !publication?.validation.valid || publication.impact.staleBase} onClick={onPublish}>Confirm publication</Button>
+            <Button colorPalette="teal" loading={busy} disabled={busy || !publication?.validation.valid || publication.impact.staleBase} onClick={onPublish}>Confirm and use settings</Button>
           </Dialog.Footer>
         </Dialog.Content>
       </Dialog.Positioner>

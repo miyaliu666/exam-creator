@@ -1,6 +1,8 @@
 import { IMPORT_FIELDS, type ContentImportRow, type ImportField } from "./content-import-columns";
 import { contentEntryDuplicateKeys, contentEntryIdentityChanged, contentEntryNameKeys } from "./content-catalog-model";
 import { registryDisplayText } from "./registry-display-text";
+import { contentLanguage, parseContentLanguage } from "./content-language";
+import { simplifyContentEntry } from "./simple-language-content";
 import type { ContentIdOption, RegistrySnapshot } from "./types";
 export * from "./content-import-columns";
 export * from "./content-import-parser";
@@ -26,14 +28,14 @@ export function splitImportList(value: string): string[] {
   }
   return value.split(/[;\n；]/).map((part) => part.trim()).filter(Boolean);
 }
-function resolveReferences(value: string, options: Array<{ id: string; label: string; retired?: boolean }>): string[] {
+function resolveReferences(value: string, options: Array<{ id: string; label: string; retired?: boolean }>, allowRetired = false): string[] {
   if (unrestricted(value)) return [];
   const values = splitImportList(value);
   return [...new Set(values.map((part) => {
     const byId = options.find((option) => option.id === part);
     const matches = byId ? [byId] : options.filter((option) => option.label === part || registryDisplayText(option.label) === part);
     if (matches.length !== 1) throw new Error(matches.length ? `“${part}” matches more than one name; use its ID.` : `Unknown reference: “${part}”.`);
-    if (matches[0].retired) throw new Error(`“${part}” is retired; choose an active reference.`);
+    if (matches[0].retired && !allowRetired) throw new Error(`“${part}” is retired; choose an active reference.`);
     return matches[0].id;
   }))];
 }
@@ -44,8 +46,24 @@ function parseRow(row: ContentImportRow, snapshot: RegistrySnapshot, mode: Conte
   if (mode === "update" && !existing) fail("id", "Update requires an existing ID from an export.");
   if (mode === "add" && existing) fail("id", "This ID already exists. Use Update mode to change it.");
   const entry: ContentIdOption = mode === "update" && existing ? { ...existing } : {
-    id: values.id.trim() || `LC-${row.id}`, kind: "lexical", label: "", masteryScope: null, canDoIds: [], contextIds: [],
+    id: values.id.trim() || `LC-${row.id}`, kind: "lexical", language: "zh", label: "", masteryScope: null, canDoIds: [], contextIds: [],
   };
+  if (values.language.trim()) {
+    const language = parseContentLanguage(values.language);
+    if (language && existing && mode === "update" && language !== contentLanguage(existing)) fail("language", "An existing entry's language cannot change. Add a new entry with a new ID.");
+    else if (language) entry.language = language;
+    else fail("language", "Choose Chinese (zh), English (en), or Spanish (es).");
+  }
+  if (values.metadata.trim()) {
+    try {
+      const metadata: unknown = JSON.parse(values.metadata);
+      if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) throw new Error("Additional metadata must be a JSON object.");
+      for (const [key, value] of Object.entries(metadata)) {
+        if (canonicalKeys.has(key) || ["__proto__", "constructor", "prototype", "metadata", "contextIds", "contextScopeMode", "excludedContextIds", "assessmentRules"].includes(key)) throw new Error(`Additional metadata cannot override “${key}”.`);
+        entry[key] = value;
+      }
+    } catch (error) { fail("metadata", (error as Error).message); }
+  }
   const kindValue = values.kind.trim().toLowerCase();
   const kind = ({ vocabulary: "lexical", lexical: "lexical", grammar: "grammar", character: "character", characters: "character", pragmatics: "pragmatics", "pragmatic functions": "pragmatics", supported: "supported", "supporting content": "supported", "supporting material types": "supported", 词汇: "lexical", 语法: "grammar" } as Record<string, string>)[kindValue];
   if (kindValue && !kind) fail("kind", "Choose Vocabulary, Grammar, Character, Pragmatics, or Supporting material types.");
@@ -53,18 +71,21 @@ function parseRow(row: ContentImportRow, snapshot: RegistrySnapshot, mode: Conte
     if (existing && mode === "update" && kind !== existing.kind) fail("kind", "An existing entry's category cannot change.");
     else entry.kind = kind;
   }
-  for (const field of ["label", "meaning", "pattern", "pinyin", "englishGloss", "restrictions", "notes"] as const) {
+  for (const field of ["level", "label", "meaning", "pattern", "pinyin", "englishGloss", "restrictions", "notes"] as const) {
     const value = values[field].trim();
     if (value) entry[field] = value === "__CLEAR__" ? "" : values[field];
   }
   if (!entry.label.trim()) fail("label", "Name is required.");
-  if (mode === "add" && entry.kind === "lexical" && !entry.meaning?.trim()) fail("meaning", "Specify the meaning assessed by this vocabulary entry.");
+  if (entry.level && /[\u0000-\u001f\u007f-\u009f]/.test(entry.level)) fail("level", "Use a single-line level without control characters.");
+  if (mode === "add" && entry.kind === "lexical" && contentLanguage(entry) !== "en" && !entry.meaning?.trim()) fail("meaning", "Specify the meaning assessed by this vocabulary entry.");
   if (mode === "add" && entry.kind === "grammar" && !entry.pattern?.trim()) fail("pattern", "Grammar structure is required for a new grammar entry.");
-  if (mode === "update" && existing?.meaning?.trim() && entry.kind === "lexical" && !entry.meaning?.trim()) fail("meaning", "Keep the assessed meaning or replace it with a corrected meaning.");
+  if (mode === "update" && existing?.meaning?.trim() && entry.kind === "lexical" && contentLanguage(entry) !== "en" && !entry.meaning?.trim()) fail("meaning", "Keep the assessed meaning or replace it with a corrected meaning.");
   if (mode === "update" && existing?.pattern?.trim() && entry.kind === "grammar" && !entry.pattern?.trim()) fail("pattern", "Keep the grammar structure or replace it with a corrected structure.");
-  for (const field of ["canDoIds", "contextIds"] as const) {
+  for (const field of ["canDoIds"] as const) {
     if (!values[field].trim()) continue;
-    try { entry[field] = resolveReferences(values[field], field === "canDoIds" ? snapshot.canDoOptions : snapshot.contextOptions); }
+    try {
+      entry.canDoIds = resolveReferences(values[field], snapshot.canDoOptions);
+    }
     catch (error) { fail(field, (error as Error).message); }
   }
   const mastery = values.masteryScope.trim();
@@ -79,18 +100,7 @@ function parseRow(row: ContentImportRow, snapshot: RegistrySnapshot, mode: Conte
     try { entry[field] = values[field].trim() === "__CLEAR__" ? [] : splitImportList(values[field]); }
     catch (error) { fail(field, (error as Error).message); }
   }
-  if (values.metadata.trim()) {
-    try {
-      const metadata: unknown = JSON.parse(values.metadata);
-      if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) throw new Error("Additional metadata must be a JSON object.");
-      for (const [key, value] of Object.entries(metadata)) {
-        if (canonicalKeys.has(key) || ["__proto__", "constructor", "prototype", "metadata"].includes(key)) throw new Error(`Additional metadata cannot override “${key}”.`);
-        entry[key] = value;
-      }
-    } catch (error) { fail("metadata", (error as Error).message); }
-  }
   if (entry.canDoIds.some((id) => !snapshot.canDoOptions.some((option) => option.id === id))) fail("canDoIds", "Remove unavailable Can-do references.");
-  if (entry.contextIds.some((id) => !snapshot.contextOptions.some((option) => option.id === id && !option.retired))) fail("contextIds", "Remove unavailable or retired Context references.");
   if (entry.masteryScope !== null && !["receptive", "productive", "receptiveProductive"].includes(entry.masteryScope)) fail("masteryScope", "Choose a valid mastery scope for this entry.");
   const changes = existing && mode === "update" ? IMPORT_FIELDS.filter(({ key }) => key !== "metadata" && JSON.stringify(existing[key]) !== JSON.stringify(entry[key])).map(({ key }) => ({ field: key, before: printable(existing[key]), after: printable(entry[key]) })) : [];
   if (existing && values.metadata.trim()) {
@@ -98,7 +108,7 @@ function parseRow(row: ContentImportRow, snapshot: RegistrySnapshot, mode: Conte
     const after = Object.fromEntries(Object.entries(entry).filter(([key]) => !canonicalKeys.has(key)));
     if (JSON.stringify(before) !== JSON.stringify(after)) changes.push({ field: "metadata", before: JSON.stringify(before), after: JSON.stringify(after) });
   }
-  return { row, entry, errors, duplicates: [], changes };
+  return { row, entry: simplifyContentEntry(entry), errors, duplicates: [], changes };
 }
 export function validateContentImport(rows: ContentImportRow[], snapshot: RegistrySnapshot, mode: ContentImportMode): ContentImportPreview[] {
   const existingById = new Map(snapshot.contentIdOptions.map((entry) => [entry.id, entry]));

@@ -17,6 +17,7 @@ import { rankAiCandidates } from "./candidate-quality";
 import { AiRunTelemetry } from "./ai-run-telemetry";
 import { generationErrorMessage } from "./generation-message";
 import { VersionDiffPanel } from "./version-diff-panel";
+import { ReviewCheckResults } from "./review-check-results";
 import {
   REVIEW_DECISION_LABELS,
   REVIEW_GATE_LABELS,
@@ -31,6 +32,7 @@ import type {
 } from "./types";
 
 interface AiCandidatesPanelProps {
+  language?: string;
   run: AiGenerationRun | undefined;
   isAdopting: boolean;
   canAdopt: boolean;
@@ -39,6 +41,7 @@ interface AiCandidatesPanelProps {
 }
 
 export function AiCandidatesPanel({
+  language,
   run,
   isAdopting,
   canAdopt,
@@ -106,9 +109,11 @@ export function AiCandidatesPanel({
                   <Text fontSize="sm" color="fg.warning">Same visible content as AI draft {duplicateOfOrdinal}</Text>
                 ) : null}
                 <AuthorPreview
+                  language={language}
                   rendererId={run.rendererId}
                   payload={candidate.candidatePayload}
                   englishTranslations={candidate.englishTranslations}
+                  exerciseTemplate={candidate.proposedExerciseTemplate}
                   showLegacyHeading={false}
                 />
                 {candidate.validation.issues.map((issue) => (
@@ -256,6 +261,7 @@ export function ReviewPanel(props: ReviewPanelProps) {
               {props.latestAiReview.findings.length === 1 ? "finding" : "findings"})
             </Box>
             <Stack mt={3} gap={2}>
+              <ReviewCheckResults review={props.latestAiReview} />
               {props.latestAiReview.findings.map((finding) => (
                 <Text key={`${finding.code}-${finding.message}`}>
                   {finding.message}

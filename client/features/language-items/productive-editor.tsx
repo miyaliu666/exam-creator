@@ -161,7 +161,7 @@ export function FormEntryEditor({ draft, updateDraft, validationIssues }: Editor
               (next.candidatePayload as FormEntryCandidatePayload).fields[index].inputType = event.target.value;
               const scoringPoint = next.scoringPackage.scoringPoints?.find((point) => point.scoringPointId === `SP-${field.fieldId}`);
               if (scoringPoint) scoringPoint.normalizationPolicyId = normalizationForInputType(event.target.value);
-            })}><option value="shortText">Short text</option><option value="typedChinese">Chinese text</option><option value="number">Number</option><option value="date">Date</option><option value="time">Time</option></NativeSelect.Field><NativeSelect.Indicator /></NativeSelect.Root></Field.Root>
+            })}><option value="shortText">Short text</option><option value="typedChinese">Target-language text</option><option value="number">Number</option><option value="date">Date</option><option value="time">Time</option></NativeSelect.Field><NativeSelect.Indicator /></NativeSelect.Root></Field.Root>
             <Field.Root><Field.Label>Accepted values / criteria (separate with /)</Field.Label><Input value={(draft.scoringPackage.acceptedResponses?.[field.fieldId] ?? []).join(" / ")} onChange={(event) => updateDraft((next) => {
               (next.scoringPackage.acceptedResponses ??= {})[field.fieldId] = event.target.value.split("/").map((value) => value.trim()).filter(Boolean);
             })} /></Field.Root>

@@ -1,0 +1,67 @@
+{
+  "taskId": "LI-legacy-minimal",
+  "taskVersion": "1",
+  "specVersions": {
+    "planningSpecVersion": "0.2-provisional",
+    "registryBundleVersion": "0.2-provisional",
+    "taskPackageVersion": "0.1"
+  },
+  "blueprintSlotId": "R-A1-1",
+  "taskFamilyId": "TF-SIGNS-NOTICES",
+  "itemFormatId": "IF-SINGLE-SELECT",
+  "renderer": {
+    "rendererId": "REN-SINGLE-SELECT",
+    "rendererVersion": "0.1"
+  },
+  "candidatePayload": {
+    "stimulus": {
+      "text": "请在门口等",
+      "imageRefs": [],
+      "audioRef": null
+    },
+    "prompt": "应该在哪里等？",
+    "options": [
+      {
+        "optionId": "A",
+        "text": "门口",
+        "imageRef": null
+      },
+      {
+        "optionId": "B",
+        "text": "教室",
+        "imageRef": null
+      }
+    ],
+    "shuffleOptions": true
+  },
+  "authoringPackage": {
+    "notes": []
+  },
+  "scoringPackage": {
+    "scoringContractTemplateId": "SCT-R-A1-1-SINGLE-SELECT-v0.1",
+    "correctOptionId": "A"
+  },
+  "reviewPackage": {
+    "gates": {}
+  },
+  "mediaRefs": [],
+  "deliveryPolicyRefs": {
+    "navigationPolicyId": "NAV-REVIEW-WITHIN-MODULE-v0.1",
+    "inputPolicyId": "notApplicable",
+    "playbackPolicyId": "notApplicable",
+    "recordingPolicyId": "notApplicable",
+    "speakingRateProfileId": "notApplicable",
+    "pauseProfileId": "notApplicable"
+  },
+  "content": {
+    "primaryCanDoId": "A1-R1",
+    "primaryReportedSkill": "Reading",
+    "communicativeActivity": "Reception",
+    "primaryDomain": "Public",
+    "contextId": "D09",
+    "difficultyBand": "TypicalA1",
+    "targetContentIds": [],
+    "requiredInformationPoints": []
+  },
+  "variation": {}
+}

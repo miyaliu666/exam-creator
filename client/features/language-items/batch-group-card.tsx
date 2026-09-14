@@ -4,8 +4,9 @@ import type { ReactNode } from "react";
 import type { BatchGroup } from "./batch-api";
 import { batchCapability, batchTargetOptions, BATCH_ITEM_LIMIT } from "./batch-plan";
 import { BatchTargetAllocation } from "./batch-target-allocation";
-import { CONTENT_KIND_LABELS, DIFFICULTY_LABELS, DOMAIN_LABELS, ITEM_FORMAT_LABELS, contentOptionLabel, optionLabel, slotLabel } from "./labels";
+import { CONTENT_KIND_LABELS, DIFFICULTY_LABELS, DOMAIN_LABELS, exerciseLabel, contentOptionLabel, optionLabel, itemRuleLabel } from "./labels";
 import { languageTargetDisplayText } from "./language-target-labels";
+import { contentLanguage, contentLanguageLabel } from "./content-language";
 import { RegistryMultiSelect } from "./registry-multi-select";
 import { registryDisplayText } from "./registry-display-text";
 import type { RegistrySnapshot } from "./types";
@@ -33,10 +34,11 @@ export function BatchGroupCard({ group, index, itemOffset, grouped = true, regis
       <Stack gap={4}>
         <HStack justify="space-between" align="start" flexWrap="wrap">
           <Stack gap={1}>
-            <Text fontWeight="semibold">{grouped ? `Group ${index + 1} · ` : ""}{slotLabel(group.blueprintSlotId, registry)}</Text>
-            <Text fontSize="sm">{ITEM_FORMAT_LABELS[group.itemFormatId]} · {DOMAIN_LABELS[group.primaryDomain]} · {DIFFICULTY_LABELS[group.difficultyBand]}</Text>
+            <Text fontWeight="semibold">{grouped ? `Group ${index + 1} · ` : ""}{itemRuleLabel(group.itemRuleId, registry)}</Text>
+            <Text fontSize="sm">Language: {contentLanguageLabel(contentLanguage(group))}</Text>
+            <Text fontSize="sm">{!group.itemFormatId.startsWith("EXERCISE:") ? `${exerciseLabel(group.itemFormatId, capability?.primaryReportedSkill)} · ` : ""}{DOMAIN_LABELS[group.primaryDomain]} · {DIFFICULTY_LABELS[group.difficultyBand]}</Text>
             <Text fontSize="sm">{registryDisplayText(optionLabel(group.primaryCanDoId, registry.canDoOptions))}</Text>
-            <Text fontSize="sm" color="fg.muted">{registryDisplayText(optionLabel(group.contextId, registry.contextOptions))}</Text>
+            {group.contextId ? <Text fontSize="sm" color="fg.muted">{registryDisplayText(optionLabel(group.contextId, registry.contextOptions))}</Text> : null}
             {capability ? <HStack flexWrap="wrap"><Badge>{capability.primaryReportedSkill}</Badge>
               {(capability.communicativeActivities ?? [capability.communicativeActivity]).map((activity) => <Badge key={activity} colorPalette="teal">{activity}</Badge>)}
             </HStack> : null}
@@ -55,6 +57,7 @@ export function BatchGroupCard({ group, index, itemOffset, grouped = true, regis
         <RegistryMultiSelect label={group.itemCount === 1 ? "What this item should assess" : "Targets required in every item"} values={group.requiredTargetContentIds} disabled={disabled}
           options={options.filter((option) => !group.rotatingTargetContentIds.includes(option.id))}
           onChange={(requiredTargetContentIds) => onChange({ ...group, requiredTargetContentIds })} />
+        {!options.length ? <Text fontSize="sm" color="fg.muted">No compatible {contentLanguageLabel(contentLanguage(group))} language targets are available. Add language content in Assessment Settings and publish the settings for new items.</Text> : null}
         {group.itemCount > 1 || group.rotatingTargetContentIds.length ? <RegistryMultiSelect label="Different targets for different items" values={group.rotatingTargetContentIds} disabled={disabled}
           options={options.filter((option) => !group.requiredTargetContentIds.includes(option.id))}
           onChange={(rotatingTargetContentIds) => onChange({ ...group, rotatingTargetContentIds })} /> : null}

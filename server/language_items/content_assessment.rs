@@ -8,6 +8,7 @@ use super::{
         ContentIdOption, RegistrySnapshot, WorkbenchCapability, capability_for,
         context_supports_capability,
     },
+    registry_content::content_supports_current_assessment,
     registry_store::RegistryValidationIssue,
 };
 
@@ -29,7 +30,7 @@ pub enum AssessmentMode {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ContentAssessmentRule {
-    pub blueprint_slot_id: String,
+    pub item_rule_id: String,
     pub item_format_id: String,
     pub primary_can_do_id: String,
     pub context_id: String,
@@ -57,12 +58,12 @@ pub struct ContentAssessmentRule {
 impl ContentAssessmentRule {
     pub fn matches(
         &self,
-        blueprint_slot_id: &str,
+        item_rule_id: &str,
         item_format_id: &str,
         primary_can_do_id: &str,
         context_id: &str,
     ) -> bool {
-        self.blueprint_slot_id == blueprint_slot_id
+        self.item_rule_id == item_rule_id
             && self.item_format_id == item_format_id
             && self.primary_can_do_id == primary_can_do_id
             && self.context_id == context_id
@@ -80,7 +81,7 @@ pub fn content_is_excluded(
     content.assessment_rules.iter().any(|rule| {
         rule.applicability == AssessmentApplicability::Excluded
             && rule.matches(
-                &capability.blueprint_slot_id,
+                &capability.item_rule_id,
                 &capability.item_format_id,
                 &capability.primary_can_do_id,
                 context_id,
@@ -90,21 +91,16 @@ pub fn content_is_excluded(
 
 pub fn content_for_assessment(
     content: &ContentIdOption,
-    blueprint_slot_id: &str,
+    item_rule_id: &str,
     item_format_id: &str,
     primary_can_do_id: &str,
     context_id: &str,
 ) -> ContentIdOption {
     let mut selected = content.clone();
     // Rules for another combination must not become instructions for this item.
-    selected.assessment_rules.retain(|rule| {
-        rule.matches(
-            blueprint_slot_id,
-            item_format_id,
-            primary_can_do_id,
-            context_id,
-        )
-    });
+    selected
+        .assessment_rules
+        .retain(|rule| rule.matches(item_rule_id, item_format_id, primary_can_do_id, context_id));
     selected
 }
 
@@ -115,6 +111,14 @@ pub fn validate_assessment_rules(
     require_complete: bool,
     issues: &mut Vec<RegistryValidationIssue>,
 ) {
+    if !content_supports_current_assessment(content) && !content.assessment_rules.is_empty() {
+        issues.push(RegistryValidationIssue {
+            severity: "error".to_string(),
+            code: "registry.contentAssessmentLanguage".to_string(),
+            path: format!("contentIdOptions.{content_index}.assessmentRules"),
+            message: "Assessment rules require a supported content language: Chinese, English, or Spanish".to_string(),
+        });
+    }
     if content.kind == "supported" {
         if require_complete && !content.assessment_rules.is_empty() {
             issues.push(RegistryValidationIssue {
@@ -141,12 +145,7 @@ pub fn validate_assessment_rules(
                 message: message.to_string(),
             });
         };
-        if !seen.insert((
-            &rule.blueprint_slot_id,
-            &rule.item_format_id,
-            &rule.primary_can_do_id,
-            &rule.context_id,
-        )) {
+        if !seen.insert((&rule.item_rule_id, &rule.context_id)) {
             issue(
                 "registry.duplicateContentAssessmentRule",
                 "",
@@ -155,7 +154,7 @@ pub fn validate_assessment_rules(
         }
         let capability = capability_for(
             snapshot,
-            &rule.blueprint_slot_id,
+            &rule.item_rule_id,
             &rule.item_format_id,
             Some(&rule.primary_can_do_id),
         );
@@ -166,27 +165,38 @@ pub fn validate_assessment_rules(
                 "The assessment rule references unavailable Item rules",
             ),
             Some(capability) => {
+                let no_context_allowed = rule.context_id.is_empty()
+                    && super::exercise_templates::exercise_type(&capability.item_format_id)
+                        .is_some()
+                    && capability.allowed_context_ids.is_empty();
                 let context = snapshot
                     .context_options
                     .iter()
                     .find(|context| context.id == rule.context_id);
-                if context.is_none_or(|context| {
-                    !context_supports_capability(context, capability)
-                        || !capability.allowed_context_ids.contains(&context.id)
-                        || context.primary_domains.len() != 1
-                        || !capability
-                            .allowed_domains
-                            .contains(&context.primary_domains[0])
-                        || !snapshot
-                            .allowed_domains
-                            .contains(&context.primary_domains[0])
-                        || context.label.trim().is_empty()
-                        || context.scope.trim().is_empty()
-                }) {
+                if !no_context_allowed
+                    && context.is_none_or(|context| {
+                        !context_supports_capability(context, capability)
+                            || (!capability.allowed_context_ids.contains(&context.id)
+                                && !(super::exercise_templates::exercise_type(
+                                    &capability.item_format_id,
+                                )
+                                .is_some()
+                                    && capability.allowed_context_ids.is_empty()))
+                            || context.primary_domains.len() != 1
+                            || !capability
+                                .allowed_domains
+                                .contains(&context.primary_domains[0])
+                            || !snapshot
+                                .allowed_domains
+                                .contains(&context.primary_domains[0])
+                            || context.label.trim().is_empty()
+                            || context.scope.trim().is_empty()
+                    })
+                {
                     issue(
                         "registry.contentAssessmentContext",
                         "contextId",
-                        "The assessment rule requires an active Context allowed by these Item rules",
+                        "The assessment rule requires an allowed active Context, or no predefined Context when the exercise rules permit it",
                     );
                 }
             }
@@ -270,7 +280,7 @@ mod tests {
         payload.options[0].text = Some("星期一".into());
         payload.options[1].text = Some("星期二".into());
         let rule = ContentAssessmentRule {
-            blueprint_slot_id: package.blueprint_slot_id.clone(),
+            item_rule_id: package.item_rule_id.clone(),
             item_format_id: package.item_format_id.clone(),
             primary_can_do_id: package.content.primary_can_do_id.clone(),
             context_id: package.content.context_id.clone(),
@@ -306,7 +316,8 @@ mod tests {
             registry_version: Some(package.spec_versions.registry_bundle_version.clone()),
             candidates_per_item: 1,
             groups: vec![BatchGroup {
-                blueprint_slot_id: package.blueprint_slot_id.clone(),
+                language: None,
+                item_rule_id: package.item_rule_id.clone(),
                 item_format_id: package.item_format_id.clone(),
                 primary_can_do_id: package.content.primary_can_do_id.clone(),
                 primary_domain: package.content.primary_domain.clone(),
@@ -343,6 +354,76 @@ mod tests {
     }
 
     #[test]
+    fn multilingual_catalog_entries_cannot_become_chinese_assessment_targets() {
+        for language in ["en", "es"] {
+            let (mut registry, mut package, rule) = fixture();
+            target_mut(&mut registry, &package)
+                .metadata
+                .insert("language".into(), json!(language));
+            assert!(validate_language_content(&registry, None).valid);
+            install_published_snapshot(registry.clone(), false);
+            for result in [
+                validate_generation_setup(&package),
+                validate_task_package(&package),
+            ] {
+                assert!(result.issues.iter().any(|issue| {
+                    issue.code == "authoring.contentLanguage"
+                        && issue.path == "content.targetContentIds.0"
+                }));
+            }
+            assert!(prepare_job(batch_for(&package), "test@example.test", &registry).is_err());
+            let mut rotating = batch_for(&package);
+            rotating.groups[0].rotating_target_content_ids =
+                std::mem::take(&mut rotating.groups[0].required_target_content_ids);
+            assert!(prepare_job(rotating, "test@example.test", &registry).is_err());
+
+            target_mut(&mut registry, &package)
+                .assessment_rules
+                .push(rule);
+            assert!(validate_language_content(&registry, None).valid);
+            install_published_snapshot(registry.clone(), false);
+            package.content.language = Some(language.into());
+            assert!(validate_generation_setup(&package).valid);
+            let mut batch = batch_for(&package);
+            batch.groups[0].language = Some(language.into());
+            let job = prepare_job(batch, "test@example.test", &registry).unwrap();
+            assert_eq!(
+                job.children[0].setup_snapshot.content.effective_language(),
+                language
+            );
+        }
+    }
+
+    #[test]
+    fn multilingual_supporting_entries_also_require_language_compatibility() {
+        for language in ["en", "es"] {
+            let (mut registry, mut package, _) = fixture();
+            let supporting = registry
+                .content_id_options
+                .iter_mut()
+                .find(|entry| entry.kind == "supported")
+                .unwrap();
+            supporting.can_do_ids.clear();
+            supporting.context_ids.clear();
+            supporting.mastery_scope = None;
+            supporting
+                .metadata
+                .insert("language".into(), json!(language));
+            package.content.supporting_content_refs = vec![supporting.id.clone()];
+            install_published_snapshot(registry, false);
+            for result in [
+                validate_generation_setup(&package),
+                validate_task_package(&package),
+            ] {
+                assert!(result.issues.iter().any(|issue| {
+                    issue.code == "authoring.contentLanguage"
+                        && issue.path == "content.supportingContentRefs.0"
+                }));
+            }
+        }
+    }
+
+    #[test]
     fn supporting_content_keeps_legacy_compatibility_without_applying_assessment_exclusions() {
         let (mut registry, mut package, mut rule) = fixture();
         let supporting_index = registry
@@ -368,7 +449,7 @@ mod tests {
         registry.content_id_options[supporting_index].assessment_rules = vec![rule];
         let capability = capability_for(
             &registry,
-            &package.blueprint_slot_id,
+            &package.item_rule_id,
             &package.item_format_id,
             Some(&package.content.primary_can_do_id),
         )
@@ -480,18 +561,13 @@ mod tests {
         assert!(prepare_job(batch_for(&package), "test@example.test", &registry).is_err());
         let capability = capability_for(
             &registry,
-            &package.blueprint_slot_id,
+            &package.item_rule_id,
             &package.item_format_id,
             Some(&package.content.primary_can_do_id),
         )
         .unwrap()
         .clone();
-        for field in [
-            "blueprintSlotId",
-            "itemFormatId",
-            "primaryCanDoId",
-            "contextId",
-        ] {
+        for field in ["itemRuleId", "itemFormatId", "primaryCanDoId", "contextId"] {
             let mut different = serde_json::to_value(&rule).unwrap();
             different[field] = json!("another-combination");
             let target = target_mut(&mut registry, &package);
@@ -572,7 +648,7 @@ mod tests {
                     .iter()
                     .find(|capability| capability.primary_reported_skill == skill)
                     .unwrap();
-                rule.blueprint_slot_id = capability.blueprint_slot_id.clone();
+                rule.item_rule_id = capability.item_rule_id.clone();
                 rule.item_format_id = capability.item_format_id.clone();
                 rule.primary_can_do_id = capability.primary_can_do_id.clone();
                 rule.context_id = capability.allowed_context_ids[0].clone();
@@ -736,7 +812,7 @@ mod tests {
             .insert("extraSource".into(), json!({ "nested": [1, 2] }));
         let expected = content_for_assessment(
             target,
-            &package.blueprint_slot_id,
+            &package.item_rule_id,
             &package.item_format_id,
             &package.content.primary_can_do_id,
             &package.content.context_id,
@@ -748,7 +824,7 @@ mod tests {
             model: "test".into(),
         };
         let preview = generation_prompt_preview(&config, &package, 1).unwrap();
-        assert_eq!(preview.prompt_version, "0.7");
+        assert_eq!(preview.prompt_version, "0.9");
         assert_eq!(
             preview.request_body["instructions"],
             crate::language_items::ai::GENERATION_PROMPT

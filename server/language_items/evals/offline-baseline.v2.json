@@ -1,0 +1,17 @@
+{
+  "baselineVersion": 1,
+  "scope": "Synthetic offline mechanical regression; not a human-rated language assessment quality dataset",
+  "provider": "deterministic-mock",
+  "promptVersion": "0.9",
+  "outputSchemaVersion": "0.3",
+  "candidatesPerFormat": 3,
+  "cases": [
+    { "template": "reading-single-select", "validCount": 3, "distinctVisibleContentCount": 3 },
+    { "template": "reading-matching", "validCount": 3, "distinctVisibleContentCount": 3 },
+    { "template": "reading-restricted-input", "validCount": 3, "distinctVisibleContentCount": 3 },
+    { "template": "writing-form-entry", "validCount": 3, "distinctVisibleContentCount": 3 },
+    { "template": "writing-typed-message", "validCount": 3, "distinctVisibleContentCount": 3 },
+    { "template": "speaking-single", "validCount": 3, "distinctVisibleContentCount": 3 },
+    { "template": "speaking-multiturn", "validCount": 3, "distinctVisibleContentCount": 3 }
+  ]
+}

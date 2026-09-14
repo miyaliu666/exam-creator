@@ -28,6 +28,7 @@ prisma-rust-schema = { git = "https://github.com/ShaunSHamilton/prisma-rust-sche
   "mongodb",
 ] }
 rand = "0.9"
+regex = "1"
 reqwest = { version = "0.12", features = ["json"] }
 sentry = { version = "0.48.5", features = [
   "metrics",

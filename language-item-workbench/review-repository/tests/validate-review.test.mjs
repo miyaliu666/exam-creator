@@ -18,6 +18,26 @@ test('form schema validates productive content and legitimate nested sourceProfi
   const f = fixture({ form: true }); assert.equal(validateReview(f.reader, refs).itemCount, 1);
 });
 
+test('shared scoring contracts explicitly authorize every bound Item rule', () => {
+  const f = fixture();
+  f.edit(f.item.registrySnapshotPath, registry => {
+    registry.scoringContracts[0].itemRuleIds.push('another-rule');
+  }, true);
+  assert.equal(validateReview(f.reader, refs).itemCount, 1);
+  f.edit(f.item.registrySnapshotPath, registry => {
+    registry.scoringContracts[0].itemRuleIds = ['another-rule'];
+  }, true);
+  assert.throws(() => validateReview(f.reader, refs), /does not apply to this item rule/);
+});
+
+test('duplicate capabilities cannot make the same Item rule identity ambiguous', () => {
+  const f = fixture();
+  f.edit(f.item.registrySnapshotPath, registry => {
+    registry.capabilities.push(structuredClone(registry.capabilities[0]));
+  }, true);
+  assert.throws(() => validateReview(f.reader, refs), /exactly one configuration/);
+});
+
 for (const [name, message] of [['manifest', /Manifest schema version/], ['item', /Item schema version/]]) {
   test(`rejects a current submission with a downgraded 1.0 ${name}`, () => {
     const f = fixture();
@@ -27,6 +47,30 @@ for (const [name, message] of [['manifest', /Manifest schema version/], ['item',
 }
 
 const englishTranslations = [{ path: '/prompt', sourceText: '这个标志是什么意思？', englishText: 'What does this sign mean?' }];
+
+test('shared pinned rules accept English and Spanish items while preserving schemas and locked language', () => {
+  for (const language of ['en', 'es']) {
+    const f = fixture();
+    f.edit(f.item.path, file => { file.taskPackage.content.language = language; }, true);
+    f.edit(f.item.registrySnapshotPath, registry => { registry.contentIdOptions.forEach(entry => { entry.language = language; }); }, true);
+    const schemaBefore = f.head.get(f.item.taskPackageSchemaPath);
+    const itemBefore = f.head.get(f.item.path);
+    assert.equal(validateReview(f.reader, refs).itemCount, 1);
+    assert.equal(f.head.get(f.item.taskPackageSchemaPath), schemaBefore);
+    assert.equal(f.head.get(f.item.path), itemBefore);
+    f.edit(f.item.path, file => { file.taskPackage.content.language = 'zh'; });
+    assert.throws(() => validateReview(f.reader, refs), /content.language/);
+  }
+});
+
+test('review rejects mixed-language targets and unsupported item languages with older pinned schemas', () => {
+  const mixed = fixture();
+  mixed.edit(mixed.item.path, file => { file.taskPackage.content.language = 'en'; }, true);
+  assert.throws(() => validateReview(mixed.reader, refs), /language/);
+  const invalid = fixture();
+  invalid.edit(invalid.item.path, file => { file.taskPackage.content.language = 'fr'; }, true);
+  assert.throws(() => validateReview(invalid.reader, refs), /language/);
+});
 
 test('review accepts author English references and preserves old pinned schemas', () => {
   for (const legacy of [false, true]) {

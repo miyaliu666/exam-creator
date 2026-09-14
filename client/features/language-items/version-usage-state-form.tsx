@@ -25,7 +25,7 @@ export function VersionUsageStateForm({ itemId, version, disabled, onDirtyChange
     <Box><Text asChild fontSize="sm" fontWeight="medium"><label htmlFor="version-usage-state">Change use status</label></Text>
       <NativeSelect.Root disabled={disabled || write.isPending}><NativeSelect.Field id="version-usage-state" value={target} onChange={(event) => {
         setTarget(event.target.value as VersionUsageState | ""); setSaved(false); write.resetRequest();
-      }}><option value="">Select status</option>{target && !transitions.includes(target) ? <option value={target}>{VERSION_USAGE_LABELS[target]} · previous request</option> : null}{transitions.map((value) => <option key={value} value={value}>{VERSION_USAGE_LABELS[value]}</option>)}</NativeSelect.Field><NativeSelect.Indicator /></NativeSelect.Root>
+      }}><option value="" disabled hidden>Select status</option>{target && !transitions.includes(target) ? <option value={target}>{VERSION_USAGE_LABELS[target]} · previous request</option> : null}{transitions.map((value) => <option key={value} value={value}>{VERSION_USAGE_LABELS[value]}</option>)}</NativeSelect.Field><NativeSelect.Indicator /></NativeSelect.Root>
     </Box>
     {(version.state === "pilot" || version.state === "suspended") && !transitions.includes("live") ? <Text fontSize="sm" color="fg.muted">Formal use requires a current pilot result with the decision Ready for formal use.</Text> : null}
     {target ? <Box><Text asChild fontSize="sm" fontWeight="medium"><label htmlFor="version-usage-reason">Reason</label></Text>

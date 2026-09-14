@@ -25,7 +25,7 @@ function fixture() {
     allowedSupportLevels: ["moderate", "limited"], allowedDistractorSimilarities: ["moderate", "close"],
   };
   const capability: RegistryCapability = {
-    blueprintSlotId: "R-A1-1", title: "Short notices", taskFamilyId: "TF-NOTICES", itemFormatId: "IF-SINGLE-SELECT",
+    itemRuleId: "R-A1-1", title: "Short notices", taskFamilyId: "TF-NOTICES", itemFormatId: "IF-SINGLE-SELECT",
     rendererId: "REN-SINGLE-SELECT", scoringContractTemplateId: "SCORE-NOTICE", primaryCanDoId: "A1-R1",
     primaryReportedSkill: "Reading", communicativeActivity: "Reception", allowedDomains: ["Public", "Educational"],
     allowedContextIds: ["shop", "school"], observableEvidence: "Locate an explicit time and place.",
@@ -35,7 +35,7 @@ function fixture() {
     settingsSchemaVersion: 1, bundleVersion: "published-1", status: "published", limitations: [], sourceFingerprint: "fixture",
     capabilities: [capability], candidateSchemas: [], taskPackageSchema: {}, allowedDomains: ["Public", "Educational"],
     difficultyBands: ["LowerA1", "UpperA1"], difficultyStandards: [lower, upper],
-    capabilityDifficultyProfileSets: [{ id: "notice-difficulty", blueprintSlotId: "R-A1-1", itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "A1-R1", standards: [lower, upper] }],
+    capabilityDifficultyProfileSets: [{ id: "notice-difficulty", itemRuleId: "R-A1-1", itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "A1-R1", standards: [lower, upper] }],
     contentIdOptions: [
       { id: "target-shop", kind: "lexical", label: "营业", canDoIds: ["A1-R1"], contextIds: ["shop"], masteryScope: "receptive" },
       { id: "target-time", kind: "lexical", label: "几点", canDoIds: ["A1-R1"], contextIds: [], masteryScope: "receptiveProductive" },
@@ -49,7 +49,7 @@ function fixture() {
   };
   const draft: TaskPackage = {
     taskId: "LI-NOTICE", taskVersion: "draft", specVersions: { planningSpecVersion: "1", registryBundleVersion: "published-1", taskPackageVersion: "1" },
-    blueprintSlotId: "R-A1-1", taskFamilyId: "TF-NOTICES", itemFormatId: "IF-SINGLE-SELECT", renderer: { rendererId: "REN-SINGLE-SELECT", rendererVersion: "1" },
+    itemRuleId: "R-A1-1", taskFamilyId: "TF-NOTICES", itemFormatId: "IF-SINGLE-SELECT", renderer: { rendererId: "REN-SINGLE-SELECT", rendererVersion: "1" },
     candidatePayload: {
       stimulus: { text: "书店在一楼，上午九点开门。", imageRefs: [], audioRef: null }, prompt: "书店几点开门？",
       options: [{ optionId: "A", text: "上午九点", imageRef: null }, { optionId: "B", text: "上午十点", imageRef: null }], shuffleOptions: false,
@@ -74,6 +74,26 @@ function fixture() {
   };
   return { draft, registry, lower, upper };
 }
+
+test("English and Spanish use shared setup rules with their own targets and generation briefs", () => {
+  for (const language of ["en", "es"]) {
+    const { draft, registry } = fixture();
+    draft.content.language = language;
+    registry.contentIdOptions.forEach((entry) => { entry.language = language; });
+    assert.equal(validateAuthoringSetup("Notice", draft, registry).filter((issue) => issue.path === "content.targetContentIds" || issue.path === "content.supportingContentRefs").length, 0);
+    const snapshot = aiGenerationSetupSnapshot(draft);
+    assert.equal(snapshot.language, language);
+    const run = { generationSetupSnapshot: snapshot } as AiGenerationRun;
+    assert.equal(aiGenerationMatchesSetup(run, draft), true);
+    draft.content.language = "zh";
+    assert.equal(aiGenerationMatchesSetup(run, draft), false);
+    assert.ok(validateAuthoringSetup("Notice", draft, registry).some((issue) => issue.path === "content.targetContentIds"));
+  }
+  const { draft } = fixture();
+  const legacy = { generationSetupSnapshot: aiGenerationSetupSnapshot(draft) } as AiGenerationRun;
+  draft.content.language = "zh";
+  assert.equal(aiGenerationMatchesSetup(legacy, draft), true);
+});
 
 test("previewing a context and difficulty change preserves authored work and leaves the saved draft untouched", () => {
   const { draft, registry } = fixture();
@@ -204,7 +224,7 @@ function generationRun(draft: TaskPackage, legacy = false): AiGenerationRun {
   return {
     id: "AIR-NOTICE", itemId: draft.taskId, provider: "deterministic-mock", model: "offline", modelVersion: "1",
     promptId: "generate", promptVersion: "1", outputSchemaVersion: "1", specVersions: snapshot.specVersions,
-    blueprintSlotId: snapshot.blueprintSlotId, taskFamilyId: snapshot.taskFamilyId, itemFormatId: snapshot.itemFormatId,
+    itemRuleId: snapshot.itemRuleId, taskFamilyId: snapshot.taskFamilyId, itemFormatId: snapshot.itemFormatId,
     rendererId: snapshot.rendererId, primaryCanDoId: snapshot.primaryCanDoId, primaryDomain: snapshot.primaryDomain,
     contextId: snapshot.contextId, difficultyBand: snapshot.difficultyBand, targetContentIds: snapshot.targetContentIds,
     requiredInformationPoints: snapshot.requiredInformationPoints.map(({ label }) => label),

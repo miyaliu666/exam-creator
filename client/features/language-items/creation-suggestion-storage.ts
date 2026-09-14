@@ -1,6 +1,7 @@
 import type { CoverageBatchSuggestion, CoverageFilters } from "./coverage-types";
+import { migrateLegacyBrowserSetup } from "./legacy-item-rule-browser-migration";
 
-const FILTER_KEYS = ["skill", "activity", "domain", "contextId", "blueprintSlotId", "primaryCanDoId", "difficultyBand", "itemFormatId"] as const;
+const FILTER_KEYS = ["language", "skill", "activity", "domain", "contextId", "itemRuleId", "primaryCanDoId", "difficultyBand", "itemFormatId"] as const;
 const memory = new Map<string, CoverageBatchSuggestion>();
 
 function storageKey(scope: string) {
@@ -17,7 +18,8 @@ function parseSuggestion(value: unknown): CoverageBatchSuggestion | undefined {
       typeof record.desiredCount !== "number" || !Number.isSafeInteger(record.desiredCount) ||
       record.desiredCount < 1 || record.desiredCount > 1_000_000 ||
       !record.filters || typeof record.filters !== "object" || Array.isArray(record.filters)) return undefined;
-  const rawFilters = record.filters as Record<string, unknown>;
+  const rawFilters = migrateLegacyBrowserSetup(record.filters) as Record<string, unknown>;
+  if (rawFilters.language !== undefined && !["zh", "en", "es"].includes(rawFilters.language as string)) return undefined;
   const filters: CoverageFilters = {};
   for (const key of FILTER_KEYS) {
     const entry = rawFilters[key];

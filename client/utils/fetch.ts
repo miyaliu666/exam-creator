@@ -16,6 +16,7 @@ import type {
   User,
 } from "../types";
 import { deserializeToPrisma, serializeFromPrisma } from "./serde";
+import { fetchWithPublicSession, isPublicAccessEnabled } from "./public-access";
 
 export { getDevLoginStatus } from "./dev-login-status";
 
@@ -27,7 +28,7 @@ export async function authorizedFetch(
     ...options?.headers,
   };
 
-  const res = await fetch(url, {
+  const res = await fetchWithPublicSession(url, {
     ...{ ...options, credentials: "include" },
     headers,
   });
@@ -36,6 +37,9 @@ export async function authorizedFetch(
     const errorData = await res.text();
     console.debug(res.status, url, errorData);
     if (res.status === 401) {
+      if (isPublicAccessEnabled()) {
+        throw new Error("The workspace session could not be restored. Please try again.");
+      }
       window.dispatchEvent(new Event("exam-creator:session-expired"));
       throw new Error(
         errorData

@@ -2,8 +2,53 @@
 
 ## [Unreleased]
 
+### Multilingual item creation and coverage
+
+- use one shared set of Item rules, Can-do, Context, difficulty and scoring settings for Chinese, English and Spanish; select the assessed language in New items and each Coverage view
+- keep language targets, item inventory and coverage suggestions within the selected language, and save each new item's language for generation, checks and review without rewriting legacy Chinese items or pinned Registry snapshots
+- keep one shared rule set across the three content languages and validate target language through server and independent review checks; new settings use rule-level Context and assessment requirements
+
+### Assessment Settings workflow cleanup
+
+- audit the settings, language eligibility, generation and review relationships; replace outdated instructions with a concise guide to the current two-tab workflow
+- consolidate shared-definition actions and repeated labels, distinguish per-rule Availability from publication, and use Apply to draft consistently for language-entry edits
+- show the next global action for each state, keep successful validation in its confirmation, and provide a direct return to unapplied edits after switching views
+- recover failed loads with an explicit retry and reset staged editors after confirmed draft reload/restart while preserving views during normal saves
+- avoid locking an unchanged rule after editing a shared Can-do, and hide irrelevant assessment fields for excluded combinations while preserving authored values
+- replace By Context and Assessment requirements with a direct View content path from Item rules to compatible content, including New entry and Import
+- clear obsolete per-entry Context restrictions and per-combination assessment exceptions in new drafts and on draft save while preserving pinned historical snapshots
+
+### English interface controls
+
+- render import and spoken-response file pickers with English Choose file / No file selected text, preserving file filters, disabled states and repeat import selection
+- remove the remaining mixed-language language-target search placeholder, translate reference link labels, and use English Workbench timestamps independently of the browser locale
+- keep speaking-preview cue headings in the interface language and translate session errors and generated batch preparation guidance to English while preserving authored target-language content
+
+### Multilingual language content
+
+- make Meaning optional for English vocabulary imports and entry editing, including explicit update clears while blank updates preserve existing meanings
+- browse Chinese, English and Spanish vocabulary and grammar with language totals, per-entry language labels, meanings/structures, example previews and readable entry details
+- add explicit language to entry creation and Excel/Markdown/pasted imports, with original English and Spanish demonstration previews; retain staged import, save and publication protections
+- keep legacy entries Chinese without rewriting snapshots, distinguish duplicates by language, and preserve stable entry languages
+
+### Item rule identity migration
+
+- remove Blueprint slot as an application entity and configuration dimension; use one `itemRuleId` across settings, item creation, saved drafts, generation jobs, coverage, validation, assembly and review
+- give every historical format and Primary Can-do combination its own deterministic rule ID, preserving distinct task requirements, difficulty profiles and shared scoring contracts
+- migrate saved browser plans and mutable database records through explicit legacy boundaries; keep original immutable review evidence verifiable and prevent uncertain generation calls from being replayed
+
+### Release preparation
+
+- deploy the validated image and a session-free application database snapshot to 8.210.43.194 with SSH key access, Docker Compose, IP HTTPS, HTTP Basic authentication and automated certificate renewal
+
+- validate the current workspace with frontend, Rust and review-validator checks and a Linux release image; keep local exports and release artifacts out of Git
+- point the main deployment guide to the existing Alibaba Cloud configuration and identify the missing configuration files in the alternative Railway notes
+
 ### Planning
 
+- prepare the complete dev application for a public, always-running Railway Docker service with external MongoDB and existing GitHub user admission
+
+- add independent answering before answer-revealed AI preliminary review, preserving human authorship and final review authority
 - prepare the Workbench for version-aware assembly and pilot feedback before connecting legacy exam delivery; separate review approval, version use and record management
 - restore the previously deferred Language coverage overview with full-directory denominators, saved assessment-target coverage, separate approved/unapproved inventory and item drilldown
 - consolidate the two Language content discussions into a field and workflow audit, with browser import/update/export/publication verification, isolated backend diagnostics, and explicit gaps for duplicate enforcement, AI reference data and historical occurrence counting
@@ -22,6 +67,24 @@
 
 ### Added
 
+- add explicit shared-workspace deployment with automatic sessions for one configured existing author, no sign-in step, secure release cookies, and recovery that preserves mounted editors
+- add an Alibaba Cloud deployment configuration with private authenticated MongoDB, bounded container memory, IP HTTPS, and local-data migration instructions; refresh one-time WebSocket tokens when reconnecting
+
+- integrate all 60 Exercise Template source names and schemas, nested field editing, a searchable template library, and isolated interactive author previews with sanitized Markdown
+- add Can-do × Exercise Template settings with Domain scope, optional Context restrictions, difficulty profiles, scoring and supplementary review criteria; preserve staged editing and versioned publication
+- connect source-template author data, answer-safe candidate projections and AI generation/adoption to the item workflow while retaining legacy item configurations
+
+- add Railway deployment configuration, release setup instructions and container build support for the current Node/Bun toolchain
+- default to local Railway source uploads with an explicit build-input allowlist, avoiding the Railway GitHub App's bundled repository write permissions
+- generate Prisma explicitly in CI and verify the complete container on dev pushes as well as main and manual runs
+- validate session-bound GitHub OAuth state with expiry and replay protection, and apply HTTPS-safe session cookie settings in release builds
+- allow release startup without optional Sentry configuration while retaining validation of supplied DSNs
+
+- add a candidate-only independent answer stage to AI preliminary review, with immutable answers, alternatives, exact-text evidence and explicit media limitations; compare the saved observation with authored answers in a separate call, retain it on later failure, and expose it in the workbench and GitHub review report
+- require the current two-stage review protocol for new submissions while retaining historical reports and existing deterministic, rule-based and human review gates
+- add Context-based language eligibility editing with staged before/after previews, explicit all/selected/exclusion scopes, and safe removal of the last selected Context
+- derive required review plans by default in new schema-version-2 settings; add editable supplementary rules, real-AI suggestions with per-rule adoption, source-change review and immutable per-check evidence/results that block submission when required criteria fail or lack evidence
+- add optional source Level metadata to language content and selected-row bulk draft editing of level, mastery and applicability, with local generation of missing Chinese pinyin and stale-edit protection
 - add immutable-version use states, append-only manual pilot summaries with explicit conclusions and timing definitions, and revision/idempotency protected history
 - add a metadata-only assembly manifest for a selected frozen version, including current Workbench availability without answer keys or exam deployment
 - add a default Coverage overview based on the complete language-content directory, with category/search-scoped totals, Chinese/English search, count sorting and direct approved/unapproved counts for every matching entry, retaining zero-item content
@@ -44,6 +107,25 @@
 
 ### Changed
 
+- make existing Assessment Settings rules the clear editing entry: simplify default filters to search/Skill/Can-do, group shared definitions in a menu, replace detail navigation selectors with a fixed identity, expose Context scope edits, and keep save/use actions visible
+- open rule details at the requested section, retain filters on return, and expose the three Language content views directly with their editing purpose
+
+- present Assessment Settings Item rules as all matching Can-do × Blueprint slot × format × Context × single Domain × difficulty rows, with dependent filters and exact detail navigation; retain slot-specific task/scoring designs and show Context/Domain pairs in the editor
+- replace inferred configuration-readiness messaging with specific repair issues, preserve backend-valid historical difficulty ranges, and explain shared difficulty scope and the central save/publication mapping workflow
+
+- apply Overview setup filters to both the eligible language-content directory and its coverage totals; preserve eligible content with no items and explain incompatible setup combinations instead of leaving the full category count unchanged
+
+- remove selectable catch-all rows from Workbench coverage, Item Bank and Assessment Settings filters; use an unset placeholder and individual clear actions while preserving unfiltered results and meaningful scope choices
+
+- clarify Assessment Settings with a separate plain-text saved/unsaved status, Save changes only when needed, and Use for new items with an explicit confirmation; include unapplied dialog edits in the unsaved status and remove duplicate success notices
+
+- present Coverage by item setup and Items as separate peer panels; keep Items expanded with its title, compact status selector and matched count on one row, without duplicate status labels
+- compact the language-content import preview: place one Review rows action beside the fixed-footer warning, group selection with counts, and collapse completed input while keeping additional input and pending mapping accessible
+- explain every disabled language-content import action beside its button; add a paginated review view for off-page errors and unconfirmed same-name rows, with explicit reversible exclusion and preserved unrelated confirmations
+- simplify vocabulary imports to level, name and meaning with optional pinyin, recognize common Level/Translation headers, infer worksheet categories without extra columns, and keep scope fields optional behind expanded controls; use minimal Excel/Markdown templates while retaining full-field exports
+- consolidate Assessment Settings into Item rules and Language content tabs, with combination details, difficulty, Context language content and review rules on one page and shared definitions in staged dialogs; retain overview filters, exact navigation and one Save draft / Publish workflow
+- remove Reference sources, Change history and Published limitations from Assessment Settings UI, use Can-do statement, and stop fetching unused settings history while retaining existing reference, audit and limitation data and APIs; preserve old published review semantics
+- rename the Language coverage overview metrics to With approved items, With unapproved items only and Without items; preserve their counts and percentages, row-level No items and qualified unknown-data labels
 - remove the internal-name input and Options disclosure from New items; derive names automatically and show the required AI drafts per item control alongside the item quantity, retaining existing saved plan names and custom counts
 - combine saved-content checks, independent AI preliminary review and PR creation into one Submit for review action; block serious AI findings and failed/stale/simulated reports, bind submissions to exact reports and revisions, and attach findings to PR bodies without approving human gates
 - remove author evidence/source forms and optional AI feedback controls from the submission page; show actual check failures and disabled reasons, and preserve successful checks without resetting them during a no-change refresh
@@ -96,6 +178,8 @@
 
 ### Fixed
 
+- show one Context or Can-do identity control in Assessment Settings, with explicit Rename / Edit statement actions and direct name entry for new definitions; keep required dropdown prompts hidden and unselectable while preserving meaningful filter choices and incomplete saved values
+- prevent Add Context and Add Can-do statement from crashing their staged editor by keeping their Immer updates mutation-only
 - detect same-category names before adding language content, including bundled display aliases; block exact new duplicates, require confirmation for distinct meanings, retain editing of legacy duplicates and invalidate confirmations when the compared content changes
 - exclude local-only docs from Vite file watching so locked temporary backend executables do not crash the frontend preview
 - preserve custom candidate quantities on blur and refresh; stop unsent candidate calls when a batch is paused, retain available results as explicit partial work, and report result-persistence failures as terminal failures instead of leaving runs active

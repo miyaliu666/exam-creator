@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { coverageGoalPlan, updateCoverageRequest } from "../client/features/language-items/coverage-query.ts";
+import { coverageSuggestionSetup, setupMatchesCoverageSuggestion } from "../client/features/language-items/batch-coverage-suggestion.ts";
 import type { CoverageRequest, CoverageResponse } from "../client/features/language-items/coverage-types.ts";
 import type { DifficultyBandStandard, RegistrySnapshot } from "../client/features/language-items/types.ts";
 
@@ -15,14 +16,14 @@ function fixture() {
   const registry: RegistrySnapshot = {
     settingsSchemaVersion: 1, bundleVersion: "rules-1", status: "published", limitations: [], sourceFingerprint: "fixture",
     capabilities: [{
-      blueprintSlotId: "R1", title: "Notices", taskFamilyId: "TF1", itemFormatId: "IF-SINGLE-SELECT",
+      itemRuleId: "R1", title: "Notices", taskFamilyId: "TF1", itemFormatId: "IF-SINGLE-SELECT",
       rendererId: "renderer", scoringContractTemplateId: "scoring", primaryCanDoId: "read-notice",
       primaryReportedSkill: "Reading", communicativeActivity: "Reception", communicativeActivities: ["Reception", "Mediation"],
       allowedDomains: ["Public"], allowedContextIds: ["shop"], observableEvidence: "Read the time.",
       taskStructure: "Select one answer.", prohibitedUses: [], referenceTask: "A shop notice",
     }],
     candidateSchemas: [], taskPackageSchema: {}, allowedDomains: ["Public"], difficultyBands: ["TypicalA1"], difficultyStandards: [standard],
-    capabilityDifficultyProfileSets: [{ id: "profile", blueprintSlotId: "R1", itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "read-notice", standards: [standard] }],
+    capabilityDifficultyProfileSets: [{ id: "profile", itemRuleId: "R1", itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "read-notice", standards: [standard] }],
     contentIdOptions: [
       { id: "time", label: "几点", kind: "lexical", contextIds: ["shop"], canDoIds: ["read-notice"], masteryScope: "receptive" },
       { id: "hello", label: "你好", kind: "lexical", contextIds: [], canDoIds: [], masteryScope: "receptiveProductive" },
@@ -124,11 +125,29 @@ test("planning checks all dimensions and context, Can-do and mastery compatibili
   const { request, goal, registry } = fixture();
   for (const filters of [
     { skill: "Writing" }, { activity: "Production" }, { domain: "Educational" }, { contextId: "school" },
-    { blueprintSlotId: "R2" }, { itemFormatId: "IF-MATCHING" }, { primaryCanDoId: "introduce" }, { difficultyBand: "UpperA1" },
+    { itemRuleId: "R2" }, { itemFormatId: "IF-MATCHING" }, { primaryCanDoId: "introduce" }, { difficultyBand: "UpperA1" },
   ]) assert.ok(coverageGoalPlan({ ...request, filters }, goal, registry).reason, JSON.stringify(filters));
   for (const id of ["productive", "elsewhere", "other-can-do", "support", "missing"]) {
     assert.ok(coverageGoalPlan({ ...request, selectedIds: ["time", id] }, goal, registry).reason, id);
   }
   registry.contextOptions[0].retired = true;
   assert.ok(coverageGoalPlan(request, goal, registry).reason);
+});
+
+test("coverage goals carry English and Spanish into creation and reject mixed-language targets", () => {
+  const { request, goal, registry } = fixture();
+  for (const language of ["en", "es"]) {
+    registry.contentIdOptions.push({ ...registry.contentIdOptions[0], id: language, language });
+    const scoped = { ...request, selectedIds: [language], filters: { ...request.filters, language } };
+    const suggestion = coverageGoalPlan(scoped, goal, registry).suggestion;
+    assert.ok(suggestion);
+    const setup = coverageSuggestionSetup(suggestion, registry);
+    assert.equal(setup?.language, language);
+    assert.equal(setup?.itemRuleId, "R1");
+    assert.deepEqual(setup?.requiredTargetContentIds, [language]);
+    assert.ok(coverageGoalPlan({ ...scoped, selectedIds: [language, "time"] }, goal, registry).reason);
+    const selection = { itemRuleId: "R1", itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "read-notice", primaryDomain: "Public", contextId: "shop", difficultyBand: "TypicalA1", language };
+    assert.equal(setupMatchesCoverageSuggestion(suggestion, selection, registry), true);
+    assert.equal(setupMatchesCoverageSuggestion(suggestion, { ...selection, language: "zh" }, registry), false);
+  }
 });

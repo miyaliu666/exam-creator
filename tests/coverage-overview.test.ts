@@ -33,6 +33,39 @@ function fixture() {
   return { registry, data, state };
 }
 
+function setupFixture() {
+  const { registry, data, state } = fixture();
+  registry.allowedDomains = ["Educational", "Personal"];
+  registry.difficultyBands = ["a1Typical"];
+  registry.difficultyStandards = [{
+    id: "a1Typical", label: "Typical A1", description: "A short supported exchange",
+    defaultDrivers: { inputLength: "shortSentence", informationPoints: 1, supportLevel: "high", distractorSimilarity: "clear", independenceLevel: "highlySupported", inferenceRequired: false },
+    allowedInputLengths: ["shortSentence"], informationPointsMin: 1, informationPointsMax: 1,
+    allowedSupportLevels: ["high"], allowedDistractorSimilarities: ["clear"],
+  }];
+  registry.capabilities = [
+    { itemRuleId: "listen", title: "Listen", primaryCanDoId: "understand", primaryReportedSkill: "Listening", communicativeActivity: "Reception", itemFormatId: "singleSelect" },
+    { itemRuleId: "speak", title: "Speak", primaryCanDoId: "exchange", primaryReportedSkill: "Speaking", communicativeActivity: "Production", itemFormatId: "shortResponse" },
+  ].map((capability) => ({
+    ...capability, taskFamilyId: "exchange", rendererId: "fixture", scoringContractTemplateId: "fixture",
+    allowedDomains: ["Educational", "Personal"], allowedContextIds: ["classroom", "home"],
+    observableEvidence: "A response", taskStructure: "An exchange", prohibitedUses: [], referenceTask: "An exchange",
+  }));
+  registry.contextOptions = [
+    { id: "classroom", label: "Classroom", primaryDomains: ["Educational"] },
+    { id: "home", label: "Home", primaryDomains: ["Personal"] },
+  ].map((context) => ({ ...context, canDoIds: ["understand", "exchange"], scope: "Everyday exchanges", exclusions: [], retired: false }));
+  registry.contentIdOptions = [
+    option("hello", "lexical", "Hello"),
+    { ...option("school-time", "lexical", "School time"), contextScopeMode: "selected", contextIds: ["classroom"] },
+    { ...option("home-time", "lexical", "Home time"), contextScopeMode: "selected", contextIds: ["home"] },
+    { ...option("produce", "lexical", "Produce a response"), masteryScope: "productive" },
+    { ...option("question", "grammar", "Ask a question"), canDoIds: ["exchange"] },
+  ];
+  data.entries = [{ id: "hello", plannedCount: 3, pendingCount: 2, confirmedCount: 0 }];
+  return { registry, data, state };
+}
+
 test("overview joins sparse counts to the complete unique directory and excludes supporting types", () => {
   const { registry, data, state } = fixture();
   registry.contentIdOptions.push({ ...registry.contentIdOptions[0] });
@@ -42,7 +75,7 @@ test("overview joins sparse counts to the complete unique directory and excludes
   assert.equal(rows.filter((row) => row.id === "hello").length, 1);
   assert.equal(rows.some((row) => ["name", "removed-reference"].includes(row.id)), false);
   assert.deepEqual(rows.find((row) => row.id === "identity"), {
-    id: "identity", category: "grammar", label: "语法 / Grammar: 是 / State identity", plannedCount: 0, pendingCount: 0,
+    id: "identity", category: "grammar", label: "Grammar: 是 / State identity", plannedCount: 0, pendingCount: 0,
   });
   const model = coverageOverviewModel(registry, data, state);
   assert.deepEqual([model.summary.total, model.summary.approved, model.summary.unapprovedOnly, model.summary.noItems], [6, 2, 1, 3]);
@@ -90,6 +123,80 @@ test("narrowing the item inventory preserves zero-item directory entries in the 
   assert.equal(searched.summary.total, 1);
   assert.equal(searched.summary.noItems, 1);
   assert.equal(searched.rows[0].id, "hello");
+});
+
+test("setup filters scope the total and table to compatible language content while retaining gaps", () => {
+  const { registry, data, state } = setupFixture();
+  const filters = { skill: "Listening", activity: "Reception", domain: "Educational", primaryCanDoId: "understand", difficultyBand: "a1Typical", itemFormatId: "singleSelect", itemRuleId: "listen" };
+  const before = structuredClone({ registry, data, state, filters });
+  const unfiltered = coverageOverviewModel(registry, data, state);
+  const model = coverageOverviewModel(registry, data, state, filters);
+  assert.equal(unfiltered.summary.total, 5);
+  assert.equal(model.hasMatchingSetup, true);
+  assert.deepEqual(model.rows.map((row) => row.id), ["hello", "school-time"]);
+  assert.deepEqual(model.summary, { total: 2, approved: 1, unapprovedOnly: 0, noItems: 1, approvedPercent: 50, unapprovedOnlyPercent: 0, noItemsPercent: 50 });
+  assert.equal(model.categoryTotal, 2);
+  assert.equal(model.matchedCount, 2);
+  assert.deepEqual([model.rows[1].plannedCount, model.rows[1].pendingCount], [0, 0], "Eligible content remains visible before an item has been created");
+  const searched = coverageOverviewModel(registry, data, { ...state, category: "lexical", search: "School" }, filters);
+  assert.equal(searched.summary.total, 1);
+  assert.equal(searched.summary.noItems, 1);
+  assert.deepEqual(searched.rows.map((row) => row.id), ["school-time"]);
+  assert.equal(searched.categoryTotal, 2);
+  assert.deepEqual({ registry, data, state, filters }, before);
+});
+
+test("a Context filter considers its compatible setups and clears without losing the full directory", () => {
+  const { registry, data, state } = setupFixture();
+  const model = coverageOverviewModel(registry, data, state, { contextId: "classroom" });
+  assert.equal(model.hasMatchingSetup, true);
+  assert.equal(model.summary.total, 4);
+  assert.deepEqual(new Set(model.rows.map((row) => row.id)), new Set(["hello", "school-time", "produce", "question"]));
+  assert.equal(model.summary.noItems, 3);
+  const lexical = coverageOverviewModel(registry, data, { ...state, category: "lexical" }, { contextId: "classroom" });
+  assert.equal(lexical.summary.total, 3);
+  assert.deepEqual(lexical.categories, model.categories, "Available category choices remain independent of the selected setup");
+  assert.deepEqual(coverageOverviewModel(registry, data, state, {}), coverageOverviewModel(registry, data, state));
+});
+
+test("conflicting setup filters return no setup or rows, distinct from a valid setup with no language matches", () => {
+  const { registry, data, state } = setupFixture();
+  const impossible = coverageOverviewModel(registry, data, state, { skill: "Listening", activity: "Production" });
+  assert.equal(impossible.hasMatchingSetup, false);
+  assert.equal(impossible.summary.total, 0);
+  assert.equal(impossible.matchedCount, 0);
+  assert.deepEqual(impossible.rows, []);
+  assert.deepEqual([impossible.summary.approvedPercent, impossible.summary.unapprovedOnlyPercent, impossible.summary.noItemsPercent], [null, null, null]);
+  const noEntries = coverageOverviewModel(registry, data, { ...state, category: "grammar" }, { skill: "Listening" });
+  assert.equal(noEntries.hasMatchingSetup, true);
+  assert.equal(noEntries.summary.total, 0);
+  assert.deepEqual(noEntries.rows, []);
+});
+
+test("setup changes clamp pagination and count all eligible entries beyond the current page", () => {
+  const { registry, data, state } = setupFixture();
+  registry.contentIdOptions = Array.from({ length: 61 }, (_, index) => ({
+    ...option(`entry-${index}`, "lexical", `Entry ${index}`), contextScopeMode: "selected" as const, contextIds: [index < 31 ? "classroom" : "home"],
+  }));
+  data.entries = [{ id: "entry-0", plannedCount: 1, pendingCount: 0, confirmedCount: 0 }];
+  const lastUnfiltered = coverageOverviewModel(registry, data, { ...state, offset: 50 });
+  assert.equal(lastUnfiltered.summary.total, 61);
+  assert.equal(lastUnfiltered.rows.length, 11);
+  const first = coverageOverviewModel(registry, data, state, { contextId: "classroom" });
+  const last = coverageOverviewModel(registry, data, { ...state, offset: 50 }, { contextId: "classroom" });
+  assert.equal(first.rows.length, 25);
+  assert.equal(last.rows.length, 6);
+  assert.equal(last.offset, 25);
+  assert.equal(last.summary.total, 31);
+  assert.equal(last.summary.noItems, 30);
+  assert.deepEqual(last.summary, first.summary);
+  assert.equal(new Set([...first.rows, ...last.rows].map((row) => row.id)).size, 31);
+  const searched = coverageOverviewModel(registry, data, { ...state, search: "Entry 30", offset: 50 }, { contextId: "classroom" });
+  assert.equal(searched.offset, 0);
+  assert.equal(searched.summary.total, 1);
+  assert.deepEqual(searched.rows.map((row) => row.id), ["entry-30"]);
+  const sorted = coverageOverviewModel(registry, data, { ...state, sort: "planned" }, { contextId: "classroom" });
+  assert.deepEqual(sorted.summary, first.summary);
 });
 
 test("summary categories form a complete partition and count overlapping approved and unapproved use once", () => {

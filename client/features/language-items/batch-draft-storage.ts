@@ -1,6 +1,7 @@
 import type { BatchGroup, CreateBatchInput } from "./batch-api";
+import { migrateLegacyBrowserSetup } from "./legacy-item-rule-browser-migration";
 
-const SETUP_KEYS = ["blueprintSlotId", "itemFormatId", "primaryCanDoId", "primaryDomain", "contextId", "difficultyBand"] as const;
+const SETUP_KEYS = ["itemRuleId", "itemFormatId", "primaryCanDoId", "primaryDomain", "contextId", "difficultyBand"] as const;
 
 function isGroup(value: unknown): value is BatchGroup {
   if (!value || typeof value !== "object") return false;
@@ -20,6 +21,7 @@ export function restoreBatchDraft(serialized: string | null, registryVersion: st
     const value: unknown = JSON.parse(serialized ?? "null");
     if (value && typeof value === "object") {
       const saved = value as Record<string, unknown>;
+      if (Array.isArray(saved.groups)) saved.groups = saved.groups.map(migrateLegacyBrowserSetup);
       if (typeof saved.title === "string" && typeof saved.registryVersion === "string" &&
         typeof saved.idempotencyKey === "string" && !!saved.idempotencyKey.trim() &&
         typeof saved.candidatesPerItem === "number" && Array.isArray(saved.groups) && saved.groups.every(isGroup)) {

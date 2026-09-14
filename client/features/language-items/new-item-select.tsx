@@ -1,11 +1,11 @@
-import { Select, createListCollection } from "@chakra-ui/react";
+import { Select, Stack, Text, createListCollection } from "@chakra-ui/react";
 import { useMemo, type ReactNode } from "react";
 
 interface NewItemSelectProps {
   label: string;
   placeholder: string;
   value: string;
-  options: Array<{ value: string; label: string }>;
+  options: Array<{ value: string; label: string; description?: string }>;
   open: boolean;
   dimmed: boolean;
   disabled?: boolean;
@@ -44,7 +44,9 @@ export function NewItemSelect({ label, placeholder, value, options, open, dimmed
             <Select.Item key={option.value} item={option} py={3} alignItems="start"
               _selected={{ bg: "blue.subtle", color: "blue.fg", fontWeight: "semibold" }}
               _highlighted={{ bg: "blue.muted" }}>
-              <Select.ItemText whiteSpace="normal">{option.label}</Select.ItemText>
+              <Stack gap={1}><Select.ItemText whiteSpace="normal" translate="no">{option.label}</Select.ItemText>
+                {option.description ? <Text fontSize="xs" color="fg.muted" fontWeight="normal">{option.description}</Text> : null}
+              </Stack>
               <Select.ItemIndicator flexShrink={0} mt={1} />
             </Select.Item>
           ))}

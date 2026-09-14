@@ -9,7 +9,7 @@ import { BatchProgressGroup } from "../client/features/language-items/batch-prog
 import type { RegistrySnapshot } from "../client/features/language-items/types";
 
 const group: BatchGroup = {
-  blueprintSlotId: "L-A1-1", itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "A1-L1", primaryDomain: "Personal",
+  itemRuleId: "L-A1-1", itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "A1-L1", primaryDomain: "Personal",
   contextId: "D02", difficultyBand: "LowerA1", itemCount: 5, requiredTargetContentIds: ["common"], rotatingTargetContentIds: ["varied"],
 };
 const children: BatchGenerationJob["children"] = (["completed", "partial", "running", "pending", "failed"] as const)
@@ -43,12 +43,13 @@ test("progress counts items with partial candidates once and reflects active chi
 
 test("single-group results show settings and shared targets once, with item numbers and bilingual target details", () => {
   const html = render();
-  for (const label of ["Blueprint slot", "Item format", "Primary Can-do", "Domain", "Context", "Difficulty"]) {
+  for (const label of ["Exercise template", "Primary Can-do", "Domain", "Context", "Difficulty"]) {
     assert.equal((html.match(new RegExp(`>${label}<`, "g")) ?? []).length, 1);
   }
+  assert.doesNotMatch(html, /Saved task design|Blueprint slot|Item rule ID/);
   assert.equal((html.match(/>我</g) ?? []).length, 1, "Common targets belong above the rows");
   assert.equal((html.match(/>你</g) ?? []).length, 5, "Additional targets stay visible for their assigned items");
-  assert.match(html, /title="词汇 \/ Vocabulary: 我 \/ I; me"/);
+  assert.match(html, /title="Vocabulary: 我 \/ I; me"/);
   for (const child of children) assert(!html.includes(child.itemId!));
   assert.match(html, /AI drafts ready/);
   assert.doesNotMatch(html, />Group 1</);

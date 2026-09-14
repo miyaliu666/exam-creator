@@ -5,6 +5,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { canSubmitDraft, initialEditorSection } from "../client/features/language-items/authoring-workflow";
 import { ITEM_TEMPLATE_REGISTRY } from "../client/features/language-items/item-template-registry";
 import { DraftCheckPanel } from "../client/features/language-items/draft-check-panel";
+import { createExerciseTemplateDraft, EXERCISE_TEMPLATES } from "../client/features/language-items/exercise-template-catalog";
+import { projectExerciseTemplateCandidate } from "../client/features/language-items/exercise-template-projection";
 import type { CandidatePayload, LanguageItemStatus, TaskPackage, ValidationResult } from "../client/features/language-items/types";
 
 const stimulus = { text: "", imageRefs: [], audioRef: null };
@@ -23,19 +25,32 @@ const payloads: Record<string, CandidatePayload> = {
   ] }] },
 };
 
+for (const template of EXERCISE_TEMPLATES) {
+  const document = { exerciseType: template.id, body: "", data: createExerciseTemplateDraft(template.id) };
+  payloads[`EXERCISE:${template.id}`] = projectExerciseTemplateCandidate(document);
+}
+
+test("the registry retains seven legacy adapters and includes all sixty source templates", () => {
+  assert.equal(ITEM_TEMPLATE_REGISTRY.length, 67);
+  assert.equal(ITEM_TEMPLATE_REGISTRY.filter(template => template.itemFormatId.startsWith("EXERCISE:")).length, 60);
+  assert.equal(ITEM_TEMPLATE_REGISTRY.filter(template => !template.itemFormatId.startsWith("EXERCISE:")).length, 7);
+});
+
 for (const template of ITEM_TEMPLATE_REGISTRY) {
   test(`${template.itemFormatId}: new scaffold starts at Prepare; authored question reopens in the editor`, () => {
     const payload = structuredClone(payloads[template.itemFormatId]);
     assert.ok(payload, "Every registered format needs a workflow fixture");
     assert.equal(initialEditorSection("draft", payload), "setup");
     assert.equal(initialEditorSection("draft", payload, true), "content");
-    if ("prompt" in payload) payload.prompt = "你叫什么名字？";
+    if ("exerciseType" in payload) payload.body = "Read the notice and answer the questions.";
+    else if ("prompt" in payload) payload.prompt = "你叫什么名字？";
     else payload.situation = "你是新来的同学。";
     assert.equal(initialEditorSection("draft", payload), "content");
   });
   test(`${template.itemFormatId}: editor and preview render without removed technical controls`, () => {
     const payload = structuredClone(payloads[template.itemFormatId]);
-    const draft = { candidatePayload: payload, itemFormatId: template.itemFormatId, content: { primaryReportedSkill: "Reading" }, scoringPackage: { correctOptionId: "A", correctMatches: {}, acceptedResponses: {}, scoringPoints: [] } } as unknown as TaskPackage;
+    const authored = "exerciseType" in payload ? { exerciseType: payload.exerciseType, body: payload.body, data: createExerciseTemplateDraft(payload.exerciseType) } : undefined;
+    const draft = { candidatePayload: payload, itemFormatId: template.itemFormatId, authoringPackage: { exerciseTemplate: authored }, content: { primaryReportedSkill: "Reading" }, scoringPackage: { correctOptionId: "A", correctMatches: {}, acceptedResponses: {}, scoringPoints: [] } } as unknown as TaskPackage;
     const Editor = template.Editor;
     const editor = renderToStaticMarkup(<ChakraProvider value={defaultSystem}><Editor draft={draft} updateDraft={() => undefined} /></ChakraProvider>);
     const preview = renderToStaticMarkup(<ChakraProvider value={defaultSystem}>{template.renderPreview(payload)}</ChakraProvider>);

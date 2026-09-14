@@ -17,6 +17,7 @@ import { getExamsMetrics } from "../utils/fetch";
 import { ProtectedRoute } from "../components/protected-route";
 import { UsersWebSocketActivityContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
+import { SignOutButton } from "../components/sign-out-button";
 import { landingRoute } from "./landing";
 import { ExamMetricsCard } from "../components/exam-metrics-card";
 import { DatabaseStatus } from "../components/database-status";
@@ -55,14 +56,14 @@ export function Metrics() {
         >
           Back to Dashboard
         </Button>
-        <Button
+        <SignOutButton
           colorPalette="red"
           variant="outline"
           size="sm"
           onClick={() => logout()}
         >
           Logout
-        </Button>
+        </SignOutButton>
       </HStack>
       <Center>
         <Stack gap={8} w="full" maxW="7xl">

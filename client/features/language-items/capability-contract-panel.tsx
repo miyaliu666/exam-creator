@@ -1,6 +1,6 @@
 import { Box, SimpleGrid, Text } from "@chakra-ui/react";
 
-import { DIFFICULTY_LABELS, DOMAIN_LABELS, ITEM_FORMAT_LABELS, WORKBENCH_LABELS, slotLabel } from "./labels";
+import { DIFFICULTY_LABELS, DOMAIN_LABELS, exerciseLabel, WORKBENCH_LABELS } from "./labels";
 import { capabilityForDraft } from "./registry-capability";
 import { registryDisplayText } from "./registry-display-text";
 import type { RegistrySnapshot, TaskPackage } from "./types";
@@ -16,7 +16,7 @@ export function CapabilityContractPanel({ draft, registry }: CapabilityContractP
   if (!capability || !registry) {
     return (
       <Box borderWidth="1px" borderRadius="lg" p={4}>
-        <Text color="fg.error">The blueprint slot and item format could not be loaded.</Text>
+        <Text color="fg.error">The item rules could not be loaded.</Text>
       </Box>
     );
   }
@@ -24,11 +24,10 @@ export function CapabilityContractPanel({ draft, registry }: CapabilityContractP
   const context = registry.contextOptions.find((entry) => entry.id === draft.content.contextId);
   const primaryCanDo = registry.canDoOptions.find((entry) => entry.id === capability.primaryCanDoId);
   const fields = [
-    [WORKBENCH_LABELS.blueprintSlot, slotLabel(draft.blueprintSlotId, registry)],
-    [WORKBENCH_LABELS.itemFormat, ITEM_FORMAT_LABELS[draft.itemFormatId] ?? "Unavailable"],
+    [WORKBENCH_LABELS.itemFormat, exerciseLabel(draft.itemFormatId, draft.content.primaryReportedSkill)],
     [WORKBENCH_LABELS.primaryCanDo, primaryCanDo ? registryDisplayText(primaryCanDo.label) : "Unavailable"],
     [WORKBENCH_LABELS.domain, DOMAIN_LABELS[draft.content.primaryDomain] ?? "Unavailable"],
-    [WORKBENCH_LABELS.context, context ? registryDisplayText(context.label) : "Unavailable"],
+    [WORKBENCH_LABELS.context, context ? registryDisplayText(context.label) : !draft.content.contextId && draft.itemFormatId.startsWith("EXERCISE:") ? "No Context restriction" : "Unavailable"],
     [WORKBENCH_LABELS.difficulty, DIFFICULTY_LABELS[draft.content.difficultyBand] ?? "Unavailable"],
   ];
 

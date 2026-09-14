@@ -1,0 +1,51 @@
+name: exam-creator
+
+services:
+  mongodb:
+    image: mongo:7
+    restart: unless-stopped
+    env_file:
+      - path: .env.mongo
+        format: raw
+    command: [mongod, --wiredTigerCacheSizeGB, '0.256', --bind_ip_all]
+    volumes:
+      - mongodb-data:/data/db
+    mem_limit: 512m
+    memswap_limit: 1g
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    healthcheck:
+      test: [CMD, mongosh, --quiet, --eval, "quit(db.adminCommand('ping').ok ? 0 : 1)"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+
+  app:
+    image: exam-creator:aliyun
+    restart: unless-stopped
+    env_file:
+      - path: .env.runtime
+        format: raw
+    ports:
+      - 127.0.0.1:8080:8080
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    init: true
+    stop_grace_period: 180s
+    mem_limit: 384m
+    memswap_limit: 768m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+volumes:
+  mongodb-data:

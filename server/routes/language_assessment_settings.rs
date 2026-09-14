@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use axum::{
-    Json,
+    Extension, Json,
     extract::{Path, Query, State},
 };
 use chrono::Utc;
@@ -21,14 +21,15 @@ use crate::{
     language_items::{
         registry::{
             RegistrySnapshot, active_snapshot, hydrate_published_registry_snapshot,
-            install_published_snapshot, item_format_name, normalize_registry_snapshot,
-            prepare_registry_draft, upgrade_draft_context_schema,
+            install_published_snapshot, item_format_name, language_content_has_exceptions,
+            normalize_registry_snapshot, prepare_registry_draft, simplify_language_content,
+            upgrade_draft_context_schema,
         },
         registry_content::validate_language_content,
         registry_store::{
             REGISTRY_STATUS_DRAFT, REGISTRY_STATUS_PUBLISHED, RegistryAuditEvent, RegistryImpact,
-            RegistrySectionChange, RegistryValidationResult, RegistryVersionRecord,
-            validate_registry, write_audit,
+            RegistrySectionChange, RegistryValidationIssue, RegistryValidationResult,
+            RegistryVersionRecord, validate_registry, write_audit,
         },
     },
     state::ServerState,
@@ -36,6 +37,116 @@ use crate::{
 
 fn now() -> String {
     Utc::now().to_rfc3339()
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ReviewRulesBody {
+    expected_revision: u64,
+    snapshot: RegistrySnapshot,
+    item_rule_id: String,
+    item_format_id: String,
+    primary_can_do_id: String,
+}
+
+fn check_review_request(
+    record: &RegistryVersionRecord,
+    actor: &str,
+    body: &ReviewRulesBody,
+    suggestions: bool,
+) -> Result<(), Error> {
+    check_revision(record, body.expected_revision)?;
+    if record.status == REGISTRY_STATUS_DRAFT {
+        check_draft_owner(record, actor)?;
+    } else if suggestions {
+        return Err(conflict(
+            "AI review rule suggestions require an owned Settings draft",
+        ));
+    } else {
+        let mut published = record.snapshot.clone();
+        hydrate_published_registry_snapshot(&mut published);
+        if serde_json::to_value(published).ok() != serde_json::to_value(&body.snapshot).ok() {
+            return Err(conflict(
+                "Published Settings are immutable; preview their saved snapshot",
+            ));
+        }
+    }
+    if body.snapshot.bundle_version != record.snapshot.bundle_version {
+        return Err(conflict(
+            "The supplied review-rule snapshot belongs to a different Settings version",
+        ));
+    }
+    Ok(())
+}
+
+fn preview_review_request(
+    record: &RegistryVersionRecord,
+    body: &ReviewRulesBody,
+) -> Result<crate::language_items::review_rules::ReviewPlanPreview, Error> {
+    let mut snapshot = body.snapshot.clone();
+    if record.status == REGISTRY_STATUS_DRAFT {
+        simplify_language_content(&mut snapshot);
+        // Match the existing save-time technical schema upgrade before fingerprinting.
+        upgrade_draft_context_schema(&mut snapshot);
+        crate::language_items::legacy_identity::upgrade_task_schema(
+            &mut snapshot.task_package_schema,
+        )
+        .map_err(|message| Error::Server(StatusCode::UNPROCESSABLE_ENTITY, message))?;
+        snapshot.settings_schema_version = 3;
+    }
+    crate::language_items::review_rules::preview(
+        &snapshot,
+        &body.item_rule_id,
+        &body.item_format_id,
+        &body.primary_can_do_id,
+    )
+}
+
+pub async fn post_review_plan(
+    user: prisma::ExamCreatorUser,
+    State(state): State<ServerState>,
+    Path(id): Path<String>,
+    Json(body): Json<ReviewRulesBody>,
+) -> Result<Json<crate::language_items::review_rules::ReviewPlanPreview>, Error> {
+    let record = state
+        .workbench_database
+        .registry_versions
+        .find_one(doc! {"id": &id})
+        .await?
+        .ok_or_else(|| not_found(&id))?;
+    check_review_request(&record, &user.email, &body, false)?;
+    Ok(Json(preview_review_request(&record, &body)?))
+}
+
+pub async fn post_review_rule_suggestions(
+    user: prisma::ExamCreatorUser,
+    State(state): State<ServerState>,
+    Extension(http_client): Extension<reqwest::Client>,
+    Path(id): Path<String>,
+    Json(body): Json<ReviewRulesBody>,
+) -> Result<Json<crate::language_items::review_rules::ReviewRuleSuggestions>, Error> {
+    let record = state
+        .workbench_database
+        .registry_versions
+        .find_one(doc! {"id": &id})
+        .await?
+        .ok_or_else(|| not_found(&id))?;
+    check_review_request(&record, &user.email, &body, true)?;
+    let preview = preview_review_request(&record, &body)?;
+    let result = crate::language_items::review_rules::suggest(
+        &state.env_vars.language_item_ai,
+        &http_client,
+        preview,
+    )
+    .await?;
+    let current = state
+        .workbench_database
+        .registry_versions
+        .find_one(doc! {"id": &id})
+        .await?
+        .ok_or_else(|| not_found(&id))?;
+    check_review_request(&current, &user.email, &body, true)?;
+    Ok(Json(result))
 }
 
 fn not_found(id: &str) -> Error {
@@ -310,7 +421,10 @@ pub async fn put_draft(
             version
         )));
     }
-    let content_validation = validate_language_content(&body.snapshot, Some(&record.snapshot));
+    let mut simplified_snapshot = body.snapshot;
+    simplify_language_content(&mut simplified_snapshot);
+    let content_validation =
+        validate_language_content(&simplified_snapshot, Some(&record.snapshot));
     if !content_validation.valid {
         return Err(Error::Server(
             StatusCode::UNPROCESSABLE_ENTITY,
@@ -319,9 +433,16 @@ pub async fn put_draft(
         ));
     }
     record.version = version.to_string();
-    record.snapshot = body.snapshot;
+    let pinned_exercise_schemas = record.snapshot.exercise_template_schemas.clone();
+    record.snapshot = simplified_snapshot;
+    record.snapshot.exercise_template_schemas = pinned_exercise_schemas;
+    crate::language_items::exercise_templates::prepare_draft(&mut record.snapshot);
     upgrade_draft_context_schema(&mut record.snapshot);
-    record.snapshot.settings_schema_version = 1;
+    crate::language_items::legacy_identity::upgrade_task_schema(
+        &mut record.snapshot.task_package_schema,
+    )
+    .map_err(|message| Error::Server(StatusCode::UNPROCESSABLE_ENTITY, message))?;
+    record.snapshot.settings_schema_version = 3;
     record.snapshot.bundle_version = record.version.clone();
     record.snapshot.status = REGISTRY_STATUS_DRAFT.to_string();
     record.revision += 1;
@@ -358,6 +479,20 @@ pub struct ExpectedRevisionBody {
     expected_revision: u64,
 }
 
+fn validate_draft_for_publication(snapshot: &RegistrySnapshot) -> RegistryValidationResult {
+    let mut result = validate_registry(snapshot);
+    if language_content_has_exceptions(snapshot) {
+        result.valid = false;
+        result.issues.push(RegistryValidationIssue {
+            severity: "error".to_string(),
+            code: "registry.obsoleteContentExceptions".to_string(),
+            path: "contentIdOptions".to_string(),
+            message: "Save changes to remove retired Language content Context and assessment rules before using these settings".to_string(),
+        });
+    }
+    result
+}
+
 pub async fn post_validate(
     _: prisma::ExamCreatorUser,
     State(state): State<ServerState>,
@@ -372,7 +507,11 @@ pub async fn post_validate(
         .ok_or_else(|| not_found(&id))?;
     check_revision(&record, body.expected_revision)?;
     normalize_registry_snapshot(&mut record.snapshot);
-    Ok(Json(validate_registry(&record.snapshot)))
+    Ok(Json(if record.status == REGISTRY_STATUS_DRAFT {
+        validate_draft_for_publication(&record.snapshot)
+    } else {
+        validate_registry(&record.snapshot)
+    }))
 }
 
 fn changed_count(
@@ -398,7 +537,7 @@ fn difficulty_configuration_changes(
     for (source, other) in [(right, left), (left, right)] {
         for profile in &source.capability_difficulty_profile_sets {
             let key = (
-                &profile.blueprint_slot_id,
+                &profile.item_rule_id,
                 &profile.item_format_id,
                 &profile.primary_can_do_id,
             );
@@ -409,7 +548,7 @@ fn difficulty_configuration_changes(
                 .capability_difficulty_profile_sets
                 .iter()
                 .find(|candidate| {
-                    candidate.blueprint_slot_id == profile.blueprint_slot_id
+                    candidate.item_rule_id == profile.item_rule_id
                         && candidate.item_format_id == profile.item_format_id
                         && candidate.primary_can_do_id == profile.primary_can_do_id
                 });
@@ -418,10 +557,10 @@ fn difficulty_configuration_changes(
             }) {
                 continue;
             }
-            let slot = source
+            let item_rule = source
                 .capabilities
                 .iter()
-                .find(|capability| capability.blueprint_slot_id == profile.blueprint_slot_id)
+                .find(|capability| capability.item_rule_id == profile.item_rule_id)
                 .map(|capability| capability.title.as_str())
                 .unwrap_or("Assessment task");
             let can_do = source
@@ -431,7 +570,7 @@ fn difficulty_configuration_changes(
                 .map(|can_do| can_do.label.as_str())
                 .unwrap_or("Primary Can-do");
             changes.push(format!(
-                "{slot} · {} · {can_do}",
+                "{item_rule} · {} · {can_do}",
                 item_format_name(&profile.item_format_id)
             ));
         }
@@ -447,7 +586,6 @@ fn additional_changes(
     let right_value = serde_json::to_value(right).expect("RegistrySnapshot serializes");
     let mut changes = Vec::new();
     for (label, fields) in [
-        ("Slots", &["blueprintSlots"][..]),
         ("Language content", &["contentIdOptions"][..]),
         ("Schemas", &["candidateSchemas", "taskPackageSchema"][..]),
         ("Review gates", &["requiredReviewGateIds"][..]),
@@ -557,7 +695,7 @@ pub async fn get_impact(
                 (
                     format!(
                         "{}::{}::{}",
-                        entry.blueprint_slot_id, entry.item_format_id, entry.primary_can_do_id
+                        entry.item_rule_id, entry.item_format_id, entry.primary_can_do_id
                     ),
                     format!("{entry:?}"),
                 )
@@ -566,7 +704,7 @@ pub async fn get_impact(
                 (
                     format!(
                         "{}::{}::{}",
-                        entry.blueprint_slot_id, entry.item_format_id, entry.primary_can_do_id
+                        entry.item_rule_id, entry.item_format_id, entry.primary_can_do_id
                     ),
                     format!("{entry:?}"),
                 )
@@ -720,7 +858,7 @@ pub async fn post_publish(
         &body.expected_active_version,
     )?;
     validate_version_label(&record.version)?;
-    let validation = validate_registry(&record.snapshot);
+    let validation = validate_draft_for_publication(&record.snapshot);
     if !validation.valid {
         return Err(Error::Server(
             StatusCode::UNPROCESSABLE_ENTITY,
@@ -785,6 +923,33 @@ mod tests {
     }
 
     #[test]
+    fn review_rule_requests_guard_owner_revision_and_published_snapshot_without_saving() {
+        let mut record = draft_record();
+        let capability = &record.snapshot.capabilities[0];
+        let mut body = ReviewRulesBody {
+            expected_revision: record.revision,
+            snapshot: record.snapshot.clone(),
+            item_rule_id: capability.item_rule_id.clone(),
+            item_format_id: capability.item_format_id.clone(),
+            primary_can_do_id: capability.primary_can_do_id.clone(),
+        };
+        body.snapshot.capabilities[0]
+            .observable_evidence
+            .push_str(" unsaved edit");
+        assert!(check_review_request(&record, "owner@example.test", &body, true).is_ok());
+        assert!(check_review_request(&record, "other@example.test", &body, false).is_err());
+        body.expected_revision -= 1;
+        assert!(check_review_request(&record, "owner@example.test", &body, true).is_err());
+        body.expected_revision = record.revision;
+        record.status = REGISTRY_STATUS_PUBLISHED.into();
+        assert!(check_review_request(&record, "owner@example.test", &body, true).is_err());
+        assert!(check_review_request(&record, "reader@example.test", &body, false).is_err());
+        body.snapshot = record.snapshot.clone();
+        hydrate_published_registry_snapshot(&mut body.snapshot);
+        assert!(check_review_request(&record, "reader@example.test", &body, false).is_ok());
+    }
+
+    #[test]
     fn publication_rejects_a_stale_browser_revision_or_published_base() {
         let record = draft_record();
         assert!(check_revision(&record, 7).is_ok());
@@ -799,6 +964,32 @@ mod tests {
         let record = draft_record();
         assert!(check_draft_owner(&record, "owner@example.test").is_ok());
         assert!(check_draft_owner(&record, "different@example.test").is_err());
+    }
+
+    #[test]
+    fn old_saved_draft_must_clear_content_exceptions_before_publication() {
+        let mut draft = draft_record().snapshot;
+        let entry = &mut draft.content_id_options[0];
+        entry.context_ids.push("D09".to_string());
+        entry.metadata.insert(
+            "contextScopeMode".to_string(),
+            serde_json::json!("selected"),
+        );
+        let result = validate_draft_for_publication(&draft);
+        assert!(!result.valid);
+        assert!(
+            result
+                .issues
+                .iter()
+                .any(|issue| issue.code == "registry.obsoleteContentExceptions")
+        );
+        simplify_language_content(&mut draft);
+        assert!(
+            !validate_draft_for_publication(&draft)
+                .issues
+                .iter()
+                .any(|issue| issue.code == "registry.obsoleteContentExceptions")
+        );
     }
 
     #[test]

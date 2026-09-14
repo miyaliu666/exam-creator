@@ -16,7 +16,7 @@ export function additionalBatchTargets(child: BatchGenerationChild, group: Batch
 
 export function batchCreationTime(value: string) {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "Creation time unavailable" : date.toLocaleString(undefined, {
+  return Number.isNaN(date.getTime()) ? "Creation time unavailable" : date.toLocaleString("en-GB", {
     year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
   });
 }

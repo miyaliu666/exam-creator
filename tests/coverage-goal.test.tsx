@@ -17,19 +17,19 @@ function fixture() {
   };
   const registry: RegistrySnapshot = {
     settingsSchemaVersion: 1, bundleVersion: "rules-1", status: "published", limitations: [], sourceFingerprint: "fixture",
-    capabilities: [{ blueprintSlotId: "R1", title: "Notices", taskFamilyId: "TF1", itemFormatId: "IF-SINGLE-SELECT",
+    capabilities: [{ itemRuleId: "R1", title: "Notices", taskFamilyId: "TF1", itemFormatId: "IF-SINGLE-SELECT",
       rendererId: "renderer", scoringContractTemplateId: "scoring", primaryCanDoId: "read-notice",
       primaryReportedSkill: "Reading", communicativeActivity: "Reception", allowedDomains: ["Public"], allowedContextIds: ["shop"],
       observableEvidence: "Read the time.", taskStructure: "Select one answer.", prohibitedUses: [], referenceTask: "A shop notice" }],
     candidateSchemas: [], taskPackageSchema: {}, allowedDomains: ["Public"], difficultyBands: ["TypicalA1"], difficultyStandards: [standard],
-    capabilityDifficultyProfileSets: [{ id: "profile", blueprintSlotId: "R1", itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "read-notice", standards: [standard] }],
+    capabilityDifficultyProfileSets: [{ id: "profile", itemRuleId: "R1", itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "read-notice", standards: [standard] }],
     contentIdOptions: [{ id: "time", label: "几点", kind: "lexical", contextIds: ["shop"], canDoIds: ["read-notice"], masteryScope: "receptive" }],
     contextOptions: [{ id: "shop", label: "Shop", primaryDomains: ["Public"], canDoIds: ["read-notice"], scope: "Read a shop notice.", exclusions: [], retired: false }],
     canDoOptions: [{ id: "read-notice", label: "Read a notice" }], requiredReviewGateIds: [],
   };
   const request: CoverageRequest = {
     registryVersion: "rules-1", scope: "approved", role: "core", matchMode: "all", selectedIds: ["time"], excludedIds: [],
-    filters: { skill: "Reading", activity: "Reception", domain: "Public", contextId: "shop", blueprintSlotId: "R1",
+    filters: { skill: "Reading", activity: "Reception", domain: "Public", contextId: "shop", itemRuleId: "R1",
       itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "read-notice", difficultyBand: "TypicalA1" },
     desiredCount: 100, offset: 0, limit: 25,
   };

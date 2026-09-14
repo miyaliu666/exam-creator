@@ -262,6 +262,7 @@ pub struct SpokenMultiturnCandidatePayload {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum CandidatePayload {
+    ExerciseTemplate(super::exercise_templates::ExerciseTemplateContent),
     SingleSelect(SingleSelectCandidatePayload),
     Matching(MatchingCandidatePayload),
     RestrictedInput(RestrictedInputCandidatePayload),
@@ -290,6 +291,8 @@ impl CandidatePayload {
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct AuthoringPackage {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub exercise_template: Option<super::exercise_templates::ExerciseTemplateContent>,
     #[serde(default)]
     pub notes: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -509,6 +512,9 @@ impl DifficultyProfile {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ContentMetadata {
+    /// Absent on historical packages; omit it when serializing to preserve frozen hashes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
     pub primary_can_do_id: String,
     pub primary_reported_skill: String,
     pub communicative_activity: String,
@@ -525,13 +531,21 @@ pub struct ContentMetadata {
     pub required_information_points: Vec<InformationPoint>,
 }
 
+impl ContentMetadata {
+    pub fn effective_language(&self) -> &str {
+        self.language.as_deref().unwrap_or("zh")
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct TaskPackage {
+    #[serde(skip)]
+    pub(crate) integrity_provenance: Option<super::legacy_identity::IntegrityProvenance>,
     pub task_id: String,
     pub task_version: String,
     pub spec_versions: SpecVersions,
-    pub blueprint_slot_id: String,
+    pub item_rule_id: String,
     pub task_family_id: String,
     pub item_format_id: String,
     pub renderer: RendererRef,
@@ -548,7 +562,11 @@ pub struct TaskPackage {
 }
 
 pub fn task_package_hash(package: &TaskPackage) -> String {
-    let bytes = serde_json::to_vec(package).expect("TaskPackage is serializable");
+    let bytes = super::legacy_identity::integrity_bytes(package);
+    hash_package_bytes(&bytes)
+}
+
+pub(crate) fn hash_package_bytes(bytes: &[u8]) -> String {
     let hash = bytes.iter().fold(0xcbf29ce484222325_u64, |hash, byte| {
         (hash ^ u64::from(*byte)).wrapping_mul(0x100000001b3)
     });
@@ -578,14 +596,17 @@ impl From<&TaskPackage> for CandidatePreview {
 impl TaskPackage {
     pub fn new(task_id: String) -> Self {
         let mut package = Self {
+            integrity_provenance: None,
             task_id,
             task_version: "draft".to_string(),
             spec_versions: SpecVersions {
                 planning_spec_version: "0.2-provisional".to_string(),
-                registry_bundle_version: "0.2-provisional".to_string(),
-                task_package_version: "0.1".to_string(),
+                registry_bundle_version: "0.3-provisional".to_string(),
+                task_package_version: "0.2".to_string(),
             },
-            blueprint_slot_id: "R-A1-1".to_string(),
+            item_rule_id:
+                "legacy-rule-5a24db839969ad64af09b47ec5dc290b4b81d186dff05b732dc1eee72beb0e61"
+                    .to_string(),
             task_family_id: "TF-SIGNS-NOTICES".to_string(),
             item_format_id: "IF-SINGLE-SELECT".to_string(),
             renderer: RendererRef {
@@ -639,6 +660,7 @@ impl TaskPackage {
                 pause_profile_id: "notApplicable".to_string(),
             },
             content: ContentMetadata {
+                language: None,
                 primary_can_do_id: "A1-R1".to_string(),
                 primary_reported_skill: "Reading".to_string(),
                 communicative_activity: "Reception".to_string(),
@@ -661,6 +683,9 @@ impl TaskPackage {
         match template_id {
             "reading-single-select" => {}
             "reading-matching" => {
+                package.item_rule_id =
+                    "legacy-rule-01eeec4aa91e2dceb1fc541825c8a04e89f31042c2ad7b48e8e975bb939312f4"
+                        .to_string();
                 package.item_format_id = "IF-MATCHING".to_string();
                 package.renderer.renderer_id = "REN-MATCHING".to_string();
                 package.scoring_package = ScoringPackage {
@@ -691,7 +716,9 @@ impl TaskPackage {
                 package.content.difficulty = Some(difficulty_for("matchedOptions", 0, None));
             }
             "reading-restricted-input" => {
-                package.blueprint_slot_id = "R-A1-3".to_string();
+                package.item_rule_id =
+                    "legacy-rule-d1775c583ae5f0b644810331eefbff706606a780d545b0c3b830ae3a3118b266"
+                        .to_string();
                 package.task_family_id = "TF-STRUCTURED-INFORMATION".to_string();
                 package.item_format_id = "IF-RESTRICTED-INPUT".to_string();
                 package.renderer.renderer_id = "REN-RESTRICTED-INPUT".to_string();
@@ -725,7 +752,9 @@ impl TaskPackage {
                 package.content.difficulty = Some(difficulty_for("shortFields", 0, None));
             }
             "writing-form-entry" => {
-                package.blueprint_slot_id = "W-A1-1".to_string();
+                package.item_rule_id =
+                    "legacy-rule-5e505212f0bb4843b429f3167cf0c85cb8d393973990e523b9bf23af58339bf4"
+                        .to_string();
                 package.task_family_id = "TF-FORM-COMPLETION".to_string();
                 package.item_format_id = "IF-FORM-ENTRY".to_string();
                 package.renderer.renderer_id = "REN-FORM-ENTRY".to_string();
@@ -767,7 +796,9 @@ impl TaskPackage {
                 package.content.difficulty = Some(difficulty_for("formFields", 0, None));
             }
             "writing-typed-message" => {
-                package.blueprint_slot_id = "W-A1-2".to_string();
+                package.item_rule_id =
+                    "legacy-rule-24afd085454c01024191fa5f08c830907a891f28f2286948b7490968e97c4310"
+                        .to_string();
                 package.task_family_id = "TF-SHORT-MESSAGE-RESPONSE".to_string();
                 package.item_format_id = "IF-TYPED-MESSAGE".to_string();
                 package.renderer.renderer_id = "REN-TYPED-MESSAGE".to_string();
@@ -807,7 +838,9 @@ impl TaskPackage {
                 package.content.difficulty = Some(difficulty_for("shortMessage", 0, None));
             }
             "speaking-single" => {
-                package.blueprint_slot_id = "S-A1-2".to_string();
+                package.item_rule_id =
+                    "legacy-rule-18b146fee99ec17e7a1024be0628829b4e5b604b7a1dd728a9725906d73e2e32"
+                        .to_string();
                 package.task_family_id = "TF-GUIDED-SPOKEN-PRODUCTION".to_string();
                 package.item_format_id = "IF-SPOKEN-SINGLE".to_string();
                 package.renderer.renderer_id = "REN-SPOKEN-SINGLE".to_string();
@@ -845,7 +878,9 @@ impl TaskPackage {
                 package.content.difficulty = Some(difficulty_for("shortSpeech", 1, Some(20)));
             }
             "speaking-multiturn" => {
-                package.blueprint_slot_id = "S-A1-1".to_string();
+                package.item_rule_id =
+                    "legacy-rule-e3351cc6d0277220ab52e838a632ab203b600496d4e3f2d4e41c0c4ed341166e"
+                        .to_string();
                 package.task_family_id = "TF-PERSONAL-QA".to_string();
                 package.item_format_id = "IF-SPOKEN-MULTITURN".to_string();
                 package.renderer.renderer_id = "REN-SPOKEN-MULTITURN".to_string();
@@ -908,6 +943,12 @@ impl TaskPackage {
     }
 
     pub fn ensure_item_scoring_spec(&mut self) {
+        if matches!(
+            self.candidate_payload,
+            CandidatePayload::ExerciseTemplate(_)
+        ) {
+            return;
+        }
         if self.scoring_package.item_scoring_version.trim().is_empty() {
             self.scoring_package.item_scoring_version = default_item_scoring_version();
         }
@@ -931,6 +972,7 @@ impl TaskPackage {
         );
         if self.scoring_package.scoring_points.is_empty() {
             self.scoring_package.scoring_points = match &self.candidate_payload {
+                CandidatePayload::ExerciseTemplate(_) => vec![],
                 CandidatePayload::SingleSelect(_) => vec![scoring_point(
                     "SP-ITEM",
                     "Correct response",
@@ -984,7 +1026,10 @@ impl TaskPackage {
                     scoring_point("SP-LANGUAGE", "Basic language control", 3, None),
                     scoring_point(
                         "SP-CONVENTIONS",
-                        "Simplified Chinese and basic writing conventions",
+                        &format!(
+                            "{} and basic writing conventions",
+                            super::multilingual::language_name(self.content.effective_language())
+                        ),
                         3,
                         None,
                     ),
@@ -1154,6 +1199,7 @@ pub struct LanguageItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub github_review: Option<GithubReviewLink>,
     pub revision: u64,
+    #[serde(deserialize_with = "super::legacy_identity::deserialize_package")]
     pub draft: TaskPackage,
     pub latest_version_id: Option<String>,
     pub created_at: String,
@@ -1228,7 +1274,7 @@ pub struct GithubSyncDelivery {
     pub completed_at: Option<String>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LanguageItemVersion {
     pub id: String,
@@ -1242,6 +1288,7 @@ pub struct LanguageItemVersion {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub evidence_content_hash: Option<String>,
     pub lifecycle_status: String,
+    #[serde(deserialize_with = "super::legacy_identity::deserialize_package")]
     pub package: TaskPackage,
     pub validation: ValidationResult,
     pub created_at: String,
@@ -1290,6 +1337,8 @@ pub struct AiCandidate {
     pub ordinal: u64,
     pub status: String,
     pub candidate_payload: CandidatePayload,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub proposed_exercise_template: Option<super::exercise_templates::ExerciseTemplateContent>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub english_translations: Vec<EnglishTranslation>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -1330,9 +1379,9 @@ pub struct AiGenerationPromptPreview {
 
 pub fn ai_generation_setup_snapshot(package: &TaskPackage) -> Value {
     // Candidate adoption remains valid after wording edits only while its generation brief is unchanged.
-    serde_json::json!({
+    let mut snapshot = serde_json::json!({
         "specVersions": package.spec_versions,
-        "blueprintSlotId": package.blueprint_slot_id,
+        "itemRuleId": package.item_rule_id,
         "taskFamilyId": package.task_family_id,
         "itemFormatId": package.item_format_id,
         "rendererId": package.renderer.renderer_id,
@@ -1344,10 +1393,14 @@ pub fn ai_generation_setup_snapshot(package: &TaskPackage) -> Value {
         "targetContentIds": package.content.target_content_ids,
         "supportingContentRefs": package.content.supporting_content_refs,
         "requiredInformationPoints": package.content.required_information_points,
-    })
+    });
+    if package.content.effective_language() != "zh" {
+        snapshot["language"] = serde_json::json!(package.content.effective_language());
+    }
+    snapshot
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AiGenerationRun {
     pub id: String,
@@ -1359,7 +1412,7 @@ pub struct AiGenerationRun {
     pub prompt_version: String,
     pub output_schema_version: String,
     pub spec_versions: SpecVersions,
-    pub blueprint_slot_id: String,
+    pub item_rule_id: String,
     pub task_family_id: String,
     pub item_format_id: String,
     pub renderer_id: String,
@@ -1424,6 +1477,12 @@ pub struct AiReviewRun {
     pub schema_version: String,
     pub spec_versions: SpecVersions,
     pub findings: Vec<AiFinding>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub review_plan: Option<super::review_rules::ReviewPlan>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub check_results: Option<Vec<super::review_rules::ReviewCheckResult>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub blind_answer: Option<super::blind_review::BlindAnswerAttempt>,
     pub status: String,
     pub error: Option<String>,
     pub created_by: String,
@@ -1440,6 +1499,13 @@ impl AiReviewRun {
             && self.status == "completed"
             && self.error.is_none()
             && matches!(self.provider.as_str(), "deepseek" | "openai")
+            && self.prompt_id == super::ai::REVIEW_PROMPT_ID
+            && self.prompt_version == super::ai::REVIEW_PROMPT_VERSION
+            && self.schema_version == super::ai::REVIEW_SCHEMA_VERSION
+            && self.blind_answer.as_ref().is_some_and(|answer| {
+                !answer.simulated
+                    && super::blind_review::validate_attempt(&item.draft, answer).is_ok()
+            })
             && self.findings.iter().all(|finding| {
                 matches!(finding.severity.as_str(), "info" | "warning" | "error")
                     && !finding.category.trim().is_empty()
@@ -1454,6 +1520,7 @@ impl AiReviewRun {
                 == item.draft.spec_versions.registry_bundle_version
             && self.spec_versions.task_package_version
                 == item.draft.spec_versions.task_package_version
+            && super::review_rules::report_matches_plan(&item.draft, self)
     }
 }
 
@@ -1533,6 +1600,7 @@ pub struct StagingLanguageItem {
     pub id: String,
     pub source_version_id: String,
     pub source_item_id: String,
+    #[serde(deserialize_with = "super::legacy_identity::deserialize_package")]
     pub package: TaskPackage,
     pub exported_at: String,
 }

@@ -1,0 +1,1032 @@
+registryType: A1ItemRuleRegistry
+registryVersion: 0.3-provisional
+status: SpecificationReadyImplementationPending
+entries:
+- itemRuleId: legacy-rule-5a24db839969ad64af09b47ec5dc290b4b81d186dff05b732dc1eee72beb0e61
+  title: Signs, labels, and short notices
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-R1
+  supportingCanDoIds: []
+  primaryReportedSkill: Reading
+  communicativeActivities:
+  - Reception
+  allowedDomains:
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  scoredResponseMode: selectOrMatch
+  taskFamilyId: TF-SIGNS-NOTICES
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  taskStructure:
+    taskGroups: 1
+    stimuli: 5-6
+    responses: 5-6
+    scoringPoints: 5-6
+  timeTargetMinutes: 5
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+- itemRuleId: legacy-rule-01eeec4aa91e2dceb1fc541825c8a04e89f31042c2ad7b48e8e975bb939312f4
+  title: Signs, labels, and short notices
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-R1
+  supportingCanDoIds: []
+  primaryReportedSkill: Reading
+  communicativeActivities:
+  - Reception
+  allowedDomains:
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D09
+  - D10
+  - D11
+  - D12
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  scoredResponseMode: selectOrMatch
+  taskFamilyId: TF-SIGNS-NOTICES
+  allowedItemFormatIds:
+  - IF-MATCHING
+  taskStructure:
+    taskGroups: 1
+    stimuli: 5-6
+    responses: 5-6
+    scoringPoints: 5-6
+  timeTargetMinutes: 5
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+- itemRuleId: legacy-rule-e4f4749bbd9657cc5cbd123ec0e4e78a53a904ed7a3fb6645b0f8785475c10d2
+  title: Short messages and online information
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-R2
+  supportingCanDoIds: []
+  primaryReportedSkill: Reading
+  communicativeActivities:
+  - Reception
+  allowedDomains:
+  - Personal
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  scoredResponseMode: selectOrMatch
+  taskFamilyId: TF-SHORT-MESSAGE-COMPREHENSION
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  taskStructure:
+    taskGroups: 1
+    stimuli: 2-3
+    responses: 5-6
+    scoringPoints: 5-6
+  timeTargetMinutes: 7
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+- itemRuleId: legacy-rule-ebf86e0da1ccfdbe2d2cb0021c9c65e462c89ff04c77bfb7be83f77d23eb79a2
+  title: Short messages and online information
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-R2
+  supportingCanDoIds: []
+  primaryReportedSkill: Reading
+  communicativeActivities:
+  - Reception
+  allowedDomains:
+  - Personal
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  scoredResponseMode: selectOrMatch
+  taskFamilyId: TF-SHORT-MESSAGE-COMPREHENSION
+  allowedItemFormatIds:
+  - IF-MATCHING
+  taskStructure:
+    taskGroups: 1
+    stimuli: 2-3
+    responses: 5-6
+    scoringPoints: 5-6
+  timeTargetMinutes: 7
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+- itemRuleId: legacy-rule-c7bdf2f8d5ea3548c61903733dcf1a3858a86df5f8d991b0f8285dee87c373d2
+  title: Practical structured information
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-R2
+  supportingCanDoIds: []
+  primaryReportedSkill: Reading
+  communicativeActivities:
+  - Reception
+  allowedDomains:
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D20
+  scoredResponseMode: selectMatchOrRestrictedInput
+  taskFamilyId: TF-STRUCTURED-INFORMATION
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  taskStructure:
+    taskGroups: 1
+    stimuli: 2-3
+    responses: 5-6
+    scoringPoints: 5-6
+  timeTargetMinutes: 7
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+- itemRuleId: legacy-rule-8ced5ccc6232e4028e84ca0390ae0fb5a87052c9ab9c639535bdb1fe2f1394f3
+  title: Practical structured information
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-R2
+  supportingCanDoIds: []
+  primaryReportedSkill: Reading
+  communicativeActivities:
+  - Reception
+  allowedDomains:
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D20
+  scoredResponseMode: selectMatchOrRestrictedInput
+  taskFamilyId: TF-STRUCTURED-INFORMATION
+  allowedItemFormatIds:
+  - IF-MATCHING
+  taskStructure:
+    taskGroups: 1
+    stimuli: 2-3
+    responses: 5-6
+    scoringPoints: 5-6
+  timeTargetMinutes: 7
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+- itemRuleId: legacy-rule-d1775c583ae5f0b644810331eefbff706606a780d545b0c3b830ae3a3118b266
+  title: Practical structured information
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-R2
+  supportingCanDoIds: []
+  primaryReportedSkill: Reading
+  communicativeActivities:
+  - Reception
+  allowedDomains:
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D20
+  scoredResponseMode: selectMatchOrRestrictedInput
+  taskFamilyId: TF-STRUCTURED-INFORMATION
+  allowedItemFormatIds:
+  - IF-RESTRICTED-INPUT
+  taskStructure:
+    taskGroups: 1
+    stimuli: 2-3
+    responses: 5-6
+    scoringPoints: 5-6
+  timeTargetMinutes: 7
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: INPUT-RESTRICTED-FIELD-v0.1
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+- itemRuleId: legacy-rule-5fa4216cddda47e533b010dc502b346330c31001384df2f0a5fbdacdb5f3afe2
+  title: Short profiles, routines, and basic descriptions
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-R2
+  supportingCanDoIds: []
+  primaryReportedSkill: Reading
+  communicativeActivities:
+  - Reception
+  allowedDomains:
+  - Personal
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D11
+  - D15
+  - D16
+  - D17
+  - D18
+  scoredResponseMode: selectOrMatch
+  taskFamilyId: TF-SHORT-TEXT-COMPREHENSION
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  taskStructure:
+    taskGroups: 1
+    stimuli: 2-3
+    responses: 5-6
+    scoringPoints: 5-6
+  timeTargetMinutes: 8
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+- itemRuleId: legacy-rule-a1daa2da2d260188aa170dd4b829b74ae7dd40cf9b742ab30959220997855615
+  title: Short profiles, routines, and basic descriptions
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-R2
+  supportingCanDoIds: []
+  primaryReportedSkill: Reading
+  communicativeActivities:
+  - Reception
+  allowedDomains:
+  - Personal
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D11
+  - D15
+  - D16
+  - D17
+  - D18
+  scoredResponseMode: selectOrMatch
+  taskFamilyId: TF-SHORT-TEXT-COMPREHENSION
+  allowedItemFormatIds:
+  - IF-MATCHING
+  taskStructure:
+    taskGroups: 1
+    stimuli: 2-3
+    responses: 5-6
+    scoringPoints: 5-6
+  timeTargetMinutes: 8
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+- itemRuleId: legacy-rule-6ad1140cba78a3c8b3485fe8e72646858a7315ed97f18ec1c3d633247b81c379
+  title: Basic personal and familiar information
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-L1
+  supportingCanDoIds: []
+  primaryReportedSkill: Listening
+  communicativeActivities:
+  - Reception
+  allowedDomains:
+  - Personal
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D07
+  - D15
+  - D17
+  scoredResponseMode: select
+  taskFamilyId: TF-LISTEN-AND-IDENTIFY
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  taskStructure:
+    taskGroups: 1
+    stimuli: about 5
+    responses: 5
+    scoringPoints: 5
+  timeTargetMinutes: 5
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-FORWARD-TASK-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: PLAY-COMPLETE-TWICE-v0.1
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+    pauseProfileId: PAUSE-A1-SENTENCE-v0.1
+- itemRuleId: legacy-rule-9a4558438d8db256a74a48331487a5f205e588f682ef0c3c92b9d78d791cf9c0
+  title: Explicit details in short dialogues
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-L2
+  supportingCanDoIds: []
+  primaryReportedSkill: Listening
+  communicativeActivities:
+  - Reception
+  allowedDomains:
+  - Personal
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D02
+  - D06
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D20
+  scoredResponseMode: select
+  taskFamilyId: TF-SHORT-DIALOGUE-DETAIL
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  taskStructure:
+    taskGroups: 1
+    stimuli: about 5
+    responses: 5
+    scoringPoints: 5
+  timeTargetMinutes: 6
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-FORWARD-TASK-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: PLAY-COMPLETE-TWICE-v0.1
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+    pauseProfileId: PAUSE-A1-DIALOGUE-v0.1
+- itemRuleId: legacy-rule-19c43a5b1c9e0975798a675bdce28e8d69b82a2bf302f2844b9d58e8cff21c16
+  title: Announcements, messages, and information records
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-L2
+  supportingCanDoIds: []
+  primaryReportedSkill: Listening
+  communicativeActivities:
+  - Reception
+  allowedDomains:
+  - Personal
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D02
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  scoredResponseMode: selectOrRestrictedInput
+  taskFamilyId: TF-LISTENING-INFORMATION-COMPLETION
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  taskStructure:
+    taskGroups: 1
+    stimuli: 2-3
+    responses: about 5
+    scoringPoints: about 5
+  timeTargetMinutes: 8
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-FORWARD-TASK-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: PLAY-COMPLETE-TWICE-v0.1
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+    pauseProfileId: PAUSE-A1-SENTENCE-v0.1
+- itemRuleId: legacy-rule-1b340a20c4571e4600ab27fe1575bc4b7416bd3542c83a313680a73c5eab59c2
+  title: Announcements, messages, and information records
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-L2
+  supportingCanDoIds: []
+  primaryReportedSkill: Listening
+  communicativeActivities:
+  - Reception
+  allowedDomains:
+  - Personal
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D02
+  - D10
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  - D20
+  scoredResponseMode: selectOrRestrictedInput
+  taskFamilyId: TF-LISTENING-INFORMATION-COMPLETION
+  allowedItemFormatIds:
+  - IF-RESTRICTED-INPUT
+  taskStructure:
+    taskGroups: 1
+    stimuli: 2-3
+    responses: about 5
+    scoringPoints: about 5
+  timeTargetMinutes: 8
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-FORWARD-TASK-v0.1
+    inputPolicyId: INPUT-RESTRICTED-FIELD-v0.1
+    playbackPolicyId: PLAY-COMPLETE-TWICE-v0.1
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+    pauseProfileId: PAUSE-A1-SENTENCE-v0.1
+- itemRuleId: legacy-rule-858349f939552c707469941227cac3db92134d3155692027cb687d959b3af46b
+  title: Simple communicative purposes and one-step instructions
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-L3
+  supportingCanDoIds: []
+  primaryReportedSkill: Listening
+  communicativeActivities:
+  - Reception
+  allowedDomains:
+  - Personal
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D01
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  scoredResponseMode: select
+  taskFamilyId: TF-COMMUNICATIVE-PURPOSE
+  allowedItemFormatIds:
+  - IF-SINGLE-SELECT
+  taskStructure:
+    taskGroups: 1
+    stimuli: about 5
+    responses: 5
+    scoringPoints: 5
+  timeTargetMinutes: 6
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-FORWARD-TASK-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: PLAY-COMPLETE-TWICE-v0.1
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+    pauseProfileId: PAUSE-A1-SENTENCE-v0.1
+- itemRuleId: legacy-rule-5e505212f0bb4843b429f3167cf0c85cb8d393973990e523b9bf23af58339bf4
+  title: Complete a basic online form
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-W1
+  supportingCanDoIds: []
+  primaryReportedSkill: Writing
+  communicativeActivities:
+  - Production
+  allowedDomains:
+  - Personal
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D02
+  - D13
+  - D14
+  - D16
+  - D17
+  - D20
+  scoredResponseMode: formEntry
+  taskFamilyId: TF-FORM-COMPLETION
+  allowedItemFormatIds:
+  - IF-FORM-ENTRY
+  taskStructure:
+    tasks: 1
+    fields: 4-6
+    responses: 4-6
+    scoringPoints: 4-6
+  timeTargetMinutes: 6
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: INPUT-EXAM-STANDARDIZED-PINYIN-v0.1
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+- itemRuleId: legacy-rule-24afd085454c01024191fa5f08c830907a891f28f2286948b7490968e97c4310
+  title: Reply to a very short practical message
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-W2
+  supportingCanDoIds:
+  - A1-I3b
+  primaryReportedSkill: Writing
+  communicativeActivities:
+  - Production
+  - Interaction
+  allowedDomains:
+  - Personal
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  - D19
+  scoredResponseMode: typedChinese
+  taskFamilyId: TF-SHORT-MESSAGE-RESPONSE
+  allowedItemFormatIds:
+  - IF-TYPED-MESSAGE
+  taskStructure:
+    tasks: 1
+    responses: 1
+    taskScores: 1
+  timeTargetMinutes: 10
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: INPUT-EXAM-STANDARDIZED-PINYIN-v0.1
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+- itemRuleId: legacy-rule-a8b19cb94037155dc6a1c8975e33e04af5ab76c6b98206770353425894b13144
+  title: Relay simple information in writing
+  status: PilotRequired
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-M2
+  supportingCanDoIds:
+  - A1-W2
+  primaryReportedSkill: Writing
+  communicativeActivities:
+  - Mediation
+  - Production
+  allowedDomains:
+  - Personal
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D17
+  - D18
+  - D19
+  - D20
+  scoredResponseMode: typedChinese
+  taskFamilyId: TF-WRITTEN-INFORMATION-RELAY
+  allowedItemFormatIds:
+  - IF-TYPED-MESSAGE
+  taskStructure:
+    tasks: 1
+    responses: 1
+    taskScores: 1
+  timeTargetMinutes: 12
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-REVIEW-WITHIN-MODULE-v0.1
+    inputPolicyId: INPUT-EXAM-STANDARDIZED-PINYIN-v0.1
+    playbackPolicyId: notApplicable
+    recordingPolicyId: notApplicable
+    speakingRateProfileId: notApplicable
+    pauseProfileId: notApplicable
+- itemRuleId: legacy-rule-e3351cc6d0277220ab52e838a632ab203b600496d4e3f2d4e41c0c4ed341166e
+  title: Basic personal questions and answers
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-I1
+  supportingCanDoIds:
+  - A1-S1
+  primaryReportedSkill: Speaking
+  communicativeActivities:
+  - Interaction
+  - Production
+  allowedDomains:
+  - Personal
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D01
+  - D02
+  - D03
+  - D04
+  - D05
+  - D06
+  - D15
+  - D16
+  - D17
+  scoredResponseMode: spokenResponse
+  taskFamilyId: TF-PERSONAL-QA
+  allowedItemFormatIds:
+  - IF-SPOKEN-MULTITURN
+  taskStructure:
+    tasks: 1
+    candidateTurns: 2-3
+    taskScores: 1
+  timeTargetMinutes: 5
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-FORWARD-RECORDING-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: REC-MULTITURN-A1-v0.1
+    speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+    pauseProfileId: PAUSE-A1-DIALOGUE-v0.1
+- itemRuleId: legacy-rule-18b146fee99ec17e7a1024be0628829b4e5b604b7a1dd728a9725906d73e2e32
+  title: Express direct needs and familiar content
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-S2
+  supportingCanDoIds: []
+  primaryReportedSkill: Speaking
+  communicativeActivities:
+  - Production
+  allowedDomains:
+  - Personal
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D04
+  - D05
+  - D06
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D14
+  - D16
+  - D17
+  - D18
+  scoredResponseMode: spokenResponse
+  taskFamilyId: TF-GUIDED-SPOKEN-PRODUCTION
+  allowedItemFormatIds:
+  - IF-SPOKEN-SINGLE
+  taskStructure:
+    tasks: 1
+    candidateTurns: 1
+    taskScores: 1
+  timeTargetMinutes: 3
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-FORWARD-RECORDING-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: REC-SINGLE-A1-v0.1
+    speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+    pauseProfileId: PAUSE-A1-SENTENCE-v0.1
+- itemRuleId: legacy-rule-3cdb3f05762f5de91d1cc2ca529900528b6312f29470b150dd63dc631dda6b17
+  title: Simple everyday interaction and arrangement confirmation
+  status: Required
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-I2
+  supportingCanDoIds:
+  - A1-I3a
+  - A1-I4
+  primaryReportedSkill: Speaking
+  communicativeActivities:
+  - Interaction
+  allowedDomains:
+  - Personal
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D01
+  - D07
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D16
+  - D17
+  - D18
+  scoredResponseMode: spokenResponse
+  taskFamilyId: TF-INTERACTIVE-ROLEPLAY
+  allowedItemFormatIds:
+  - IF-SPOKEN-MULTITURN
+  taskStructure:
+    tasks: 1
+    candidateTurns: 2-3
+    taskScores: 1
+  timeTargetMinutes: 6
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-FORWARD-RECORDING-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: REC-MULTITURN-A1-v0.1
+    speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+    pauseProfileId: PAUSE-A1-DIALOGUE-v0.1
+- itemRuleId: legacy-rule-8a543f21723a84bc5b9f181b4961ae2cd1c6f908a0371f6997ebf1b733fb366b
+  title: Relay simple information orally
+  status: PilotRequired
+  coverageRole: requiredForPilot
+  primaryCanDoId: A1-M1
+  supportingCanDoIds: []
+  primaryReportedSkill: Speaking
+  communicativeActivities:
+  - Mediation
+  - Production
+  allowedDomains:
+  - Personal
+  - Public
+  - Educational
+  - Occupational
+  allowedContextIds:
+  - D08
+  - D09
+  - D10
+  - D11
+  - D12
+  - D13
+  - D14
+  - D15
+  - D17
+  - D18
+  - D20
+  scoredResponseMode: spokenResponse
+  taskFamilyId: TF-SPOKEN-INFORMATION-RELAY
+  allowedItemFormatIds:
+  - IF-SPOKEN-SINGLE
+  taskStructure:
+    tasks: 1
+    candidateTurns: 1
+    taskScores: 1
+  timeTargetMinutes: 4
+  difficultyBands:
+  - LowerA1
+  - TypicalA1
+  - UpperA1
+  implementationStatus: SpecificationReadyImplementationPending
+  ruleVersion: 0.3-provisional
+  deliveryPolicyRefs:
+    navigationPolicyId: NAV-FORWARD-RECORDING-v0.1
+    inputPolicyId: notApplicable
+    playbackPolicyId: notApplicable
+    recordingPolicyId: REC-SINGLE-A1-v0.1
+    speakingRateProfileId: RATE-A1-CLEAR-SLOW-v0.1
+    pauseProfileId: PAUSE-A1-SENTENCE-v0.1

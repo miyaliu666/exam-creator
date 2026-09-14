@@ -8,6 +8,9 @@ import type { BatchGroup } from "../client/features/language-items/batch-api.ts"
 import type { CoverageBatchSuggestion } from "../client/features/language-items/coverage-types.ts";
 import type { DifficultyBandStandard, RegistryCapability, RegistrySnapshot } from "../client/features/language-items/types.ts";
 import { isValidCandidateCount, parseCandidateCount } from "../client/features/language-items/candidate-count.ts";
+import { contextIsOptional, domainsForCapability, setupContextIsCompatible } from "../client/features/language-items/registry-capability.ts";
+import { coverageContentScope } from "../client/features/language-items/coverage-content-scope.ts";
+import { NO_CONTEXT_FILTER } from "../client/features/language-items/coverage-context.ts";
 
 function fixture() {
   const standard: DifficultyBandStandard = {
@@ -17,7 +20,7 @@ function fixture() {
     allowedSupportLevels: ["high"], allowedDistractorSimilarities: ["clear"],
   };
   const capability: RegistryCapability = {
-    blueprintSlotId: "R1", title: "Notices", taskFamilyId: "TF1", itemFormatId: "IF-SINGLE-SELECT",
+    itemRuleId: "R1", title: "Notices", taskFamilyId: "TF1", itemFormatId: "IF-SINGLE-SELECT",
     rendererId: "renderer", scoringContractTemplateId: "scoring", primaryCanDoId: "read-notice",
     primaryReportedSkill: "Reading", communicativeActivity: "Reception", communicativeActivities: ["Reception", "Mediation"],
     allowedDomains: ["Public"], allowedContextIds: ["shop"], observableEvidence: "Read the time.",
@@ -27,7 +30,7 @@ function fixture() {
     settingsSchemaVersion: 1, bundleVersion: "rules-1", status: "published", limitations: [], sourceFingerprint: "fixture",
     capabilities: [capability], candidateSchemas: [], taskPackageSchema: {}, allowedDomains: ["Public"],
     difficultyBands: ["TypicalA1"], difficultyStandards: [standard],
-    capabilityDifficultyProfileSets: [{ id: "profile", blueprintSlotId: "R1", itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "read-notice", standards: [standard] }],
+    capabilityDifficultyProfileSets: [{ id: "profile", itemRuleId: "R1", itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "read-notice", standards: [standard] }],
     contentIdOptions: [
       { id: "time", label: "几点", kind: "lexical", contextIds: ["shop"], canDoIds: ["read-notice"], masteryScope: "receptive" },
       { id: "hello", label: "你好", kind: "lexical", contextIds: [], canDoIds: [], masteryScope: "receptiveProductive" },
@@ -40,7 +43,7 @@ function fixture() {
     canDoOptions: [{ id: "read-notice", label: "Understand a short notice" }], requiredReviewGateIds: [],
   };
   const group: BatchGroup = {
-    blueprintSlotId: "R1", itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "read-notice", primaryDomain: "Public", contextId: "shop", difficultyBand: "TypicalA1",
+    itemRuleId: "R1", itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "read-notice", primaryDomain: "Public", contextId: "shop", difficultyBand: "TypicalA1",
     itemCount: 20, requiredTargetContentIds: ["time"], rotatingTargetContentIds: ["hello"],
   };
   const suggestion: CoverageBatchSuggestion = {
@@ -49,6 +52,61 @@ function fixture() {
   };
   return { registry, group, suggestion };
 }
+
+test("shared item rules select only the requested language and keep persisted language", () => {
+  const { registry, group } = fixture();
+  for (const language of ["en", "es"]) {
+    const id = `target-${language}`;
+    registry.contentIdOptions.push({ ...registry.contentIdOptions[0], id, language, label: language === "en" ? "time" : "hora" });
+    const selected: BatchGroup = { ...group, language, requiredTargetContentIds: [id], rotatingTargetContentIds: [] };
+    assert.deepEqual(batchTargetOptions(selected, registry).map((entry) => entry.id), [id]);
+    assert.deepEqual(batchPlanIssues([selected], registry, 1), []);
+    assert.ok(batchPlanIssues([{ ...selected, requiredTargetContentIds: ["time"] }], registry, 1).some((issue) => issue.includes("incompatible")));
+    const plan = { ...emptyBatchDraft(registry.bundleVersion), groups: [selected] };
+    const restored = restoreBatchDraft(JSON.stringify(plan), registry.bundleVersion);
+    assert.equal(restored.groups[0].language, language);
+    assert.equal(restored.idempotencyKey, plan.idempotencyKey);
+  }
+  assert.ok(batchTargetOptions(group, registry).every((entry) => !entry.language || entry.language === "zh"));
+  assert.ok(batchPlanIssues([{ ...group, language: "fr" }], registry, 1).some((issue) => issue.includes("choose Chinese")));
+});
+
+test("source exercise setups allow an unspecified Context without widening language scopes", () => {
+  const { registry, group } = fixture();
+  const capability = registry.capabilities[0];
+  capability.itemRuleId = group.itemRuleId = "notice";
+  capability.itemFormatId = group.itemFormatId = "EXERCISE:multiple-choice";
+  capability.allowedContextIds = [];
+  group.contextId = "";
+  group.requiredTargetContentIds = ["hello"];
+  group.rotatingTargetContentIds = [];
+  registry.exerciseTemplateRules = [{ id: "notice", exerciseType: "multiple-choice", primaryCanDoId: capability.primaryCanDoId,
+    allowedDomains: ["Public"], allowedContextIds: [], enabled: true, taskRequirements: "Locate the opening time.",
+    difficultyStandards: registry.difficultyStandards, scoring: { method: "exactMatch", criteria: "Correct time", normalizationPolicy: "Exact choice" }, reviewCriteria: [], defaults: {} }];
+  registry.contentIdOptions.push({ id: "excluded", label: "Closed", kind: "lexical", canDoIds: [], contextIds: [], contextScopeMode: "all", excludedContextIds: ["school"], masteryScope: "receptive" });
+  assert.equal(contextIsOptional(registry, capability), true);
+  assert.deepEqual(domainsForCapability(registry, capability), ["Public"]);
+  assert.equal(setupContextIsCompatible(registry, capability, "Public", ""), true);
+  assert.deepEqual(batchPlanIssues([group], registry, 1), []);
+  assert.deepEqual(batchTargetOptions(group, registry).map((entry) => entry.id), ["hello"]);
+  const filters = { itemRuleId: group.itemRuleId, itemFormatId: group.itemFormatId, primaryCanDoId: group.primaryCanDoId,
+    contextId: NO_CONTEXT_FILTER, domain: group.primaryDomain, difficultyBand: group.difficultyBand };
+  assert.deepEqual(coverageContentScope(registry, filters).entries.map((entry) => entry.id), ["hello"]);
+  const noContextSuggestion = { registryVersion: registry.bundleVersion, filters, targetContentIds: ["hello"], desiredCount: 1 };
+  assert.equal(coverageSuggestionSetup(noContextSuggestion, registry)?.contextId, "");
+  assert.equal(setupMatchesCoverageSuggestion(noContextSuggestion, group, registry), true);
+  assert.equal(setupMatchesCoverageSuggestion(noContextSuggestion, { ...group, contextId: "shop" }, registry), false);
+  assert.equal(coverageContentScope(registry, { ...filters, domain: "Educational" }).hasMatchingSetup, false);
+  group.contextId = "shop";
+  assert.deepEqual(batchTargetOptions(group, registry).map((entry) => entry.id), ["time", "hello", "excluded"]);
+  registry.exerciseTemplateRules[0].allowedContextIds = capability.allowedContextIds = ["shop"];
+  group.contextId = "";
+  assert.equal(contextIsOptional(registry, capability), false);
+  assert.ok(batchPlanIssues([group], registry, 1).some((issue) => issue.includes("review the setup")));
+  group.contextId = "shop";
+  group.primaryDomain = "Educational";
+  assert.ok(batchPlanIssues([group], registry, 1).some((issue) => issue.includes("review the setup")));
+});
 
 test("batch targets honor context, primary Can-do and receptive/productive mastery", () => {
   const { registry, group } = fixture();
@@ -105,7 +163,8 @@ test("coverage planning resolves all dimensions and retains the full shortage wi
   const before = structuredClone(suggestion);
   const setup = coverageSuggestionSetup({ ...suggestion, desiredCount: 80 }, registry);
   assert.deepEqual(setup, {
-    blueprintSlotId: "R1", itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "read-notice", primaryDomain: "Public", contextId: "shop", difficultyBand: "TypicalA1",
+    language: "zh",
+    itemRuleId: "R1", itemFormatId: "IF-SINGLE-SELECT", primaryCanDoId: "read-notice", primaryDomain: "Public", contextId: "shop", difficultyBand: "TypicalA1",
     itemCount: 80, requiredTargetContentIds: ["time", "hello"], rotatingTargetContentIds: [],
   });
   assert.deepEqual(suggestion, before);
@@ -155,7 +214,7 @@ test("automatic names are stable across retries and do not rewrite saved custom 
   const { registry, group } = fixture();
   const draft = { ...emptyBatchDraft(registry.bundleVersion), groups: [group] };
   assert.equal(batchRequest(emptyBatchDraft(registry.bundleVersion), registry).title, "Language items");
-  assert.equal(batchRequest(draft, registry).title, "Notices");
+  assert.equal(batchRequest(draft, registry).title, "Understand a short notice · Multiple choice");
   assert.deepEqual(batchRequest(draft, registry), batchRequest(restoreBatchDraft(JSON.stringify(draft), registry.bundleVersion), registry));
   assert.equal(batchRequest({ ...draft, title: "My authored name" }, registry).title, "My authored name");
   assert.equal(draft.title, "");

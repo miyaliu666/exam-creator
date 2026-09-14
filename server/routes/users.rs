@@ -627,11 +627,21 @@ mod tests {
             HashMap::from([("a".to_string(), &a), ("b".to_string(), &b)]);
 
         assert_eq!(
-            resolve_selection(&Selection::Pick { source_id: "a".into() }, &candidates),
+            resolve_selection(
+                &Selection::Pick {
+                    source_id: "a".into()
+                },
+                &candidates
+            ),
             Some(Bson::String("alpha".to_string()))
         );
         assert_eq!(
-            resolve_selection(&Selection::Pick { source_id: "b".into() }, &candidates),
+            resolve_selection(
+                &Selection::Pick {
+                    source_id: "b".into()
+                },
+                &candidates
+            ),
             Some(Bson::Int32(7))
         );
     }
@@ -643,7 +653,9 @@ mod tests {
 
         assert_eq!(
             resolve_selection(
-                &Selection::Pick { source_id: "missing".into() },
+                &Selection::Pick {
+                    source_id: "missing".into()
+                },
                 &candidates,
             ),
             None
@@ -657,7 +669,12 @@ mod tests {
         let candidates: HashMap<String, &Bson> = HashMap::from([("a".to_string(), &a)]);
 
         assert_eq!(
-            resolve_selection(&Selection::Pick { source_id: "a".into() }, &candidates),
+            resolve_selection(
+                &Selection::Pick {
+                    source_id: "a".into()
+                },
+                &candidates
+            ),
             Some(Bson::ObjectId(oid))
         );
     }
@@ -671,8 +688,18 @@ mod tests {
 
         let sel = Selection::Object {
             fields: HashMap::from([
-                ("name".to_string(), Selection::Pick { source_id: "a".into() }),
-                ("note".to_string(), Selection::Pick { source_id: "b".into() }),
+                (
+                    "name".to_string(),
+                    Selection::Pick {
+                        source_id: "a".into(),
+                    },
+                ),
+                (
+                    "note".to_string(),
+                    Selection::Pick {
+                        source_id: "b".into(),
+                    },
+                ),
             ]),
         };
 
@@ -690,8 +717,18 @@ mod tests {
         // `missing` is sourced from `a`, which lacks it, so it is dropped from the result.
         let sel = Selection::Object {
             fields: HashMap::from([
-                ("name".to_string(), Selection::Pick { source_id: "a".into() }),
-                ("missing".to_string(), Selection::Pick { source_id: "a".into() }),
+                (
+                    "name".to_string(),
+                    Selection::Pick {
+                        source_id: "a".into(),
+                    },
+                ),
+                (
+                    "missing".to_string(),
+                    Selection::Pick {
+                        source_id: "a".into(),
+                    },
+                ),
             ]),
         };
 
@@ -712,12 +749,22 @@ mod tests {
         let sel = Selection::Array {
             groups: vec![
                 ArrayGroup {
-                    members: vec![GroupMember { source_id: "a".into(), index: 1 }],
-                    selection: Selection::Pick { source_id: "a".into() },
+                    members: vec![GroupMember {
+                        source_id: "a".into(),
+                        index: 1,
+                    }],
+                    selection: Selection::Pick {
+                        source_id: "a".into(),
+                    },
                 },
                 ArrayGroup {
-                    members: vec![GroupMember { source_id: "b".into(), index: 0 }],
-                    selection: Selection::Pick { source_id: "b".into() },
+                    members: vec![GroupMember {
+                        source_id: "b".into(),
+                        index: 0,
+                    }],
+                    selection: Selection::Pick {
+                        source_id: "b".into(),
+                    },
                 },
             ],
         };
@@ -742,13 +789,29 @@ mod tests {
         let sel = Selection::Array {
             groups: vec![ArrayGroup {
                 members: vec![
-                    GroupMember { source_id: "a".into(), index: 0 },
-                    GroupMember { source_id: "b".into(), index: 0 },
+                    GroupMember {
+                        source_id: "a".into(),
+                        index: 0,
+                    },
+                    GroupMember {
+                        source_id: "b".into(),
+                        index: 0,
+                    },
                 ],
                 selection: Selection::Object {
                     fields: HashMap::from([
-                        ("id".to_string(), Selection::Pick { source_id: "a".into() }),
-                        ("val".to_string(), Selection::Pick { source_id: "b".into() }),
+                        (
+                            "id".to_string(),
+                            Selection::Pick {
+                                source_id: "a".into(),
+                            },
+                        ),
+                        (
+                            "val".to_string(),
+                            Selection::Pick {
+                                source_id: "b".into(),
+                            },
+                        ),
                     ]),
                 },
             }],
@@ -774,10 +837,18 @@ mod tests {
         let sel = Selection::Array {
             groups: vec![ArrayGroup {
                 members: vec![
-                    GroupMember { source_id: "a".into(), index: 9 },
-                    GroupMember { source_id: "b".into(), index: 0 },
+                    GroupMember {
+                        source_id: "a".into(),
+                        index: 9,
+                    },
+                    GroupMember {
+                        source_id: "b".into(),
+                        index: 0,
+                    },
                 ],
-                selection: Selection::Pick { source_id: "a".into() },
+                selection: Selection::Pick {
+                    source_id: "a".into(),
+                },
             }],
         };
 
@@ -803,18 +874,33 @@ mod tests {
 
         let sel = Selection::Object {
             fields: HashMap::from([
-                ("tag".to_string(), Selection::Pick { source_id: "a".into() }),
+                (
+                    "tag".to_string(),
+                    Selection::Pick {
+                        source_id: "a".into(),
+                    },
+                ),
                 (
                     "files".to_string(),
                     Selection::Array {
                         groups: vec![
                             ArrayGroup {
-                                members: vec![GroupMember { source_id: "a".into(), index: 0 }],
-                                selection: Selection::Pick { source_id: "a".into() },
+                                members: vec![GroupMember {
+                                    source_id: "a".into(),
+                                    index: 0,
+                                }],
+                                selection: Selection::Pick {
+                                    source_id: "a".into(),
+                                },
                             },
                             ArrayGroup {
-                                members: vec![GroupMember { source_id: "b".into(), index: 0 }],
-                                selection: Selection::Pick { source_id: "b".into() },
+                                members: vec![GroupMember {
+                                    source_id: "b".into(),
+                                    index: 0,
+                                }],
+                                selection: Selection::Pick {
+                                    source_id: "b".into(),
+                                },
                             },
                         ],
                     },
@@ -826,7 +912,13 @@ mod tests {
         assert_eq!(d.get_str("tag").unwrap(), "a");
         let files = d.get_array("files").unwrap();
         assert_eq!(files.len(), 2);
-        assert_eq!(files[0].as_document().unwrap().get_str("name").unwrap(), "f1");
-        assert_eq!(files[1].as_document().unwrap().get_str("name").unwrap(), "f2");
+        assert_eq!(
+            files[0].as_document().unwrap().get_str("name").unwrap(),
+            "f1"
+        );
+        assert_eq!(
+            files[1].as_document().unwrap().get_str("name").unwrap(),
+            "f2"
+        );
     }
 }

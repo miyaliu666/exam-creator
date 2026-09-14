@@ -19,7 +19,6 @@ export function LanguageCoveragePanel({ registry, accountScope, onPlanBatch }: {
 }) {
   const [state, setState] = useState(() => initialCoverageState(registry.bundleVersion));
   const [resetCount, setResetCount] = useState(0);
-  const [showMatchingItems, setShowMatchingItems] = useState(false);
   const [setupReturnRequest, setSetupReturnRequest] = useState<CoverageRequest>();
   const [setupReturnPlanning, setSetupReturnPlanning] = useState<CoverageSetupGoalState>();
   const [setupGoal, setSetupGoal] = useState<CoverageSetupGoalState>();
@@ -52,7 +51,7 @@ export function LanguageCoveragePanel({ registry, accountScope, onPlanBatch }: {
   const update = (patch: Partial<CoverageRequest>) => {
     setState((previous) => updateCoverageState(previous, patch));
     if (view === "items" && coverageAnalysisKey(updateCoverageRequest(request, patch)) !== analysisKey) {
-      setShowMatchingItems(false); setSetupReturnRequest(undefined); setSetupReturnPlanning(undefined); setSetupGoal(undefined);
+      setSetupReturnRequest(undefined); setSetupReturnPlanning(undefined); setSetupGoal(undefined);
     }
   };
   // Quantities stay attached to their language targets and setup, independent of detail status.
@@ -61,7 +60,7 @@ export function LanguageCoveragePanel({ registry, accountScope, onPlanBatch }: {
   const reset = () => {
     setState((previous) => resetCoverageView(previous, registry.bundleVersion));
     if (view === "items") {
-      setResetCount((previous) => previous + 1); setShowMatchingItems(false); setSetupReturnRequest(undefined); setSetupReturnPlanning(undefined); setSetupGoal(undefined);
+      setResetCount((previous) => previous + 1); setSetupReturnRequest(undefined); setSetupReturnPlanning(undefined); setSetupGoal(undefined);
     }
   };
   const controls = <fieldset disabled={!currentRegistry} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
@@ -85,32 +84,31 @@ export function LanguageCoveragePanel({ registry, accountScope, onPlanBatch }: {
       <Button size="sm" variant="outline" onClick={() => void queryClient.invalidateQueries({ queryKey: ["language-coverage", accountScope], refetchType: "active" })}
         disabled={!currentRegistry} loading={fetchingCount > 0}>Refresh</Button>
     </HStack>
-    {view === "overview" && <CoverageOverviewPanel registry={currentRegistry ?? registry} data={currentRegistry && !query.error ? query.data?.overview : undefined} state={state.overview}
+    {view === "overview" && <CoverageOverviewPanel registry={currentRegistry ?? registry} data={currentRegistry && !query.error ? query.data?.overview : undefined} state={state.overview} itemFilters={state.overviewInventory.filters}
         filters={controls} feedback={feedback} disabled={!currentRegistry} onReset={hasFilters ? reset : undefined}
         onStateChange={(patch) => setState((previous) => ({ ...previous, overview: { ...previous.overview, ...patch, offset: patch.offset ?? 0 } }))}
         onInspect={(id, scope) => {
           setState((previous) => inspectCoverageEntry(previous, id, scope));
-          setSetupReturnRequest(undefined); setShowMatchingItems(false);
+          setSetupReturnRequest(undefined);
           setSetupReturnPlanning(undefined);
           setSetupGoal(undefined);
         }} />}
     {view === "items" && <>
       {setupReturnRequest && <Button size="sm" variant="outline" alignSelf="start" onClick={() => {
         setState((previous) => ({ ...previous, request: setupReturnRequest }));
-        setSetupReturnRequest(undefined); setShowMatchingItems(false);
+        setSetupReturnRequest(undefined);
         setSetupGoal(setupReturnPlanning); setSetupReturnPlanning(undefined);
       }}>Back to item setups</Button>}
       <CoverageFilterSection onReset={hasFilters ? reset : undefined}>{controls}</CoverageFilterSection>
       {feedback}
     </>}
     {view === "items" && query.data && !query.error && currentRegistry && <CoverageResults key={goalKey} data={query.data} request={request} registry={currentRegistry}
-      currentRegistry={registry} accountScope={accountScope} showItems={showMatchingItems} onPlan={onPlanBatch} onChange={update}
-      onItemsOpenChange={setShowMatchingItems} setupGoal={activeSetupGoal}
+      currentRegistry={registry} accountScope={accountScope} onPlan={onPlanBatch} onChange={update} setupGoal={activeSetupGoal}
       onSetupGoalChange={(next) => setSetupGoal(next ? { ...next, queryKey: analysisKey } : undefined)}
       onInspect={(filters, scope) => {
         update(coverageSetupQuery(request, filters, scope));
         setSetupReturnPlanning(setupReturnRequest ? setupReturnPlanning : activeSetupGoal);
-        setSetupReturnRequest(setupReturnRequest ?? request); setShowMatchingItems(true);
+        setSetupReturnRequest(setupReturnRequest ?? request);
       }} />}
   </Stack>;
 }

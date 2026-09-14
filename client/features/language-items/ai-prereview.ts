@@ -1,4 +1,6 @@
 import type { AiFinding, AiReviewRun } from "./types";
+import { reviewChecklistProblem } from "./review-check-validation";
+import { blindAnswerProblem } from "./blind-answer";
 
 export type AiPrereviewStage = "checking" | "aiReview" | "creatingPr" | null;
 
@@ -28,5 +30,5 @@ export function aiPrereviewBlockReason(run: AiReviewRun | null | undefined): str
   if (run.findings.some((finding) => finding.severity === "error")) {
     return "AI preliminary review found serious issues. Edit the item and submit again.";
   }
-  return null;
+  return blindAnswerProblem(run) ?? reviewChecklistProblem(run);
 }

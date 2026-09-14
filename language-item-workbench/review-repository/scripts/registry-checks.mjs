@@ -15,19 +15,21 @@ export function validateLockedFields(current, original) {
   for (const key of ['schemaVersion', 'itemId', 'source']) same(current[key], original[key], key);
   const now = current.taskPackage;
   const before = original.taskPackage;
-  for (const key of ['taskId', 'taskVersion', 'specVersions', 'blueprintSlotId', 'taskFamilyId',
+  for (const key of ['taskId', 'taskVersion', 'specVersions', 'itemRuleId', 'taskFamilyId',
     'itemFormatId', 'renderer', 'deliveryPolicyRefs', 'reviewPackage']) same(now[key], before[key], key);
-  for (const key of ['primaryCanDoId', 'primaryReportedSkill', 'communicativeActivity', 'primaryDomain',
+  for (const key of ['language', 'primaryCanDoId', 'primaryReportedSkill', 'communicativeActivity', 'primaryDomain',
     'contextId', 'difficultyBand', 'difficulty']) same(now.content[key], before.content[key], `content.${key}`);
   for (const key of ['scoringContractTemplateId', 'scoringContractTemplateVersion', 'rubricId',
     'benchmarkSetVersion']) same(now.scoringPackage[key], before.scoringPackage[key], `scoringPackage.${key}`);
 }
 
 export function validateRegistry(pkg, registry) {
+  const language = pkg.content.language ?? 'zh';
+  requireRule(['zh', 'en', 'es'].includes(language), 'Item language must be Chinese, English or Spanish');
   same(pkg.specVersions.registryBundleVersion, registry.bundleVersion, 'Registry version');
-  const matches = registry.capabilities.filter(cap => cap.blueprintSlotId === pkg.blueprintSlotId
+  const matches = registry.capabilities.filter(cap => cap.itemRuleId === pkg.itemRuleId
     && cap.itemFormatId === pkg.itemFormatId && cap.primaryCanDoId === pkg.content.primaryCanDoId);
-  requireRule(matches.length === 1, 'Task × format × Primary Can-do must resolve to exactly one configuration');
+  requireRule(matches.length === 1, 'Item rule must resolve to exactly one configuration with its format and Primary Can-do');
   const cap = matches[0];
   for (const key of ['taskFamilyId', 'itemFormatId']) same(pkg[key], cap[key], key);
   same(pkg.renderer.rendererId, cap.rendererId, 'Renderer');
@@ -44,14 +46,17 @@ export function validateRegistry(pkg, registry) {
   requireRule(contract, 'Scoring contract is not registered');
   same(pkg.scoringPackage.scoringContractTemplateId, contract.scoringContractTemplateId, 'Scoring contract');
   same(pkg.scoringPackage.scoringContractTemplateVersion, contract.templateVersion, 'Scoring contract version');
-  same(pkg.blueprintSlotId, contract.blueprintSlotId, 'Scoring slot');
+  requireRule(contract.itemRuleIds?.includes(pkg.itemRuleId), 'Scoring contract does not apply to this item rule');
   same(pkg.itemFormatId, contract.itemFormatId, 'Scoring format');
   const rubric = !contract.rubricId || contract.rubricId === 'notApplicable' ? null : contract.rubricId;
   same(pkg.scoringPackage.rubricId ?? null, rubric, 'Scoring rubric');
+  const exercise = pkg.itemFormatId.startsWith('EXERCISE:');
   const context = registry.contextOptions.find(entry => entry.id === pkg.content.contextId);
-  requireRule(context && !context.retired && cap.allowedContextIds.includes(context.id)
-    && cap.allowedDomains.includes(pkg.content.primaryDomain)
-    && context.primaryDomains.includes(pkg.content.primaryDomain)
+  requireRule(cap.allowedDomains.includes(pkg.content.primaryDomain), 'Domain is unavailable for this configuration');
+  const unrestrictedExercise = exercise && !cap.allowedContextIds.length;
+  if (!(unrestrictedExercise && pkg.content.contextId === '')) requireRule(context && !context.retired
+    && (unrestrictedExercise || cap.allowedContextIds.includes(context.id))
+    && context.primaryDomains.length === 1 && context.primaryDomains.includes(pkg.content.primaryDomain)
     && context.canDoIds.includes(cap.primaryCanDoId), 'Context is unavailable for the Primary Can-do/domain');
   const content = pkg.content;
   requireRule(content.targetContentIds.length > 0, 'At least one core language target is required');
@@ -60,13 +65,21 @@ export function validateRegistry(pkg, registry) {
     for (const id of content[key]) {
       const entry = registry.contentIdOptions.find(option => option.id === id);
       requireRule(entry, `${key}: unregistered language content`);
+      same(entry.language ?? 'zh', language, `${key}: language`);
       requireRule((entry.kind === 'supported') === supporting, `${key}: incorrect content partition`);
-      requireRule(!entry.contextIds.length || entry.contextIds.includes(context.id), `${key}: incompatible context`);
+      const selectedContext = pkg.content.contextId;
+      const allowedContext = entry.contextScopeMode === 'all' ? !(entry.excludedContextIds ?? []).includes(selectedContext)
+        : entry.contextScopeMode === 'selected' ? entry.contextIds.includes(selectedContext)
+        : !entry.contextIds.length || entry.contextIds.includes(selectedContext);
+      requireRule(allowedContext, `${key}: incompatible context`);
       requireRule(!entry.canDoIds.length || entry.canDoIds.some(ref =>
-        ref === cap.primaryCanDoId || cap.supportingCanDoIds.includes(ref)), `${key}: incompatible Can-do`);
+        ref === cap.primaryCanDoId || (cap.supportingCanDoIds ?? []).includes(ref)), `${key}: incompatible Can-do`);
       const productive = ['Writing', 'Speaking'].includes(cap.primaryReportedSkill);
       requireRule(!entry.masteryScope || entry.masteryScope === 'receptiveProductive'
         || entry.masteryScope === (productive ? 'productive' : 'receptive'), `${key}: incompatible mastery scope`);
+      requireRule(!(entry.assessmentRules ?? []).some(rule => rule.itemRuleId === cap.itemRuleId
+        && rule.itemFormatId === cap.itemFormatId && rule.primaryCanDoId === cap.primaryCanDoId
+        && rule.contextId === selectedContext && rule.applicability === 'excluded'), `${key}: excluded for this exact configuration`);
     }
   }
   validateDifficulty(pkg, registry, cap);
@@ -88,7 +101,7 @@ function validateDifficulty(pkg, registry, cap) {
   const modern = (registry.settingsSchemaVersion ?? 0) >= 1;
   const profiles = registry.capabilityDifficultyProfileSets ?? [];
   const standards = !modern && !profiles.length ? registry.difficultyStandards : profiles.find(entry =>
-    entry.blueprintSlotId === cap.blueprintSlotId && entry.itemFormatId === cap.itemFormatId
+    entry.itemRuleId === cap.itemRuleId && entry.itemFormatId === cap.itemFormatId
     && entry.primaryCanDoId === cap.primaryCanDoId)?.standards;
   const standard = standards?.find(entry => entry.id === pkg.content.difficultyBand);
   requireRule(standard, 'Difficulty band is unavailable for this configuration');
@@ -108,7 +121,7 @@ function validateDifficulty(pkg, registry, cap) {
       && driver.informationPoints <= standard.informationPointsMax
       && standard.allowedInputLengths.includes(driver.inputLength)
       && standard.allowedSupportLevels.includes(driver.supportLevel), 'Difficulty driver is outside the configured range');
-    if (['IF-SINGLE-SELECT', 'IF-MATCHING'].includes(pkg.itemFormatId)) {
+    if (['IF-SINGLE-SELECT', 'IF-MATCHING'].includes(pkg.itemFormatId) || pkg.itemFormatId.startsWith('EXERCISE:')) {
       requireRule(standard.allowedDistractorSimilarities.includes(driver.distractorSimilarity), 'Distractor similarity is outside the configured range');
     }
   } else requireRule(driver.informationPoints <= 2, 'Legacy A1 profiles allow at most two information points');

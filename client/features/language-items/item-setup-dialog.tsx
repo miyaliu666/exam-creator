@@ -2,10 +2,11 @@ import { Box, Button, Dialog, Field, NativeSelect, Stack, Text } from "@chakra-u
 import { useState } from "react";
 
 import { isContentOptionCompatible } from "./content-compatibility";
+import { contentLanguage, contentLanguageLabel } from "./content-language";
 import { DifficultySchemeSummary } from "./difficulty-scheme-summary";
 import { applyItemSetup, itemSetupSelection, selectedDifficulty, type ItemSetupSelection } from "./item-setup";
 import { contentOptionLabel, DOMAIN_LABELS, WORKBENCH_LABELS } from "./labels";
-import { capabilityForDraft, contextsForCapability, difficultyStandardsForCapability } from "./registry-capability";
+import { capabilityForDraft, contextIsOptional, contextsForCapability, difficultyStandardsForCapability, domainsForCapability, setupContextIsCompatible } from "./registry-capability";
 import { registryDisplayText } from "./registry-display-text";
 import type { RegistrySnapshot, TaskPackage } from "./types";
 
@@ -18,17 +19,18 @@ export function ItemSetupDialog({ draft, registry, onApply, onClose }: {
   const [selection, setSelection] = useState(() => itemSetupSelection(draft));
   const capability = capabilityForDraft(registry, draft);
   const contexts = contextsForCapability(registry, capability);
-  const domains = registry.allowedDomains.filter((domain) => contexts.some((context) => context.primaryDomains.includes(domain)));
+  const optionalContext = contextIsOptional(registry, capability);
+  const domains = capability ? domainsForCapability(registry, capability) : [];
   const allowedContexts = contexts.filter((context) => context.primaryDomains.includes(selection.domain));
   const standards = difficultyStandardsForCapability(registry, capability);
-  const valid = allowedContexts.some((context) => context.id === selection.contextId) && standards.some((standard) => standard.id === selection.difficultyBand);
+  const valid = domains.includes(selection.domain) && setupContextIsCompatible(registry, capability, selection.domain, selection.contextId) && standards.some((standard) => standard.id === selection.difficultyBand);
   const changed = JSON.stringify(selection) !== JSON.stringify(itemSetupSelection(draft));
   const preview = structuredClone(draft);
   if (standards.some((standard) => standard.id === selection.difficultyBand)) applyItemSetup(preview, selection, registry);
   const difficulty = selectedDifficulty(preview, registry);
   const incompatible = [...draft.content.targetContentIds, ...(draft.content.supportingContentRefs ?? [])].filter((id) => {
     const entry = registry.contentIdOptions.find((option) => option.id === id);
-    return !entry || !isContentOptionCompatible(entry, capability, selection.contextId);
+    return !entry || !isContentOptionCompatible(entry, capability, selection.contextId, contentLanguage(draft.content));
   });
   const expectedPoints = difficulty?.drivers.informationPoints ?? 1;
   const fields = [
@@ -41,6 +43,7 @@ export function ItemSetupDialog({ draft, registry, onApply, onClose }: {
     <Dialog.Positioner><Dialog.Content maxW="xl">
       <Dialog.Header><Dialog.Title>Edit item setup</Dialog.Title></Dialog.Header>
       <Dialog.Body><Stack gap={4}>
+        <Text fontSize="sm">Language: {contentLanguageLabel(contentLanguage(draft.content))}</Text>
         <Text fontSize="sm" color="fg.muted">Correct this item's selections using its published assessment rules. Changes take effect when you apply them.</Text>
         {fields.map(({ label, key, options }) => <Field.Root key={key}>
           <Field.Label>{label}</Field.Label>
@@ -50,7 +53,8 @@ export function ItemSetupDialog({ draft, registry, onApply, onClose }: {
               ...(key === "domain" && !contexts.some((context) => context.id === current.contextId && context.primaryDomains.includes(value)) ? { contextId: "" } : {}),
             }));
           }}>
-            {!options.some((option) => option.value === selection[key]) ? <option value={selection[key]} disabled>{selection[key] ? "Unavailable selection" : `Select ${label.toLowerCase()}`}</option> : null}
+            {key === "contextId" && optionalContext ? <option value="">No Context restriction</option> : null}
+            {!options.some((option) => option.value === selection[key]) && !(key === "contextId" && optionalContext && !selection[key]) ? <option value={selection[key]} disabled>{selection[key] ? "Unavailable selection" : `Select ${label.toLowerCase()}`}</option> : null}
             {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </NativeSelect.Field><NativeSelect.Indicator /></NativeSelect.Root>
         </Field.Root>)}

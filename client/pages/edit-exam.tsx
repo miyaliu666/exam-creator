@@ -34,6 +34,7 @@ import { EditExamActions } from "../components/edit-exam-actions";
 import { QuestionTypeConfigForm } from "../components/question-type-config-form";
 import { UsersWebSocketActivityContext } from "../contexts/users-websocket";
 import { AuthContext } from "../contexts/auth";
+import { SignOutButton } from "../components/sign-out-button";
 import { examsRoute } from "./exams";
 import { EditExamGenerationVariability } from "../components/edit-exam-generation-variability";
 import { EditExamConfig } from "../components/edit-exam-config";
@@ -70,14 +71,14 @@ function Edit() {
         >
           Back to Exams
         </Button>
-        <Button
+        <SignOutButton
           colorPalette="red"
           variant="outline"
           size="sm"
           onClick={() => logout()}
         >
           Logout
-        </Button>
+        </SignOutButton>
       </HStack>
       {/* Floating widget: top right */}
       <UsersEditing />

@@ -1,0 +1,67 @@
+name: exam-creator-public
+
+services:
+  mongodb:
+    image: mongo:7
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: examcreator
+      MONGO_INITDB_ROOT_PASSWORD: ${PUBLIC_MONGO_PASSWORD:?Set PUBLIC_MONGO_PASSWORD in .env.public}
+    volumes:
+      - public-mongodb:/data/db
+    healthcheck:
+      test: [CMD, mongosh, --quiet, --eval, "quit(db.adminCommand('ping').ok ? 0 : 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    image: exam-creator:public
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    stop_grace_period: 180s
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - 127.0.0.1:18081:8080
+    environment:
+      PORT: '8080'
+      MOCK_AUTH: 'false'
+      COOKIE_KEY: ${COOKIE_KEY:?Set a new 64-character COOKIE_KEY in .env.public}
+      MONGODB_URI_PRODUCTION: mongodb://examcreator:${PUBLIC_MONGO_PASSWORD:?Required}@mongodb:27017/exam_creator_public_production?authSource=admin
+      MONGODB_URI_STAGING: mongodb://examcreator:${PUBLIC_MONGO_PASSWORD:?Required}@mongodb:27017/exam_creator_public_staging?authSource=admin
+      FRONTEND_URL: ${FRONTEND_URL:?Set the complete GitHub Pages URL including repository path}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set the GitHub Pages origin without repository path}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:?Set the deployment OAuth app ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:?Set the deployment OAuth app secret}
+      GITHUB_REDIRECT_URL: ${GITHUB_REDIRECT_URL:?Set the backend OAuth callback URL}
+      SUPABASE_URL: ${SUPABASE_URL:?Set a reachable events-service URL}
+      SUPABASE_KEY: ${SUPABASE_KEY:?Set the events-service key}
+      LANGUAGE_ITEM_AI_PROVIDER: ${LANGUAGE_ITEM_AI_PROVIDER:-deterministic-mock}
+      LANGUAGE_ITEM_AI_MODEL: ${LANGUAGE_ITEM_AI_MODEL:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      GITHUB_REVIEW_ENABLED: ${GITHUB_REVIEW_ENABLED:-false}
+      GITHUB_REVIEW_REPOSITORY: ${GITHUB_REVIEW_REPOSITORY:-}
+      GITHUB_REVIEW_BASE_BRANCH: ${GITHUB_REVIEW_BASE_BRANCH:-main}
+      GITHUB_REVIEW_TOKEN: ${GITHUB_REVIEW_TOKEN:-}
+      GITHUB_REVIEW_WEBHOOK_SECRET: ${GITHUB_REVIEW_WEBHOOK_SECRET:-}
+      REQUEST_TIMEOUT_IN_MS: ${REQUEST_TIMEOUT_IN_MS:-180000}
+
+  tunnel:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    profiles: [public]
+    depends_on:
+      - backend
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:?Set the ngrok agent token in .env.public}
+    command: [http, "http://backend:8080", --url, "${PUBLIC_BACKEND_URL:?Set the assigned ngrok HTTPS origin}", --inspect=false]
+
+volumes:
+  public-mongodb:

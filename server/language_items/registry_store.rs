@@ -25,6 +25,7 @@ pub struct RegistryVersionRecord {
     pub active: bool,
     pub revision: u64,
     pub base_version: Option<String>,
+    #[serde(deserialize_with = "super::legacy_identity::deserialize_registry")]
     pub snapshot: RegistrySnapshot,
     pub created_by: String,
     pub updated_by: String,
@@ -277,7 +278,12 @@ fn check_display_names<'a>(
 }
 
 pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResult {
+    let mut projected = snapshot.clone();
+    super::exercise_templates::project_rules(&mut projected);
+    let snapshot = &projected;
     let mut issues = super::registry_content::validate_language_content(snapshot, None).issues;
+    issues.extend(super::exercise_templates::validate_rules(snapshot));
+    issues.extend(super::review_rules::validate_rule_sets(snapshot));
     if snapshot.bundle_version.trim().is_empty() {
         issue(
             &mut issues,
@@ -290,7 +296,7 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
         (
             snapshot.capabilities.is_empty(),
             "capabilities",
-            "Blueprint capabilities",
+            "Item rules",
         ),
         (
             snapshot.can_do_options.is_empty(),
@@ -430,18 +436,21 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
         }
     }
     check_unique(
-        snapshot.blueprint_slots.iter().map(|slot| slot.id.as_str()),
-        "blueprintSlots",
-        "Blueprint slot",
+        snapshot
+            .capabilities
+            .iter()
+            .map(|rule| rule.item_rule_id.as_str()),
+        "capabilities",
+        "Item rule",
         &mut issues,
     );
-    for (index, slot) in snapshot.blueprint_slots.iter().enumerate() {
-        if slot.display_name.trim().is_empty() || slot.allowed_item_format_ids.is_empty() {
+    for (index, rule) in snapshot.capabilities.iter().enumerate() {
+        if rule.title.trim().is_empty() || rule.item_format_id.trim().is_empty() {
             issue(
                 &mut issues,
-                "registry.slotDetailsRequired",
-                format!("blueprintSlots.{index}"),
-                "Each blueprint slot requires a display name and at least one item format",
+                "registry.itemRuleDetailsRequired",
+                format!("capabilities.{index}"),
+                "Each item rule requires a display name and one item format",
             );
         }
     }
@@ -577,10 +586,15 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
     }
 
     for (index, capability) in snapshot.capabilities.iter().enumerate() {
+        // These records are derived from explicit Can-do × exercise rules. Their
+        // independent Domain and optional Context rules are checked above.
+        if super::exercise_templates::exercise_type(&capability.item_format_id).is_some() {
+            continue;
+        }
         let path = format!("capabilities.{index}");
         let key = format!(
             "{}::{}::{}",
-            capability.blueprint_slot_id, capability.item_format_id, capability.primary_can_do_id
+            capability.item_rule_id, capability.item_format_id, capability.primary_can_do_id
         );
         if !capability_keys.insert(key.clone()) {
             issue(
@@ -588,31 +602,13 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
                 "registry.duplicateCapability",
                 &path,
                 format!(
-                    "Duplicate Blueprint slot × Item format × Primary Can-do task configuration: {key}"
-                ),
-            );
-        }
-        if !snapshot.blueprint_slots.iter().any(|slot| {
-            slot.id == capability.blueprint_slot_id
-                && slot
-                    .allowed_item_format_ids
-                    .contains(&capability.item_format_id)
-        }) {
-            issue(
-                &mut issues,
-                "registry.slotFormatMismatch",
-                format!("{path}.itemFormatId"),
-                format!(
-                    "“{}” does not allow the selected Item Format",
-                    capability.title
+                    "Duplicate Item rule × Item format × Primary Can-do task configuration: {key}"
                 ),
             );
         }
         if !snapshot.task_family_options.iter().any(|family| {
             family.id == capability.task_family_id
-                && family
-                    .blueprint_slot_ids
-                    .contains(&capability.blueprint_slot_id)
+                && family.item_rule_ids.contains(&capability.item_rule_id)
                 && family
                     .allowed_item_format_ids
                     .contains(&capability.item_format_id)
@@ -622,22 +618,22 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
                 "registry.taskFamilyMismatch",
                 format!("{path}.taskFamilyId"),
                 format!(
-                    "The task family selected for “{}” is not registered for this blueprint slot and item format",
+                    "The task family selected for “{}” is not registered for this item rule and item format",
                     capability.title
                 ),
             );
         }
         if snapshot.capabilities.iter().any(|other| {
-            other.blueprint_slot_id == capability.blueprint_slot_id
+            other.item_rule_id == capability.item_rule_id
                 && other.item_format_id == capability.item_format_id
                 && (other.primary_reported_skill != capability.primary_reported_skill
                     || other.communicative_activity != capability.communicative_activity)
         }) {
             issue(
                 &mut issues,
-                "registry.slotConstructMismatch",
+                "registry.itemRuleConstructMismatch",
                 format!("{path}.primaryCanDoId"),
-                "Primary Can-do choices for the same blueprint slot and item format must retain the registered skill and activity",
+                "Primary Can-do choices for the same item rule and item format must retain the registered skill and activity",
             );
         }
         if capability.primary_reported_skill.trim().is_empty() {
@@ -737,7 +733,7 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
             );
         } else if let Some(contract) = snapshot.scoring_contracts.iter().find(|contract| {
             contract.scoring_contract_template_id == capability.scoring_contract_template_id
-        }) && (contract.blueprint_slot_id != capability.blueprint_slot_id
+        }) && (!contract.item_rule_ids.contains(&capability.item_rule_id)
             || contract.item_format_id != capability.item_format_id)
         {
             issue(
@@ -747,9 +743,9 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
                 format!(
                     "Scoring contract {} is registered for {} × {}, not {} × {}",
                     contract.scoring_contract_template_id,
-                    contract.blueprint_slot_id,
+                    contract.item_rule_ids.join(", "),
                     contract.item_format_id,
-                    capability.blueprint_slot_id,
+                    capability.item_rule_id,
                     capability.item_format_id
                 ),
             );
@@ -777,7 +773,7 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
                     format!("{path}.allowedDomains"),
                     format!(
                         "{} allows {domain}, but no allowed Context belongs to that Domain",
-                        capability.blueprint_slot_id
+                        capability.item_rule_id
                     ),
                 );
             }
@@ -863,7 +859,7 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
                 &mut issues,
                 "registry.exerciseTemplateUnused",
                 "capabilities",
-                format!("No blueprint slot uses required item format {item_format_id}"),
+                format!("No item rule uses required item format {item_format_id}"),
             );
         }
         if snapshot
@@ -928,7 +924,7 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
         }
         let key = format!(
             "{}::{}::{}",
-            profile.blueprint_slot_id, profile.item_format_id, profile.primary_can_do_id
+            profile.item_rule_id, profile.item_format_id, profile.primary_can_do_id
         );
         if !profile_keys.insert(key.clone()) {
             issue(
@@ -939,7 +935,7 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
             );
         }
         if !snapshot.capabilities.iter().any(|capability| {
-            capability.blueprint_slot_id == profile.blueprint_slot_id
+            capability.item_rule_id == profile.item_rule_id
                 && capability.item_format_id == profile.item_format_id
                 && capability.primary_can_do_id == profile.primary_can_do_id
         }) {
@@ -990,7 +986,7 @@ pub fn validate_registry(snapshot: &RegistrySnapshot) -> RegistryValidationResul
             .capability_difficulty_profile_sets
             .iter()
             .any(|profile| {
-                profile.blueprint_slot_id == capability.blueprint_slot_id
+                profile.item_rule_id == capability.item_rule_id
                     && profile.item_format_id == capability.item_format_id
                     && profile.primary_can_do_id == capability.primary_can_do_id
             });
@@ -1285,7 +1281,7 @@ mod tests {
     }
 
     #[test]
-    fn every_slot_domain_has_an_allowed_context() {
+    fn every_rule_domain_has_an_allowed_context() {
         let registry = snapshot();
         for capability in &registry.capabilities {
             for domain in &capability.allowed_domains {
@@ -1295,7 +1291,7 @@ mod tests {
                             && context.primary_domains.contains(domain)
                     }),
                     "{} × {} has no concrete Context",
-                    capability.blueprint_slot_id,
+                    capability.item_rule_id,
                     domain
                 );
             }

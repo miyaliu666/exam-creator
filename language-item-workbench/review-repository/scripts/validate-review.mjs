@@ -6,6 +6,8 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import { requireRule, same, unique, validateLockedFields, validateRegistry } from './registry-checks.mjs';
 import { validateCandidate } from './candidate-checks.mjs';
 import { packageForPinnedSchema } from './author-translations.mjs';
+import { exerciseReviewSchemas, exerciseType } from './exercise-template-checks.mjs';
+import { legacyPinnedValidation } from './legacy/pinned-validation.mjs';
 
 const shaPattern = /^[a-f0-9]{40}$/;
 const idPattern = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/;
@@ -69,8 +71,8 @@ export function validateReview(reader, { batchId, submission, head, base }) {
     const key = createHash('sha256').update(item.registryVersion).digest('hex');
     const directory = `review-batches/${batchId}/rules/${key}`;
     same(item.registrySnapshotPath, `${directory}/snapshot.json`, 'Snapshot path');
-    same(item.taskPackageSchemaPath, `${directory}/task-package.schema.json`, 'Task schema path');
-    requireRule(new RegExp(`^${directory}/IF-(SINGLE-SELECT|MATCHING|RESTRICTED-INPUT|FORM-ENTRY|TYPED-MESSAGE|SPOKEN-SINGLE|SPOKEN-MULTITURN)\\.schema\\.json$`).test(item.candidateSchemaPath), 'Candidate schema path is outside the batch');
+    requireRule(new RegExp(`^${directory}/task-package(?:-exercise-[a-z][a-z0-9-]*)?\\.schema\\.json$`).test(item.taskPackageSchemaPath), 'Task schema path is outside the batch');
+    requireRule(new RegExp(`^${directory}/(?:IF-(SINGLE-SELECT|MATCHING|RESTRICTED-INPUT|FORM-ENTRY|TYPED-MESSAGE|SPOKEN-SINGLE|SPOKEN-MULTITURN)|exercise-[a-z][a-z0-9-]*)\\.schema\\.json$`).test(item.candidateSchemaPath), 'Candidate schema path is outside the batch');
     for (const path of [item.registrySnapshotPath, item.taskPackageSchemaPath, item.candidateSchemaPath]) assets.add(path);
   }
   unique(manifest.items.map(item => item.itemId), 'Batch items');
@@ -91,17 +93,31 @@ export function validateReview(reader, { batchId, submission, head, base }) {
       same(file.taskPackage.taskId, item.itemId, 'Task identity');
       same(file.taskPackage.specVersions.registryBundleVersion, item.registryVersion, 'Pinned registry');
     }
-    validateLockedFields(edited, original);
     const registry = parse(reader.read(submission, item.registrySnapshotPath), item.registrySnapshotPath);
     const taskSchema = parse(reader.read(submission, item.taskPackageSchemaPath), item.taskPackageSchemaPath);
     const candidateSchema = parse(reader.read(submission, item.candidateSchemaPath), item.candidateSchemaPath);
-    same(item.candidateSchemaPath.split('/').at(-1), `${edited.taskPackage.itemFormatId}.schema.json`, 'Format schema');
-    same(taskSchema, registry.taskPackageSchema, 'Snapshot TaskPackage schema');
-    requireRule(registry.candidateSchemas.some(schema => JSON.stringify(schema) === JSON.stringify(candidateSchema)), 'Candidate schema does not belong to pinned snapshot');
+    // Dispatch only after all protected assets have passed byte-for-byte checks.
+    // Never normalize or reserialize legacy packages before their pinned schema and rules run.
+    const checks = legacyPinnedValidation(original.taskPackage, registry, taskSchema)
+      ?? { validateLockedFields, validateRegistry, validateCandidate, exerciseReviewSchemas };
+    checks.validateLockedFields(edited, original);
+    const type = exerciseType(edited.taskPackage);
+    if (type) {
+      same(item.candidateSchemaPath.split('/').at(-1), `exercise-${type}.schema.json`, 'Format schema');
+      same(item.taskPackageSchemaPath.split('/').at(-1), `task-package-exercise-${type}.schema.json`, 'Task schema path');
+      const canonical = checks.exerciseReviewSchemas(registry, type);
+      same(taskSchema, canonical.task, 'Pinned exercise TaskPackage schema');
+      same(candidateSchema, canonical.candidate, 'Pinned exercise candidate schema');
+    } else {
+      same(item.candidateSchemaPath.split('/').at(-1), `${edited.taskPackage.itemFormatId}.schema.json`, 'Format schema');
+      same(item.taskPackageSchemaPath.split('/').at(-1), 'task-package.schema.json', 'Task schema path');
+      same(taskSchema, registry.taskPackageSchema, 'Snapshot TaskPackage schema');
+      requireRule(registry.candidateSchemas.some(schema => JSON.stringify(schema) === JSON.stringify(candidateSchema)), 'Candidate schema does not belong to pinned snapshot');
+    }
     schemaCheck(taskSchema, packageForPinnedSchema(edited.taskPackage, taskSchema), 'TaskPackage schema');
     schemaCheck(candidateSchema, edited.taskPackage.candidatePayload, 'Candidate payload schema');
-    validateRegistry(edited.taskPackage, registry);
-    validateCandidate(edited.taskPackage);
+    checks.validateRegistry(edited.taskPackage, registry);
+    checks.validateCandidate(edited.taskPackage, registry);
   }
   return { batchId, itemCount: manifest.items.length, submission, head };
 }

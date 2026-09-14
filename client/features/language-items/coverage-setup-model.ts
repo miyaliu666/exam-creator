@@ -2,6 +2,7 @@ import { coverageSuggestionSetup } from "./batch-coverage-suggestion";
 import { updateCoverageRequest } from "./coverage-query";
 import type { CoverageFilters, CoverageRequest, CoverageResponse } from "./coverage-types";
 import type { RegistrySnapshot } from "./types";
+import { NO_CONTEXT_FILTER } from "./coverage-context";
 
 export interface CoverageSetupGoalState {
   queryKey: string;
@@ -21,6 +22,7 @@ export function coverageSetupQuery(request: CoverageRequest, filters: CoverageFi
   // A setup drilldown narrows the same language query, including an explicit intersection.
   // Unfiltered API dimensions are null; the creation handoff accepts only defined string filters.
   const definedFilters = Object.fromEntries(Object.entries(filters).filter(([, value]) => typeof value === "string"));
+  if (request.filters.language !== undefined && definedFilters.language === undefined) definedFilters.language = request.filters.language;
   return { filters: definedFilters, scope, offset: 0, desiredCount: undefined, pattern: request.pattern };
 }
 
@@ -28,14 +30,16 @@ export function coverageSetupGoalRequest(request: CoverageRequest, filters: Cove
   return { ...updateCoverageRequest(request, coverageSetupQuery(request, filters, "approved")), desiredCount };
 }
 
-export const COVERAGE_SETUP_FIELDS = ["blueprintSlotId", "contextId", "domain", "difficultyBand", "itemFormatId", "primaryCanDoId"] as const;
+export const COVERAGE_SETUP_FIELDS = ["itemRuleId", "contextId", "domain", "difficultyBand", "itemFormatId", "primaryCanDoId"] as const;
 
 export function completeCoverageSetup(filters: CoverageFilters) {
   return COVERAGE_SETUP_FIELDS.every((key) => !!filters[key]);
 }
 
 export function coverageSetupRows(data: CoverageResponse, request: CoverageRequest, registry: RegistrySnapshot) {
-  if (!data.setupCounts || data.setupCounts.length || !completeCoverageSetup(request.filters)) return data.setupCounts;
+  const rows = data.setupCounts?.map((row) => row.filters.contextId === "" && row.filters.itemFormatId?.startsWith("EXERCISE:")
+    ? { ...row, filters: { ...row.filters, contextId: NO_CONTEXT_FILTER } } : row);
+  if (!rows || rows.length || !completeCoverageSetup(request.filters)) return rows;
   const setup = coverageSuggestionSetup({ registryVersion: request.registryVersion, filters: request.filters,
     targetContentIds: request.selectedIds, desiredCount: 1 }, registry);
   // A fully selected, compatible setup still exists when its sparse inventory has no recorded matches.

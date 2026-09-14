@@ -1,0 +1,94 @@
+registryType: A1ReferenceTaskRegistry
+registryVersion: 0.2-provisional
+status: DraftBriefsNotApprovedItems
+entries:
+- slot: R-A1-1
+  valid: A notice states “星期一不开门”; the candidate selects what cannot be done on Monday, and the text determines the answer directly.
+  invalid: The answer can be inferred from a culture-specific icon alone, while the text contains unsupported out-of-scope keywords.
+  lower: One high-frequency sign in an obvious context.
+  typical: One short sentence containing one explicit fact or negation.
+  upper: A short notice containing two related explicit facts, with relatively close distractors.
+- slot: R-A1-2
+  valid: A two-turn exchange states “明天下午三点在图书馆门口见”; the candidate identifies the time and place.
+  invalid: Requires inferring whether the sender is angry.
+  lower: One message and one information point.
+  typical: A 2–3-turn exchange with two information points.
+  upper: A 3–4-turn short exchange containing a small amount of irrelevant information.
+- slot: R-A1-3
+  valid: A timetable lists courses, times, and classrooms; the candidate locates the classroom for Tuesday at 9:00.
+  invalid: A dense table that requires calculating the duration of breaks.
+  lower: One column or a short list.
+  typical: Locate one field in a clear, small table.
+  upper: Connect two explicit fields in the same row.
+- slot: R-A1-4
+  valid: A three-sentence profile states a name, workplace, and finishing time; the candidate selects explicitly stated information.
+  invalid: A long account of past experience that asks the candidate to judge attitude.
+  lower: Two sentences, one person, and one target fact.
+  typical: Three sentences and two information points.
+  upper: Four sentences with a small number of similar facts.
+- slot: L-A1-1
+  valid: The candidate hears “安娜在学校学汉语” and selects the matching picture of the person and activity.
+  invalid: Uses only a minimal tone contrast to create a trap.
+  lower: One sentence, one information point, and an obvious image.
+  typical: A short sentence with one non-target detail.
+  upper: A very short exchange containing two familiar details.
+- slot: L-A1-2
+  valid: The candidate hears a two-turn dialogue confirming “一杯茶二十元” and selects the price.
+  invalid: Contains repeated self-correction and tests memory through three dependent questions.
+  lower: Two turns, with the target at the end of the sentence.
+  typical: Two to three turns with one irrelevant detail.
+  upper: Three turns containing similar numbers or places, but with an explicit answer.
+- slot: L-A1-3
+  valid: The candidate hears a course message and completes three independent fields: “星期三”, “九点”, and “305教室”.
+  invalid: Requires dictating full sentences and a large number of Chinese characters.
+  lower: One audio passage and one numeric field.
+  typical: Two information points presented in order.
+  upper: Three information points and a small amount of non-target information.
+- slot: L-A1-4
+  valid: The candidate hears “请在门口等一下” and selects the action to take.
+  invalid: Labels selection of an appropriate response as Interaction.
+  lower: A direct request with clearly distinct options.
+  typical: A familiar confirmation or one-step instruction.
+  upper: Pragmatically similar options, with only one appropriate in context.
+- slot: W-A1-1
+  valid: Complete name, city, date of birth, phone, and study details from a profile card or self-selected fictional information.
+  invalid: Requires a real identity-document number and full address, with every field copied mechanically.
+  lower: Four fields, including two Chinese-language fields.
+  typical: Five fields combining Chinese text and numbers.
+  upper: Six fields requiring limited selection from a profile card.
+- slot: W-A1-2
+  valid: A friend invites the candidate to meet tomorrow afternoon; the candidate replies whether they can attend and confirms the place.
+  invalid: Writes a statement unrelated to the source message or a long formal email.
+  lower: One required content point with strong prompting.
+  typical: Two content points that respond to and confirm the arrangement.
+  upper: Three content points plus one simple question.
+- slot: W-A1-3
+  valid: Select the time and classroom from a course notice and write a short message to a classmate.
+  invalid: Copies the entire notice word for word without a specified recipient.
+  lower: One relevant information point and an obvious recipient.
+  typical: Two relevant information points and a small amount of irrelevant information.
+  upper: Three information points plus a simple requested action.
+- slot: S-A1-1
+  valid: Answer where the candidate lives and what they study, then initiate one related question.
+  invalid: Recites a memorised self-introduction continuously for two minutes.
+  lower: Two direct questions with an explicit question frame.
+  typical: Two to three turns, including one candidate-initiated related question.
+  upper: Limited follow-up questions with less prompting, while remaining predictable.
+- slot: S-A1-2
+  valid: Use an information card to state a health problem and the help needed in one to three sentences.
+  invalid: Describes medical history, causes, and a treatment plan.
+  lower: One content point with image support.
+  typical: Two content points.
+  upper: Three content points connecting two simple details.
+- slot: S-A1-3
+  valid: Complete a 2–3-turn restaurant exchange to order and confirm quantity, including one spoken request.
+  invalid: Only clicks an answer, or lets generative AI change the question dynamically.
+  lower: Two fixed turns with obvious prompting.
+  typical: Three turns containing one request or confirmation.
+  upper: Limited branching or communication repair, with every branch reviewed in advance.
+- slot: S-A1-4
+  valid: Read a bus information card and tell a friend the route, time, and boarding point orally.
+  invalid: Reads the entire information card aloud or summarises multiple routes.
+  lower: One relevant information point.
+  typical: Two information points and an explicit recipient.
+  upper: Three information points and a small amount of irrelevant information.

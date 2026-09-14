@@ -1,93 +1,159 @@
 registryType: A1ReferenceTaskRegistry
-registryVersion: 0.2-provisional
+registryVersion: 0.3-provisional
 status: DraftBriefsNotApprovedItems
 entries:
-- slot: R-A1-1
-  valid: A notice states “星期一不开门”; the candidate selects what cannot be done on Monday, and the text determines the answer directly.
-  invalid: The answer can be inferred from a culture-specific icon alone, while the text contains unsupported out-of-scope keywords.
+- itemRuleId: legacy-rule-5a24db839969ad64af09b47ec5dc290b4b81d186dff05b732dc1eee72beb0e61
+  valid: A notice states “星期一不开门”; the candidate selects what cannot be done on
+    Monday, and the text determines the answer directly.
+  invalid: The answer can be inferred from a culture-specific icon alone, while
+    the text contains unsupported out-of-scope keywords.
   lower: One high-frequency sign in an obvious context.
   typical: One short sentence containing one explicit fact or negation.
-  upper: A short notice containing two related explicit facts, with relatively close distractors.
-- slot: R-A1-2
-  valid: A two-turn exchange states “明天下午三点在图书馆门口见”; the candidate identifies the time and place.
+  upper: A short notice containing two related explicit facts, with relatively
+    close distractors.
+- itemRuleId: legacy-rule-01eeec4aa91e2dceb1fc541825c8a04e89f31042c2ad7b48e8e975bb939312f4
+  valid: A notice states “星期一不开门”; the candidate selects what cannot be done on
+    Monday, and the text determines the answer directly.
+  invalid: The answer can be inferred from a culture-specific icon alone, while
+    the text contains unsupported out-of-scope keywords.
+  lower: One high-frequency sign in an obvious context.
+  typical: One short sentence containing one explicit fact or negation.
+  upper: A short notice containing two related explicit facts, with relatively
+    close distractors.
+- itemRuleId: legacy-rule-e4f4749bbd9657cc5cbd123ec0e4e78a53a904ed7a3fb6645b0f8785475c10d2
+  valid: A two-turn exchange states “明天下午三点在图书馆门口见”; the candidate identifies the
+    time and place.
   invalid: Requires inferring whether the sender is angry.
   lower: One message and one information point.
   typical: A 2–3-turn exchange with two information points.
-  upper: A 3–4-turn short exchange containing a small amount of irrelevant information.
-- slot: R-A1-3
-  valid: A timetable lists courses, times, and classrooms; the candidate locates the classroom for Tuesday at 9:00.
+  upper: A 3–4-turn short exchange containing a small amount of irrelevant
+    information.
+- itemRuleId: legacy-rule-ebf86e0da1ccfdbe2d2cb0021c9c65e462c89ff04c77bfb7be83f77d23eb79a2
+  valid: A two-turn exchange states “明天下午三点在图书馆门口见”; the candidate identifies the
+    time and place.
+  invalid: Requires inferring whether the sender is angry.
+  lower: One message and one information point.
+  typical: A 2–3-turn exchange with two information points.
+  upper: A 3–4-turn short exchange containing a small amount of irrelevant
+    information.
+- itemRuleId: legacy-rule-c7bdf2f8d5ea3548c61903733dcf1a3858a86df5f8d991b0f8285dee87c373d2
+  valid: A timetable lists courses, times, and classrooms; the candidate locates
+    the classroom for Tuesday at 9:00.
   invalid: A dense table that requires calculating the duration of breaks.
   lower: One column or a short list.
   typical: Locate one field in a clear, small table.
   upper: Connect two explicit fields in the same row.
-- slot: R-A1-4
-  valid: A three-sentence profile states a name, workplace, and finishing time; the candidate selects explicitly stated information.
+- itemRuleId: legacy-rule-8ced5ccc6232e4028e84ca0390ae0fb5a87052c9ab9c639535bdb1fe2f1394f3
+  valid: A timetable lists courses, times, and classrooms; the candidate locates
+    the classroom for Tuesday at 9:00.
+  invalid: A dense table that requires calculating the duration of breaks.
+  lower: One column or a short list.
+  typical: Locate one field in a clear, small table.
+  upper: Connect two explicit fields in the same row.
+- itemRuleId: legacy-rule-d1775c583ae5f0b644810331eefbff706606a780d545b0c3b830ae3a3118b266
+  valid: A timetable lists courses, times, and classrooms; the candidate locates
+    the classroom for Tuesday at 9:00.
+  invalid: A dense table that requires calculating the duration of breaks.
+  lower: One column or a short list.
+  typical: Locate one field in a clear, small table.
+  upper: Connect two explicit fields in the same row.
+- itemRuleId: legacy-rule-5fa4216cddda47e533b010dc502b346330c31001384df2f0a5fbdacdb5f3afe2
+  valid: A three-sentence profile states a name, workplace, and finishing time;
+    the candidate selects explicitly stated information.
   invalid: A long account of past experience that asks the candidate to judge attitude.
   lower: Two sentences, one person, and one target fact.
   typical: Three sentences and two information points.
   upper: Four sentences with a small number of similar facts.
-- slot: L-A1-1
-  valid: The candidate hears “安娜在学校学汉语” and selects the matching picture of the person and activity.
+- itemRuleId: legacy-rule-a1daa2da2d260188aa170dd4b829b74ae7dd40cf9b742ab30959220997855615
+  valid: A three-sentence profile states a name, workplace, and finishing time;
+    the candidate selects explicitly stated information.
+  invalid: A long account of past experience that asks the candidate to judge attitude.
+  lower: Two sentences, one person, and one target fact.
+  typical: Three sentences and two information points.
+  upper: Four sentences with a small number of similar facts.
+- itemRuleId: legacy-rule-6ad1140cba78a3c8b3485fe8e72646858a7315ed97f18ec1c3d633247b81c379
+  valid: The candidate hears “安娜在学校学汉语” and selects the matching picture of the
+    person and activity.
   invalid: Uses only a minimal tone contrast to create a trap.
   lower: One sentence, one information point, and an obvious image.
   typical: A short sentence with one non-target detail.
   upper: A very short exchange containing two familiar details.
-- slot: L-A1-2
-  valid: The candidate hears a two-turn dialogue confirming “一杯茶二十元” and selects the price.
-  invalid: Contains repeated self-correction and tests memory through three dependent questions.
+- itemRuleId: legacy-rule-9a4558438d8db256a74a48331487a5f205e588f682ef0c3c92b9d78d791cf9c0
+  valid: The candidate hears a two-turn dialogue confirming “一杯茶二十元” and selects
+    the price.
+  invalid: Contains repeated self-correction and tests memory through three
+    dependent questions.
   lower: Two turns, with the target at the end of the sentence.
   typical: Two to three turns with one irrelevant detail.
-  upper: Three turns containing similar numbers or places, but with an explicit answer.
-- slot: L-A1-3
-  valid: The candidate hears a course message and completes three independent fields: “星期三”, “九点”, and “305教室”.
+  upper: Three turns containing similar numbers or places, but with an explicit
+    answer.
+- itemRuleId: legacy-rule-19c43a5b1c9e0975798a675bdce28e8d69b82a2bf302f2844b9d58e8cff21c16
+  valid: "The candidate hears a course message and completes three independent
+    fields: “星期三”, “九点”, and “305教室”."
   invalid: Requires dictating full sentences and a large number of Chinese characters.
   lower: One audio passage and one numeric field.
   typical: Two information points presented in order.
   upper: Three information points and a small amount of non-target information.
-- slot: L-A1-4
+- itemRuleId: legacy-rule-1b340a20c4571e4600ab27fe1575bc4b7416bd3542c83a313680a73c5eab59c2
+  valid: "The candidate hears a course message and completes three independent
+    fields: “星期三”, “九点”, and “305教室”."
+  invalid: Requires dictating full sentences and a large number of Chinese characters.
+  lower: One audio passage and one numeric field.
+  typical: Two information points presented in order.
+  upper: Three information points and a small amount of non-target information.
+- itemRuleId: legacy-rule-858349f939552c707469941227cac3db92134d3155692027cb687d959b3af46b
   valid: The candidate hears “请在门口等一下” and selects the action to take.
   invalid: Labels selection of an appropriate response as Interaction.
   lower: A direct request with clearly distinct options.
   typical: A familiar confirmation or one-step instruction.
   upper: Pragmatically similar options, with only one appropriate in context.
-- slot: W-A1-1
-  valid: Complete name, city, date of birth, phone, and study details from a profile card or self-selected fictional information.
-  invalid: Requires a real identity-document number and full address, with every field copied mechanically.
+- itemRuleId: legacy-rule-5e505212f0bb4843b429f3167cf0c85cb8d393973990e523b9bf23af58339bf4
+  valid: Complete name, city, date of birth, phone, and study details from a
+    profile card or self-selected fictional information.
+  invalid: Requires a real identity-document number and full address, with every
+    field copied mechanically.
   lower: Four fields, including two Chinese-language fields.
   typical: Five fields combining Chinese text and numbers.
   upper: Six fields requiring limited selection from a profile card.
-- slot: W-A1-2
-  valid: A friend invites the candidate to meet tomorrow afternoon; the candidate replies whether they can attend and confirms the place.
+- itemRuleId: legacy-rule-24afd085454c01024191fa5f08c830907a891f28f2286948b7490968e97c4310
+  valid: A friend invites the candidate to meet tomorrow afternoon; the candidate
+    replies whether they can attend and confirms the place.
   invalid: Writes a statement unrelated to the source message or a long formal email.
   lower: One required content point with strong prompting.
   typical: Two content points that respond to and confirm the arrangement.
   upper: Three content points plus one simple question.
-- slot: W-A1-3
-  valid: Select the time and classroom from a course notice and write a short message to a classmate.
+- itemRuleId: legacy-rule-a8b19cb94037155dc6a1c8975e33e04af5ab76c6b98206770353425894b13144
+  valid: Select the time and classroom from a course notice and write a short
+    message to a classmate.
   invalid: Copies the entire notice word for word without a specified recipient.
   lower: One relevant information point and an obvious recipient.
   typical: Two relevant information points and a small amount of irrelevant information.
   upper: Three information points plus a simple requested action.
-- slot: S-A1-1
-  valid: Answer where the candidate lives and what they study, then initiate one related question.
+- itemRuleId: legacy-rule-e3351cc6d0277220ab52e838a632ab203b600496d4e3f2d4e41c0c4ed341166e
+  valid: Answer where the candidate lives and what they study, then initiate one
+    related question.
   invalid: Recites a memorised self-introduction continuously for two minutes.
   lower: Two direct questions with an explicit question frame.
   typical: Two to three turns, including one candidate-initiated related question.
   upper: Limited follow-up questions with less prompting, while remaining predictable.
-- slot: S-A1-2
-  valid: Use an information card to state a health problem and the help needed in one to three sentences.
+- itemRuleId: legacy-rule-18b146fee99ec17e7a1024be0628829b4e5b604b7a1dd728a9725906d73e2e32
+  valid: Use an information card to state a health problem and the help needed in
+    one to three sentences.
   invalid: Describes medical history, causes, and a treatment plan.
   lower: One content point with image support.
   typical: Two content points.
   upper: Three content points connecting two simple details.
-- slot: S-A1-3
-  valid: Complete a 2–3-turn restaurant exchange to order and confirm quantity, including one spoken request.
+- itemRuleId: legacy-rule-3cdb3f05762f5de91d1cc2ca529900528b6312f29470b150dd63dc631dda6b17
+  valid: Complete a 2–3-turn restaurant exchange to order and confirm quantity,
+    including one spoken request.
   invalid: Only clicks an answer, or lets generative AI change the question dynamically.
   lower: Two fixed turns with obvious prompting.
   typical: Three turns containing one request or confirmation.
-  upper: Limited branching or communication repair, with every branch reviewed in advance.
-- slot: S-A1-4
-  valid: Read a bus information card and tell a friend the route, time, and boarding point orally.
+  upper: Limited branching or communication repair, with every branch reviewed in
+    advance.
+- itemRuleId: legacy-rule-8a543f21723a84bc5b9f181b4961ae2cd1c6f908a0371f6997ebf1b733fb366b
+  valid: Read a bus information card and tell a friend the route, time, and
+    boarding point orally.
   invalid: Reads the entire information card aloud or summarises multiple routes.
   lower: One relevant information point.
   typical: Two information points and an explicit recipient.

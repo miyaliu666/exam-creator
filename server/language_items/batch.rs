@@ -22,7 +22,9 @@ fn default_candidates() -> u64 {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct BatchGroup {
-    pub blueprint_slot_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
+    pub item_rule_id: String,
     pub item_format_id: String,
     pub primary_can_do_id: String,
     pub primary_domain: String,
@@ -58,10 +60,11 @@ pub struct BatchChild {
     pub item_created: bool,
     pub error: Option<String>,
     // Persist the actual brief so a restart or later software update cannot reinterpret it.
+    #[serde(deserialize_with = "super::legacy_identity::deserialize_package")]
     pub setup_snapshot: TaskPackage,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BatchGenerationJob {
     pub id: String,
@@ -70,6 +73,7 @@ pub struct BatchGenerationJob {
     pub idempotency_key: String,
     pub request_fingerprint: String,
     pub registry_version: String,
+    #[serde(deserialize_with = "super::legacy_identity::deserialize_groups")]
     pub groups: Vec<BatchGroup>,
     pub candidates_per_item: u64,
     pub status: String,
@@ -188,16 +192,23 @@ pub fn validate_request(body: &CreateBatchBody) -> Result<(), Error> {
         ));
     }
     for (index, group) in body.groups.iter().enumerate() {
+        if !["zh", "en", "es"].contains(&group.language.as_deref().unwrap_or("zh")) {
+            return Err(invalid(format!(
+                "Group {} must select Chinese, English, or Spanish",
+                index + 1
+            )));
+        }
         if [
-            &group.blueprint_slot_id,
+            &group.item_rule_id,
             &group.item_format_id,
             &group.primary_can_do_id,
             &group.primary_domain,
-            &group.context_id,
             &group.difficulty_band,
         ]
         .iter()
         .any(|value| value.trim().is_empty())
+            || (group.context_id.trim().is_empty()
+                && super::exercise_templates::exercise_type(&group.item_format_id).is_none())
         {
             return Err(invalid(format!(
                 "Group {} must select all six setup criteria",
@@ -259,18 +270,18 @@ fn information_point_guidance(
     item_ordinal: usize,
     point: usize,
 ) -> String {
-    // Guidance follows the pinned Can-do rather than a hardcoded interpretation of a slot.
+    // Guidance follows the pinned Can-do rather than a hardcoded interpretation of an item rule.
     // It proposes variation; only review can establish that generated items are distinct.
     let variation = [
-        "选择一个具体、熟悉的日常微情境",
-        "在相同情境范围内改变交际安排，保持原有交际目的",
-        "在适用时变化人物、时间、地点或数量，保持相同信息负荷",
-        "在适用时变化信息呈现顺序，保持信息直接、明确",
+        "Choose a specific, familiar everyday situation",
+        "Vary the communication within the same Context while retaining the original communicative purpose",
+        "Where appropriate, vary people, times, places or quantities while keeping the same information load",
+        "Where appropriate, vary the order of information while keeping it direct and clear",
     ][item_ordinal % 4];
     format!(
-        "{context}：{evidence}。为第{}道独立题准备第{}个可直接观察的信息点；{variation}。所有变化须服从已选 Can-do、Context、语言目标和难度。",
-        item_ordinal + 1,
+        "{context}: {evidence}. Prepare observable information point {} for independent item {}. {variation}. All variations must follow the selected Can-do, Context, language targets and difficulty.",
         point + 1,
+        item_ordinal + 1,
     )
 }
 
@@ -297,7 +308,7 @@ pub fn prepare_job(
     for (group_index, group) in body.groups.iter().enumerate() {
         let capability = capability_for(
             registry,
-            &group.blueprint_slot_id,
+            &group.item_rule_id,
             &group.item_format_id,
             Some(&group.primary_can_do_id),
         )
@@ -310,13 +321,17 @@ pub fn prepare_job(
         let context = registry
             .context_options
             .iter()
-            .find(|entry| entry.id == group.context_id)
-            .ok_or_else(|| {
-                invalid(format!(
-                    "Group {} has an unavailable Context",
-                    group_index + 1
-                ))
-            })?;
+            .find(|entry| entry.id == group.context_id);
+        if context.is_none()
+            && !(super::exercise_templates::exercise_type(&group.item_format_id).is_some()
+                && capability.allowed_context_ids.is_empty()
+                && group.context_id.is_empty())
+        {
+            return Err(invalid(format!(
+                "Group {} has an unavailable Context",
+                group_index + 1
+            )));
+        }
         for ordinal in 0..usize::from(group.item_count) {
             let index = children.len();
             let item_id = format!("LI-{}-{}", &id[6..], index + 1);
@@ -329,6 +344,11 @@ pub fn prepare_job(
                 Some(&group.difficulty_band),
             )?;
             draft.spec_versions.registry_bundle_version = registry.bundle_version.clone();
+            crate::routes::language_items::set_draft_language(
+                &mut draft,
+                group.language.as_deref().unwrap_or("zh"),
+                registry,
+            )?;
             draft.content.target_content_ids = allocate_targets(group, ordinal);
             let expected = draft
                 .content
@@ -350,7 +370,14 @@ pub fn prepare_job(
                 .map(|point| {
                     InformationPoint::new(
                         point,
-                        information_point_guidance(&context.label, evidence, index, point),
+                        information_point_guidance(
+                            context
+                                .map(|context| context.label.as_str())
+                                .unwrap_or(&group.primary_domain),
+                            evidence,
+                            index,
+                            point,
+                        ),
                     )
                 })
                 .collect();
@@ -444,7 +471,13 @@ mod tests {
 
     fn group() -> BatchGroup {
         BatchGroup {
-            blueprint_slot_id: "R-A1-1".into(),
+            language: None,
+            item_rule_id: super::super::legacy_identity::legacy_rule_id(
+                "R-A1-1",
+                "IF-SINGLE-SELECT",
+                "A1-R1",
+            )
+            .unwrap(),
             item_format_id: "IF-SINGLE-SELECT".into(),
             primary_can_do_id: "test".into(),
             primary_domain: "Public".into(),
@@ -645,7 +678,8 @@ mod tests {
             .unwrap();
         let mut body = request();
         body.groups[0] = BatchGroup {
-            blueprint_slot_id: capability.blueprint_slot_id.clone(),
+            language: None,
+            item_rule_id: capability.item_rule_id.clone(),
             item_format_id: capability.item_format_id.clone(),
             primary_can_do_id: capability.primary_can_do_id.clone(),
             primary_domain: context.primary_domains[0].clone(),
@@ -726,7 +760,8 @@ mod tests {
                 let mut body = request();
                 body.registry_version = Some(registry.bundle_version.clone());
                 body.groups[0] = BatchGroup {
-                    blueprint_slot_id: capability.blueprint_slot_id.clone(),
+                    language: None,
+                    item_rule_id: capability.item_rule_id.clone(),
                     item_format_id: capability.item_format_id.clone(),
                     primary_can_do_id: capability.primary_can_do_id.clone(),
                     primary_domain: domain.clone(),

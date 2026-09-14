@@ -1,5 +1,6 @@
 import { languageTargetDisplayText, languageTargetLabel } from "./language-target-labels.ts";
 import type { ContentIdOption, RegistrySnapshot } from "./types.ts";
+import { CONTENT_LANGUAGE_OPTIONS, contentLanguage } from "./content-language.ts";
 
 export const CONTENT_MASTERY_OPTIONS = [
   { id: "", label: "Not restricted" },
@@ -9,11 +10,12 @@ export const CONTENT_MASTERY_OPTIONS = [
 ];
 
 export interface ContentCatalogFilters {
+  language?: string;
   kind: string;
   query: string;
   mastery: string;
   canDoId: string;
-  contextId: string;
+  level?: string;
 }
 
 export function contentEntryBaselineMatches(initial: ContentIdOption, entries: ContentIdOption[], isNew: boolean): boolean {
@@ -36,6 +38,14 @@ export function prepareContentEntry(entry: ContentIdOption, initial: ContentIdOp
   return result;
 }
 
+export interface ContentGeneratedPinyin { label: string; pinyin: string }
+
+export function reconcileContentGeneratedPinyin(entry: ContentIdOption, generated: ContentGeneratedPinyin | null): { entry: ContentIdOption; generated: ContentGeneratedPinyin | null } {
+  if (!generated || entry.pinyin !== generated.pinyin) return { entry, generated: null };
+  if (entry.label !== generated.label) return { entry: { ...entry, pinyin: "" }, generated: null };
+  return { entry, generated };
+}
+
 export function contentMasteryLabel(scope: string | null) {
   return CONTENT_MASTERY_OPTIONS.find((option) => option.id === (scope ?? ""))?.label ?? "Unknown mastery scope";
 }
@@ -43,18 +53,18 @@ export function contentMasteryLabel(scope: string | null) {
 const normalized = (value: string) => value.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase();
 
 export function contentEntryNameKey(entry: ContentIdOption): string {
-  return JSON.stringify([entry.kind, normalized(entry.label)]);
+  return JSON.stringify([contentLanguage(entry), entry.kind, normalized(entry.label)]);
 }
 
 export function contentEntryNameKeys(entry: ContentIdOption): string[] {
   const names = [entry.label];
   if (entry.kind === "grammar" || entry.kind === "pragmatics") {
     // Only established display names are aliases; an authored English meaning is not another name.
-    const display = languageTargetLabel({ id: entry.id, kind: entry.kind, label: entry.label });
+    const display = languageTargetLabel({ id: entry.id, kind: entry.kind, label: entry.label, language: entry.language });
     names.push(display.primary);
     if (display.english) names.push(display.english);
   }
-  return [...new Set(names.map((name) => JSON.stringify([entry.kind, normalized(name)])))];
+  return [...new Set(names.map((name) => JSON.stringify([contentLanguage(entry), entry.kind, normalized(name)])))];
 }
 
 const identityDetail = (entry: ContentIdOption) => normalized((entry.kind === "lexical" ? entry.meaning : entry.kind === "grammar" ? entry.pattern : undefined) ?? "");
@@ -86,23 +96,25 @@ export function filterContentEntries(entries: ContentIdOption[], filters: Conten
   const matchesScope = (ids: string[], selected: string) => !selected
     || (selected === "__unrestricted" ? !ids.length : !ids.length || ids.includes(selected));
   return entries.filter((entry) => (!filters.kind || entry.kind === filters.kind)
+    && (!filters.language || contentLanguage(entry) === filters.language)
     && (filters.mastery === "all" || (entry.masteryScope ?? "") === filters.mastery)
     && matchesScope(entry.canDoIds, filters.canDoId)
-    && matchesScope(entry.contextIds, filters.contextId)
-    && (!query || normalized([languageTargetDisplayText(entry), entry.meaning, entry.pattern, entry.pinyin, entry.englishGloss].filter(Boolean).join(" ")).includes(query)));
+    && (!filters.level || (filters.level === "__missing" ? !entry.level?.trim() : entry.level?.trim() === filters.level))
+    && (!query || normalized([languageTargetDisplayText(entry), entry.meaning, entry.pattern, entry.pinyin, entry.englishGloss, ...(entry.examples ?? [])].filter(Boolean).join(" ")).includes(query)));
 }
 
 export function contentEntryErrors(entry: ContentIdOption, snapshot: RegistrySnapshot, isNew: boolean) {
   const errors: string[] = [];
   if (!entry.label.trim()) errors.push("Enter a name.");
-  if (entry.kind === "lexical" && (isNew || entry.meaning !== undefined) && !entry.meaning?.trim()) errors.push("Enter the vocabulary meaning being assessed.");
+  if (entry.language !== undefined && !CONTENT_LANGUAGE_OPTIONS.some((option) => option.id === entry.language)) errors.push("Choose Chinese, English, or Spanish.");
+  if (entry.level && /[\u0000-\u001f\u007f-\u009f]/u.test(entry.level)) errors.push("Level must be a single line without control characters.");
+  if (entry.kind === "lexical" && contentLanguage(entry) !== "en" && (isNew || entry.meaning !== undefined) && !entry.meaning?.trim()) errors.push("Enter the vocabulary meaning being assessed.");
   if (entry.kind === "grammar" && (isNew || entry.pattern !== undefined) && !entry.pattern?.trim()) errors.push("Enter the grammar structure.");
   if (!CONTENT_MASTERY_OPTIONS.some((option) => option.id === (entry.masteryScope ?? ""))) errors.push("Choose a valid mastery scope.");
   if (entry.canDoIds.some((id) => !snapshot.canDoOptions.some((option) => option.id === id))) errors.push("Remove unavailable Can-do references.");
-  if (entry.contextIds.some((id) => !snapshot.contextOptions.some((option) => option.id === id && !option.retired))) errors.push("Remove unavailable or retired Context references.");
   return errors;
 }
 
-export function newContentEntry(kind = "lexical"): ContentIdOption {
-  return { id: `CONTENT-CUSTOM-${crypto.randomUUID()}`, kind, label: "", masteryScope: null, canDoIds: [], contextIds: [] };
+export function newContentEntry(kind = "lexical", language = "zh"): ContentIdOption {
+  return { id: `CONTENT-CUSTOM-${crypto.randomUUID()}`, kind, language, label: "", masteryScope: null, canDoIds: [], contextIds: [] };
 }

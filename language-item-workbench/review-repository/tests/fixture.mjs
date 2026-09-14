@@ -7,19 +7,19 @@ export function fixture({ form = false, contextId = 'D12' } = {}) {
   const taskSchema = schema('task-package');
   const candidateSchema = schema(form ? 'form-entry' : 'single-select');
   const format = form ? 'IF-FORM-ENTRY' : 'IF-SINGLE-SELECT';
-  const slot = form ? 'W-A1-1' : 'R-A1-1';
   const primary = form ? 'A1-W1' : 'A1-R1';
+  const itemRuleId = form ? 'test-rule-form' : 'test-rule-reading';
   const skill = form ? 'Writing' : 'Reading';
   const activity = form ? 'Production' : 'Reception';
   const family = form ? 'TF-FORM-COMPLETION' : 'TF-SIGNS-NOTICES';
   const registryVersion = 'settings-fixture-1';
-  const contractId = `SCT-${slot}-${format.slice(3)}-v0.1`;
+  const contractId = `SCT-${itemRuleId}-${format.slice(3)}-v0.1`;
   const delivery = Object.fromEntries(['navigationPolicyId', 'inputPolicyId', 'playbackPolicyId',
     'recordingPolicyId', 'speakingRateProfileId', 'pauseProfileId'].map(key => [key, `POL-${key}`]));
   const responseIds = form ? ['NAME', 'AGE', 'CITY', 'DATE'] : ['ITEM'];
   const pkg = {
-    taskId: 'LI-test', taskVersion: '1', specVersions: { planningSpecVersion: '0.2-provisional', registryBundleVersion: registryVersion, taskPackageVersion: '0.1' },
-    blueprintSlotId: slot, taskFamilyId: family, itemFormatId: format,
+    taskId: 'LI-test', taskVersion: '1', specVersions: { planningSpecVersion: '0.2-provisional', registryBundleVersion: registryVersion, taskPackageVersion: '0.2' },
+    itemRuleId, taskFamilyId: family, itemFormatId: format,
     renderer: { rendererId: `REN-${format.slice(3)}`, rendererVersion: '0.1' },
     candidatePayload: form ? { situation: '填写报名表', instructions: '请填写个人信息。', sourceProfile: { name: '小王', details: [{ city: '北京' }] },
       fields: responseIds.map(fieldId => ({ fieldId, label: fieldId, inputType: 'shortText', required: true })) }
@@ -35,16 +35,16 @@ export function fixture({ form = false, contextId = 'D12' } = {}) {
       difficulty: { intendedBand: 'TypicalA1', status: 'AuthorEstimated', drivers: { inputLength: 'shortSentence', informationPoints: 1, supportLevel: 'moderate', distractorSimilarity: form ? 'notApplicable' : 'moderate', outputLength: 'short', interactionTurns: 0, preparationTimeSeconds: null, independenceLevel: 'someSupport', inferenceRequired: false }, rationale: ['一个明确的信息点'], empiricalDifficulty: { status: 'NotPiloted', sampleId: null, observedBand: null, percentCorrect: null, discrimination: null, omissionRate: null, medianResponseTimeSeconds: null, decision: null } } }, variation: {},
   };
   const registry = {
-    settingsSchemaVersion: 1, bundleVersion: registryVersion, taskPackageSchema: taskSchema, candidateSchemas: [candidateSchema],
-    capabilities: [{ blueprintSlotId: slot, itemFormatId: format, taskFamilyId: family, primaryCanDoId: primary,
+    settingsSchemaVersion: 3, bundleVersion: registryVersion, taskPackageSchema: taskSchema, candidateSchemas: [candidateSchema],
+    capabilities: [{ itemRuleId, itemFormatId: format, taskFamilyId: family, primaryCanDoId: primary,
       primaryReportedSkill: skill, communicativeActivity: activity, rendererId: pkg.renderer.rendererId,
       deliveryPolicyRefs: delivery, scoringContractTemplateId: contractId, supportingCanDoIds: [], allowedContextIds: [contextId], allowedDomains: ['Public'] }],
     canDoOptions: [{ id: primary, primarySkill: skill, activity }],
-    scoringContracts: [{ scoringContractTemplateId: contractId, templateVersion: '0.1', blueprintSlotId: slot, itemFormatId: format,
+    scoringContracts: [{ scoringContractTemplateId: contractId, templateVersion: '0.1', itemRuleIds: [itemRuleId], itemFormatId: format,
       rubricId: 'notApplicable', normalization: { policyId: 'NORM-EXACT' } }],
     contextOptions: [{ id: contextId, primaryDomains: ['Public'], canDoIds: [primary], retired: false }],
     contentIdOptions: [{ id: 'LEX-test', kind: 'vocabulary', canDoIds: [primary], contextIds: [contextId], masteryScope: form ? 'productive' : 'receptive' }],
-    capabilityDifficultyProfileSets: [{ blueprintSlotId: slot, itemFormatId: format, primaryCanDoId: primary, standards: [{ id: 'TypicalA1',
+    capabilityDifficultyProfileSets: [{ itemRuleId, itemFormatId: format, primaryCanDoId: primary, standards: [{ id: 'TypicalA1',
       allowedInputLengths: ['shortSentence'], informationPointsMin: 1, informationPointsMax: 2, allowedSupportLevels: ['moderate'], allowedDistractorSimilarities: ['moderate'], defaultDrivers: { inferenceRequired: false } }] }],
   };
   const rulesPath = `review-batches/${refs.batchId}/rules/${createHash('sha256').update(registryVersion).digest('hex')}`;

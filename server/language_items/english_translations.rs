@@ -128,10 +128,153 @@ fn collect_pattern(
     }
 }
 
+fn exercise_text(
+    field: &Value,
+    value: &Value,
+    pointer: &str,
+    source_path: &str,
+    policy: &Value,
+    fields: &mut BTreeMap<String, String>,
+) {
+    let key = field.get("key").and_then(Value::as_str).unwrap_or("");
+    if matches!(
+        key,
+        "type"
+            | "level"
+            | "language"
+            | "instructionLanguage"
+            | "src"
+            | "countBy"
+            | "layout"
+            | "responseMode"
+    ) || policy
+        .get("privatePaths")
+        .and_then(Value::as_array)
+        .is_some_and(|paths| paths.iter().any(|path| path.as_str() == Some(source_path)))
+    {
+        return;
+    }
+    if key == "text"
+        && policy.get("transform").and_then(Value::as_str) == Some("masked-letters")
+        && value.as_str().is_some_and(|text| {
+            regex::Regex::new(r"\{[^|{}]+\|\d+\}")
+                .expect("mask pattern is valid")
+                .is_match(text)
+        })
+    {
+        return;
+    }
+    match field.get("type").and_then(Value::as_str) {
+        Some("string") => {
+            if let Some(text) = value
+                .as_str()
+                .filter(|text| !text.trim().is_empty() && !is_reference(text))
+            {
+                fields.insert(pointer.into(), text.into());
+            }
+        }
+        Some("object") => {
+            if let Some(properties) = field.get("properties").and_then(Value::as_array) {
+                for child in properties {
+                    if let Some(key) = child.get("key").and_then(Value::as_str)
+                        && let Some(value) = value.get(key)
+                    {
+                        exercise_text(
+                            child,
+                            value,
+                            &format!("{pointer}/{}", pointer_segment(key)),
+                            &format!("{source_path}.{key}"),
+                            policy,
+                            fields,
+                        );
+                    }
+                }
+            }
+        }
+        Some("array") => {
+            if let (Some(element), Some(values)) = (field.get("element"), value.as_array()) {
+                for (index, value) in values.iter().enumerate() {
+                    exercise_text(
+                        element,
+                        value,
+                        &format!("{pointer}/{index}"),
+                        &format!("{source_path}.*"),
+                        policy,
+                        fields,
+                    );
+                }
+            }
+        }
+        Some("union") => {
+            if let Some(variants) = field.get("variants").and_then(Value::as_array) {
+                for variant in variants {
+                    exercise_text(variant, value, pointer, source_path, policy, fields);
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
 /// Only these author-readable text fields can have translations; IDs and delivery settings are excluded.
 pub fn translation_source_fields(payload: &CandidatePayload) -> BTreeMap<String, String> {
+    translation_source_fields_with_definition(payload, None)
+}
+
+pub fn translation_source_fields_for_registry(
+    payload: &CandidatePayload,
+    registry: &super::registry::RegistrySnapshot,
+) -> BTreeMap<String, String> {
+    let definition = match payload {
+        CandidatePayload::ExerciseTemplate(payload) => registry
+            .exercise_template_schemas
+            .get(&payload.exercise_type)
+            .and_then(|schema| schema.get("x-exercise-template")),
+        _ => None,
+    };
+    translation_source_fields_with_definition(payload, definition)
+}
+
+fn translation_source_fields_with_definition(
+    payload: &CandidatePayload,
+    definition: Option<&Value>,
+) -> BTreeMap<String, String> {
     let value = serde_json::to_value(payload).expect("candidate payload is serializable");
     let mut fields = BTreeMap::new();
+    if let CandidatePayload::ExerciseTemplate(payload) = payload {
+        if !payload.body.trim().is_empty() {
+            fields.insert("/body".into(), payload.body.clone());
+        }
+        if let Some(definition) =
+            definition.or_else(|| super::exercise_templates::template(&payload.exercise_type))
+        {
+            let policy = &definition["projection"];
+            if let Some(source_fields) = definition.get("fields").and_then(Value::as_array) {
+                for field in source_fields {
+                    if let Some(key) = field.get("key").and_then(Value::as_str)
+                        && let Some(value) = payload.data.get(key)
+                    {
+                        exercise_text(
+                            field,
+                            value,
+                            &format!("/data/{}", pointer_segment(key)),
+                            key,
+                            policy,
+                            &mut fields,
+                        );
+                    }
+                }
+            }
+            if policy.get("transform").and_then(Value::as_str) == Some("independent-columns") {
+                for key in ["leftItems", "rightItems"] {
+                    if let Some(value) = payload.data.get(key) {
+                        profile_text(value, &format!("/data/{key}"), &mut fields);
+                    }
+                }
+            }
+        }
+        return fields;
+    }
     for pattern in [
         "stimulus/text",
         "prompt",
@@ -185,6 +328,27 @@ pub fn validate_english_translations(
     require_complete: bool,
 ) -> Vec<ValidationIssue> {
     let fields = translation_source_fields(payload);
+    validate_translation_fields(fields, translations, require_complete)
+}
+
+pub fn validate_english_translations_for_registry(
+    payload: &CandidatePayload,
+    translations: &[EnglishTranslation],
+    require_complete: bool,
+    registry: &super::registry::RegistrySnapshot,
+) -> Vec<ValidationIssue> {
+    validate_translation_fields(
+        translation_source_fields_for_registry(payload, registry),
+        translations,
+        require_complete,
+    )
+}
+
+fn validate_translation_fields(
+    fields: BTreeMap<String, String>,
+    translations: &[EnglishTranslation],
+    require_complete: bool,
+) -> Vec<ValidationIssue> {
     let mut issues = Vec::new();
     let mut paths = HashSet::new();
     let mut matched = HashSet::new();
@@ -235,7 +399,7 @@ pub fn validate_english_translations(
             Some(_) => add(
                 "staleSource",
                 format!("{path}.sourceText"),
-                "The Chinese source has changed; update its English translation",
+                "The source text has changed; update its English translation",
                 true,
             ),
             None => add(
@@ -413,4 +577,40 @@ mod tests {
         let fields = translation_source_fields(&package.candidate_payload);
         assert!(!fields.keys().any(|path| path.contains("/paths/")));
     }
+}
+#[test]
+fn generic_translation_sources_use_only_safe_human_fields() {
+    let payload = CandidatePayload::ExerciseTemplate(
+        crate::language_items::exercise_templates::ExerciseTemplateContent {
+            exercise_type: "listening".into(),
+            body: "请选择。".into(),
+            data: serde_json::json!({"type":"listening","title":"上课时间","language":"zh-CN","audio":{"src":"/中文录音.mp3","alt":"听录音"},"transcript":"秘密答案","teacherNotes":"教师备注","questions":[{"prompt":"几点上课？","options":["九点","十点"],"correct":[0],"responseMode":"multiple","explanation":"私密解释"}]}),
+        },
+    );
+    let fields = translation_source_fields(&payload);
+    assert_eq!(fields.get("/body").map(String::as_str), Some("请选择。"));
+    assert_eq!(
+        fields
+            .get("/data/questions/0/options/1")
+            .map(String::as_str),
+        Some("十点")
+    );
+    assert!(!fields.keys().any(|path| {
+        [
+            "src",
+            "transcript",
+            "teacherNotes",
+            "correct",
+            "responseMode",
+            "explanation",
+            "language",
+        ]
+        .iter()
+        .any(|key| path.split('/').any(|segment| segment == *key))
+    }));
+    assert!(
+        validate_english_translations(&payload, &[], true)
+            .iter()
+            .any(|issue| issue.code.ends_with("missing"))
+    );
 }

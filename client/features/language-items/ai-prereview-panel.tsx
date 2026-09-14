@@ -2,10 +2,12 @@ import { Badge, Box, Heading, HStack, Stack, Text } from "@chakra-ui/react";
 
 import { aiPrereviewBlockReason, isAiPrereviewFinding, type AiPrereviewStage } from "./ai-prereview";
 import type { AiReviewRun } from "./types";
+import { ReviewCheckResults } from "./review-check-results";
+import { BlindAnswerResult } from "./blind-answer-result";
 
 const STAGE_LABELS = {
   checking: "Checking item…",
-  aiReview: "Reviewing item…",
+  aiReview: "Answering and reviewing item…",
   creatingPr: "Creating review PR…",
 } as const;
 
@@ -26,6 +28,8 @@ export function AiPrereviewPanel({ stage, review }: { stage: AiPrereviewStage; r
         {reason ?? "No serious issues found"}
       </Text>
       {typeof review?.model === "string" && review.model ? <Text fontSize="xs" color="fg.muted">{review.model}</Text> : null}
+      <BlindAnswerResult attempt={review?.blindAnswer} />
+      {review ? <ReviewCheckResults review={review} /> : null}
       {findings.map((finding, index) => <Box key={`${finding.code}-${finding.fieldPath}-${index}`} borderTopWidth="1px" pt={3}>
         <HStack gap={2} mb={1}>
           <Badge colorPalette={FINDING_LABELS[finding.severity].color}>{FINDING_LABELS[finding.severity].label}</Badge>

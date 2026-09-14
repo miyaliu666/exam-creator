@@ -1,4 +1,4 @@
-import { IMPORT_FIELDS, mapContentTables, type ContentImportTable } from "./content-import-columns";
+import { IMPORT_FIELDS, inferContentKind, mapContentTables, type ContentImportTable } from "./content-import-columns";
 import { parseContentTables, tableFromRecords } from "./content-import-parser";
 import { registryDisplayText } from "./registry-display-text";
 import type { ContentIdOption, RegistrySnapshot } from "./types";
@@ -6,10 +6,14 @@ import type { ContentIdOption, RegistrySnapshot } from "./types";
 const MAX_ROWS = 5000;
 const supportSheets = new Set(["Instructions", "Can-do references", "Context references"]);
 const instructionRows = [
-  ["Category: Vocabulary, Grammar, Characters, Pragmatic functions, or Supporting material types."],
   ["New entries: Name is required; vocabulary also requires Meaning, grammar requires Structure."],
+  ["Language: Chinese (zh), English (en), or Spanish (es). Blank new rows use the import language; blank updates preserve the saved language. Legacy entries without a language are Chinese."],
+  ["Level is optional and preserves your source level, such as A1, A2 or HSK 1. It does not set item Difficulty."],
+  ["Pinyin is optional for Chinese vocabulary. Missing pinyin can be generated in the import preview."],
+  ["The worksheet name supplies the category. Other fields can be set after importing."],
+  ["Meaning is optional for English vocabulary. It accepts definitions or translations in any language; a separate English meaning is optional."],
   ["Mastery scope: receptive, productive, receptiveProductive, or Not restricted. Blank means Not restricted for new entries."],
-  ["Can-do and Context: IDs or unique names separated by semicolons. Blank means Not restricted for new entries."],
+  ["Can-do: IDs or unique names separated by semicolons. Blank means Not restricted for new entries."],
   ["Update by exported ID: blanks preserve values; __CLEAR__ clears optional fields or scope restrictions. Missing rows never delete entries."],
   ["Examples and Sources: semicolon-separated values, or a JSON string array for values containing semicolons or line breaks."],
   ["Additional metadata: JSON object for extra source fields; cannot replace standard fields."],
@@ -36,29 +40,24 @@ export async function readContentTables(file: File): Promise<ContentImportTable[
     const records = rows.map((cells, index) => ({ line: index + range.s.r + 1, cells: cells.map(String) })).filter((row) => row.cells.some((cell) => cell.trim()));
     if (!records.length) continue;
     const table = tableFromRecords(records, `${file.name} / ${name}`, true);
-    const kind = /grammar/i.test(name) ? "grammar" : /vocabulary|lexical/i.test(name) ? "lexical" : undefined;
-    if (kind) {
-      if (!table.mapping.includes("kind")) { table.headers.push("Category"); table.mapping.push("kind"); }
-      const kindIndex = table.mapping.indexOf("kind");
-      table.rows.forEach((row) => { if (!row.cells[kindIndex]?.trim()) row.cells[kindIndex] = kind; });
-    }
+    table.defaultKind = inferContentKind(name);
     tables.push(table);
   }
   if (tables.reduce((sum, table) => sum + table.rows.length, 0) > MAX_ROWS) throw new Error("Import at most 5,000 content rows at a time.");
   if (!tables.length) throw new Error("The workbook has no content tables.");
   return tables;
 }
-export async function readContentFile(file: File, kind = "lexical") { return mapContentTables(await readContentTables(file), kind); }
+export async function readContentFile(file: File, kind = "lexical", language = "") { return mapContentTables(await readContentTables(file), kind, language); }
 
 function entryCells(entry: ContentIdOption): string[] {
   const standard = new Set(IMPORT_FIELDS.map(({ key }) => key as string));
   return IMPORT_FIELDS.map(({ key }) => {
     if (key === "metadata") {
-      const metadata = Object.fromEntries(Object.entries(entry).filter(([field]) => !standard.has(field)));
+      const metadata = Object.fromEntries(Object.entries(entry).filter(([field]) => !standard.has(field) && !["contextIds", "contextScopeMode", "excludedContextIds", "assessmentRules"].includes(field)));
       return Object.keys(metadata).length ? JSON.stringify(metadata) : "";
     }
     const value = entry[key];
-    if (["masteryScope", "canDoIds", "contextIds"].includes(key) && (value === null || (Array.isArray(value) && !value.length))) return "Not restricted";
+    if (["masteryScope", "canDoIds"].includes(key) && (value === null || (Array.isArray(value) && !value.length))) return "Not restricted";
     if (value === undefined) return "";
     if (Array.isArray(value)) return JSON.stringify(value);
     if (typeof value === "string") return value || "__CLEAR__";
@@ -76,12 +75,14 @@ export async function buildContentWorkbook(entries: ContentIdOption[], snapshot:
   for (const [kind, title] of [["lexical", "Vocabulary"], ["grammar", "Grammar"], ["character", "Characters"], ["pragmatics", "Pragmatic functions"], ["supported", "Supporting material types"]]) {
     const matching = entries.filter((entry) => entry.kind === kind);
     if (!matching.length && !(template && ["lexical", "grammar"].includes(kind))) continue;
-    append(title, [IMPORT_FIELDS.map(({ label }) => label), ...matching.map(entryCells)]);
+    const templateFields = kind === "grammar" ? ["Language", "Level", "Name", "Structure", "Meaning"] : ["Language", "Level", "Name", "Meaning", "Pinyin"];
+    append(title, template ? [templateFields] : [IMPORT_FIELDS.map(({ label }) => label), ...matching.map(entryCells)]);
   }
   if (!workbook.SheetNames.length) append("Language content", [IMPORT_FIELDS.map(({ label }) => label)]);
   append("Instructions", instructionRows);
-  append("Can-do references", [["ID", "Name"], ...snapshot.canDoOptions.map((entry) => [entry.id, registryDisplayText(entry.label)])]);
-  append("Context references", [["ID", "Name"], ...snapshot.contextOptions.filter((entry) => !entry.retired).map((entry) => [entry.id, registryDisplayText(entry.label)])]);
+  if (!template) {
+    append("Can-do references", [["ID", "Name"], ...snapshot.canDoOptions.map((entry) => [entry.id, registryDisplayText(entry.label)])]);
+  }
   return XLSX.write(workbook, { type: "array", bookType: "xlsx" }) as ArrayBuffer;
 }
 function download(data: BlobPart, name: string, type: string) {
@@ -91,14 +92,13 @@ function download(data: BlobPart, name: string, type: string) {
 }
 export async function downloadContentTemplate(snapshot: RegistrySnapshot, format: "xlsx" | "markdown" = "xlsx"): Promise<void> {
   if (format === "markdown") {
-    const fields = IMPORT_FIELDS.filter(({ key }) => key !== "metadata");
-    const header = `| ${fields.map(({ label }) => label).join(" | ")} |\n| ${fields.map(() => "---").join(" | ")} |`;
-    const instructions = instructionRows.map(([line]) => line).join("\n\n");
-    const references = [...snapshot.canDoOptions, ...snapshot.contextOptions.filter((entry) => !entry.retired)].map((entry) => `- ${entry.id}: ${registryDisplayText(entry.label)}`).join("\n");
-    download(`# Language content template\n\n${instructions}\n\nEscape literal pipes as \\|; use <br> for newlines in table cells.\n\n${header}\n\n## Can-do and Context\n\n${references}\n`, "language-content-template.md", "text/markdown;charset=utf-8");
+    download(buildContentMarkdownTemplate(), "language-content-template.md", "text/markdown;charset=utf-8");
     return;
   }
   download(await buildContentWorkbook([], snapshot, true), "language-content-template.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+}
+export function buildContentMarkdownTemplate(): string {
+  return "# Language content template\n\nFill either table. Language accepts Chinese (zh), English (en), or Spanish (es); blank new rows use the selected import language. Level and Pinyin are optional. Add further fields after import. Escape literal pipes as \\|; use <br> for newlines.\n\n## Vocabulary\n\n| Language | Level | Name | Meaning | Pinyin |\n| --- | --- | --- | --- | --- |\n\n## Grammar\n\n| Language | Level | Name | Structure | Meaning |\n| --- | --- | --- | --- | --- |\n";
 }
 export async function exportContentEntries(entries: ContentIdOption[], snapshot: RegistrySnapshot): Promise<void> {
   download(await buildContentWorkbook(entries, snapshot), "language-content.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");

@@ -7,8 +7,30 @@ import type { RegistrySnapshot } from "../client/features/language-items/types.t
 
 const inventory: CoverageFilters = {
   skill: "Listening", activity: "Reception", domain: "Public", contextId: "shop",
-  blueprintSlotId: "L1", primaryCanDoId: "listen", difficultyBand: "TypicalA1", itemFormatId: "single",
+  itemRuleId: "L1", primaryCanDoId: "listen", difficultyBand: "TypicalA1", itemFormatId: "single",
 };
+
+test("language choices belong to each view and survive Registry switches while targets reset", () => {
+  let state = updateCoverageState(initialCoverageState("current"), { filters: { language: "en", skill: "Reading" } });
+  state = updateCoverageState({ ...state, view: "items" }, { filters: { language: "es" } });
+  state.request = { ...state.request, selectedIds: ["spanish"], excludedIds: ["excluded"], pattern: ["spanish"], desiredCount: 5, offset: 25 };
+  const changed = updateCoverageState(state, { filters: { ...state.request.filters, language: "en" } });
+  assert.deepEqual(changed.request.selectedIds, []);
+  assert.deepEqual(changed.request.excludedIds, []);
+  assert.equal(changed.request.pattern, undefined);
+  assert.equal(changed.request.desiredCount, undefined);
+  assert.equal(changed.request.offset, 0);
+  assert.deepEqual(changed.overviewInventory, state.overviewInventory);
+  const itemsVersion = updateCoverageState(state, { registryVersion: "older" });
+  assert.deepEqual(itemsVersion.request.filters, { language: "es" });
+  assert.deepEqual(itemsVersion.overviewInventory, state.overviewInventory);
+  const overviewVersion = updateCoverageState({ ...state, view: "overview" }, { registryVersion: "older" });
+  assert.deepEqual(overviewVersion.overviewInventory.filters, { language: "en" });
+  assert.deepEqual(overviewVersion.request, state.request);
+  const inspected = inspectCoverageEntry(state, "english", "approved");
+  assert.equal(inspected.request.filters.language, "en");
+  assert.equal(resetCoverageView(state, "current").request.filters.language, undefined);
+});
 
 function analysis() {
   const state = initialCoverageState("current");

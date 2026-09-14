@@ -5,6 +5,7 @@ import { useContext, useEffect, useState } from "react";
 import { ProtectedRoute } from "../components/protected-route";
 import { Header } from "../components/ui/header";
 import { AuthContext } from "../contexts/auth";
+import { SignOutButton } from "../components/sign-out-button";
 import { UsersWebSocketActivityContext } from "../contexts/users-websocket";
 import { RegistrySettingsPanel } from "../features/language-items/registry-settings-panel";
 import { rootRoute } from "./root";
@@ -20,9 +21,9 @@ function LanguageAssessmentSettings() {
     <Box minH="100vh" bg="bg" py={12} px={4}>
       <HStack position="fixed" top={3} left={8} zIndex={101} gap={3}>
         <Button variant="outline" colorPalette="teal" size="sm" disabled={busy} onClick={() => navigate({ to: "/language-items" })}>Item Bank</Button>
-        <Button variant="outline" colorPalette="red" size="sm" disabled={busy} onClick={() => {
+        <SignOutButton variant="outline" colorPalette="red" size="sm" disabled={busy} onClick={() => {
           if (!dirty || window.confirm("Discard unsaved settings and sign out?")) logout();
-        }}>Sign out / switch account</Button>
+        }}>Sign out / switch account</SignOutButton>
       </HStack>
       <Center>
         <Stack gap={6} w="full" maxW="7xl">

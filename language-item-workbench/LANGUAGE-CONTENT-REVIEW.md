@@ -284,7 +284,7 @@ Sources 链接不会触发自动打开、语料导入或 RAG。条目 Sources �
 
 隔离流程还验证了：可选 Details 全部省略也能保存并用于新 Item；新增目录内容不会进入尚未发布或绑定旧版本的 Item；不兼容的目标可以保留在待修复草稿，但 Checks 和 generation 会阻止继续生成；测试生成使用 deterministic mock，没有真实 provider 调用。
 
-浏览器主流程使用 Reading signs、Single select 等六项 Item setup 完成手动创建，验证的“因为……所以……”是可搜索、可选择的登记目标；这并不表示已经自动识别了正文中的语法形式。
+浏览器主流程使用 Reading signs、Single select 等五项 Item setup 完成手动创建，验证的“因为……所以……”是可搜索、可选择的登记目标；这并不表示已经自动识别了正文中的语法形式。
 
 后端诊断证据保存在本地 [language-content-flow-result.json](../docs/language-content-flow-result.json)。`docs/` 为本地诊断目录，不作为产品数据或已发布规则。
 

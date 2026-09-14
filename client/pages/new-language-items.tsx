@@ -6,11 +6,13 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { ProtectedRoute } from "../components/protected-route";
 import { Header } from "../components/ui/header";
 import { AuthContext } from "../contexts/auth";
+import { SignOutButton } from "../components/sign-out-button";
 import { UsersWebSocketActivityContext } from "../contexts/users-websocket";
 import { createLanguageItem, getLanguageItem, getLanguageItemRegistry, saveLanguageItemDraft } from "../features/language-items/api";
 import { createLanguageItemBatch, type BatchGenerationJob, type CreateBatchInput } from "../features/language-items/batch-api";
 import { BatchCreatePanel } from "../features/language-items/batch-create-panel";
 import { batchPlanIssues } from "../features/language-items/batch-plan";
+import { contentLanguage } from "../features/language-items/content-language";
 import { clearCreationSuggestion, readCreationSuggestion } from "../features/language-items/creation-suggestion-storage";
 import { clearManualCreationRecovery, readManualCreationRecovery, saveManualCreationRecovery } from "../features/language-items/manual-creation-recovery";
 import { rootRoute } from "./root";
@@ -46,9 +48,10 @@ function NewLanguageItems() {
     if (issues.length) throw new Error(issues.join(" "));
     const group = input.groups[0];
     const setup = {
-      blueprintSlotId: group.blueprintSlotId, itemFormatId: group.itemFormatId,
+      itemRuleId: group.itemRuleId, itemFormatId: group.itemFormatId,
       primaryCanDoId: group.primaryCanDoId, primaryDomain: group.primaryDomain,
       contextId: group.contextId, difficultyBand: group.difficultyBand,
+      ...(contentLanguage(group) !== "zh" ? { language: contentLanguage(group) } : {}),
     };
     const setupKey = JSON.stringify({ ...setup, registryVersion: input.registryVersion });
     // A target-save retry reuses its already-created draft instead of creating another item.
@@ -80,7 +83,7 @@ function NewLanguageItems() {
   return <Box minH="100vh" bg="bg" py={12} px={4}>
     <HStack position="fixed" top={3} left={8} zIndex={101} gap={3}>
       <Button variant="outline" colorPalette="teal" size="sm" disabled={busy} onClick={() => navigate({ to: "/language-items" })}>Item Bank</Button>
-      <Button variant="outline" colorPalette="red" size="sm" disabled={busy} onClick={() => logout()}>Sign out / switch account</Button>
+      <SignOutButton variant="outline" colorPalette="red" size="sm" disabled={busy} onClick={() => logout()}>Sign out / switch account</SignOutButton>
     </HStack>
     <Center><Stack gap={6} w="full" maxW="7xl">
       <Header title="New items"><Button variant="outline" disabled={busy} onClick={() => navigate({ to: "/language-items/batches" })}>Generation jobs</Button></Header>

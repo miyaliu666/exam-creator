@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 
 import { controlLanguageItemBatch, getLanguageItemBatch, getLanguageItemBatches } from "./batch-api";
 import { BatchProgress } from "./batch-progress";
+import { CONTENT_LANGUAGE_OPTIONS, contentLanguage } from "./content-language";
+import { FilterSelect } from "./filter-select";
 import { batchNeedsPolling, batchProgressVisibility, includeFocusedBatch } from "./batch-progress-state";
 import type { RegistrySnapshot } from "./types";
 
@@ -15,6 +17,7 @@ export function BatchAuthoringPanel({ scope, registry, focusedJobId, onOpenItem 
 }) {
   const queryClient = useQueryClient();
   const [showHistory, setShowHistory] = useState(false);
+  const [languageFilter, setLanguageFilter] = useState("");
   const jobsQuery = useQuery({
     queryKey: ["language-item-batches", scope], queryFn: getLanguageItemBatches, retry: false,
     refetchInterval: (query) => query.state.data?.some(batchNeedsPolling) ? 2500 : false,
@@ -45,9 +48,12 @@ export function BatchAuthoringPanel({ scope, registry, focusedJobId, onOpenItem 
       queryClient.invalidateQueries({ queryKey: ["language-coverage"] }),
     ]);
   }, [progressKey, queryClient]);
-  const { latestId, visibleJobs, hiddenCompletedCount } = batchProgressVisibility(jobs, showHistory, focusedJobId);
+  const matchingJobs = jobs.filter((job) => !languageFilter || job.groups.some((group) => contentLanguage(group) === languageFilter));
+  const { latestId, visibleJobs, hiddenCompletedCount } = batchProgressVisibility(matchingJobs, showHistory, focusedJobId);
   return (
     <Stack gap={4}>
+      <HStack><FilterSelect label="Language" value={languageFilter} options={[...CONTENT_LANGUAGE_OPTIONS]} onChange={setLanguageFilter} /></HStack>
+      {jobsQuery.isSuccess && languageFilter && !matchingJobs.length ? <Text color="fg.muted">No generation jobs match this language.</Text> : null}
       {needsFocusedJob && focusedJobQuery.isPending ? <HStack><Spinner size="sm" /><Text color="fg.muted">Loading requested generation job…</Text></HStack> : null}
       {needsFocusedJob && focusedJobQuery.error ? <HStack flexWrap="wrap">
         <Text role="alert" color="fg.error" fontSize="sm">Could not load the requested generation job: {focusedJobQuery.error.message}</Text>

@@ -1,18 +1,22 @@
 import type { RegistrySnapshot } from "./types";
 import { getContentAssessmentRule } from "./content-assessment-rules";
+import { contentContextMatches, contentContextMode } from "./content-context-scope";
+import { contentLanguage } from "./content-language";
 
-type Capability = RegistrySnapshot["capabilities"][number];
+type Capability = Pick<RegistrySnapshot["capabilities"][number], "itemRuleId" | "itemFormatId" | "primaryCanDoId" | "supportingCanDoIds" | "primaryReportedSkill">;
 type ContentOption = RegistrySnapshot["contentIdOptions"][number];
 
 export function isContentOptionCompatible(
   option: ContentOption,
   capability: Capability | undefined,
   contextId: string,
+  language = "zh",
 ) {
-  if (!capability) return false;
+  if (!capability || !["zh", "en", "es"].includes(language) || contentLanguage(option) !== language) return false;
+  if (capability.itemFormatId?.startsWith("EXERCISE:") && !contextId &&
+    (contentContextMode(option) !== "all" || option.contextIds.length > 0 || (option.excludedContextIds?.length ?? 0) > 0)) return false;
 
-  const contextMatches =
-    option.contextIds.length === 0 || option.contextIds.includes(contextId);
+  const contextMatches = contentContextMatches(option, contextId);
   const relevantCanDoIds = new Set([
     capability.primaryCanDoId,
     ...(capability.supportingCanDoIds ?? []),

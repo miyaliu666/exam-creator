@@ -54,7 +54,7 @@ export function informationPointSuggestions(
   return Array.from(
     new Set([
       ...contextual,
-      ...(SLOT_SUGGESTIONS[draft.blueprintSlotId] ?? []),
+      ...(SLOT_SUGGESTIONS[draft.itemRuleId] ?? []),
     ]),
   ).slice(0, 6);
 }
