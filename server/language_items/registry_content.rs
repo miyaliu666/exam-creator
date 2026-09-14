@@ -533,10 +533,12 @@ mod tests {
     fn customized_labels_are_not_given_original_seed_meanings() {
         let mut draft = snapshot().clone();
         draft.content_id_options[0].label = "另一义项".to_string();
-        let before = serde_json::to_value(&draft.content_id_options[0]).unwrap();
+        let mut expected = draft.content_id_options[0].clone();
+        // New drafts remove historical Context restrictions independently of metadata hydration.
+        expected.context_ids.clear();
         prepare_registry_draft(&mut draft);
         assert_eq!(
-            before,
+            serde_json::to_value(expected).unwrap(),
             serde_json::to_value(&draft.content_id_options[0]).unwrap()
         );
     }
